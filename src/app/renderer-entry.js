@@ -1,8 +1,7 @@
-// Renderer entry point wrapper.
-// Injects eve as a global (required by snapsvg) before loading the app.
-import eve from 'eve';
+// Renderer entry point: boots the app (page dispatch + close handshake),
+// then re-exports appEntry for anything that wants loadPage directly.
+import { bootApp } from './appEntry.js';
 
-/** @type {any} */ (globalThis).eve = eve;
+bootApp();
 
-// Re-export the actual app entry
 export * from './appEntry.js';

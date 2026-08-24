@@ -17,27 +17,36 @@ import { checkForUpdate, openExternalUrl } from './main/updater';
 
 let dataStore: ScratchJRDataStore | undefined;
 
+/** Shared crash path: record, best-effort save, exit(1). */
+function flushSaveAndExit (type: string, err: unknown): void {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = (err as Error)?.stack;
+    const entry = JSON.stringify({ ts: new Date().toISOString(), type, message, stack });
+    logFile.write(entry + '\n');
+    process.stdout.write(entry + '\n');
+    try {
+        if (dataStore && dataStore.databaseManager) {
+            dataStore.databaseManager.flushPendingSave();
+            dataStore.databaseManager.save();
+        }
+    } catch (_) { /* best-effort save */ }
+    logFile.end(() => process.exit(1));
+}
+
 // Register crash handlers (must happen before any other code runs)
 process.on('uncaughtException', (err: Error & { stack?: string }) => {
-    const entry = JSON.stringify({ ts: new Date().toISOString(), type: 'uncaughtException', message: err?.message, stack: err?.stack });
-    logFile.write(entry + '\n');
-    process.stdout.write(entry + '\n');
-    try { if (dataStore && dataStore.databaseManager) { dataStore.databaseManager.flushPendingSave(); dataStore.databaseManager.save(); } } catch (_) { /* best-effort save */ }
-    logFile.end(() => process.exit(1));
+    flushSaveAndExit('uncaughtException', err);
 });
 process.on('unhandledRejection', (reason: unknown) => {
-    const entry = JSON.stringify({ ts: new Date().toISOString(), type: 'unhandledRejection', message: String(reason), stack: (reason as Error)?.stack });
-    logFile.write(entry + '\n');
-    process.stdout.write(entry + '\n');
-    try { if (dataStore && dataStore.databaseManager) { dataStore.databaseManager.flushPendingSave(); dataStore.databaseManager.save(); } } catch (_) { /* best-effort save */ }
-    logFile.end(() => process.exit(1));
+    flushSaveAndExit('unhandledRejection', reason);
 });
 
 // Register IPC handlers (they use lazy getters so dataStore doesn't need to exist yet)
 ipcHandlers.register(() => dataStore as ScratchJRDataStore, getWindow);
 
-/** Check for updates and show a native dialog with the result */
-async function showUpdateCheck(): Promise<void> {
+/** Check for updates and show a native dialog with the result.
+ *  Silent unless announceUpToDate — the launch-time check must not nag. */
+async function showUpdateCheck(announceUpToDate = false): Promise<void> {
     const win = getWindow();
     const info = await checkForUpdate();
     if (info.available) {
@@ -56,7 +65,7 @@ ${info.releaseNotes ? info.releaseNotes.slice(0, 500) : ''}`,
         } else if (result === 1) {
             openExternalUrl(info.releasePageUrl);
         }
-    } else {
+    } else if (announceUpToDate) {
         dialog.showMessageBox(win!, {
             type: 'info',
             buttons: ['OK'],
@@ -87,7 +96,7 @@ app.whenReady().then(async () => {
     fsMenu.push({ type: 'separator' });
     fsMenu.push({
         label: 'Check for Updates...',
-        click: () => { showUpdateCheck(); },
+        click: () => { showUpdateCheck(true); },
     });
     fsMenu.push({ role: 'quit' });
 

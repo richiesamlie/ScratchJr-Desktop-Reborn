@@ -42,7 +42,11 @@ declare class WebKitCSSMatrix {
 /** @deprecated Use ScratchJrBridge */
 type TabletBridge = ScratchJrBridge;
 
-interface ScratchJrBridge {
+/**
+ * Channels exposed by preload.ts on window.scratchjr.
+ * Keep in sync with src/preload.ts — this is exactly that object's shape.
+ */
+interface IpcBridge {
     // ---- Database ----
     database_stmt(json: string): Promise<unknown>;
     database_query(json: string): Promise<unknown>;
@@ -79,7 +83,14 @@ interface ScratchJrBridge {
     onDatabaseRestored(callback: () => void): void;
     onKeyboardShortcut(callback: (action: string) => void): void;
     onAppClose(callback: () => void): void;
+}
 
+/**
+ * Full tablet surface reached through window.tablet (ElectronDesktopInterface
+ * in electronClient.js): the IPC channels plus sound/recording/camera methods
+ * implemented renderer-side with web APIs.
+ */
+interface ScratchJrBridge extends IpcBridge {
     // ---- Sound ----
     io_registersound(dir: string, name: string): Promise<void>;
     io_playsound(name: string): void;
@@ -175,18 +186,30 @@ interface ThumbElement extends HTMLDivElement {
 }
 
 /**
- * SQL payload bag built incrementally by iOS/IO persistence code
- * (`var json = {}` + field adds). Type annotation replaces the
- * non-evolving `{}` inference on `var` declarations.
+ * Structured database intents sent over the IPC bridge. SQL is composed
+ * main-side (src/lib/db-intents.ts) from allowlisted tables/columns; the
+ * renderer never sends SQL text.
  */
-interface SqlPayload {
-    stmt?: string;
-    values?: Array<string | number | boolean | null>;
-    cond?: string;
-    items?: string[];
-    order?: string;
-    [key: string]: unknown;
+type DbValue = string | number | boolean | null;
+
+interface DbClause {
+    col: string;
+    op: '=' | '!=' | 'IS NULL';
+    value?: DbValue;
 }
+
+interface DbSelectIntent {
+    op: 'select';
+    table: string;
+    items?: string[];
+    where?: DbClause[];
+    order?: { col: string; dir?: 'asc' | 'desc' };
+}
+
+type DbWriteIntent =
+    | { op: 'insert'; table: string; row: Record<string, DbValue> }
+    | { op: 'update'; table: string; row: Record<string, DbValue>; id: DbValue }
+    | { op: 'delete'; table: string; id: DbValue };
 
 /**
  * Expando properties attached to DOM elements by the editor/lobby code
@@ -261,8 +284,8 @@ interface ScriptProcessorNode {
 interface Window {
     // Runtime-injected by appEntry.js from settings.json
     Settings?: ScratchJrSettings;
-    // Electron bridge set by preload.js via contextBridge
-    scratchjr?: ScratchJrBridge;
+    // Electron bridge set by preload.js via contextBridge (IPC channels only)
+    scratchjr?: IpcBridge;
     // Legacy global assignment kept until Phase 8 teardown
     ScratchAudio?: ScratchAudioGlobal;
     // Set by iPad/iOS for tablet sharing callbacks
@@ -277,11 +300,15 @@ interface Window {
     scratchJrPage?: string;
     // Legacy tablet bridge (ElectronDesktopInterface)
     tablet?: ScratchJrBridge;
+    // Editor globals exposed by the ESM bundle for electronClient keyboard shortcuts
+    ScratchJr?: { saveProject(arg: unknown, cb: () => void): void };
+    Undo?: { prevStep(e: object): void; nextStep(e: object): void };
+    Home?: { createNewProject(): void };
 }
 
-/** ScratchJr editor globals set at runtime */
+/** Editor globals referenced by electronClient.js (assigned to window by the bundle) */
 declare const ScratchJr: { saveProject(arg: unknown, cb: () => void): void };
-declare const Undo: { undo(): void; redo(): void };
+declare const Undo: { prevStep(e: object): void; nextStep(e: object): void };
 declare const Home: { createNewProject(): void };
 declare const iOS: { soundDone(name: string): void };
 declare const Camera: { processimage(data: string): void };

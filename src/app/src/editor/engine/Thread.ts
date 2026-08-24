@@ -1,5 +1,5 @@
 import Prims from './Prims';
-import Grid from '../ui/Grid';
+import { GRID_SIZE } from './stageMetrics';
 import Vector from '../../geom/Vector';
 import Sprite from './Sprite';
 import type Sound from '../../utils/Sound';
@@ -148,8 +148,8 @@ export default class Thread {
                 if (dy < 0) {
                     dy = 0;
                 }
-                if (dy >= (360 - Grid.size)) {
-                    dy = (360 - Grid.size);
+                if (dy >= (360 - GRID_SIZE)) {
+                    dy = (360 - GRID_SIZE);
                 }
                 s.setPos(s.xcoor + this.vector.x, dy);
             }

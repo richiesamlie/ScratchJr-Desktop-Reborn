@@ -1,7 +1,6 @@
 import ScratchAudio from '../utils/ScratchAudio';
 import {gn, getUrlVars, isAndroid, isiOS} from '../utils/lib';
 import iOS from '../iPad/iOS';
-import UI from '../editor/ui/UI';
 import Localization from '../utils/Localization';
 import AppUsage from '../utils/AppUsage';
 
@@ -130,17 +129,6 @@ function indexLoadUsage() {
 
 }
 
-function setClassOfElementById(id: string, className: string) { // eslint-disable-line no-unused-vars
-	let element = gn(id)!;
-		
-	if (!element) {
-		return;
-	}
-	
-	element.className = className;
-	
-}
-
 function indexGohome () {
     iOS.setfile('homescroll.sjr', 0, function () {
         doNext();
@@ -195,11 +183,14 @@ function indexInfo () {
 function indexMoreApps () {
     ScratchAudio.sndFX('tap.wav');
 
-    UI.parentalGate(null, function () {
-        if (isiOS) {
-            window.location.href = 'https://itunes.apple.com/us/developer/pbs-kids/id324323339?mt=8';
-        } else {
-            window.location.href = 'http://to.pbs.org/ScJr_GPlay';
-        }
+    // Lazy: pulls the editor UI chunk only if the parental gate is needed.
+    import('../editor/ui/UI').then((m) => {
+        m.default.parentalGate(null, function () {
+            if (isiOS) {
+                window.location.href = 'https://itunes.apple.com/us/developer/pbs-kids/id324323339?mt=8';
+            } else {
+                window.location.href = 'http://to.pbs.org/ScJr_GPlay';
+            }
+        });
     });
 }

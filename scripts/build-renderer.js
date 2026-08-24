@@ -15,11 +15,15 @@ const isWatch = process.argv.includes('--watch');
 /** @type {import('esbuild').BuildOptions} */
 const options = {
     entryPoints: [path.resolve(__dirname, '..', 'src', 'app', 'renderer-entry.js')],
+    outdir: path.resolve(__dirname, '..', 'src', 'app', 'dist'),
+    // HTML pages load dist/app.bundle.js; page chunks + shared chunks land
+    // alongside it via code splitting (appEntry.js uses dynamic imports).
+    entryNames: 'app.bundle',
+    splitting: true,
     bundle: true,
-    outfile: path.resolve(__dirname, '..', 'src', 'app', 'dist', 'app.bundle.js'),
     format: 'esm',
     platform: 'browser',
-    target: ['chrome134'],  // Electron 42 uses Chromium 134
+    target: ['chrome134'],  // Electron 43 ships Chromium 134
     sourcemap: true,
     minify: false,  // keep readable for debugging
     logLevel: 'info',

@@ -3,6 +3,7 @@
 // (the project file format), the scroll-aware page-strip caret math, and a
 // runtime primitive execution.
 import './renderer-harness.js';
+import './engine-port-adapter.js';
 import { describe, it, expect, beforeEach } from 'vitest';
 import Project from '../../src/app/src/editor/ui/Project.js';
 import Scripts from '../../src/app/src/editor/ui/Scripts.js';
@@ -29,7 +30,7 @@ function resetDom () {
     const stage = document.createElement('div');
     stage.id = 'stage';
     document.body.appendChild(stage);
-    stage.owner = { currentZoom: 1 };
+    window.__modelRefs.setModelRef(stage, 'stage', { currentZoom: 1 });
     ScratchJr.stage = {
         pagesdiv,
         pages: [],
@@ -131,7 +132,7 @@ describe('Thumbs.getPagePos (scroll-aware page strip caret math)', () => {
             const thumb = document.createElement('div');
             thumb.id = 'pt' + i;
             Object.defineProperty(thumb, 'offsetTop', { value: i * 50, configurable: true });
-            thumb.owner = 'page' + i;
+            window.__modelRefs.setModelRef(thumb, 'pagethumb', 'page' + i);
             thumb.prev = prevThumb;
             if (prevThumb) {
                 prevThumb.next = thumb;
@@ -142,7 +143,7 @@ describe('Thumbs.getPagePos (scroll-aware page strip caret math)', () => {
             const pageDiv = document.createElement('div');
             pageDiv.id = 'page' + i;
             document.body.appendChild(pageDiv);
-            pageDiv.owner = { id: 'page' + i };
+            window.__modelRefs.setModelRef(pageDiv, 'page', { id: 'page' + i });
         }
     });
 
@@ -204,7 +205,7 @@ describe('page encode/decode round-trip (page bag format)', () => {
         expect(JSON.parse(page2.sprites)).toEqual(['cat']);
         const catDiv = Array.from(page2.div.children).find(c => c.id === 'cat');
         expect(catDiv).toBeTruthy();
-        expect(catDiv.owner.type).toBe('sprite');
+        expect(window.__modelRefs.getModelRefAs(catDiv, 'sprite').type).toBe('sprite');
     });
 });
 
@@ -331,7 +332,7 @@ describe('Undo page-order snapshot', () => {
         for (let i = 0; i < 3; i++) {
             const thumb = document.createElement('div');
             thumb.id = 'pt' + i;
-            thumb.owner = 'page' + i;
+            window.__modelRefs.setModelRef(thumb, 'pagethumb', 'page' + i);
             thumb.prev = prevThumb;
             if (prevThumb) {
                 prevThumb.next = thumb;
@@ -343,7 +344,7 @@ describe('Undo page-order snapshot', () => {
             const pageDiv = document.createElement('div');
             pageDiv.id = 'page' + i;
             document.body.appendChild(pageDiv);
-            pageDiv.owner = pageObj;
+            window.__modelRefs.setModelRef(pageDiv, 'page', pageObj);
         }
 
         const order = Undo.getPageOrder({ pages: ['page0', 'page1', 'page2'], currentPage: 'page1' });

@@ -10,6 +10,7 @@ import fs from 'fs';
 import { app, BrowserWindow, globalShortcut } from 'electron';
 import { DEBUG_LOAD_DEVTOOLS, debugLog } from './logging';
 import type { ScratchJRDataStore } from './data-store';
+import { isParentFolder } from '../lib/path-utils';
 
 let win: BrowserWindow | null = null;
 let dataStoreRef: ScratchJRDataStore | null = null;
@@ -109,7 +110,7 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
         }
 
         const relative = path.relative(appRoot, targetPath);
-        const allowed = (relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative)));
+        const allowed = (relative === '' || isParentFolder(appRoot, targetPath));
         if (!allowed) {
             event.preventDefault();
             debugLog('Blocked navigation (outside app root):', navigationUrl);

@@ -18,34 +18,30 @@ function evaluatePreprocessExpression (expression: string) {
     if (!trimmed) {
         return '';
     }
-    if (!/^[\w\s()+\-*/.,]+$/.test(trimmed)) {
-        return '${' + expression + '}';
+    // Eval-free evaluator for the exact grammar our shipped CSS uses:
+    //   css_vh(N) / css_vw(N), scaleMultiplier, -scaleMultiplier,
+    //   N * scaleMultiplier, Math.max(1, Math.ceil(5 * scaleMultiplier))
+    // Anything else keeps the literal ${...} — same fallback the old
+    // Function()-based version had for unknown expressions.
+    var vhvw = trimmed.match(/^css_v([hw])\(\s*(-?\d*\.?\d+)\s*\)$/);
+    if (vhvw) {
+        var n = parseFloat(vhvw[2]);
+        return vhvw[1] === 'h' ? css_vh(n) : css_vw(n);
     }
-    var allowedNames: Record<string, boolean> = {
-        css_vh: true,
-        css_vw: true,
-        scaleMultiplier: true,
-        Math: true,
-        max: true,
-        min: true,
-        ceil: true,
-        floor: true,
-        round: true,
-        abs: true
-    };
-    var identifiers = trimmed.match(/[A-Za-z_][A-Za-z0-9_]*/g) || [];
-    for (var i = 0; i < identifiers.length; i++) {
-        if (!allowedNames[identifiers[i]]) {
-            return '${' + expression + '}';
-        }
+    if (trimmed === 'scaleMultiplier') {
+        return String(scaleMultiplier);
     }
-
-    try {
-        var value = Function('css_vh', 'css_vw', 'scaleMultiplier', 'Math', '\'use strict\'; return (' + trimmed + ');')(css_vh, css_vw, scaleMultiplier, Math);
-        return (value === undefined || value === null) ? '' : String(value);
-    } catch (e) {
-        return '${' + expression + '}';
+    if (trimmed === '-scaleMultiplier') {
+        return String(-scaleMultiplier);
     }
+    var scaled = trimmed.match(/^(-?\d*\.?\d+) \* scaleMultiplier$/);
+    if (scaled) {
+        return String(parseFloat(scaled[1]) * scaleMultiplier);
+    }
+    if (/^Math\.max\(1,\s*Math\.ceil\(5 \* scaleMultiplier\)\)$/.test(trimmed)) {
+        return String(Math.max(1, Math.ceil(5 * scaleMultiplier)));
+    }
+    return '${' + expression + '}';
 }
 
 /**

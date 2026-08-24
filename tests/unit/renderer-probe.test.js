@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // Probe: what does the editor module graph need at import time under jsdom?
 import './renderer-harness.js';
+import './engine-port-adapter.js';
 import { describe, it, expect } from 'vitest';
 
 describe('import probe', () => {

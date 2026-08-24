@@ -962,6 +962,15 @@ class CameraPickerDialog {
 
 
 bridge.onKeyboardShortcut(function(action) {
+  // The ESM bundle exposes ScratchJr/Undo/Home on window (globals.d.ts).
+  // Undo.prevStep/nextStep normally receive real MouseEvents; shortcuts pass a
+  // minimal stand-in since there is nothing to preventDefault here.
+  var syntheticEvt = {
+    preventDefault: function () {},
+    stopPropagation: function () {},
+    timeStamp: performance.now(),
+    touches: undefined
+  };
   switch (action) {
     case 'save':
       if (typeof ScratchJr !== 'undefined' && ScratchJr.saveProject) { // eslint-disable-line no-undef
@@ -969,13 +978,13 @@ bridge.onKeyboardShortcut(function(action) {
       }
       break;
     case 'undo':
-      if (typeof Undo !== 'undefined' && Undo.undo) { // eslint-disable-line no-undef
-        Undo.undo(); // eslint-disable-line no-undef
+      if (typeof Undo !== 'undefined' && Undo.prevStep) { // eslint-disable-line no-undef
+        Undo.prevStep(syntheticEvt); // eslint-disable-line no-undef
       }
       break;
     case 'redo':
-      if (typeof Undo !== 'undefined' && Undo.redo) { // eslint-disable-line no-undef
-        Undo.redo(); // eslint-disable-line no-undef
+      if (typeof Undo !== 'undefined' && Undo.nextStep) { // eslint-disable-line no-undef
+        Undo.nextStep(syntheticEvt); // eslint-disable-line no-undef
       }
       break;
     case 'new':

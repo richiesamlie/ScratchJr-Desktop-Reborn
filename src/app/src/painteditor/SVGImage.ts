@@ -141,54 +141,6 @@ export default class SVGImage {
         PaintAction.currentshape = pathborder;
     }
 
-    ///////////////////////
-    //	Mask for camera
-    ///////////////////////
-
-    static draw (image: Element, clip: Element, ctx: CanvasRenderingContext2D, fcn?: () => void) {
-        var angle = Transform.getRotationAngle(image);
-        var center = SVGTools.getBoxCenter(image);
-        var newcnv = document.createElement('canvas');
-        setCanvasSize(newcnv, ctx.canvas.width, ctx.canvas.height);
-        var newctx = newcnv.getContext('2d')!;
-        var dataurl = image.getAttribute('xlink:href');
-        var img = document.createElement('img');
-        img.src = dataurl!;
-        if (!img.complete) {
-            img.onload = function () {
-                drame(img, newctx, angle, center);
-            };
-        } else {
-            drame(img, newctx, angle, center);
-        }
-
-        function drame (img: HTMLImageElement, c: CanvasRenderingContext2D, angle: number, center: Point) {
-            var x = Number(image.getAttribute('x'));
-            var y = Number(image.getAttribute('y'));
-            var width = Number(image.getAttribute('width'));
-            var height = Number(image.getAttribute('height'));
-            c.fillStyle = 'red';
-            c.fillRect(x, y, width, height);
-            c.save();
-            c.translate(center.x, center.y);
-            c.rotate(angle * DEGTOR);
-            c.translate(-center.x, -center.y);
-            c.drawImage(img, x, y, width, height);
-            c.restore();
-            c.save();
-            c.globalCompositeOperation = 'destination-in';
-            c.fillStyle = '#f30';
-            c.strokeStyle = 'rgba(0,0,0,0)';
-            SVG2Canvas.processXMLnode(clip, c);
-            c.restore();
-            ctx.drawImage(newcnv, 0, 0);
-            if (fcn) {
-                fcn();
-            }
-        }
-
-    }
-
     static getImage (mt: Element | null) {
         if (!mt) {
             return null;

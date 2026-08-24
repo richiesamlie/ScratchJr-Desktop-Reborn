@@ -1,5 +1,4 @@
-import ScratchJr from '../ScratchJr';
-import Project from '../ui/Project';
+import { enginePorts } from './ports';
 import Prims from './Prims';
 import Thread, { BlockLike } from './Thread';
 import Sprite from './Sprite';
@@ -25,15 +24,14 @@ export default class Runtime {
         this.intervalId = window.setInterval(function () {
             rt.tickTask();
         }, 32);
-        // Project.js static attached at module scope; typed once Project converts (Phase 6)
-        const projectWithSaving = Project as unknown as { saving: boolean };
-        projectWithSaving.saving = false;
+        // The UI save-in-progress flag clears when a run starts.
+        enginePorts().projectClearSaving();
         // Prims.time = Date.now();
         this.threadsRunning = [];
     }
 
     tickTask () {
-        ScratchJr.updateRunStopButtons();
+        enginePorts().updateRunStopButtons();
         if (this.threadsRunning.length < 1) {
             return;
         }

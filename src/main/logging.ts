@@ -14,6 +14,13 @@ const isDev: boolean = !app.isPackaged || !!process.env.DEBUG_SCRATCHJR;
 
 // --- Structured log file (initialized early so crash handlers can use it) ---
 const logPath = path.join(app.getPath('userData'), 'debug.log');
+// Cap growth: rotate to .old at boot when the previous run crossed 5 MB.
+const MAX_LOG_BYTES = 5 * 1024 * 1024;
+try {
+    if (fs.statSync(logPath).size > MAX_LOG_BYTES) {
+        fs.renameSync(logPath, logPath + '.old');
+    }
+} catch (_) { /* first run or already rotated */ }
 const logFile = fs.createWriteStream(logPath, { flags: 'a' });
 const logStdout = process.stdout;
 

@@ -20,10 +20,6 @@ let mediacounter = 0;
 let tabletInterface: TabletBridge | null = null;
 
 export default class iOS {
-    // Referenced by ScratchJr.stopServer but never defined anywhere in the
-    // codebase (pre-existing missing method).
-    static stopserver: (fcn?: unknown) => void;
-
     // Getters/setters for properties used in other classes
     static get path (): string {
         return path!;
@@ -74,7 +70,7 @@ export default class iOS {
     }
 
     // Database functions
-    static async stmt(json: unknown, fcn?: (result: unknown) => void) {
+    static async stmt(json: DbWriteIntent, fcn?: (result: unknown) => void) {
         try {
             var result = await tabletInterface!.database_stmt(JSON.stringify(json));
             if (typeof (fcn) !== 'undefined') {
@@ -87,7 +83,7 @@ export default class iOS {
         }
     }
 
-    static async query(json: unknown, fcn: (result: string) => void) {
+    static async query(json: DbSelectIntent, fcn: (result: string) => void) {
         var result = await tabletInterface!.database_query(JSON.stringify(json));
         if (typeof (fcn) !== 'undefined') {
             fcn(result as string);
@@ -95,11 +91,12 @@ export default class iOS {
     }
 
     static setfield (db: string, id: string, fieldname: string, val: string | number | boolean | null, fcn?: (result: unknown) => void) {
-        var json: SqlPayload = {};
-        var keylist = [fieldname + ' = ?', 'mtime = ?'];
-        json.values = [val, (new Date()).getTime().toString()];
-        json.stmt = 'update ' + db + ' set ' + keylist.toString() + ' where id = ' + id;
-        iOS.stmt(json, fcn);
+        var row: Record<string, DbValue> = {};
+        row[fieldname] = val;
+        row.mtime = (new Date()).getTime().toString();
+        // fieldname is a caller-supplied literal column name; the main-side
+        // intent validator rejects anything that is not an allowlisted column.
+        iOS.stmt({ op: 'update', table: db, row, id }, fcn);
     }
 
     // IO functions

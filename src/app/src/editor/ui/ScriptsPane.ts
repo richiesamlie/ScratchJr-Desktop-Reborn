@@ -4,6 +4,7 @@ import Project from './Project';
 import Thumbs from './Thumbs';
 import Palette from './Palette';
 import Undo from './Undo';
+import { getModelRefAs } from '../modelRegistry';
 import Events from '../../utils/Events';
 import Scroll from './Scroll';
 import Menu from '../blocks/Menu';
@@ -52,8 +53,8 @@ export default class ScriptsPane {
             // Sprite not found
             return;
         }
-        ScratchJr.stage.currentPage.setCurrentSprite(gn(sprname)!.owner as Sprite);
-        const scriptsOwner = currentsc.owner as Scripts;
+        ScratchJr.stage.currentPage.setCurrentSprite(getModelRefAs<Sprite>(gn(sprname) as HTMLElement, 'sprite')!);
+        const scriptsOwner = getModelRefAs<Scripts>(currentsc, 'scripts')!;
         scriptsOwner.activate();
         const scriptsParent = currentsc.parentNode as HTMLElement;
         scriptsParent.onmousedown = function (evt) {
@@ -65,7 +66,7 @@ export default class ScriptsPane {
     static runBlock (e: MouseEvent | TouchEvent, div: HTMLElement) {
         e.preventDefault();
         e.stopPropagation();
-        var b = (div.owner as Block).findFirst();
+        var b = getModelRefAs<Block>(div, 'block')!.findFirst();
         //	if (b.aStart) b = b.next;
         if (!b) {
             return;
@@ -87,8 +88,8 @@ export default class ScriptsPane {
         }
         ScriptsPane.cleanCarets();
         ScratchJr.unfocus(e);
-        var sc = ScratchJr.getActiveScript().owner as Scripts;
-        sc.dragList = sc.findGroup(Events.dragthumbnail.owner as Block);
+        var sc = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
+        sc.dragList = sc.findGroup(getModelRefAs<Block>(Events.dragthumbnail, 'block')!);
         sc.flowCaret = null;
         var sy = (Events.dragthumbnail.parentNode as HTMLElement).scrollTop;
         var sx = (Events.dragthumbnail.parentNode as HTMLElement).scrollLeft;
@@ -113,13 +114,13 @@ export default class ScriptsPane {
         Events.move3D(Events.dragcanvas, mx, my);
         Events.dragcanvas.style.zIndex = String(ScratchJr.dragginLayer);
         Events.dragDiv.appendChild(Events.dragcanvas);
-        var b = Events.dragcanvas.owner as Block;
+        var b = getModelRefAs<Block>(Events.dragcanvas, 'block')!;
         b.detachBlock();
         //	b.lift();
         if (Events.dragcanvas.isReporter) {
             return;
         }
-        (ScratchJr.getActiveScript().owner as Scripts).prepareCaret(b);
+        getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.prepareCaret(b);
         for (var i = 1; i < sc.dragList.length; i++) {
             b = sc.dragList[i];
             var pos = new WebKitCSSMatrix(window.getComputedStyle(b.div).webkitTransform);
@@ -145,7 +146,7 @@ export default class ScriptsPane {
     }
 
     static blockFeedback (dx: number, dy: number, e: MouseEvent) {
-        var script = ScratchJr.getActiveScript().owner as Scripts;
+        var script = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
         const paletteParent = gn('palette')!.parentNode as HTMLElement;
         var limit = paletteParent.offsetTop + paletteParent.offsetHeight;
         var ycor = dy + Events.dragcanvas.offsetHeight;
@@ -159,7 +160,7 @@ export default class ScriptsPane {
         switch (Palette.getLandingPlace(script.dragList[0].div, e)) {
         case 'library':
             thumb = Palette.getHittedThumb(script.dragList[0].div, gn('spritecc')!);
-            if (thumb && ((gn(thumb.owner as string)!.owner as Sprite).type == (ScratchJr.getSprite() as Sprite).type)) {
+            if (thumb && ((getModelRefAs<Sprite>(gn(getModelRefAs<string>(thumb, 'spritethumb')!) as HTMLElement, 'sprite')!).type == (ScratchJr.getSprite() as Sprite).type)) {
                 Thumbs.quickHighlight(thumb);
             } else {
                 thumb = undefined;
@@ -188,7 +189,7 @@ export default class ScriptsPane {
     static dropBlock (e: MouseEvent | TouchEvent, el: HTMLElement & { startx?: number; starty?: number }) {
         e.preventDefault();
         var sc = ScratchJr.getActiveScript();
-        var spr = (sc.owner as Scripts).spr.id;
+        var spr = getModelRefAs<Scripts>(sc, 'scripts')!.spr.id;
         var page = ScratchJr.stage.currentPage;
         switch (Palette.getLandingPlace(el, e)) {
         case 'scripts':
@@ -199,25 +200,25 @@ export default class ScriptsPane {
         case 'library':
             var thumb = Palette.getHittedThumb(el, gn('spritecc')!) as HTMLElement | null;
             ScriptsPane.blockDropped(ScratchJr.getActiveScript(), el.startx!, el.starty!);
-            if (thumb && ((gn(thumb.owner as string)!.owner as Sprite).type == (gn(page.currentSpriteName!)!.owner as Sprite).type)) {
+            if (thumb && ((getModelRefAs<Sprite>(gn(getModelRefAs<string>(thumb, 'spritethumb')!) as HTMLElement, 'sprite')!).type == (getModelRefAs<Sprite>(gn(page.currentSpriteName!) as HTMLElement, 'sprite')!).type)) {
                 ScratchJr.storyStart('ScriptsPane.dropBlock:library');
                 ScratchAudio.sndFX('copy.wav');
                 Thumbs.quickHighlight(thumb);
                 setTimeout(function () {
                     Thumbs.quickRestore(thumb!);
                 }, 300);
-                const scScripts = gn(String(thumb.owner) + '_scripts')!.owner as Scripts;
-                var strip = Project.encodeStrip(el.owner as Block);
+                const scScripts = getModelRefAs<Scripts>(gn(getModelRefAs<string>(thumb, 'spritethumb')! + '_scripts')!, 'scripts')!;
+                var strip = Project.encodeStrip(getModelRefAs<Block>(el, 'block')!);
                 var firstblock = strip[0];
                 var delta = scScripts.gettopblocks().length * 3;
                 firstblock[2] = (firstblock[2] as number) + delta;
                 firstblock[3] = (firstblock[3] as number) + delta;
                 scScripts.recreateStrip(strip);
-                spr = String(thumb.owner);
+                spr = getModelRefAs<string>(thumb, 'spritethumb')!;
             }
             break;
         default:
-            (ScratchJr.getActiveScript().owner as Scripts).deleteBlocks();
+            getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.deleteBlocks();
             scroll.adjustCanvas();
             scroll.refresh();
             scroll.fitToScreen();
@@ -228,15 +229,15 @@ export default class ScriptsPane {
             where: page.id,
             who: spr
         });
-        (ScratchJr.getActiveScript().owner as Scripts).dragList = [];
+        getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.dragList = [];
     }
 
     static blockDropped (sc: HTMLElement, dx: number, dy: number) {
         Events.dragcanvas.style.zIndex = '';
-        var script = ScratchJr.getActiveScript().owner as Scripts;
+        var script = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
         ScriptsPane.cleanCarets();
         script.addBlockToScripts(Events.dragcanvas, dx, dy);
-        script.layout(Events.dragcanvas.owner as Block);
+        script.layout(getModelRefAs<Block>(Events.dragcanvas, 'block')!);
         if (sc.id == ScratchJr.getActiveScript().id) {
             scroll.adjustCanvas();
             scroll.refresh();
@@ -245,7 +246,7 @@ export default class ScriptsPane {
     }
 
     static cleanCarets () {
-        (ScratchJr.getActiveScript().owner as Scripts).removeCaret();
+        getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.removeCaret();
         ScriptsPane.removeLibCaret();
     }
 
@@ -322,7 +323,7 @@ export default class ScriptsPane {
             if (!gn(list[j] + '_scripts')!) {
                 continue;
             }
-            var sc = gn(list[j] + '_scripts')!.owner as Scripts;
+            var sc = getModelRefAs<Scripts>(gn(list[j] + '_scripts')!, 'scripts')!;
             if (!sc) {
                 continue;
             }

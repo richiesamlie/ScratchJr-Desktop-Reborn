@@ -5,12 +5,6 @@ import iOS from './src/iPad/iOS';
 import IO from './src/iPad/IO';
 import MediaLib from './src/iPad/MediaLib';
 
-import {indexMain} from './src/entry/index';
-import {homeMain} from './src/entry/home';
-import {editorMain} from './src/entry/editor';
-import {gettingStartedMain} from './src/entry/gettingstarted';
-import {inappInterfaceGuide, inappAbout, inappBlocksGuide, inappPaintEditorGuide} from './src/entry/inapp';
-
 /** @param {string} settingsRoot @param {() => void} whenDone */
 function loadSettings (settingsRoot, whenDone) {
 	IO.requestFromServer(settingsRoot + 'settings.json', (result) => {
@@ -19,23 +13,54 @@ function loadSettings (settingsRoot, whenDone) {
 	});
 }
 
+// Per-page entry loaders. Dynamically imported so esbuild code-splitting puts
+// each page's code in its own chunk: the lobby never parses the editor engine,
+// and vice versa. The in-app help pages call loadPage('inapp*') at runtime
+// (see Lobby.loadLink), so those chunks are pulled on demand too.
+const pageEntries = {
+	index: () => import('./src/entry/index').then((m) => iOS.waitForInterface(m.indexMain)),
+	home: () => import('./src/entry/home').then((m) => iOS.waitForInterface(m.homeMain)),
+	editor: () => import('./src/entry/editor').then((m) => iOS.waitForInterface(m.editorMain)),
+	gettingStarted: () => import('./src/entry/gettingstarted').then((m) => iOS.waitForInterface(m.gettingStartedMain)),
+	inappAbout: () => import('./src/entry/inapp').then((m) => m.inappAbout()),
+	inappInterfaceGuide: () => import('./src/entry/inapp').then((m) => m.inappInterfaceGuide()),
+	inappPaintEditorGuide: () => import('./src/entry/inapp').then((m) => m.inappPaintEditorGuide()),
+	inappBlocksGuide: () => import('./src/entry/inapp').then((m) => m.inappBlocksGuide()),
+};
 
-// App-wide entry-point
-window.onload = () => loadPage(document.body.dataset.scratchjrPage || window.scratchJrPage || '').catch((err) => console.error('loadPage failed:', err)); // eslint-disable-line no-console
+/**
+ * Runtime bootstrap: page-dispatch hook plus the close handshake. Called once
+ * from renderer-entry.js; kept out of module scope so importing loadPage
+ * (e.g. from the lobby) has no side effects.
+ */
+export function bootApp () {
+	if (!window.scratchjr) {
+		throw new Error('ScratchJr: preload bridge missing');
+	}
+	const ipc = window.scratchjr;
+
+	window.onload = () => loadPage(document.body.dataset.scratchjrPage || window.scratchJrPage || '').catch((err) => console.error('loadPage failed:', err)); // eslint-disable-line no-console
+
+	// Close handshake lives here (not in the editor chunk) so quitting from any
+	// page acks immediately; the editor chunk saves first via window.ScratchJr.
+	ipc.onAppClose(function () {
+		if (window.ScratchJr && window.ScratchJr.saveProject) {
+			window.ScratchJr.saveProject(null, function () { ipc.sendAppClosedAcked(); });
+		} else {
+			ipc.sendAppClosedAcked();
+		}
+	});
+}
 
 
 
 /** @param {string} page */
 export async function loadPage(page) {
-	// Function to be called after settings, locale strings, and Media Lib
-	// are asynchronously loaded. This is overwritten per HTML page below.
-	let entryFunction = () => {};
-
 	// Root directory for includes. Needed in case we are in the inapp-help
 	// directory (and root becomes '../')
 	let root = './';
 
-	// Load CSS and set root/entryFunction for all pages
+	// Load CSS per page
 	switch (page) {
 	default:
 	case 'index':
@@ -46,7 +71,6 @@ export async function loadPage(page) {
 		await preprocessAndLoadCss('css', 'css/thumbs.css');
 		/* For parental gate. These CSS properties should be refactored */
 		await preprocessAndLoadCss('css', 'css/editor.css');
-		entryFunction = () => iOS.waitForInterface(indexMain);
 		break;
 	case 'home':
 		// Lobby pages
@@ -54,7 +78,6 @@ export async function loadPage(page) {
 		await preprocessAndLoadCss('css', 'css/base.css');
 		await preprocessAndLoadCss('css', 'css/lobby.css');
 		await preprocessAndLoadCss('css', 'css/thumbs.css');
-		entryFunction = () => iOS.waitForInterface(homeMain);
 		break;
 	case 'editor':
 		// Editor pages
@@ -66,38 +89,28 @@ export async function loadPage(page) {
 		await preprocessAndLoadCss('css', 'css/editormodal.css');
 		await preprocessAndLoadCss('css', 'css/librarymodal.css');
 		await preprocessAndLoadCss('css', 'css/paintlook.css');
-		entryFunction = () => iOS.waitForInterface(editorMain);
 		break;
 	case 'gettingStarted':
 		// Getting started video page
 		await preprocessAndLoadCss('css', 'css/font.css');
 		await preprocessAndLoadCss('css', 'css/base.css');
 		await preprocessAndLoadCss('css', 'css/gs.css');
-		entryFunction = () => iOS.waitForInterface(gettingStartedMain);
 		break;
 	case 'inappAbout':
 		// About ScratchJr in-app help frame
 		await preprocessAndLoadCss('style', 'inapp/style/about.css');
-		entryFunction = () => inappAbout();
-		//root = '../';
 		break;
 	case 'inappInterfaceGuide':
 		// Interface guide in-app help frame
 		await preprocessAndLoadCss('style', 'inapp/style/interface.css');
-		entryFunction = () => inappInterfaceGuide();
-	//	  root = '../';
 		break;
 	case 'inappPaintEditorGuide':
 		// Paint editor guide in-app help frame
 		await preprocessAndLoadCss('style', 'inapp/style/paint.css');
-		entryFunction = () => inappPaintEditorGuide();
-	//  root = '../';
 		break;
 	case 'inappBlocksGuide':
 		// Blocks guide in-app help frame
 		await preprocessAndLoadCss('style', 'inapp/style/blocks.css');
-		entryFunction = () => inappBlocksGuide();
-    //	  root = '../';
 		break;
 	}
 
@@ -108,7 +121,9 @@ export async function loadPage(page) {
 		Localization.includeLocales(root, () => {
 			// Load Media Lib from JSON
 			MediaLib.loadMediaLib(root, () => {
-				entryFunction();
+				const entries = /** @type {Record<string, () => Promise<void>>} */ (pageEntries);
+				const entry = entries[page] || entries.index;
+				entry();
 			});
 		});
 		// Initialize currentUsage data

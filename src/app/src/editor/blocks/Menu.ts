@@ -1,4 +1,5 @@
 import BlockSpecs from './BlockSpecs';
+import { getModelRefAs } from '../modelRegistry';
 import type Block from './Block';
 import {scaleMultiplier, setProps, setCanvasSize, newHTML, isTouch,
     newDiv, getDocumentHeight, drawThumbnail, frame, globalx, globaly,
@@ -22,7 +23,7 @@ export default class Menu {
 
     static openDropDown (b: HTMLElement, fcn: (e: MouseEvent, mu: HTMLElement, b: HTMLElement, c: string) => void) {
         var size = 50;
-        const block = b.owner as Block;
+        const block = getModelRefAs<Block>(b, 'block')!;
         var color = block.blocktype == 'setspeed' ? 'orange' : 'yellow';
         var list = JSON.parse(block.arg.list);
         var num = block.arg.numperrow;

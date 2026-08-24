@@ -5,8 +5,6 @@
 import Lobby from './Lobby.js';
 import iOS from '../iPad/iOS';
 import IO from '../iPad/IO';
-import Project from '../editor/ui/Project';
-import Alert from '../editor/ui/Alert';
 import Localization from '../utils/Localization';
 import ScratchAudio from '../utils/ScratchAudio';
 import Vector from '../geom/Vector';
@@ -148,12 +146,15 @@ export default class Home {
             break;
         case 'delete':
             ScratchAudio.sndFX('cut.wav');
-            Project.thumbnailUnique(Home.actionTarget.thumb!, Home.actionTarget.id, function (isUnique) {
-                if (isUnique) {
-                    iOS.remove(Home.actionTarget!.thumb!, iOS.trace);
-                }
+            // Lazy: the editor chunk (Project/Alert) loads only when deleting.
+            import('../editor/ui/Project').then((m) => {
+                m.default.thumbnailUnique(Home.actionTarget!.thumb!, Home.actionTarget!.id, function (isUnique) {
+                    if (isUnique) {
+                        iOS.remove(Home.actionTarget!.thumb!, iOS.trace);
+                    }
+                });
+                iOS.setfield(iOS.database, Home.actionTarget!.id, 'deleted', 'YES', Home.removeProjThumb);
             });
-            iOS.setfield(iOS.database, Home.actionTarget.id, 'deleted', 'YES', Home.removeProjThumb);
             break;
         default:
             if (Home.actionTarget && (Home.actionTarget.childElementCount > 2)) {
@@ -181,7 +182,9 @@ export default class Home {
     static gotoEditor (md5: unknown) {
         if (!md5 || md5 === -1 || md5 === 0 || md5 === '0' || md5 === '-1') {
             console.error('gotoEditor: Failed to create project in database, invalid id:', md5);
-            Alert.open(frame, gn('flip')!, 'Error creating project', '#D62222');
+            import('../editor/ui/Alert').then((m) => {
+                m.default.open(frame, gn('flip')!, 'Error creating project', '#D62222');
+            });
             return;
         }
         iOS.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
@@ -244,11 +247,16 @@ export default class Home {
         function gotScrollsState (str: string) {
             var num = Number(atob(str));
             scrollvalue = (num.toString() == 'NaN') ? 0 : num;
-            var json: SqlPayload = {};
-            json.cond = 'deleted = ? AND version = ? AND gallery IS NULL';
-            json.items = ['name', 'thumbnail', 'id', 'isgift'];
-            json.values = ['NO', version || window.Settings!.scratchJrVersion];
-            json.order = 'ctime desc';
+            var json: DbSelectIntent = {
+                op: 'select', table: iOS.database,
+                items: ['name', 'thumbnail', 'id', 'isgift'],
+                where: [
+                    { col: 'deleted', op: '=', value: 'NO' },
+                    { col: 'version', op: '=', value: version || window.Settings!.scratchJrVersion },
+                    { col: 'gallery', op: 'IS NULL' },
+                ],
+                order: { col: 'ctime', dir: 'desc' },
+            };
             IO.query(iOS.database, json, Home.displayProjects);
         }
     }
@@ -338,3 +346,6 @@ class Events {
         };
     }
 }
+
+// Expose for electronClient.js keyboard shortcuts (ESM does not leak globals).
+window.Home = Home;

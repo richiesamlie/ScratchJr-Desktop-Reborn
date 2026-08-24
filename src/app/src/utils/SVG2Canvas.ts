@@ -1,6 +1,5 @@
 import Vector, {type Point} from '../geom/Vector';
-import {setCanvasSize, rgb2hsb, colorToRGBA} from './lib';
-import SVGImage from '../painteditor/SVGImage';
+import {setCanvasSize, rgb2hsb, colorToRGBA, DEGTOR} from './lib';
 import type Sprite from '../editor/engine/Sprite';
 
 let endp!: Point;
@@ -254,6 +253,66 @@ export default class SVG2Canvas {
         }
     }
 
+    /**
+     * Draws an embedded <image> element masked by its border path.
+     * Moved here from painteditor/SVGImage so the rasterizer no longer pulls
+     * the whole paint editor into every page's bundle.
+     */
+    static drawImageElem (image: Element, clip: Element, ctx: DrawContext) {
+        // First rotate(...) transform on the element, in degrees (see Transform.getRotationAngle)
+        var angle = 0;
+        var tl = (image as SVGGraphicsElement).transform;
+        if (tl) {
+            var items = tl.baseVal;
+            for (var i = 0; i < items.numberOfItems; ++i) {
+                if (items.getItem(i).type == 4) {
+                    angle = items.getItem(i).angle;
+                    break;
+                }
+            }
+        }
+        // For <image>, the box is exactly x/y/width/height (see SVGTools.getBox)
+        var center = {
+            x: Number(image.getAttribute('x')) + Number(image.getAttribute('width')) / 2,
+            y: Number(image.getAttribute('y')) + Number(image.getAttribute('height')) / 2
+        };
+        var newcnv = document.createElement('canvas');
+        setCanvasSize(newcnv, ctx.canvas.width, ctx.canvas.height);
+        var newctx = newcnv.getContext('2d')!;
+        var dataurl = image.getAttribute('xlink:href');
+        var img = document.createElement('img');
+        img.src = dataurl!;
+        if (!img.complete) {
+            img.onload = function () {
+                drame(img, newctx, angle * DEGTOR, center);
+            };
+        } else {
+            drame(img, newctx, angle * DEGTOR, center);
+        }
+
+        function drame (img: HTMLImageElement, c: CanvasRenderingContext2D, angle: number, center: Point) {
+            var x = Number(image.getAttribute('x'));
+            var y = Number(image.getAttribute('y'));
+            var width = Number(image.getAttribute('width'));
+            var height = Number(image.getAttribute('height'));
+            c.fillStyle = 'red';
+            c.fillRect(x, y, width, height);
+            c.save();
+            c.translate(center.x, center.y);
+            c.rotate(angle);
+            c.translate(-center.x, -center.y);
+            c.drawImage(img, x, y, width, height);
+            c.restore();
+            c.save();
+            c.globalCompositeOperation = 'destination-in';
+            c.fillStyle = '#f30';
+            c.strokeStyle = 'rgba(0,0,0,0)';
+            SVG2Canvas.processXMLnode(clip, c);
+            c.restore();
+            ctx.drawImage(newcnv, 0, 0);
+        }
+    }
+
     ////////////////////////////////////////////////////////
     //  Drawing SVG path commands
     ////////////////////////////////////////////////////////
@@ -290,7 +349,7 @@ export default class SVG2Canvas {
                     }
                 }
             }
-            SVGImage.draw(elem, targetPathElement!, ctx);
+            SVG2Canvas.drawImageElem(elem, targetPathElement!, ctx);
             break;
         case 'clipPath':
             break;

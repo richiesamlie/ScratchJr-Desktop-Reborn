@@ -4,10 +4,12 @@
 
 import ScratchJr from '../ScratchJr';
 import Block from '../blocks/Block';
+import BlockArg from '../blocks/BlockArg';
 import BlockSpecs from '../blocks/BlockSpecs';
 import ScriptsPane from './ScriptsPane';
 import Events from '../../utils/Events';
 import ScratchAudio from '../../utils/ScratchAudio';
+import { getModelRefAs, setModelRef } from '../modelRegistry';
 import {gn, newHTML, setCanvasSize, setProps,
     localx, localy, scaleMultiplier, hit3DRect, isTouch} from '../../utils/lib';
 import type Sprite from '../engine/Sprite';
@@ -29,7 +31,7 @@ export default class Scripts {
         setCanvasSize(this.sc, dc.offsetWidth, dc.offsetHeight);
         this.sc.setAttribute('id', spr.id + '_scripts');
         this.sc.setAttribute('class', 'look');
-        this.sc.owner = this;
+        setModelRef(this.sc, 'scripts', this);
         this.sc.top = 0;
         this.sc.left = 0;
     }
@@ -58,7 +60,7 @@ export default class Scripts {
             return;
         }
         var target = e.target as HTMLElement;
-        if ((target.nodeName == 'H3') && (target.owner == ScratchJr.activeFocus)) {
+        if ((target.nodeName == 'H3') && (getModelRefAs<BlockArg>(target, 'blockarg') === ScratchJr.activeFocus)) {
             return;
         } // editing the current field
         ScratchJr.clearSelection();
@@ -83,10 +85,11 @@ export default class Scripts {
         };
         for (var i = sc.childElementCount - 1; i > -1; i--) {
             var ths = sc.childNodes[i] as HTMLElement;
-            if (!ths.owner) {
+            var thsBlock = getModelRefAs<Block>(ths, 'block');
+            if (!thsBlock) {
                 continue;
             }
-            if ((ths.owner as Block).isCaret) {
+            if (thsBlock.isCaret) {
                 continue;
             }
             if (!hit3DRect(ths, pt)) {
@@ -116,17 +119,17 @@ export default class Scripts {
         Events.dragDiv.removeChild(b);
         this.sc.appendChild(b);
         //  b.owner.drop();
-        (b.owner as Block).moveBlock(dx, dy);
+        getModelRefAs<Block>(b, 'block')!.moveBlock(dx, dy);
         for (var i = 1; i < this.dragList.length; i++) {
             var piece = this.dragList[i].div;
             piece.parentNode!.removeChild(piece);
             this.sc.appendChild(piece);
         //   piece.owner.drop();
         }
-        this.layout(b.owner as Block);
+        this.layout(getModelRefAs<Block>(b, 'block')!);
         this.snapToPlace(this.dragList);
-        if ((b.owner as Block).cShape) {
-            this.sendToBack(b.owner as Block);
+        if (getModelRefAs<Block>(b, 'block')!.cShape) {
+            this.sendToBack(getModelRefAs<Block>(b, 'block')!);
         }
         this.dragList = [];
     }
@@ -422,14 +425,14 @@ export default class Scripts {
         var res: Block[] = [];
         var sc = this.sc;
         for (var i = 0; i < sc.childElementCount; i++) {
-            var b = sc.childNodes[i].owner;
+            var b = getModelRefAs<Block>(sc.childNodes[i] as HTMLElement, 'block');
             if (!b) {
                 continue;
             }
-            if ((b as Block).type != 'block') {
+            if (b.type != 'block') {
                 continue;
             }
-            if ((b as Block).isCaret) {
+            if (b.isCaret) {
                 continue;
             }
             res.push(b as Block);
@@ -476,11 +479,11 @@ export default class Scripts {
         var list: Block[] = [];
         var sc = this.sc;
         for (var i = 0; i < sc.childElementCount; i++){
-            var b = sc.childNodes[i].owner;
-            if (!b || (b as Block).type != 'block') {
+            var b = getModelRefAs<Block>(sc.childNodes[i] as HTMLElement, 'block');
+            if (!b || b.type != 'block') {
                 continue;
             }
-            list.push(b as Block);
+            list.push(b);
         }
 
         var res: Block[] = [];

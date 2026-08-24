@@ -1,5 +1,3 @@
-import Snap from 'snapsvg';
-
 import ScratchJr from '../editor/ScratchJr';
 import SVGTools from './SVGTools';
 import Paint from './Paint';
@@ -28,6 +26,29 @@ let maskCanvas = document.createElement('canvas');
 let maskData: Record<string, string> = {};
 let linemask = 16;
 let maskColor = 16;
+
+// Point-in-path hit testing without snapsvg: Path2D parses the same SVG path
+// data natively. Uses nonzero winding; Snap used ray-casting — differs only on
+// self-intersecting paths with opposite winding.
+let hitTestCtx: CanvasRenderingContext2D | null = null;
+
+function pointInPathData (d: string, x: number, y: number): boolean {
+    if (!hitTestCtx) {
+        hitTestCtx = document.createElement('canvas').getContext('2d');
+    }
+    if (!hitTestCtx) {
+        return false;
+    }
+    hitTestCtx.save();
+    hitTestCtx.setTransform(1, 0, 0, 1, 0, 0);
+    let inside = false;
+    try {
+        inside = hitTestCtx.isPointInPath(new Path2D(d), x, y);
+    } finally {
+        hitTestCtx.restore();
+    }
+    return inside;
+}
 
 export default class Ghost {
     static get maskCanvas () {
@@ -179,7 +200,6 @@ export default class Ghost {
     /**
      * Iterates all the path elements of the root and checks if 'pt'
      * is inside the path.
-     * This method uses the SnapSVG library (Apache 2 license) to perform the hit test.
      */
     static svgHitHelper (root: Element, pt: Point) {
         var matches: Element[] = [];
@@ -190,7 +210,7 @@ export default class Ghost {
         var paths = root.getElementsByTagName('path');
         for (var i = 0; i < paths.length; ++i) {
             var pathData = paths[i].getAttribute('d');
-            if (pathData && Snap.path.isPointInside(pathData, pt.x, pt.y)) {
+            if (pathData && pointInPathData(pathData, pt.x, pt.y)) {
                 matches.push(paths[i]);
             }
         }

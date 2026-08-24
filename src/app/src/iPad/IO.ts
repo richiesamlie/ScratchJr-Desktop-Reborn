@@ -39,8 +39,6 @@ interface ProjectRecord {
 
 // Sharing state
 let zipFile: JSZip | null = null;
-let zipAssetsExpected = 0;
-let zipAssetsActual = 0;
 let zipFileName = '';
 let shareName = '';
 
@@ -51,22 +49,6 @@ export default class IO {
 
     static get shareName () {
         return shareName;
-    }
-
-    /**
-     * Synchronous requests are normally not recommended, but in this case we're
-     * going to file URLs so this should be okay.
-     */
-    static requestSynchronous (url: string) {
-        var request = new XMLHttpRequest();
-        request.open('GET', url, false);
-        request.send(null);
-        if (request.status === 0 || request.status === 200) {
-            return request.responseText;
-        } else {
-            // Failed synchronous loading
-            return '';
-        }
     }
 
     static requestFromServer (url: string, whenDone: (result: string) => void) {
@@ -227,9 +209,7 @@ export default class IO {
     }
 
     static getObjectinDB (db: string, md5: string, fcn: (obj: string) => void) {
-        var json: SqlPayload = {};
-        json.stmt = 'select * from ' + db + ' where id = ?';
-        json.values = [md5];
+        var json: DbSelectIntent = { op: 'select', table: db, where: [{ col: 'id', op: '=', value: md5 }] };
         iOS.query(json, fcn);
     }
 
@@ -237,19 +217,13 @@ export default class IO {
         iOS.setmedia(btoa(data), type, fcn);
     }
 
-    static query (type: string, obj: SqlPayload, fcn: (result: string) => void) {
-        var json: SqlPayload = {};
-        json.stmt = 'select ' + obj.items!.toString() + ' from ' + type
-            + ' where ' + obj.cond! + (obj.order ? ' order by ' + obj.order : '');
-        json.values = obj.values;
+    static query (type: string, obj: Omit<DbSelectIntent, 'op' | 'table'>, fcn: (result: string) => void) {
+        var json: DbSelectIntent = { op: 'select', table: type, items: obj.items, where: obj.where, order: obj.order };
         iOS.query(json, fcn);
     }
 
     static deleteobject (type: string, id: string, fcn?: (result: unknown) => void) {
-        var json: SqlPayload = {};
-        json.stmt = 'delete from ' + type + ' where id = ?';
-        json.values = [id];
-        iOS.stmt(json, fcn);
+        iOS.stmt({ op: 'delete', table: type, id }, fcn);
     }
 
     ////////////////////////
@@ -265,38 +239,33 @@ export default class IO {
     */
 
     static createProject (obj: ProjectRecord, fcn?: (result: unknown) => void) {
-        var json: SqlPayload = {};
-        var keylist = ['name', 'version', 'deleted', 'mtime', 'isgift'];
-        var values = '?,?,?,?,?';
-        var mtime = (new Date()).getTime().toString();
-        var isGift = obj.isgift ? obj.isgift : '0';
-        var projVersion = obj.version || window.Settings?.scratchJrVersion || '1.0.0';
-        json.values = [obj.name || 'Project', projVersion, 'NO', mtime, isGift];
+        var row: Record<string, DbValue> = {
+            name: obj.name || 'Project',
+            version: obj.version || window.Settings?.scratchJrVersion || '1.0.0',
+            deleted: 'NO',
+            mtime: (new Date()).getTime().toString(),
+            isgift: obj.isgift ? obj.isgift : '0',
+        };
         if (obj.json) {
-            addValue('json', JSON.stringify(obj.json));
+            row.json = JSON.stringify(obj.json);
         }
         if (obj.thumbnail) {
-            addValue('thumbnail', JSON.stringify(obj.thumbnail));
+            row.thumbnail = JSON.stringify(obj.thumbnail);
         }
-        json.stmt = 'insert into ' + database + ' (' + keylist.toString() + ') values (' + values + ')';
-        iOS.stmt(json, fcn);
-        function addValue (key: string, str: string) {
-            keylist.push(key);
-            values += ',?';
-            json.values!.push(str);
-        }
+        iOS.stmt({ op: 'insert', table: database, row }, fcn);
     }
 
     static saveProject (obj: ProjectRecord, fcn?: (result: unknown) => void) {
         try {
-            var json: SqlPayload = {};
-            var keylist = ['version = ?', 'deleted = ?', 'name = ?', 'json = ?', 'thumbnail = ?', 'mtime = ?'];
-            var projVersion = obj.version || window.Settings?.scratchJrVersion || '1.0.0';
-            json.values = [projVersion, obj.deleted || 'NO', obj.name || 'Project', JSON.stringify(obj.json),
-                JSON.stringify(obj.thumbnail), (new Date()).getTime().toString()];
-            json.stmt = 'update ' + database + ' set ' + keylist.toString() + ' where id = ?';
-            json.values.push(obj.id!);
-            iOS.stmt(json, fcn);
+            var row: Record<string, DbValue> = {
+                version: obj.version || window.Settings?.scratchJrVersion || '1.0.0',
+                deleted: obj.deleted || 'NO',
+                name: obj.name || 'Project',
+                json: JSON.stringify(obj.json),
+                thumbnail: JSON.stringify(obj.thumbnail),
+                mtime: (new Date()).getTime().toString(),
+            };
+            iOS.stmt({ op: 'update', table: database, row, id: obj.id! }, fcn);
         } catch (e) {
             if (fcn) {
                 fcn(-1);
@@ -307,12 +276,7 @@ export default class IO {
     // Since saveProject is changing the modified time of the project,
     // let's just simply update the isgift flag in a separate function...
     static setProjectIsGift (obj: ProjectRecord, fcn?: (result: unknown) => void) {
-        var json: SqlPayload = {};
-        var keylist = ['isgift = ?'];
-        json.values = [obj.isgift!];
-        json.stmt = 'update ' + database + ' set ' + keylist.toString() + ' where id = ?';
-        json.values.push(obj.id!);
-        iOS.stmt(json, fcn);
+        iOS.stmt({ op: 'update', table: database, row: { isgift: obj.isgift! }, id: obj.id! }, fcn);
     }
 
     static getExtension (str: string) {
@@ -426,55 +390,49 @@ export default class IO {
             var projectDataForZip = JSON.stringify(jsonData);
             zipFile!.file('project/data.json', projectDataForZip, {});
 
-            zipAssetsExpected = 0;
-            zipAssetsActual = 0;
-
-            // Generic function for adding media to the zip file
-            var addMediaToZip = function (folder: string, md5: string) {
-                var addB64ToZip = function (b64data: string) {
-                    zipFile!.file('project/' + folder + '/' + md5, b64data, {
-                        base64: true,
-                        createFolders: true
-                    });
-                    zipAssetsActual++;
-                };
-                // Determine if the md5 is a MediaLib file or a user one, and download it appropriately
-                // See also, Sprite.getAsset
-                if (md5 in MediaLib.keys) {
-                    // Library character
-                    IO.requestFromServer(MediaLib.path + md5, function (raw) {
-                        addB64ToZip(btoa(raw));
-                    });
-                } else {
-                    // User file
-                    iOS.getmedia(md5, addB64ToZip);
-                }
+            // Generic function for adding media to the zip file; resolves when
+            // the asset is in the archive.
+            var addMediaToZip = function (folder: string, md5: string): Promise<void> {
+                return new Promise(function (resolve) {
+                    var addToZip = function (b64data: string) {
+                        zipFile!.file('project/' + folder + '/' + md5, b64data, {
+                            base64: true,
+                            createFolders: true
+                        });
+                        resolve();
+                    };
+                    // Determine if the md5 is a MediaLib file or a user one, and download it appropriately
+                    // See also, Sprite.getAsset
+                    if (md5 in MediaLib.keys) {
+                        // Library character
+                        IO.requestFromServer(MediaLib.path + md5, function (raw) {
+                            addToZip(btoa(raw));
+                        });
+                    } else {
+                        // User file
+                        iOS.getmedia(md5, addToZip);
+                    }
+                });
             };
+
+            var pendingAssets: Promise<void>[] = [];
 
             // Add each type of media
             for (var j = 0; j < projectMetadata.thumbnails.length; j++) {
-                addMediaToZip('thumbnails', projectMetadata.thumbnails[j]);
-                zipAssetsExpected++;
+                pendingAssets.push(addMediaToZip('thumbnails', projectMetadata.thumbnails[j]));
             }
 
             for (var k = 0; k < projectMetadata.characters.length; k++) {
-                addMediaToZip('characters', projectMetadata.characters[k]);
-                zipAssetsExpected++;
+                pendingAssets.push(addMediaToZip('characters', projectMetadata.characters[k]));
             }
 
             for (var l = 0; l < projectMetadata.backgrounds.length; l++) {
-                addMediaToZip('backgrounds', projectMetadata.backgrounds[l]);
-                zipAssetsExpected++;
+                pendingAssets.push(addMediaToZip('backgrounds', projectMetadata.backgrounds[l]));
             }
 
             for (var m = 0; m < projectMetadata.sounds.length; m++) {
-                addMediaToZip('sounds', projectMetadata.sounds[m]);
-                zipAssetsExpected++;
+                pendingAssets.push(addMediaToZip('sounds', projectMetadata.sounds[m]));
             }
-
-            // Now the UI should wait for actual media count to equal expected media count
-            // This could pause if getmedia takes a long time, for example,
-            // if we have many large sprites or large sounds
 
             // strip spaces and sanitize filename, including windows reserved names even though
             // kids are unlikely to name their project lpt1 etc.
@@ -494,16 +452,13 @@ export default class IO {
                 .replace(windowsTrailingRe, '_');
             shareName = projectName;
 
-            function checkStatus () {
-                if ((zipAssetsActual / zipAssetsExpected) == 1) {
-                    finished((zipFile as unknown as LegacyZipArchive).generate({
-                        'compression': 'STORE'
-                    }) as string);
-                } else {
-                    setTimeout(checkStatus, 200);
-                }
-            }
-            checkStatus();
+            // Finish as soon as every asset has landed — replaces the old
+            // 200ms expected/actual counter polling.
+            Promise.all(pendingAssets).then(function () {
+                finished((zipFile as unknown as LegacyZipArchive).generate({
+                    'compression': 'STORE'
+                }) as string);
+            });
         });
     }
 
@@ -533,10 +488,11 @@ export default class IO {
         var giftProjectNameParts = nameAndNumber(jsonData.name!);
 
         // Get project names already existing in the DB
-        var json: SqlPayload = {};
-        json.cond = 'deleted = ? AND gallery IS NULL';
-        json.items = ['name'];
-        json.values = ['NO'];
+        var json: DbSelectIntent = {
+            op: 'select', table: iOS.database,
+            items: ['name'],
+            where: [{ col: 'deleted', op: '=', value: 'NO' }, { col: 'gallery', op: 'IS NULL' }],
+        };
         IO.query(iOS.database, json, function (existingProjects: string) {
             var newNumber: number | null = null;
 
@@ -686,27 +642,32 @@ export default class IO {
                             // Sprite thumbnail is saved - save character to the DB
 
                             // First ensure that this character doesn't already exist in the exact form
-                            var json: SqlPayload = {};
-                            json.cond = ('ext = ? AND md5 = ? AND altmd5 = ? AND name = ? '
-                                + 'AND scale = ? AND width = ? AND height = ?');
-                            json.items = ['*'];
-                            json.values = ['svg', fullName, thumbnailMD5,
-                                charName, scale, width.toString(), height.toString()];
-                            json.order = 'ctime desc';
+                            var json: DbSelectIntent = {
+                                op: 'select', table: 'usershapes',
+                                items: ['*'],
+                                where: [
+                                    { col: 'ext', op: '=', value: 'svg' },
+                                    { col: 'md5', op: '=', value: fullName },
+                                    { col: 'altmd5', op: '=', value: thumbnailMD5 },
+                                    { col: 'name', op: '=', value: charName },
+                                    { col: 'scale', op: '=', value: scale },
+                                    { col: 'width', op: '=', value: width.toString() },
+                                    { col: 'height', op: '=', value: height.toString() },
+                                ],
+                                order: { col: 'ctime', dir: 'desc' },
+                            };
                             IO.query('usershapes', json, function (results) {
                                 results = JSON.parse(results);
                                 if (results.length == 0) {
                                     // This character doesn't already exist - insert it
-                                    var json: SqlPayload = {};
-                                    var keylist = ['scale', 'md5', 'altmd5',
-                                        'version', 'width', 'height', 'ext', 'name'];
-                                    var values = '?,?,?,?,?,?,?,?';
-                                    json.values = [scale, fullName, thumbnailMD5, 'iOSv01',
-                                        width.toString(), height.toString(), 'svg', charName];
-                                    json.stmt = 'insert into usershapes ('
-                                        + keylist.toString() + ') values (' + values + ')';
-
-                                    iOS.stmt(json, function () {
+                                    iOS.stmt({
+                                        op: 'insert', table: 'usershapes',
+                                        row: {
+                                            scale, md5: fullName, altmd5: thumbnailMD5,
+                                            version: 'iOSv01', width: width.toString(),
+                                            height: height.toString(), ext: 'svg', name: charName,
+                                        },
+                                    }, function () {
                                         saveActual++;
                                     });
                                 } else {
@@ -727,22 +688,27 @@ export default class IO {
                         iOS.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
 
                             // First ensure that this bg doesn't already exist in the exact form
-                            var json: SqlPayload = {};
-                            json.cond = 'ext = ? AND md5 = ? AND altmd5 = ?';
-                            json.items = ['*'];
-                            json.values = ['svg', fullName, thumbnailMD5];
-                            json.order = 'ctime desc';
+                            var json: DbSelectIntent = {
+                                op: 'select', table: 'userbkgs',
+                                items: ['*'],
+                                where: [
+                                    { col: 'ext', op: '=', value: 'svg' },
+                                    { col: 'md5', op: '=', value: fullName },
+                                    { col: 'altmd5', op: '=', value: thumbnailMD5 },
+                                ],
+                                order: { col: 'ctime', dir: 'desc' },
+                            };
                             IO.query('userbkgs', json, function (results) {
                                 results = JSON.parse(results);
                                 if (results.length == 0) {
                                     // Background is unique, insert into the library
-                                    var json: SqlPayload = {};
-                                    var keylist = ['md5', 'altmd5', 'version', 'width', 'height', 'ext'];
-                                    var values = '?,?,?,?,?,?';
-                                    json.values = [fullName, thumbnailMD5, 'iOSv01', '480', '360', 'svg'];
-                                    json.stmt = 'insert into userbkgs (' + keylist.toString()
-                                        + ') values (' + values + ')';
-                                    iOS.stmt(json, function () {
+                                    iOS.stmt({
+                                        op: 'insert', table: 'userbkgs',
+                                        row: {
+                                            md5: fullName, altmd5: thumbnailMD5, version: 'iOSv01',
+                                            width: '480', height: '360', ext: 'svg',
+                                        },
+                                    }, function () {
                                         saveActual++;
                                     });
                                 } else {
@@ -758,6 +724,7 @@ export default class IO {
         });
 
         // For updating the Lobby UI - if we're on the lobby page when receiving a project, refresh it
+        // ponytail: 100ms counter-poll; convert to Promise.all if this branch is ever refactored
         function refreshLobby () {
             if (gn('hometab')! !== null) { // Check if we're on the lobby page
                 if (saveActual == saveExpected) {

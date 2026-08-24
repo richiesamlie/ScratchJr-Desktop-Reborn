@@ -1,7 +1,8 @@
-import ScratchJr from '../ScratchJr';
+import { enginePorts } from '../engine/ports';
+import { setModelRef, getModelRefAs } from '../modelRegistry';
 import BlockSpecs from './BlockSpecs';
 import Menu from './Menu';
-import Undo from '../ui/Undo';
+
 import {setCanvasSize, setProps, writeText, scaleMultiplier,
     newHTML, newDiv, newCanvas, getStringSize, isTouch,
     newP, globalx, globaly, dprCenterTransform} from '../../utils/lib';
@@ -46,7 +47,7 @@ export default class BlockArg {
             break;
         case 't':
             this.argValue = block.spec[4];
-            if (Localization.isSampleLocalizedKey(String(this.argValue)) && ScratchJr.isSampleOrStarter()) {
+            if (Localization.isSampleLocalizedKey(String(this.argValue)) && enginePorts().isSampleOrStarter()) {
                 this.argValue = Localization.localize('SAMPLE_TEXT_' + this.argValue);
             }
             this.div = this.addTextArg();
@@ -187,7 +188,7 @@ export default class BlockArg {
         }
         var ti = newHTML('h3', undefined, div);
         this.input = ti as HTMLInputElement;
-        ti.owner = this;
+        setModelRef(ti, 'blockarg', this);
         ti.textContent = str;
         this.arg = div;
         // Expand the parent div to incorporate the size of the button,
@@ -203,7 +204,7 @@ export default class BlockArg {
         var div = newHTML('div', 'textfield', this.daddy.div);
         var ti = newHTML('h3', undefined, div);
         this.input = ti as HTMLInputElement;
-        ti.owner = this;
+        setModelRef(ti, 'blockarg', this);
         ti.textContent = str;
         this.arg = div;
         // Expand the parent div to incorporate the size of the button,
@@ -306,12 +307,12 @@ export default class BlockArg {
         if (isTouch && e.touches && (e.touches.length > 1)) {
             return;
         }
-        if (ScratchJr.onHold) {
+        if (enginePorts().isOnHold()) {
             return;
         }
         e.preventDefault();
         e.stopPropagation();
-        ScratchJr.unfocus(e);
+        enginePorts().unfocus(e);
         if (!this.daddy) {
             return;
         }
@@ -320,7 +321,7 @@ export default class BlockArg {
 
     closePictureMenu (e: MouseEvent, mu: HTMLElement, b: HTMLElement, c: string) {
         e.preventDefault();
-        const block = b.owner as Block;
+        const block = getModelRefAs<Block>(b, 'block')!;
         var value = block.arg.argValue;
         block.arg.argValue = c.substring(c.indexOf('_') + 1, c.length);
         var ctx = block.blockicon.getContext('2d')!;
@@ -343,21 +344,21 @@ export default class BlockArg {
             Menu.openMenu!.parentNode!.removeChild(Menu.openMenu!);
         }
         if (block.arg.argValue != value) {
-            var spr = (b.parentNode!.owner as Scripts).spr;
+            var spr = getModelRefAs<Scripts>(b.parentNode as HTMLElement, 'scripts')!.spr;
             var action = {
                 action: 'scripts',
-                where: (spr.div.parentNode!.owner as Page).id,
+                where: (getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!).id,
                 who: spr.id
             };
-            Undo.record(action);
-            ScratchJr.storyStart('BlockArg.prototype.closePictureMenu');
+            enginePorts().undoRecord(action);
+            enginePorts().storyStart('BlockArg.prototype.closePictureMenu');
         }
         Menu.openMenu = null;
     }
 
     menuCloseSpeeds (e: MouseEvent, mu: HTMLElement, b: HTMLElement, c: string) {
         e.preventDefault();
-        const block = b.owner as Block;
+        const block = getModelRefAs<Block>(b, 'block')!;
         var value = block.arg.argValue;
         block.arg.argValue = BlockSpecs.speeds.indexOf(c);
         var ctx = block.blockicon.getContext('2d')!;
@@ -384,14 +385,14 @@ export default class BlockArg {
             Menu.openMenu!.parentNode!.removeChild(Menu.openMenu!);
         }
         if (block.arg.argValue != value) {
-            var spr = (b.parentNode!.owner as Scripts).spr;
+            var spr = getModelRefAs<Scripts>(b.parentNode as HTMLElement, 'scripts')!.spr;
             var action = {
                 action: 'scripts',
-                where: (spr.div.parentNode!.owner as Page).id,
+                where: (getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!).id,
                 who: spr.id
             };
-            Undo.record(action);
-            ScratchJr.storyStart('BlockArg.prototype.menuCloseSpeeds');
+            enginePorts().undoRecord(action);
+            enginePorts().storyStart('BlockArg.prototype.menuCloseSpeeds');
         }
         Menu.openMenu = null;
     }
@@ -402,7 +403,7 @@ export default class BlockArg {
 
     pageIcon (num: number) {
         var dpr = window.devicePixelRatio;
-        var page = ScratchJr.stage.pages[num - 1];
+        var page = enginePorts().getStage().pages[num - 1];
         var icon = document.createElement('canvas');
         setCanvasSize(icon, 86 * dpr, 66 * dpr);
         if (!page) {
@@ -430,7 +431,7 @@ export default class BlockArg {
         }
         var scale = w / 480;
         for (var i = 0; i < page.div.childElementCount; i++) {
-            var spr = page.div.childNodes[i].owner;
+            var spr = getModelRefAs<Sprite>(page.div.childNodes[i] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -458,7 +459,7 @@ export default class BlockArg {
 
     updateIcon () {
         var num = this.argValue as number;
-        var page = ScratchJr.stage.pages[Number(num) - 1];
+        var page = enginePorts().getStage().pages[Number(num) - 1];
         page.num = num;
         this.div = this.pageIcon(num);
         var block = this.daddy;

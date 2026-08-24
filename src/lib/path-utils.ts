@@ -1,18 +1,17 @@
 /**
  * Path containment utilities for ScratchJr Desktop.
  *
- * Extracted from main.js to enable unit testing.
  * Prevents path traversal attacks in file operations.
  */
 
-const path = require('path');
+import path from 'path';
 
-function isParentFolder(parent: string, dir: string) {
+export function isParentFolder(parent: string, dir: string) {
     const relative = path.relative(parent, dir);
     return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-function validateFilePath(appRoot: string, requestedFile: string) {
+export function validateFilePath(appRoot: string, requestedFile: string) {
     if (!requestedFile || requestedFile === '') {
         throw new Error('File cannot be null or empty');
     }
@@ -25,5 +24,3 @@ function validateFilePath(appRoot: string, requestedFile: string) {
     }
     return resolvedFile;
 }
-
-module.exports = { isParentFolder, validateFilePath };

@@ -80,6 +80,12 @@ if (typeof HTMLImageElement !== 'undefined') {
     Object.defineProperty(HTMLImageElement.prototype, 'complete', { get: () => true, configurable: true });
 }
 
+// jsdom does not implement scrollIntoView; thumbnail/strip code calls it.
+if (typeof Element !== 'undefined' && !Element.prototype.__scratchjrScrollStub) {
+    Element.prototype.scrollIntoView = function scrollIntoView () {};
+    Object.defineProperty(Element.prototype, '__scratchjrScrollStub', { value: true });
+}
+
 // 2D canvas context: jsdom's getContext returns null without the canvas
 // npm package. Return a no-op context where measureText reports a fixed
 // width so layout math stays finite.

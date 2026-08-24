@@ -3,6 +3,7 @@
 //////////////////////////////
 
 import ScratchJr from '../ScratchJr';
+import { getModelRefAs } from '../modelRegistry';
 import Events from '../../utils/Events';
 import type Sprite from '../engine/Sprite';
 import Localization from '../../utils/Localization';
@@ -10,7 +11,8 @@ import {gn, scaleMultiplier, newDiv, setProps, newP, newCanvas} from '../../util
 
 let width = 482;
 let height = 362;
-let size = 24;
+import { GRID_SIZE } from '../engine/stageMetrics';
+let size = GRID_SIZE;
 let hidden = true;
 
 export default class Grid {
@@ -198,7 +200,7 @@ export default class Grid {
         if (!spr) {
             return;
         }
-        var obj = spr.owner as Sprite;
+        var obj = getModelRefAs<Sprite>(spr as HTMLElement, 'sprite')!;
         var c = gn('circlenum')!;
         if (!c) {
             return;

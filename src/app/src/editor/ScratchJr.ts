@@ -3,6 +3,7 @@ import type Sprite from './engine/Sprite';
 import type Scripts from './ui/Scripts';
 import type Stage from './engine/Stage';
 import type Page from './engine/Page';
+import { getModelRefAs, hasModelRef } from './modelRegistry';
 import type BlockArg from './blocks/BlockArg';
 import type Block from './blocks/Block';
 import ScratchAudio from '../utils/ScratchAudio';
@@ -25,8 +26,6 @@ import Runtime from './engine/Runtime';
 import Localization from '../utils/Localization';
 import {libInit, gn, scaleMultiplier, newHTML,
     isAndroid, getUrlVars, CSSTransition3D, frame} from '../utils/lib';
-
-const bridge = window.scratchjr!;
 
 // Named-form access
 const namedForms = document.forms as unknown as {
@@ -296,14 +295,14 @@ export default class ScratchJr {
         Menu.closeMyOpenMenu();
     }
 
-    static getSprite () {
+    static getSprite (): Sprite | undefined {
         if (!stage.currentPage.currentSpriteName) {
             return undefined;
         }
         if (!gn(stage.currentPage.currentSpriteName)!) {
             return undefined;
         }
-        return gn(stage.currentPage.currentSpriteName)!.owner;
+        return getModelRefAs<Sprite>(gn(stage.currentPage.currentSpriteName) as HTMLElement, 'sprite')!;
     }
 
     static gestureStart (e: Event) {
@@ -476,7 +475,7 @@ export default class ScratchJr {
     static startCurrentPageStrips (list: string[]) {
         var page = stage.currentPage.div;
         for (var i = 0; i < page.childElementCount; i++) {
-            var spr = page.childNodes[i].owner as Sprite;
+            var spr = getModelRefAs<Sprite>(page.childNodes[i] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -489,7 +488,7 @@ export default class ScratchJr {
 
     static startScriptsFor (spr: Sprite, list: string[]) {
         var sc = gn(spr.id + '_scripts')!;
-        const scriptsOwner = sc.owner as Scripts;
+        const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
         var topblocks = scriptsOwner.getBlocksType(list);
         for (var j = 0; j < topblocks.length; j++) {
             var b = topblocks[j];
@@ -572,7 +571,7 @@ export default class ScratchJr {
     }
 
     static getBlocks () {
-        return (ScratchJr.getActiveScript().owner as Scripts).getBlocks();
+        return getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.getBlocks();
     }
 
     /////////////////////////////////////////////////
@@ -618,8 +617,8 @@ export default class ScratchJr {
     static editArg (e: Event, ti: HTMLElement) {
         e.preventDefault();
         e.stopPropagation();
-        // arg divs carry their BlockArg in the owner expando (BlockArg.createButton)
-        const argOwner = ti ? (ti.owner as BlockArg) : undefined;
+        // arg divs carry their BlockArg via the model registry (BlockArg.createButton)
+        const argOwner = ti ? getModelRefAs<BlockArg>(ti, 'blockarg') : undefined;
         if (argOwner && argOwner.isText()) {
             ScratchJr.textClicked(e, ti);
         } else {
@@ -632,7 +631,7 @@ export default class ScratchJr {
     }
 
     static textClicked (e: Event, div: HTMLElement) {
-        var b = div.owner as ActiveFocusArg; // b is a BlockArg
+        var b = getModelRefAs<BlockArg>(div, 'blockarg') as ActiveFocusArg;
         activeFocus = b;
         var pt = b.getScreenPt();
         var sc = ScratchJr.getActiveScript();
@@ -675,10 +674,10 @@ export default class ScratchJr {
         focus.setValue(str);
         namedForms.editable.className = 'textform off';
         if (focus.daddy.div.parentNode) {
-            var spr = (focus.daddy.div.parentNode.owner as Scripts).spr;
+            var spr = getModelRefAs<Scripts>(focus.daddy.div.parentNode as HTMLElement, 'scripts')!.spr;
             var action = {
                 action: 'scripts',
-                where: (spr.div.parentNode!.owner as Page).id,
+                where: (getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!).id,
                 who: spr.id
             };
             if (focus.input.textContent != focus.oldvalue) {
@@ -780,14 +779,14 @@ export default class ScratchJr {
             activeFocus.div.className = 'numfield off';
             ScratchJr.numEditDone();
         }
-        var b = ti.owner as ActiveFocusArg; // b is a BlockArg
+        var b = getModelRefAs<BlockArg>(ti, 'blockarg') as ActiveFocusArg;
         activeFocus = b;
         activeFocus.delta = delta;
         b.oldvalue = ti.textContent;
         activeFocus.div.className = 'numfield on';
         keypad.className = 'picokeyboard on';
         editfirst = true;
-        var p = ti.parentNode!.parentNode!.owner as Block; // the block div owner expando
+        var p = getModelRefAs<Block>(ti.parentNode!.parentNode! as HTMLElement, 'block')!;
         if (Number(p.min) < 0) {
             ScratchJr.setMinusKey();
         } else {
@@ -930,12 +929,12 @@ export default class ScratchJr {
         var ba = activeFocus!;
         activeFocus!.setValue(parseFloat(String(val)));
         ba.argValue = val;
-        if (ba.daddy && ba.daddy.div.parentNode!.owner) {
-            var spr = (ba.daddy.div.parentNode!.owner as Scripts).spr;
+        if (ba.daddy && hasModelRef(ba.daddy.div.parentNode as HTMLElement)) {
+            var spr = getModelRefAs<Scripts>(ba.daddy.div.parentNode as HTMLElement, 'scripts')!.spr;
             if (spr && spr.div.parentNode) {
                 var action = {
                     action: 'scripts',
-                    where: (spr.div.parentNode!.owner as Page).id,
+                    where: (getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!).id,
                     who: spr.id
                 };
                 if (ba.argValue != ba.oldvalue) {
@@ -972,37 +971,8 @@ export default class ScratchJr {
         return str;
     }
 
-    /**
-     * The functions that are invokved when the Android back button is clicked.
-     * Methods are called from the rear and popped off after each invocation.
-     */
-
-
-    /**
-     * Handles updating the UI when the Android back button is clicked.  This
-     * method invokes the methods defined at {@link onBackButtonCallback}
-     * if not empty, otherwise it invokes {@link ScratchJr.saveAndFlip}.  The
-     * back button callback is set by UI components when they initialize a modal
-     * or popup, so it is the responsibility of popup components to correctly cleanup
-     * the onBackButtonCallback.
-     */
-    static goBack () {
-        if (onBackButtonCallback.length === 0) {
-            var e = document.createEvent('TouchEvent') as TouchEvent & { initTouchEvent: () => void };
-            e.initTouchEvent();
-            e.preventDefault();
-            e.stopPropagation();
-            ScratchJr.saveAndFlip(e);
-        } else {
-            var callbackReference = onBackButtonCallback[onBackButtonCallback.length - 1];
-            callbackReference();
-        }
-    }
 }
 
-bridge.onAppClose(function() {
-    // save the project, then tell electron that it can exit
-    ScratchJr.saveProject(null, function () {
-        bridge.sendAppClosedAcked();
-    });
-});
+// Expose for electronClient.js keyboard shortcuts and appEntry's close handler
+// (ESM does not leak globals).
+window.ScratchJr = ScratchJr;

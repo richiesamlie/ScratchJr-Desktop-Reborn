@@ -151,12 +151,13 @@ export default class Library {
         Library.addEmptyThumb(div, (type == 'costumes') ? (118 * scaleMultiplier) : (120 * scaleMultiplier), (type == 'costumes') ? (90 * scaleMultiplier) : (90 * scaleMultiplier));
         var key = (type == 'costumes') ? 'usershapes' : 'userbkgs';
         // Student' assets
-        var json: SqlPayload = {};
-        json.cond = 'ext = ? AND version = ?';
-        json.items = ((type == 'costumes')
-            ? ['md5', 'altmd5', 'name', 'scale', 'width', 'height'] : ['altmd5', 'md5', 'width', 'height']);
-        json.values = ['svg', ScratchJr.version];
-        json.order = 'ctime desc';
+        var json: DbSelectIntent = {
+            op: 'select', table: key,
+            items: ((type == 'costumes')
+                ? ['md5', 'altmd5', 'name', 'scale', 'width', 'height'] : ['altmd5', 'md5', 'width', 'height']),
+            where: [{ col: 'ext', op: '=', value: 'svg' }, { col: 'version', op: '=', value: ScratchJr.version }],
+            order: { col: 'ctime', dir: 'desc' },
+        };
         IO.query(key, json, Library.displayAssets);
     }
 
@@ -400,10 +401,11 @@ export default class Library {
         var b = shaking!;
         b.parentNode!.removeChild(b);
         var key = (type == 'costumes') ? 'usershapes' : 'userbkgs';
-        var json: SqlPayload = {};
-        json.cond = 'md5 = ?';
-        json.items = ['*'];
-        json.values = [b.id];
+        var json: DbSelectIntent = {
+            op: 'select', table: key,
+            items: ['*'],
+            where: [{ col: 'md5', op: '=', value: b.id }],
+        };
         IO.query(key, json, Library.removeAssetFromLib);
         clickThumb = null;
         selectedOne = null;
@@ -416,11 +418,12 @@ export default class Library {
     // callback: called with true if unique, false if duplicate exists
     static assetThumbnailUnique (md5: string, type: string, callback: (isUnique: boolean) => void) {
         var key = (type == 'costumes') ? 'usershapes' : 'userbkgs';
-        var json: SqlPayload = {};
-        json.cond = 'ext = ? AND altmd5 = ?';
-        json.items = ['md5', 'altmd5'];
-        json.values = ['svg', md5];
-        json.order = 'ctime desc';
+        var json: DbSelectIntent = {
+            op: 'select', table: key,
+            items: ['md5', 'altmd5'],
+            where: [{ col: 'ext', op: '=', value: 'svg' }, { col: 'altmd5', op: '=', value: md5 }],
+            order: { col: 'ctime', dir: 'desc' },
+        };
         IO.query(key, json, function (results: string) {
             results = JSON.parse(results);
             callback(results.length <= 1);

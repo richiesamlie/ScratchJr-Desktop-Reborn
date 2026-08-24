@@ -6,6 +6,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { DEBUG_DATABASE, DEBUG_CLEANASSETS, debugLog } from './logging';
 
 interface SqlJsDatabase {
@@ -40,6 +41,8 @@ export class DatabaseManager {
     databaseRestoreFilename: string | undefined;
     databaseBackupFilename: string;
     db: SqlJsDatabase | null = null;
+    /** When set, project media is stored as files here; PROJECTFILES rows are legacy fallback only */
+    mediaDirectory: string | null = null;
     private _SQL: SqlJsStatic;
     /** Set by the caller after construction if it needs to know about auto-recovery */
     onAutoRecovery: (() => void) | null = null;
@@ -232,6 +235,50 @@ export class DatabaseManager {
         }, this._saveDelay);
     }
 
+    /**
+     * One-time upgrade: move legacy in-DB base64 media rows to file-backed
+     * storage. Per row: write -> verify byte-equality -> drain the row.
+     * Aborts on first failure leaving everything consistent; retried on next
+     * launch. Yields between batches so large libraries don't block startup.
+     */
+    async migrateMediaToDisk(): Promise<void> {
+        if (!this.mediaDirectory || !this.db) return;
+
+        const rows = this.query({ stmt: 'select MD5, CONTENTS from PROJECTFILES', values: [] });
+        if (rows.length === 0) return;
+
+        debugLog(`media migration: moving ${rows.length} item(s) to ${this.mediaDirectory}`);
+        // Rotate .bak before touching anything
+        this.save();
+
+        let migrated = 0;
+        for (const row of rows) {
+            const name = String(row.MD5 ?? '');
+            const b64 = String(row.CONTENTS ?? '');
+            try {
+                const target = this.mediaFilePath(name);
+                if (!target) throw new Error('unsafe media name');
+                const buffer = Buffer.from(b64, 'base64');
+                const tmpPath = target + '.tmp';
+                fs.writeFileSync(tmpPath, buffer);
+                fs.renameSync(tmpPath, target);
+                const readBack = fs.readFileSync(target).toString('base64');
+                if (readBack !== b64) throw new Error('verification mismatch after copy');
+                this.deleteProjectFileRow(name);
+                migrated++;
+                if (migrated % 20 === 0) {
+                    await new Promise((resolve) => setImmediate(resolve));
+                }
+            } catch (e) {
+                debugLog(`media migration: stopped after ${migrated} item(s), will retry on next launch:`, e);
+                this.save();
+                return;
+            }
+        }
+        this.save();
+        debugLog(`media migration complete: ${migrated} item(s) now file-backed`);
+    }
+
     /** Flush any pending debounced save immediately (used on close/crash). */
     flushPendingSave(): void {
         if (this._saveTimer !== null) {
@@ -241,71 +288,133 @@ export class DatabaseManager {
         }
     }
 
+    /** True when a media name is still referenced by any project/shape/background row */
+    private mediaInUse(name: string): boolean {
+        const queryFindFileInProjects: QueryJson = {
+            stmt: 'select ID from PROJECTS where json like ?',
+            values: [`%${name}%`],
+        };
+        if (this.query(queryFindFileInProjects).length > 0) {
+            if (DEBUG_CLEANASSETS) debugLog('...project is currently using: ', name);
+            return true;
+        }
+
+        const queryFindFileInUsershapes: QueryJson = {
+            stmt: 'select MD5 from USERSHAPES where MD5 = ?',
+            values: [name],
+        };
+        if (this.query(queryFindFileInUsershapes).length > 0) {
+            if (DEBUG_CLEANASSETS) debugLog('...user shapes is using: ', name);
+            return true;
+        }
+
+        const queryFindFileInUserbkgs: QueryJson = {
+            stmt: 'select MD5 from USERBKGS where MD5 = ?',
+            values: [name],
+        };
+        if (this.query(queryFindFileInUserbkgs).length > 0) {
+            if (DEBUG_CLEANASSETS) debugLog('...user backgrounds is using: ', name);
+            return true;
+        }
+
+        return false;
+    }
+
     cleanProjectFiles(fileType: string): void {
         if (fileType === 'wav') {
             fileType = 'webm';
         }
 
+        // Candidates come from legacy PROJECTFILES rows AND file-backed media
+        const names = new Set<string>();
+
         const queryListAllFilesWithExtension: QueryJson = {
             stmt: `select MD5 FROM PROJECTFILES WHERE MD5 LIKE ?`,
             values: [`%.${fileType}`],
         };
+        for (const row of this.query(queryListAllFilesWithExtension)) {
+            if (row.MD5) names.add(row.MD5 as string);
+        }
 
-        const allProjectFilesWithExtension = this.query(queryListAllFilesWithExtension);
-
-        for (let i = 0; i < allProjectFilesWithExtension.length; i++) {
-            const currentFileToCheck = allProjectFilesWithExtension[i].MD5 as string;
-
-            if (!currentFileToCheck) continue;
-
-            if (DEBUG_CLEANASSETS) debugLog('checking if in use: ', currentFileToCheck);
-
-            const queryFindFileInProjects: QueryJson = {
-                stmt: 'select ID from PROJECTS where json like ?',
-                values: [`%${currentFileToCheck}%`],
-            };
-
-            const projectJSON = this.query(queryFindFileInProjects);
-            if (projectJSON.length > 0) {
-                if (DEBUG_CLEANASSETS) debugLog('...project is currently using: ', currentFileToCheck);
-                continue;
+        if (this.mediaDirectory) {
+            try {
+                for (const f of fs.readdirSync(this.mediaDirectory)) {
+                    if (f.endsWith(`.${fileType}`)) names.add(f);
+                }
+            } catch (e) {
+                debugLog('cleanProjectFiles: could not list media dir:', e);
             }
+        }
 
-            const queryFindFileInUsershapes: QueryJson = {
-                stmt: 'select MD5 from USERSHAPES where MD5 = ?',
-                values: [currentFileToCheck],
-            };
-
-            const shapeFiles = this.query(queryFindFileInUsershapes);
-            if (shapeFiles.length > 0) {
-                if (DEBUG_CLEANASSETS) debugLog('...user shapes is using: ', currentFileToCheck, shapeFiles);
-                continue;
+        for (const name of names) {
+            if (DEBUG_CLEANASSETS) debugLog('checking if in use: ', name);
+            if (!this.mediaInUse(name)) {
+                if (DEBUG_CLEANASSETS) debugLog('...not in use, removing: ', name);
+                this.removeProjectFile(name);
             }
-
-            const queryFindFileInUserbkgs: QueryJson = {
-                stmt: 'select MD5 from USERBKGS where MD5 = ?',
-                values: [currentFileToCheck],
-            };
-            const bkgFiles = this.query(queryFindFileInUserbkgs);
-            if (bkgFiles.length > 0) {
-                if (DEBUG_CLEANASSETS) debugLog('...user backgrounds is using: ', currentFileToCheck, bkgFiles);
-                continue;
-            }
-
-            if (DEBUG_CLEANASSETS) debugLog('...not in use, removing: ', currentFileToCheck);
-            this.removeProjectFile(currentFileToCheck);
         }
         this.savePending();
     }
 
+    /**
+     * Enable file-backed media storage. Must be called before the first
+     * media write; reads transparently fall back to legacy PROJECTFILES rows.
+     */
+    setMediaDirectory(dir: string): void {
+        fs.mkdirSync(dir, { recursive: true });
+        this.mediaDirectory = dir;
+    }
+
+    /**
+     * Resolve a media name to a path inside mediaDirectory, rejecting any
+     * name that tries to traverse out of it. Returns null when file-backed
+     * storage is off or the name is unsafe.
+     */
+    private mediaFilePath(name: string): string | null {
+        if (!this.mediaDirectory || !name) return null;
+        const base = path.basename(name);
+        if (base !== name || base === '.' || base === '..') return null;
+        return path.join(this.mediaDirectory, base);
+    }
+
     removeProjectFile(fileMD5: string): void {
+        // Remove the file copy (if file-backed) and any legacy DB row.
+        const filePath = this.mediaFilePath(fileMD5);
+        if (filePath && fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) {
+                debugLog('removeProjectFile: failed to unlink', fileMD5, e);
+            }
+        }
         const json: QueryJson = {};
         json.stmt = `delete from PROJECTFILES where MD5 = ?`;
         json.values = [fileMD5];
         this.stmt(json);
     }
 
-    readProjectFile(fileMD5: string): string | null {
+    /** Delete only the PROJECTFILES row (used by migration after verified copy). */
+    private deleteProjectFileRow(fileMD5: string): void {
+        const json: QueryJson = {};
+        json.stmt = `delete from PROJECTFILES where MD5 = ?`;
+        json.values = [fileMD5];
+        this.stmt(json);
+    }
+
+    /**
+     * Read a media asset as base64. File-backed copy first (async, does not
+     * block the main process); legacy in-DB base64 row otherwise.
+     */
+    async readProjectFile(fileMD5: string): Promise<string | null> {
+        const filePath = this.mediaFilePath(fileMD5);
+        if (filePath) {
+            try {
+                return (await fs.promises.readFile(filePath)).toString('base64');
+            } catch (e) {
+                const code = (e as NodeJS.ErrnoException)?.code;
+                if (code !== 'ENOENT') {
+                    debugLog('readProjectFile: failed to read file, falling back to DB:', fileMD5, e);
+                }
+            }
+        }
         const json: QueryJson = {};
         json.stmt = 'select CONTENTS from PROJECTFILES where MD5 = ?';
         json.values = [fileMD5];
@@ -319,6 +428,21 @@ export class DatabaseManager {
     }
 
     saveToProjectFiles(fileMD5: string, content: string): boolean {
+        // File-backed write first; falls back to a DB row on any failure so a
+        // broken media directory can never lose data.
+        const filePath = this.mediaFilePath(fileMD5);
+        if (filePath) {
+            try {
+                const buffer = Buffer.from(content, 'base64');
+                const tmpPath = filePath + '.tmp';
+                fs.writeFileSync(tmpPath, buffer);
+                fs.renameSync(tmpPath, filePath);
+                return true;
+            } catch (e) {
+                debugLog('saveToProjectFiles: file write failed, storing in DB instead:', fileMD5, e);
+            }
+        }
+
         const json: QueryJson = {};
         json.values = [fileMD5, content];
         json.stmt = 'insert or replace into PROJECTFILES (MD5, CONTENTS) values (?, ?)';

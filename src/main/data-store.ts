@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import { app, dialog, BrowserWindow } from 'electron';
 import { DEBUG_DATABASE, DEBUG_FILEIO, debugLog } from './logging';
 import { DatabaseManager } from './database';
+import { validateFilePath } from '../lib/path-utils';
 
 export class ScratchJRDataStore {
     /** Cache of key to base64-encoded media value */
@@ -36,15 +37,27 @@ export class ScratchJRDataStore {
                 this._dbInitPromise = DatabaseManager.initialize(scratchDBPath);
             }
             this.databaseManager = await this._dbInitPromise;
-            // Wire up auto-recovery notification to the renderer
-            this.databaseManager.onAutoRecovery = () => {
-                if (this.electronBrowserWindow && !this.electronBrowserWindow.isDestroyed()) {
-                    this.electronBrowserWindow.webContents.send('databaseRestored', {});
-                }
-            };
-            if (DEBUG_DATABASE) debugLog('DatabaseManager created');
+            this.finishInit(this.databaseManager);
         }
         return this.databaseManager;
+    }
+
+    /** Shared post-init wiring: media dir, migration, recovery notification */
+    private finishInit(db: DatabaseManager): void {
+        try {
+            db.setMediaDirectory(path.join(ScratchJRDataStore.getScratchJRFolder(), 'media'));
+            // Fire-and-forget one-time upgrade of legacy in-DB media rows.
+            void db.migrateMediaToDisk();
+        } catch (e) {
+            debugLog('media directory setup failed — staying on DB-backed media:', e);
+        }
+        // Wire up auto-recovery notification to the renderer
+        db.onAutoRecovery = () => {
+            if (this.electronBrowserWindow && !this.electronBrowserWindow.isDestroyed()) {
+                this.electronBrowserWindow.webContents.send('databaseRestored', {});
+            }
+        };
+        if (DEBUG_DATABASE) debugLog('DatabaseManager created');
     }
 
     hasRestoreDatabase(): boolean {
@@ -60,6 +73,7 @@ export class ScratchJRDataStore {
 
         if (fs.existsSync(scratchRestoreDB)) {
             this.databaseManager = await DatabaseManager.initialize(scratchDBPath, scratchRestoreDB);
+            this.finishInit(this.databaseManager);
 
             if (DEBUG_DATABASE) debugLog('DatabaseManager reloaded from restored copy');
 
@@ -85,11 +99,6 @@ export class ScratchJRDataStore {
         const testFolder = path.dirname(fullPath);
         const scratchJRPath = ScratchJRDataStore.getScratchJRFolder();
         return (scratchJRPath === testFolder);
-    }
-
-    isParentFolder(parent: string, dir: string): boolean {
-        const relative = path.relative(parent, dir);
-        return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
     }
 
     static getScratchJRFolder(): string {
@@ -125,7 +134,7 @@ export class ScratchJRDataStore {
         }
     }
 
-    readProjectFileAsBase64EncodedString(filename: string): string | null {
+    readProjectFileAsBase64EncodedString(filename: string): Promise<string | null> {
         const db = this.databaseManager!;
         return db.readProjectFile(filename);
     }
@@ -150,10 +159,8 @@ export class ScratchJRDataStore {
         // App root: build/main/ -> build/ -> <root>/ -> src/app/
         const appRoot = path.join(__dirname, '..', '..', 'src', 'app');
 
-        const filePath = path.join(appRoot, file);
-        if (!this.isParentFolder(appRoot, filePath)) {
-            throw new Error(`safe resolve path - file outside app folder.${filePath}`);
-        }
+        // Resolves and rejects traversal / root-relative escapes (see lib/path-utils)
+        const filePath = validateFilePath(appRoot, file);
 
         if (fs.existsSync(filePath)) {
             return filePath;

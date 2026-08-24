@@ -18,7 +18,8 @@
     "src/main.ts",
     "src/main/**/*.ts",
     "src/preload.ts",
-    "src/lib/sql-validator.ts"
+    "src/lib/db-intents.ts",
+    "src/lib/path-utils.ts"
   ],
   "exclude": [
     "src/app/**",

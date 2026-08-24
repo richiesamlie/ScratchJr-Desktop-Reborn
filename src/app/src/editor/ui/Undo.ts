@@ -3,6 +3,7 @@
 //////////////////////////////////
 
 import ScratchJr from '../ScratchJr';
+import { getModelRefAs } from '../modelRegistry';
 import Thumbs from './Thumbs';
 import Project from './Project';
 import type {ProjectData, PageData, SpriteData} from './Project';
@@ -49,7 +50,7 @@ export default class Undo {
     static record (obj: Record<string, unknown>) {
         //console.log ("record", index, JSON.stringify(obj));
         if (ScratchJr.getActiveScript()) {
-            const activeScripts = ScratchJr.getActiveScript().owner as Scripts;
+            const activeScripts = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
             activeScripts.removeCaret();
         }
         if ((index + 1) <= buffer.length) {
@@ -122,23 +123,23 @@ export default class Undo {
         case 'pageorder':
             ScratchJr.stage.pages = Undo.getPageOrder(data);
             Undo.recreateAllScripts(data);
-            ScratchJr.stage.setPage(gn(data.currentPage)!.owner as Page, false);
+            ScratchJr.stage.setPage(getModelRefAs<Page>(gn(data.currentPage) as HTMLElement, 'page')!, false);
             if (Palette.numcat == 5) {
                 Palette.selectCategory(5);
             }
             break;
         case 'changepage':
-            ScratchJr.stage.setPage(gn(data.currentPage)!.owner as Page, false);
+            ScratchJr.stage.setPage(getModelRefAs<Page>(gn(data.currentPage) as HTMLElement, 'page')!, false);
             break;
         case 'changebkg':
-            (gn(page)!.owner as Page).redoChangeBkg(data);
+            (getModelRefAs<Page>(gn(page) as HTMLElement, 'page')!).redoChangeBkg(data);
             break;
         case 'scripts':
             Undo.redoScripts(data, page, spr);
             if (spr && gn(spr)!) {
-                const pageOwner = gn(page)!.owner as Page;
-                pageOwner.setCurrentSprite(gn(spr)!.owner as Sprite); // sets the variables
-                Thumbs.selectThisSprite(gn(spr)!.owner as Sprite); // sets the UI
+                const pageOwner = getModelRefAs<Page>(gn(page) as HTMLElement, 'page')!;
+                pageOwner.setCurrentSprite(getModelRefAs<Sprite>(gn(spr) as HTMLElement, 'sprite')!); // sets the variables
+                Thumbs.selectThisSprite(getModelRefAs<Sprite>(gn(spr) as HTMLElement, 'sprite')!); // sets the UI
                 UI.resetSpriteLibrary();
             }
             break;
@@ -160,14 +161,14 @@ export default class Undo {
             break;
         case 'deletesound':
             var sounds = ((data[page] as PageData)[spr] as SpriteData).sounds.concat();
-            (gn(spr)!.owner as Sprite).sounds = sounds;
+            (getModelRefAs<Sprite>(gn(spr) as HTMLElement, 'sprite')!).sounds = sounds;
             Undo.redoScripts(data, page, spr);
             if (Palette.numcat == 3) {
                 Palette.selectCategory(3);
             }
             break;
         case 'recordsound':
-            var recspr = gn(((data[page] as PageData)[spr] as SpriteData).id)!.owner as Sprite;
+            var recspr = getModelRefAs<Sprite>(gn(((data[page] as PageData)[spr] as SpriteData).id) as HTMLElement, 'sprite')!;
             if (elem.sound && (recspr.sounds.indexOf(elem.sound) > -1)) {
                 var indx = recspr.sounds.indexOf(elem.sound);
                 if (indx > -1) {
@@ -198,17 +199,17 @@ export default class Undo {
     static copyPage (obj: ProjectData, page: string) {
         var sc = ScratchJr.getSprite() ? gn(ScratchJr.stage.currentPage.currentSpriteName + '_scripts')! : undefined;
         if (sc) {
-            (sc.owner as Scripts).deactivate();
+            getModelRefAs<Scripts>(sc, 'scripts')!.deactivate();
         }
         Project.recreatePage(page, obj[page] as PageData, nextStep2);
         function nextStep2 () {
             ScratchJr.stage.pages = Undo.getPageOrder(obj);
-            ScratchJr.stage.setPage(gn(obj.currentPage)!.owner as Page, false);
+            ScratchJr.stage.setPage(getModelRefAs<Page>(gn(obj.currentPage) as HTMLElement, 'page')!, false);
             Undo.recreateAllScripts(obj);
             var spritename = (obj[obj.currentPage] as PageData).lastSprite;
             if (spritename && gn(spritename)!) {
-                var spr = gn(spritename)!.owner as Sprite;
-                var page = spr.div.parentNode!.owner as Page;
+                var spr = getModelRefAs<Sprite>(gn(spritename) as HTMLElement, 'sprite')!;
+                var page = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
                 page.setCurrentSprite(spr);
                 Thumbs.selectThisSprite(spr);
                 if (Palette.numcat == 5) {
@@ -222,7 +223,7 @@ export default class Undo {
         var pages = data.pages;
         var res: Page[] = [];
         for (var i = 0; i < pages.length; i++) {
-            res.push(gn(pages[i])!.owner as Page);
+            res.push(getModelRefAs<Page>(gn(pages[i]) as HTMLElement, 'page')!);
         }
         return res;
     }
@@ -252,7 +253,7 @@ export default class Undo {
         if (!gn(str)!) {
             return;
         }
-        var page = gn(str)!.owner as Page;
+        var page = getModelRefAs<Page>(gn(str) as HTMLElement, 'page')!;
         if (!page) {
             return;
         }
@@ -262,7 +263,7 @@ export default class Undo {
         if (ScratchJr.stage.pages.length == 0) {
             Undo.copyPage(data, data.currentPage);
         } else {
-            ScratchJr.stage.setViewPage(gn(data.currentPage)!.owner as Page);
+            ScratchJr.stage.setViewPage(getModelRefAs<Page>(gn(data.currentPage) as HTMLElement, 'page')!);
             Thumbs.updateSprites();
             Thumbs.updatePages();
         }
@@ -273,7 +274,7 @@ export default class Undo {
         while (div.childElementCount > 0) {
             div.removeChild(div.childNodes[0]);
         }
-        var sc = div.owner as Scripts;
+        var sc = getModelRefAs<Scripts>(div, 'scripts')!;
         var list = ((data[page] as PageData)[spr] as SpriteData).scripts;
         for (var j = 0; j < list.length; j++) {
             sc.recreateStrip(list[j]);
@@ -296,7 +297,7 @@ export default class Undo {
                 Thumbs.updatePages();
             }
         };
-        Project.recreateObject(gn(page)!.owner as Page, spr, obj, fcn, ((data[page] as PageData).lastSprite == spr));
+        Project.recreateObject(getModelRefAs<Page>(gn(page) as HTMLElement, 'page')!, spr, obj, fcn, ((data[page] as PageData).lastSprite == spr));
     }
 
     static setSprite (page: string, data: ProjectData) {
@@ -304,13 +305,13 @@ export default class Undo {
         if (page != ScratchJr.stage.currentPage.id) {
             return;
         }
-        var pageobj = gn(page)!.owner as Page;
+        var pageobj = getModelRefAs<Page>(gn(page) as HTMLElement, 'page')!;
         var lastspritename = (data[page] as PageData).lastSprite;
         var lastsprite = lastspritename ? gn(lastspritename)! : undefined;
         if (!lastsprite) {
             pageobj.setCurrentSprite(undefined);
         } else {
-            var cs = lastsprite.owner as Sprite;
+            var cs = getModelRefAs<Sprite>(lastsprite as HTMLElement, 'sprite')!;
             pageobj.setCurrentSprite(cs);
             UI.needsScroll();
             Thumbs.updateSprites();
@@ -321,10 +322,10 @@ export default class Undo {
         if (!gn(spr)!) {
             return;
         }
-        var sprite = gn(spr)!.owner as Sprite;
+        var sprite = getModelRefAs<Sprite>(gn(spr) as HTMLElement, 'sprite')!;
         var th = sprite.thumbnail;
         ScratchJr.runtime.stopThreadSprite(sprite);
-        var pageobj = gn(page)!.owner as Page;
+        var pageobj = getModelRefAs<Page>(gn(page) as HTMLElement, 'page')!;
         var list = JSON.parse(pageobj.sprites);
         var n = list.indexOf(spr);
         list.splice(n, 1);
@@ -430,3 +431,6 @@ export default class Undo {
         kid.setAttribute('class', kclass + ' disable');
     }
 }
+
+// Expose for electronClient.js keyboard shortcuts (ESM does not leak globals).
+window.Undo = Undo;

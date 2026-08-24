@@ -1,6 +1,7 @@
 import BlockSpecs from './BlockSpecs';
 import BlockArg from './BlockArg';
-import ScratchJr from '../ScratchJr';
+import { setModelRef } from '../modelRegistry';
+import { enginePorts } from '../engine/ports';
 import type Sprite from '../engine/Sprite';
 import {setProps, setCanvasSize, scaleMultiplier, dprCenterTransform} from '../../utils/lib';
 
@@ -74,7 +75,7 @@ export default class Block {
             return;
         }
         this.createArgument();
-        this.div.owner = this;
+        setModelRef(this.div, 'block', this);
     }
 
     getWidth () {
@@ -242,7 +243,7 @@ export default class Block {
             return;
         } // deleted block
         const parentNode = this.div.parentNode as HTMLElement;
-        if ((parentNode.id != 'palette') && (this.div.parentNode != ScratchJr.getActiveScript())) {
+        if ((parentNode.id != 'palette') && (this.div.parentNode != enginePorts().getActiveScript())) {
             return;
         }
         this.shine.style.visibility = 'visible';

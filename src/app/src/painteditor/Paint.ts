@@ -1,4 +1,5 @@
 import ScratchJr from '../editor/ScratchJr';
+import { getModelRefAs } from '../editor/modelRegistry';
 import BlockSpecs from '../editor/blocks/BlockSpecs';
 import SVGTools from './SVGTools';
 import SVG2Canvas from '../utils/SVG2Canvas';
@@ -1146,7 +1147,7 @@ export default class Paint {
     static initSprite (ow?: number, oh?: number) {
         nativeJr = true;
         namedForms.spriteform.style.visibility = 'visible';
-        namedForms.spriteform.name.value = gn(currentName!)! ? (gn(currentName!)!.owner as Sprite).name : currentName!;
+        namedForms.spriteform.name.value = gn(currentName!)! ? (getModelRefAs<Sprite>(gn(currentName!) as HTMLElement, 'sprite')!).name : currentName!;
         if (ow) {
             workspaceWidth = ow;
         }
@@ -1232,10 +1233,14 @@ export default class Paint {
     static changeBackground (md5: string, fcn?: (result: unknown) => void) {
         saveMD5 = md5;
         var type = 'userbkgs';
-        var mobj: SqlPayload = {};
-        mobj.cond = 'md5 = ? AND version = ?';
-        mobj.items = ['*'];
-        mobj.values = [saveMD5, ScratchJr.version];
+        var mobj: DbSelectIntent = {
+            op: 'select', table: type,
+            items: ['*'],
+            where: [
+                { col: 'md5', op: '=', value: saveMD5 },
+                { col: 'version', op: '=', value: ScratchJr.version },
+            ],
+        };
         IO.query(type, mobj, function (str: string) {
             Paint.checkDuplicateBkg(str, fcn);
         });
@@ -1269,12 +1274,13 @@ export default class Paint {
         var pngBase64 = dataurl.split(',')[1];
         iOS.setmedia(pngBase64, 'png', setBkgRecord);
         function setBkgRecord (pngmd5: string) {
-            var json: SqlPayload = {};
-            var keylist = ['md5', 'altmd5', 'version', 'width', 'height', 'ext'];
-            var values = '?,?,?,?,?,?';
-            json.values = [saveMD5, pngmd5, ScratchJr.version, '480', '360', 'svg'];
-            json.stmt = 'insert into userbkgs (' + keylist.toString() + ') values (' + values + ')';
-            iOS.stmt(json, fcn);
+            iOS.stmt({
+                op: 'insert', table: 'userbkgs',
+                row: {
+                    md5: saveMD5, altmd5: pngmd5, version: ScratchJr.version,
+                    width: '480', height: '360', ext: 'svg',
+                },
+            }, fcn);
         }
     }
 
@@ -1309,10 +1315,14 @@ export default class Paint {
 
     static addOrModifySprite (str: string, fcn?: (result: unknown) => void) {
         saveMD5 = str;
-        var mobj: SqlPayload = {};
-        mobj.cond = 'md5 = ? AND version = ?';
-        mobj.items = ['*'];
-        mobj.values = [saveMD5, ScratchJr.version];
+        var mobj: DbSelectIntent = {
+            op: 'select', table: 'usershapes',
+            items: ['*'],
+            where: [
+                { col: 'md5', op: '=', value: saveMD5 },
+                { col: 'version', op: '=', value: ScratchJr.version },
+            ],
+        };
         IO.query('usershapes', mobj, function (str: string) {
             Paint.checkDuplicate(str, fcn);
         });
@@ -1356,12 +1366,13 @@ export default class Paint {
         var pngBase64 = dataurl.split(',')[1];
         iOS.setmedia(pngBase64, 'png', setCostumeRecord);
         function setCostumeRecord (pngmd5: string) {
-            var json: SqlPayload = {};
-            var keylist = ['scale', 'md5', 'altmd5', 'version', 'width', 'height', 'ext', 'name'];
-            var values = '?,?,?,?,?,?,?,?';
-            json.values = [scale, saveMD5, pngmd5, ScratchJr.version, w, h, 'svg', cname];
-            json.stmt = 'insert into usershapes (' + keylist.toString() + ') values (' + values + ')';
-            iOS.stmt(json, fcn);
+            iOS.stmt({
+                op: 'insert', table: 'usershapes',
+                row: {
+                    scale, md5: saveMD5, altmd5: pngmd5, version: ScratchJr.version,
+                    width: w, height: h, ext: 'svg', name: cname,
+                },
+            }, fcn);
         }
     }
 

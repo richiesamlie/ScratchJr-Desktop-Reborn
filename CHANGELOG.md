@@ -3,6 +3,50 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.7.0] � 2026-08-24
+
+**Modernization release.** The legacy tablet architecture was refactored to a
+typed, tested, sandboxed desktop architecture while preserving full project
+compatibility.
+
+### Security & storage
+- **Eval-free renderer:** CSS preprocessing no longer uses `Function()`; all
+  page CSPs dropped `'unsafe-eval'`.
+- **Structured database intents:** the renderer no longer sends SQL text over
+  IPC. Statements are composed main-side from allowlisted tables/columns with
+  bound parameters (the old keyword-denylist validator is gone).
+- **File-backed media:** project assets now live as files under
+  `Documents\ScratchJR\media` instead of base64 rows inside the database,
+  with a verified one-time startup migration, read-fallback for legacy
+  databases, and atomic writes. Database saves shrink accordingly.
+- Async (non-blocking) media reads in the main process.
+
+### Architecture
+- **Engine/UI separation:** all `editor/engine` + `editor/blocks` modules now
+  talk to UI singletons through a typed `EnginePorts` seam and to editor state
+  through a kind-tagged model registry (`modelRegistry.ts`) � the invisible
+  `div.owner` expando object graph is gone.
+- **Per-page bundles:** esbuild code splitting gives each screen only its own
+  code (lobby/start no longer parse the block engine or paint editor).
+- Keyboard shortcuts (Ctrl+S/Z/Shift+Z/N) are functional; close handshake
+  works from every page; appEntry is import-side-effect-free.
+
+### Reliability
+- Updater: ETag-based conditional GitHub checks (rate-limit friendly),
+  prerelease-safe version comparison, quota diagnostics, silent launch check.
+- Debug log rotation at boot (5 MB cap per generation).
+- Deduplicated crash handlers; hardened path containment unified in
+  `lib/path-utils`.
+
+### Quality
+- 127 unit tests including golden undo/save-reload flows, DB intent
+  validation, media migration, ETag caching, and setfield parameterization.
+- New CDP harnesses: 
+pm run smoke` (boot ? lobby ? editor ? help ? media
+  round-trip) and 
+pm run interact` (real pointer drags: sprite move,
+  palette?script block docking, undo replay).
+
 ## [v1.5.5] — 2026-08-14
 
 **Stage visibility fix.** The responsive layout now reserves enough vertical
@@ -38,7 +82,8 @@ still loading). Fixes:
 
 **Developer experience:**
 
-- `npm install` now builds the renderer bundle (fresh clones boot immediately)
+- 
+pm install` now builds the renderer bundle (fresh clones boot immediately)
 - Removed dead `UI.scrollContents`
 - New engine tests: Hop / Repeat / Say primitives, Undo page-order chain
 - CI boot-smokes the packaged Windows build before release (catches packaging
@@ -95,7 +140,8 @@ Full modernization (8 phases):
 
 - **Electron 22 → 42.8.1** (Chromium 134), Node 22/26 compatible
 - **IPC**: synchronous `sendSync` (renderer-freezing) → async `invoke`/`handle` (19 channels)
-- **Security**: `nodeIntegration: true` → `sandbox: true`, CSP on all pages, SQL validation, navigation/permission restrictions, window-open denied
+- **Security**: 
+odeIntegration: true` → `sandbox: true`, CSP on all pages, SQL validation, navigation/permission restrictions, window-open denied
 - **Main process**: 1,122-line monolith → 94-line orchestrator + 5 focused modules
 - **Renderer**: global vendor scripts → esbuild bundler, explicit ESM imports
 - **Tests**: 0 → 80 (vitest: IPC, SQL, paths, layout)

@@ -1,4 +1,5 @@
 import ScratchJr from '../ScratchJr';
+import { getModelRefAs } from '../modelRegistry';
 import Palette from './Palette';
 import Undo from './Undo';
 import iOS from '../../iPad/iOS';
@@ -300,7 +301,7 @@ export default class Record {
         function whenDone (snd: string) {
             if (snd != 'error') {
                 var spr = ScratchJr.getSprite() as Sprite;
-                var page = spr.div.parentNode!.owner as Page;
+                var page = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
                 spr.sounds.push(recordedSound!);
                 Undo.record({
                     action: 'recordsound',

@@ -1,4 +1,5 @@
 import ScratchJr from '../ScratchJr';
+import { getModelRefAs } from '../modelRegistry';
 import BlockSpecs from '../blocks/BlockSpecs';
 import Alert from './Alert';
 import Palette from './Palette';
@@ -15,7 +16,7 @@ import {frame, gn, newHTML, scaleMultiplier, getIdFor,
     isAndroid, setProps, setCanvasSize} from '../../utils/lib';
 
 let metadata: Record<string, unknown> | null = null;
-let mediaCount = -1;
+import { getMediaCount as _getMediaCount, setMediaCount as _setMediaCount, bumpMediaCount as _bumpMediaCount } from '../engine/mediaCounter';
 let saving = false;
 let interval: number | null = null;
 let pageid: string | null = null;
@@ -67,11 +68,11 @@ export default class Project {
     }
 
     static get mediaCount () {
-        return mediaCount;
+        return _getMediaCount();
     }
 
     static set mediaCount (newMediaCount) {
-        mediaCount = newMediaCount;
+        _setMediaCount(newMediaCount);
     }
 
     static set loadIcon (newLoadIcon) {
@@ -142,11 +143,11 @@ export default class Project {
         if (!metadata.version) {
             metadata.version = window.Settings?.scratchJrVersion || '1.0.0';
         }
-        mediaCount = -1;
+        _setMediaCount(-1);
         if (metadata!.json) {
             Project.loadData(metadata.json as Record<string, unknown>, doneProjectLoad);
         } else {
-            mediaCount = 0;
+            _setMediaCount(0);
             let page = new Page(getIdFor('page')); // eslint-disable-line no-unused-vars
             Palette.selectCategory(1);
             // On Android 4.2, this comes up blank the first time, so try again in 100ms.
@@ -227,7 +228,7 @@ export default class Project {
             return;
         }
         var h = projectbarsize - Math.round(projectbarsize * perc / 100);
-        ScratchJr.log('setProgress', perc, h, mediaCount, mediaCountBase);
+        ScratchJr.log('setProgress', perc, h, _getMediaCount(), mediaCountBase);
         gn('progressbar')!.style.height = h + 'px';
         if (h == 0) {
             gn('progressbar2')!.style.height = '0px';
@@ -251,8 +252,8 @@ export default class Project {
         if (interval != null) {
             window.clearInterval(interval);
         }
-        mediaCountBase = mediaCount;
-        if (mediaCount <= 0) {
+        mediaCountBase = _getMediaCount();
+        if (_getMediaCount() <= 0) {
             Project.getStarted(whenDone);
         } else {
             interval = window.setInterval(function () {
@@ -262,7 +263,7 @@ export default class Project {
     }
 
     static loadTask (whenDone: () => void) {
-        if (mediaCount <= 0) {
+        if (_getMediaCount() <= 0) {
             Project.getStarted(whenDone);
         } else {
             Project.setProgress(Project.getMediaLoadRatio(70));
@@ -270,10 +271,10 @@ export default class Project {
     }
 
     static getMediaLoadRatio (f: number) {
-        if (mediaCount > mediaCountBase) {
-            mediaCountBase = mediaCount;
+        if (_getMediaCount() > mediaCountBase) {
+            mediaCountBase = _getMediaCount();
         }
-        return 20 + f - (mediaCount / mediaCountBase) * f;
+        return 20 + f - (_getMediaCount() / mediaCountBase) * f;
     }
 
     static getStarted (whenDone: () => void) {
@@ -284,7 +285,7 @@ export default class Project {
         interval = null;
         ScratchJr.log('Project images retrieved from server', ScratchJr.getTime(), 'sec');
         Project.setLoadPage(pageid, whenDone);
-        ScratchJr.log('load done', ScratchJr.getTime(), 'sec', '-- media missing = ', mediaCount);
+        ScratchJr.log('load done', ScratchJr.getTime(), 'sec', '-- media missing = ', _getMediaCount());
         ScratchJr.stage.resetPages();
         ScratchJr.runtime.beginTimer();
     }
@@ -325,7 +326,7 @@ export default class Project {
     static loadData (data: Record<string, unknown>, fcn: () => void) {
         try {
             data = (typeof data === 'string') ? JSON.parse(data) : data;
-            mediaCount = 0;
+            _setMediaCount(0);
             Project.loadme(data, fcn);
             error = false;
         } catch (e) {
@@ -376,14 +377,14 @@ export default class Project {
 
     static recreate (data: Record<string, unknown>) {
         ScratchJr.log('Project data structures start loading', ScratchJr.getTime(), 'sec');
-        mediaCount = 0;
+        _setMediaCount(0);
         ScratchJr.stage.pages = [];
         var pages = data.pages as unknown[];
         pageid = data.currentPage as string;
         for (var i = 0; i < pages.length; i++) {
             Project.recreatePage(pages[i] as string, data[pages[i] as string] as Record<string, unknown>);
         }
-        mediaCountBase = mediaCount;
+        mediaCountBase = _getMediaCount();
     }
 
     static recreatePage (name: string, data: Record<string, unknown>, fcn?: () => void) {
@@ -392,7 +393,7 @@ export default class Project {
     }
 
     static substractCount () {
-        mediaCount--;
+        _bumpMediaCount(-1);
         if ((gn('backdrop')!.className != 'modal-backdrop fade in') || (mediaCountBase == 0)) {
             return;
         }
@@ -405,10 +406,10 @@ export default class Project {
         var spr;
         data.page = page;
         if (data.type == 'sprite') {
-            mediaCount++;
+            _bumpMediaCount(1);
             var fcn = function (spr: Sprite) {
                 spr.setPos(data.xcoor as number, data.ycoor as number);
-                mediaCount--;
+                _bumpMediaCount(-1);
                 if (gn('backdrop')!.className == 'modal-backdrop fade in') {
                     Project.setProgress(Project.getMediaLoadRatio(70));
                 }
@@ -422,7 +423,7 @@ export default class Project {
             }
             spr = new Sprite(data, fcn);
             // load scripts
-            var sc = gn(name + '_scripts')!.owner as Scripts;
+            var sc = getModelRefAs<Scripts>(gn(name + '_scripts')!, 'scripts')!;
             for (var j = 0; j < list.length; j++) {
                 sc.recreateStrip(list[j]);
             }
@@ -465,10 +466,15 @@ export default class Project {
     // Determine if thumbnailMD5 is unique to projectID
     // callback(true/false)
     static thumbnailUnique (thumbnailMD5: string, projectID: string, callback: (isUnique: boolean) => void) {
-        var json: SqlPayload = {};
-        json.cond = 'deleted = ? AND id != ? AND gallery IS NULL';
-        json.items = ['name', 'thumbnail', 'id'];
-        json.values = ['NO', projectID];
+        var json: DbSelectIntent = {
+            op: 'select', table: iOS.database,
+            items: ['name', 'thumbnail', 'id'],
+            where: [
+                { col: 'deleted', op: '=', value: 'NO' },
+                { col: 'id', op: '!=', value: projectID },
+                { col: 'gallery', op: 'IS NULL' },
+            ],
+        };
         IO.query(iOS.database, json, function (result: string) {
             var pdata = JSON.parse(result);
             var isUnique = true;
@@ -589,7 +595,7 @@ export default class Project {
     }
 
     static encodeSprite (name: string) {
-        return (gn(name)!.owner as Sprite).getData();
+        return (getModelRefAs<Sprite>(gn(name) as HTMLElement, 'sprite')!).getData();
     }
 
     static encodeStrip (b: Block | null) {
@@ -688,7 +694,7 @@ export default class Project {
                 Project.maskBorders(c.getContext('2d')!, w, h);
                 fcn(c.toDataURL('image/png'));
             } else {
-                var spr = page.div.childNodes[n].owner as Sprite;
+                var spr = getModelRefAs<Sprite>(page.div.childNodes[n] as HTMLElement, 'sprite')!;
                 if (!spr || !spr.shown) {
                     doNext(n + 1);
                 } else {

@@ -22,6 +22,7 @@ import Paint from '../../painteditor/Paint';
 import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
+import { getModelRefAs } from '../modelRegistry';
 import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, isTouch, newDiv,
     newTextInput, isAndroid, getDocumentWidth, getDocumentHeight, setProps, globalx} from '../../utils/lib';
 
@@ -739,7 +740,7 @@ export default class UI {
         e.stopPropagation();
         var t = e.target as HTMLElement;
         if (ScratchJr.isEditable() && ScratchJr.getSprite()
-            && (((t.className == 'sname') && (el.owner == (ScratchJr.getSprite() as Sprite).id))
+            && (((t.className == 'sname') && (getModelRefAs<string>(el, 'spritethumb') == (ScratchJr.getSprite() as Sprite).id))
             || (t.className == 'brush'))) {
             UI.putInPaintEditor(e);
             return;
@@ -870,7 +871,7 @@ export default class UI {
             gn(list[i])!.className = gn(list[i])!.className + ' presentationmode';
             frame.appendChild(gn(list[i])!);
         }
-        const stageOwner = gn('stage')!.owner as Stage;
+        const stageOwner = getModelRefAs<Stage>(gn('stage') as HTMLElement, 'stage')!;
         var scale = Math.min((w - (136 * scaleMultiplier)) / stageOwner.width, h / stageOwner.height);
         var dx = Math.floor((w - (stageOwner.width * scale)) / 2);
         var dy = Math.floor((h - (stageOwner.height * scale)) / 2);
@@ -892,7 +893,7 @@ export default class UI {
         div.appendChild(gn('go')!);
         gn('full')!.className = 'fullscreen';
         div.appendChild(gn('full')!);
-        const stageOwner = gn('stage')!.owner as Stage;
+        const stageOwner = getModelRefAs<Stage>(gn('stage') as HTMLElement, 'stage')!;
         stageOwner.currentZoom = 1;
         gn('stage')!.style.webkitTextSizeAdjust = '100%';
         (document.body.parentNode as HTMLElement).style.background = 'none';
@@ -1124,7 +1125,7 @@ export default class UI {
         var text = namedForms.activetextbox.textsprite;
         var c = (t.childNodes[0].childNodes[0] as HTMLElement).style.background;
         text!.setColor!(c);
-        const textOwnerPage = text!.div!.parentNode!.owner as Page;
+        const textOwnerPage = getModelRefAs<Page>(text!.div!.parentNode as HTMLElement, 'page')!;
         Undo.record({
             action: 'edittext',
             where: textOwnerPage.id,
@@ -1171,7 +1172,7 @@ export default class UI {
         UI.setMenuTextSize(t);
         var text = namedForms.activetextbox.textsprite;
         text!.setFontSize!(t.fs!);
-        const textOwnerPage = text!.div!.parentNode!.owner as Page;
+        const textOwnerPage = getModelRefAs<Page>(text!.div!.parentNode as HTMLElement, 'page')!;
         Undo.record({
             action: 'edittext',
             where: textOwnerPage.id,

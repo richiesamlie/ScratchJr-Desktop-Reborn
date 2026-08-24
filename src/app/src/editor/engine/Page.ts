@@ -1,14 +1,11 @@
-import ScratchJr from '../ScratchJr';
-import Project from '../ui/Project';
-import Thumbs from '../ui/Thumbs';
-import UI from '../ui/UI';
+import { enginePorts } from './ports';
+import { bumpMediaCount, getMediaCount } from './mediaCounter';
+import { getModelRefAs, setModelRef } from '../modelRegistry';
 import Sprite from './Sprite';
-import Palette from '../ui/Palette';
 import BlockSpecs from '../blocks/BlockSpecs';
 import iOS from '../../iPad/iOS';
 import IO from '../../iPad/IO';
 import MediaLib from '../../iPad/MediaLib';
-import Undo from '../ui/Undo';
 import Matrix from '../../geom/Matrix';
 import Vector from '../../geom/Vector';
 import {newHTML, newDiv, gn,
@@ -28,21 +25,21 @@ export default class Page {
     thumbnail!: HTMLElement;
 
     constructor (id: string, data?: Record<string, unknown>, fcn?: () => void) {
-        var container = ScratchJr.stage.pagesdiv;
+        var container = enginePorts().getStage().pagesdiv;
         this.div = newHTML('div', 'stagepage', container); // newDiv(container,0,0, 480, 360, {position: 'absolute'});
-        this.div.owner = this;
+        setModelRef(this.div, 'page', this);
         this.id = id;
         this.textstartat = 36;
         this.div.setAttribute('id', this.id);
-        ScratchJr.stage.currentPage = this;
-        this.num = data ? data.num as number : ScratchJr.stage.pages.length + 1;
+        enginePorts().getStage().currentPage = this;
+        this.num = data ? data.num as number : enginePorts().getStage().pages.length + 1;
         this.sprites = JSON.stringify([]);
         this.bkg = newDiv(this.div, 0, 0, 480, 360, {
             position: 'absolute',
-            background: ScratchJr.stagecolor
+            background: enginePorts().getStageColor()
         });
         this.bkg.type = 'background';
-        ScratchJr.stage.pages.push(this);
+        enginePorts().getStage().pages.push(this);
         if (!data) {
             this.emptyPage();
         } else {
@@ -56,14 +53,14 @@ export default class Page {
             this.textstartat = Number(data.textstartat);
         }
         if (data.md5 && (data.md5 != 'undefined')) {
-            Project.mediaCount++;
+            bumpMediaCount(1);
             this.setBackground(data.md5 as string, checkBkgDone);
         } else {
             this.clearBackground();
         }
         var list = data.sprites as string[];
         for (var j = 0; j < list.length; j++) {
-            Project.recreateObject(this, list[j], data[list[j]] as Record<string, unknown>, checkCount);
+            enginePorts().projectRecreateObject(this, list[j], data[list[j]] as Record<string, unknown>, checkCount);
         }
         var layers = data.layers as string[];
         for (var i = 0; i < layers.length; i++) {
@@ -76,17 +73,17 @@ export default class Page {
             if (!fcn) {
                 return;
             }
-            if (Project.mediaCount < 1) {
+            if (getMediaCount() < 1) {
                 fcn();
             }
         }
 
         function checkBkgDone () {
-            Project.substractCount();
+            enginePorts().projectSubstractCount();
             if (!fcn) {
                 return;
             }
-            if (Project.mediaCount < 1) {
+            if (getMediaCount() < 1) {
                 fcn();
             }
         }
@@ -98,18 +95,18 @@ export default class Page {
     }
 
     setCurrentSprite (spr?: Sprite) { // set the sprite and toggles UI if no sprite is available
-        if (ScratchJr.getSprite()) {
-            (ScratchJr.getSprite() as Sprite).unselect();
+        if (enginePorts().getSprite()) {
+            (enginePorts().getSprite() as Sprite).unselect();
         }
         if (spr) {
             this.currentSpriteName = spr.id;
             spr.div.style.visibility = 'visible';
-            Palette.show();
-            gn('scripts')!.style.display = ScratchJr.inFullscreen ? 'none' : 'block';
+            enginePorts().paletteShow();
+            gn('scripts')!.style.display = enginePorts().isInFullscreen() ? 'none' : 'block';
             spr.activate();
         } else {
             this.currentSpriteName = undefined;
-            Palette.hide();
+            enginePorts().paletteHide();
             gn('scripts')!.style.display = 'none';
         }
     }
@@ -194,7 +191,7 @@ export default class Page {
         if (!img.complete) {
             img.onload = function () {
                 if (gn('backdrop')!.className == 'modal-backdrop fade in') {
-                    Project.setProgress(Project.getMediaLoadRatio(70));
+                    enginePorts().projectSetProgress(enginePorts().projectGetMediaLoadRatio(70));
                 }
                 if (fcn) {
                     fcn();
@@ -202,7 +199,7 @@ export default class Page {
             };
         } else {
             if (gn('backdrop')!.className == 'modal-backdrop fade in') {
-                Project.setProgress(Project.getMediaLoadRatio(70));
+                enginePorts().projectSetProgress(enginePorts().projectGetMediaLoadRatio(70));
             }
             if (fcn) {
                 fcn();
@@ -229,7 +226,7 @@ export default class Page {
     /////////////////////////////////////
 
     updateThumb (page?: Page) {
-        var me = page ? page : ScratchJr.stage.currentPage;
+        var me = page ? page : enginePorts().getStage().currentPage;
         if (!me.thumbnail) {
             return;
         }
@@ -240,7 +237,7 @@ export default class Page {
     pageThumbnail (p: HTMLElement) {
         var tb = newHTML('div', 'pagethumb', p);
         tb.setAttribute('id', getIdFor('pagethumb'));
-        tb.owner = this.id;
+        setModelRef(tb, 'pagethumb', this.id);
         tb.type = 'pagethumb';
         var container = newHTML('div', 'pc-container', tb);
         var c = newHTML('canvas', 'pc', container) as HTMLCanvasElement;
@@ -250,7 +247,7 @@ export default class Page {
         pq.textContent = String(this.num);
         newHTML('div', 'deletethumb', tb);
         tb.onmousedown = function (evt: MouseEvent) {
-                Thumbs.pageMouseDown(evt);
+                enginePorts().thumbsPageMouseDown(evt);
             };
         this.thumbnail = tb;
         return tb;
@@ -286,7 +283,7 @@ export default class Page {
         }
         var scale = w / 480;
         for (var i = 0; i < this.div.childElementCount; i++) {
-            var spr = this.div.childNodes[i].owner as Sprite;
+            var spr = getModelRefAs<Sprite>(this.div.childNodes[i] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -368,12 +365,12 @@ export default class Page {
             data.md5 = md5;
         }
         data.num = this.num;
-        const owner = this.currentSpriteName ? gn(this.currentSpriteName)!.owner : null;
+        const owner = this.currentSpriteName ? getModelRefAs<unknown>(gn(this.currentSpriteName)!, 'sprite') : null;
         const isSpriteOwner = owner != null && typeof owner === 'object' && 'type' in owner && owner.type == 'sprite';
         this.currentSpriteName = !this.currentSpriteName ? undefined : isSpriteOwner ? this.currentSpriteName : this.getSprites()[0];
         data.lastSprite = this.currentSpriteName;
         for (var j = 0; j < spritelist.length; j++) {
-            data[spritelist[j]] = Project.encodeSprite(spritelist[j]);
+            data[spritelist[j]] = enginePorts().projectEncodeSprite(spritelist[j]);
         }
         var layers: string[] = [];
         for (var i = 1; i < p.childElementCount; i++) {
@@ -391,7 +388,7 @@ export default class Page {
         var spritelist = JSON.parse(this.sprites);
         var res: string[] = [];
         for (var i = 0; i < spritelist.length; i++) {
-            const owner = gn(spritelist[i])!.owner;
+            const owner = getModelRefAs<unknown>(gn(spritelist[i])!, 'sprite');
             if (owner && typeof owner === 'object' && 'type' in owner && owner.type == 'sprite') {
                 res.push(spritelist[i]);
             }
@@ -432,71 +429,71 @@ export default class Page {
     }
 
     createCat () {
-        var sprAttr = UI.mascotData(ScratchJr.stage.currentPage);
-        Project.mediaCount++;
+        var sprAttr = enginePorts().uiMascotData(enginePorts().getStage().currentPage);
+        bumpMediaCount(1);
         var me = this;
         return new Sprite(sprAttr, me.pageAdded);
     }
 
     update (spr?: Sprite) {
         if (spr) {
-            Undo.record({
+            enginePorts().undoRecord({
                 action: 'modify',
                 where: this.id,
                 who: spr.id
             });
         } else {
-            Undo.record({
+            enginePorts().undoRecord({
                 action: 'recreatepage',
                 where: this.id,
                 who: this.id
             });
         }
         if (spr) {
-            Thumbs.updateSprite(spr);
+            enginePorts().thumbsUpdateSprite(spr);
         } else {
-            Thumbs.updateSprites();
+            enginePorts().thumbsUpdateSprites();
         }
-        Thumbs.updatePages();
+        enginePorts().thumbsUpdatePages();
     }
 
     updateBkg () {
-        var me = ScratchJr.stage.currentPage;
-        ScratchJr.storyStart('Page.prototype.updateBkg');
-        Undo.record({
+        var me = enginePorts().getStage().currentPage;
+        enginePorts().storyStart('Page.prototype.updateBkg');
+        enginePorts().undoRecord({
             action: 'changebkg',
             where: me.id,
             who: me.id
         });
-        Thumbs.updatePages();
+        enginePorts().thumbsUpdatePages();
     }
 
     spriteAdded (spr: Sprite) {
-        var me = spr.div.parentNode!.owner as Page;
+        var me = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
         me.setCurrentSprite(spr);
         me.update(spr);
-        UI.spriteInView(spr);
-        ScratchJr.onHold = false;
+        enginePorts().uiSpriteInView(spr);
+        enginePorts().setOnHold(false);
     }
 
     pageAdded (spr: Sprite) {
-        var me = spr.div.parentNode!.owner as Page;
-        Project.mediaCount--;
+        var me = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
+        bumpMediaCount(-1);
         me.setCurrentSprite(spr);
-        ScratchJr.storyStart('Page.prototype.pageAdded');
-        if (ScratchJr.stage.pages.length > 1) {
-            Undo.record({
+        enginePorts().storyStart('Page.prototype.pageAdded');
+        if (enginePorts().getStage().pages.length > 1) {
+            enginePorts().undoRecord({
                 action: 'addpage',
                 where: me.id,
                 who: me.id
             });
         }
-        Thumbs.updateSprites();
-        Thumbs.updatePages();
+        enginePorts().thumbsUpdateSprites();
+        enginePorts().thumbsUpdatePages();
     }
 
     addSprite (scale: number, md5: string, cname: string) {
-        ScratchJr.onHold = true;
+        enginePorts().setOnHold(true);
         var sprAttr: Record<string, unknown> = {
             flip: false,
             angle: 0,
@@ -515,7 +512,7 @@ export default class Page {
             ycoor: 180,
             homeshown: true
         };
-        sprAttr.page = ScratchJr.stage.currentPage;
+        sprAttr.page = enginePorts().getStage().currentPage;
         sprAttr.id = getIdFor(cname);
         sprAttr.name = cname;
         sprAttr.md5 = md5;
@@ -527,9 +524,9 @@ export default class Page {
     }
 
     modifySprite (md5: string, cid: string, sid: string) {
-        var sprite = gn(unescape(sid))!.owner as Sprite;
+        var sprite = getModelRefAs<Sprite>(gn(unescape(sid)) as HTMLElement, 'sprite')!;
         if (!sprite) {
-            sprite = ScratchJr.getSprite() as Sprite;
+            sprite = enginePorts().getSprite() as Sprite;
         }
         sprite.md5 = md5;
         sprite.name = cid;
@@ -541,17 +538,17 @@ export default class Page {
     }
 
     modifySpriteName (cid: string, sid: string) {
-        var sprite = gn(unescape(sid))!.owner as Sprite;
+        var sprite = getModelRefAs<Sprite>(gn(unescape(sid)) as HTMLElement, 'sprite')!;
         if (!sprite) {
-            sprite = ScratchJr.getSprite() as Sprite;
+            sprite = enginePorts().getSprite() as Sprite;
         }
         sprite.name = cid;
         sprite.thumbnail.childNodes[1].textContent = cid;
-        Undo.record({
+        enginePorts().undoRecord({
             action: 'modify',
             where: this.id,
             who: sprite.id
         });
-        ScratchJr.storyStart('Page.prototype.modifySpriteName');
+        enginePorts().storyStart('Page.prototype.modifySpriteName');
     }
 }

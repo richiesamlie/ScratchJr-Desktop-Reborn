@@ -7,23 +7,19 @@
 //  d. Create Mask for pixel detection and cache it on the browser
 ////////////////////////////////////////////////////////////
 
-import ScratchJr from '../ScratchJr';
-import Project from '../ui/Project';
-import Thumbs from '../ui/Thumbs';
-import UI from '../ui/UI';
+import { enginePorts } from './ports';
+import { getModelRefAs, setModelRef } from '../modelRegistry';
 import BlockSpecs from '../blocks/BlockSpecs';
 import iOS from '../../iPad/iOS';
 import IO from '../../iPad/IO';
 import MediaLib from '../../iPad/MediaLib';
-import Undo from '../ui/Undo';
-import ScriptsPane from '../ui/ScriptsPane';
 import SVG2Canvas from '../../utils/SVG2Canvas';
 import SVGTools from '../../painteditor/SVGTools';
 import Rectangle from '../../geom/Rectangle';
 import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
-import Scripts from '../ui/Scripts';
+import type Scripts from '../ui/Scripts';
 import {newHTML, newDiv, newP, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
     DEGTOR, getIdFor, setProps, isTouch, isiOS,
@@ -92,7 +88,7 @@ export default class Sprite {
     }
 
     createSprite (page: Page, md5: string, id: string, attr: Record<string, unknown>, fcn?: (spr: Sprite) => void) {
-        ScratchJr.storyStart('Sprite.prototype.createSprite');
+        enginePorts().storyStart('Sprite.prototype.createSprite');
         this.div = document.createElement('div');
         setProps(this.div.style, {
             position: 'absolute',
@@ -100,15 +96,15 @@ export default class Sprite {
             top: '0px'
         });
         //document.createElement('img');
-        this.div.owner = this;
+        setModelRef(this.div, 'sprite', this);
         this.div.id = id;
         this.id = id;
         this.md5 = md5;
         this.borderOn = false;
         this.outline = document.createElement('canvas');
-        this.code = new Scripts(this);
+        this.code = enginePorts().scriptsCreate(this);
         setProps(this, attr);
-        if (Localization.isSampleLocalizedKey(this.name) && ScratchJr.isSampleOrStarter()) {
+        if (Localization.isSampleLocalizedKey(this.name) && enginePorts().isSampleOrStarter()) {
             this.name = Localization.localize('SAMPLE_TEXT_' + this.name);
         }
         for (var i = 0; i < this.sounds.length; i++) {
@@ -244,7 +240,7 @@ export default class Sprite {
         var tb = newHTML('div', 'spritethumb off', p);
         tb.setAttribute('id', getIdFor('spritethumb'));
         tb.type = 'spritethumb';
-        tb.owner = this.id;
+        setModelRef(tb, 'spritethumb', this.id);
         var c = newHTML('canvas', 'thumbcanvas', tb) as HTMLCanvasElement;
 
         // TODO: Merge these to get better thumbnail rendering on iOS
@@ -321,12 +317,12 @@ export default class Sprite {
         if (!this.shown) {
             return false;
         }
-        setCanvasSize(ScratchJr.workingCanvas, 480, 360);
-        setCanvasSize(ScratchJr.workingCanvas2, 480, 360);
+        setCanvasSize(enginePorts().getWorkingCanvas(), 480, 360);
+        setCanvasSize(enginePorts().getWorkingCanvas2(), 480, 360);
         var page = this.div.parentNode;
         var box = this.getBoxWithEffects(); // box with effects is a scale  and 1.5 times to count for rotations
         for (var i = 0; i < page!.childElementCount; i++) {
-            var other = page!.childNodes[i].owner as Sprite;
+            var other = getModelRefAs<Sprite>(page!.childNodes[i] as HTMLElement, 'sprite')!;
             if (!other) {
                 continue;
             }
@@ -339,7 +335,7 @@ export default class Sprite {
             if (other.id == this.id) {
                 continue;
             }
-            if (Events.dragthumbnail && (other == Events.dragthumbnail.owner)) {
+            if (Events.dragthumbnail && (other == getModelRefAs<Sprite>(Events.dragthumbnail, 'sprite'))) {
                 continue;
             }
             var box2 = other.getBoxWithEffects();
@@ -354,8 +350,8 @@ export default class Sprite {
     }
 
     verifyHit (other: Sprite) {
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
-        var ctx2 = ScratchJr.workingCanvas2.getContext('2d')!;
+        var ctx = enginePorts().getWorkingCanvas().getContext('2d')!;
+        var ctx2 = enginePorts().getWorkingCanvas2().getContext('2d')!;
         ctx.clearRect(0, 0, 480, 360);
         ctx2.clearRect(0, 0, 480, 360);
         var box = this.getBoxWithEffects();
@@ -384,7 +380,7 @@ export default class Sprite {
         ctx2.globalCompositeOperation = 'source-over';
         other.stamp(ctx2);
         ctx.globalCompositeOperation = 'source-in';
-        ctx.drawImage(ScratchJr.workingCanvas2, 0, 0);
+        ctx.drawImage(enginePorts().getWorkingCanvas2(), 0, 0);
         var pixels = ctx.getImageData(rect.x, rect.y, rect.width, rect.height).data;
         var max = Math.floor(pixels.length / 4);
         for (var i = 0; i < max; i++) {
@@ -635,7 +631,7 @@ Math.floor(h));
         var h = 36;
         var curve = 6;
         var dy = this.screenTop();
-        this.balloon = newDiv(ScratchJr.stage.currentPage.div, 0, 0, w, h, {
+        this.balloon = newDiv(enginePorts().getStage().currentPage.div, 0, 0, w, h, {
             position: 'absolute',
             zIndex: 2,
             visibility: 'hidden'
@@ -656,7 +652,7 @@ Math.floor(h));
             w = 200;
         }
         // stage div owner is the Stage instance
-        const stageOwner = gn('stage')!.owner as Stage;
+        const stageOwner = getModelRefAs<Stage>(gn('stage') as HTMLElement, 'stage')!;
         w += (10 * stageOwner.currentZoom);
         setProps(p.style, {
             position: 'absolute',
@@ -767,7 +763,7 @@ Math.floor(h));
             color: this.color,
             fontFamily: window.Settings!.textSpriteFont
         });
-        this.div.owner = this;
+        setModelRef(this.div, 'sprite', this);
         this.div.id = this.id;
         this.scale = 1;
         this.homescale = 1;
@@ -788,7 +784,7 @@ Math.floor(h));
                 page.textstartat = 42;
             }
         } else {
-            if (Localization.isSampleLocalizedKey(this.str) && ScratchJr.isSampleOrStarter()) {
+            if (Localization.isSampleLocalizedKey(this.str) && enginePorts().isSampleOrStarter()) {
                 this.str = Localization.localize('SAMPLE_TEXT_' + this.str);
             }
             this.recalculateText();
@@ -819,7 +815,7 @@ Math.floor(h));
             };
         }
         var ci = BlockSpecs.fontcolors.indexOf(rgbToHex(this.color));
-        UI.setMenuTextColor(gn('textcolormenu')!.childNodes[(ci < 0) ? 9 : ci] as HTMLElement);
+        enginePorts().uiSetMenuTextColor(gn('textcolormenu')!.childNodes[(ci < 0) ? 9 : ci] as HTMLElement);
         setProps(ti.style, styles);
 
         // TODO: Merge these for iOS
@@ -864,7 +860,7 @@ Math.floor(h));
     }
 
     unfocusText () {
-        ScratchJr.blur();
+        enginePorts().blur();
         document.body.scrollTop = 0;
         document.body.scrollLeft = 0;
         var form = namedForms.activetextbox;
@@ -885,25 +881,25 @@ Math.floor(h));
             form.textsprite = null;
             this.deactivateInput();
             if (changed) {
-                const parentPage = this.div.parentNode!.owner as Page;
-            Undo.record({
+                const parentPage = getModelRefAs<Page>(this.div.parentNode as HTMLElement, 'page')!;
+            enginePorts().undoRecord({
                     action: 'edittext',
                     where: parentPage.id,
                     who: this.id
                 });
-                ScratchJr.storyStart('Sprite.prototype.unfocusText');
+                enginePorts().storyStart('Sprite.prototype.unfocusText');
             }
         }
-        Thumbs.updatePages();
+        enginePorts().thumbsUpdatePages();
         if (isAndroid) {
-            ScratchJr.onBackButtonCallback.pop();
+            enginePorts().popBackButtonCallback();
             AndroidInterface.scratchjr_forceHideKeyboard();
         }
     }
 
     deleteText (record: boolean) {
         var id = this.id;
-        var page = ScratchJr.stage.currentPage;
+        var page = enginePorts().getStage().currentPage;
         page.textstartat = (this.ycoor + (this.fontsize * 1.35)) > 360 ? 36 : this.ycoor;
         var list = JSON.parse(page.sprites);
         var n = list.indexOf(this.id);
@@ -917,12 +913,12 @@ Math.floor(h));
         gn('textbox')!.style.visibility = 'hidden';
         form.textsprite = null;
         if (record) {
-            Undo.record({
+            enginePorts().undoRecord({
                 action: 'deletesprite',
                 who: id,
-                where: ScratchJr.stage.currentPage.id
+                where: enginePorts().getStage().currentPage.id
             });
-            ScratchJr.storyStart('Sprite.prototype.deleteText');
+            enginePorts().storyStart('Sprite.prototype.deleteText');
         }
     }
 
@@ -971,7 +967,7 @@ Math.floor(h));
                 ti.focus();
             }, 500);
 
-            ScratchJr.onBackButtonCallback.push(function () {
+            enginePorts().pushBackButtonCallback(function () {
                 me.unfocusText();
             });
         } else {
@@ -1019,8 +1015,8 @@ Math.floor(h));
     }
 
     activate () {
-        var list = fitInRect(this.w, this.h, ScriptsPane.watermark.offsetWidth, ScriptsPane.watermark.offsetHeight);
-        var div = ScriptsPane.watermark;
+        var list = fitInRect(this.w, this.h, enginePorts().scriptsPaneWatermark().offsetWidth, enginePorts().scriptsPaneWatermark().offsetHeight);
+        var div = enginePorts().scriptsPaneWatermark();
         while (div.childElementCount > 0) {
             div.removeChild(div.childNodes[0]);
         }
@@ -1124,15 +1120,15 @@ Math.floor(h));
         if (isiOS && this.type == 'sprite') {
             cb.style.zoom = Math.floor((1 / this.scale) * 100) + '%';
         }
-        if ((globalx(cb) - globalx(ScratchJr.stage.div)) < 0) {
-            cb.style.left = Math.abs(globalx(cb) - globalx(ScratchJr.stage.div)) * this.scale + 'px';
+        if ((globalx(cb) - globalx(enginePorts().getStage().div)) < 0) {
+            cb.style.left = Math.abs(globalx(cb) - globalx(enginePorts().getStage().div)) * this.scale + 'px';
         }
-        if ((globaly(cb) - globaly(ScratchJr.stage.div)) < 0) {
-            cb.style.top = Math.abs(globaly(cb) - globaly(ScratchJr.stage.div)) * this.scale + 'px';
+        if ((globaly(cb) - globaly(enginePorts().getStage().div)) < 0) {
+            cb.style.top = Math.abs(globaly(cb) - globaly(enginePorts().getStage().div)) * this.scale + 'px';
         }
         cb.id = 'deletesprite';
         this.div = shake;
-        this.div.owner = this;
+        setModelRef(this.div, 'sprite', this);
     }
 
     stopShaking () {
@@ -1141,7 +1137,7 @@ Math.floor(h));
         }
         var p = this.div;
         this.div = this.div.childNodes[0] as HTMLElement;
-        ScratchJr.stage.currentPage.div.appendChild(this.div);
+        enginePorts().getStage().currentPage.div.appendChild(this.div);
         if (p.id == 'shakediv') {
             p.parentNode!.removeChild(p);
         }
@@ -1186,11 +1182,11 @@ Math.floor(h));
         if (this.type != 'sprite') {
             return data;
         }
-        const scriptsOwner = gn(this.id + '_scripts')!.owner as Scripts;
-        var res: ReturnType<typeof Project.encodeStrip>[] = [];
+        const scriptsOwner = getModelRefAs<Scripts>(gn(this.id + '_scripts')!, 'scripts')!;
+        var res: unknown[][] = [];
         var topblocks = scriptsOwner.getEncodableBlocks();
         for (var i = 0; i < topblocks.length; i++) {
-            res.push(Project.encodeStrip(topblocks[i]));
+            res.push(enginePorts().projectEncodeStrip(topblocks[i]));
         }
         data.scripts = res;
         return data;

@@ -7,6 +7,7 @@ import Block from '../blocks/Block';
 import BlockSpecs from '../blocks/BlockSpecs';
 import ScriptsPane from './ScriptsPane';
 import Undo from './Undo';
+import { getModelRefAs, hasModelRef, findUpModelRefEl } from '../modelRegistry';
 import iOS from '../../iPad/iOS';
 import MediaLib from '../../iPad/MediaLib';
 import Events from '../../utils/Events';
@@ -103,20 +104,20 @@ export default class Palette {
     }
 
     static isRecorded (ths: HTMLElement) {
-        var val = (ths.owner as Block).getArgValue() as string;
-        const activeScripts = ScratchJr.getActiveScript().owner as Scripts;
+        var val = getModelRefAs<Block>(ths, 'block')!.getArgValue() as string;
+        const activeScripts = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
         var list = activeScripts.spr.sounds;
         return list.indexOf(val) > 0;
     }
 
     static removeSound (ths: HTMLElement) {
         ScratchAudio.sndFX('cut.wav');
-        var indx = (ths.owner as Block).getArgValue() as number;
+        var indx = getModelRefAs<Block>(ths, 'block')!.getArgValue() as number;
         var spr = ScratchJr.getSprite() as Sprite;
         if (!spr) {
             return;
         }
-        var page = spr.div.parentNode!.owner as Page;
+        var page = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
         var sounds = spr.sounds.concat();
         if (indx >= sounds.length) {
             return;
@@ -129,7 +130,7 @@ export default class Palette {
         while (div.childElementCount > 0) {
             div.removeChild(div.childNodes[0]);
         }
-        var sc = div.owner as Scripts;
+        var sc = getModelRefAs<Scripts>(div, 'scripts')!;
         var list = sprdata.scripts as EncodedStrip[];
         for (var j = 0; j < list.length; j++) {
             sc.recreateStrip(list[j]);
@@ -146,7 +147,7 @@ export default class Palette {
     }
 
     static showHelp (e: Event | null, b: HTMLElement) {
-        var block = b.owner as Block;
+        var block = getModelRefAs<Block>(b, 'block')!;
         var help = BlockSpecs.blockDesc(block, ScratchJr.getSprite()) as { [key: string]: string };
         var str = help[block.blocktype];
         if (!str) {
@@ -157,10 +158,10 @@ export default class Palette {
     }
 
     static startShaking (b: HTMLElement) {
-        if (!b.owner) {
+        if (!hasModelRef(b)) {
             return;
         }
-        if ((b.owner as Block).blocktype != 'playusersnd') {
+        if (getModelRefAs<Block>(b, 'block')!.blocktype != 'playusersnd') {
             Palette.showHelp(null, b); return;
         }
         ScratchJr.shaking = b;
@@ -179,7 +180,7 @@ export default class Palette {
     }
 
     static stopShaking (b: HTMLElement) {
-        if (!b.owner) {
+        if (!hasModelRef(b)) {
             return;
         }
         ScratchJr.shaking = undefined;
@@ -271,13 +272,13 @@ export default class Palette {
         if (!ScratchJr.runtime.inactive()) {
             ScratchJr.stopStrips();
         }
-        var sc = ScratchJr.getActiveScript().owner as Scripts;
+        var sc = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
         sc.flowCaret = null;
         var pt = Events.getTargetPoint(e);
         Events.dragmousex = pt.x;
         Events.dragmousey = pt.y;
         if (!Events.dragthumbnail.parentNode) { // palette has been removed programatically
-            Events.dragthumbnail = Palette.getBlockNamed((Events.dragthumbnail.owner as Block).blocktype) as HTMLElement;
+            Events.dragthumbnail = Palette.getBlockNamed(getModelRefAs<Block>(Events.dragthumbnail, 'block')!.blocktype) as HTMLElement;
             if (!Events.dragthumbnail) {
                 Events.cancelAll();
                 return;
@@ -285,19 +286,19 @@ export default class Palette {
         }
         var mx = Events.dragmousex - frame.offsetLeft - localx(Events.dragthumbnail, Events.dragmousex);
         var my = Events.dragmousey - frame.offsetTop - localy(Events.dragthumbnail, Events.dragmousey);
-        const dragOwner = Events.dragthumbnail.owner as Block;
+        const dragOwner = getModelRefAs<Block>(Events.dragthumbnail, 'block')!;
         Events.dragcanvas = dragOwner.duplicateBlock(mx, my, sc.spr).div;
         Events.dragcanvas.style.zIndex = String(ScratchJr.dragginLayer);
         Events.dragDiv.appendChild(Events.dragcanvas);
         // Events.dragcanvas.owner.lift();
-        sc.dragList = [Events.dragcanvas.owner as Block];
-        sc.prepareCaret(Events.dragcanvas.owner as Block);
+        sc.dragList = [getModelRefAs<Block>(Events.dragcanvas, 'block')!];
+        sc.prepareCaret(getModelRefAs<Block>(Events.dragcanvas, 'block')!);
     }
 
     static getBlockNamed (str: string) {
         var pal = gn('palette')!;
         for (var i = 0; i < pal.childElementCount; i++) {
-            const owner = pal.childNodes[i].owner as Block;
+            const owner = getModelRefAs<Block>(pal.childNodes[i] as HTMLElement, 'block')!;
             if (owner.blocktype == str) {
                 return pal.childNodes[i];
             }
@@ -503,7 +504,7 @@ export default class Palette {
     // move to scratch jr app
     static getLandingPlace (el: HTMLElement, e: MouseEvent | TouchEvent | null, scale?: number) {
         scale = typeof scale !== 'undefined' ? scale : 1;
-        var sc = ScratchJr.getActiveScript().owner as Scripts;
+        var sc = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
         var pt = e ? Events.getTargetPoint(e) : null;
         if (pt && !pt.x) {
             pt = null;
@@ -547,13 +548,7 @@ export default class Palette {
 
 
     static getBlockfromChild (div: HTMLElement | null) {
-        while (div != null) {
-            if (div.owner) {
-                return div;
-            }
-            div = div.parentNode as HTMLElement | null;
-        }
-        return null;
+        return findUpModelRefEl(div);
     }
 
     static getHittedThumb (el: HTMLElement, div: HTMLElement, scale?: number) {
@@ -597,14 +592,14 @@ export default class Palette {
         e.preventDefault();
         switch (Palette.getLandingPlace(element, e)) {
         case 'scripts':
-            iOS.analyticsEvent('editor', 'new_block', (element.owner as Block).blocktype);
+            iOS.analyticsEvent('editor', 'new_block', getModelRefAs<Block>(element, 'block')!.blocktype);
             var sc = ScratchJr.getActiveScript();
             var dx = localx(sc, element.left!);
             var dy = localy(sc, element.top!);
             ScriptsPane.blockDropped(sc, dx, dy);
-            const activeScripts = ScratchJr.getActiveScript().owner as Scripts;
+            const activeScripts = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
             var spr = activeScripts.spr;
-            const parentPage = spr.div.parentNode!.owner as Page;
+            const parentPage = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
             Undo.record({
                 action: 'scripts',
                 where: parentPage.id,
@@ -614,9 +609,9 @@ export default class Palette {
             ScratchJr.storyStart('Palette.dropBlockFromPalette');
             break;
         default:
-            (ScratchJr.getActiveScript().owner as Scripts).deleteBlocks();
+            getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.deleteBlocks();
             break;
         }
-        (ScratchJr.getActiveScript().owner as Scripts).dragList = [];
+        getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!.dragList = [];
     }
 }

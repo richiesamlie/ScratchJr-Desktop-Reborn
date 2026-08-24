@@ -14,7 +14,6 @@
   },
   "include": ["src/**/*.ts", "src/**/*.js"],
   "exclude": [
-    "src/app/src/snap/**",
     "src/app/dist/**",
     "src/app/pnglibrary/**",
     "src/app/svglibrary/**",

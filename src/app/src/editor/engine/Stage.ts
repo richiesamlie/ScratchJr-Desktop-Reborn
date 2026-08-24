@@ -1,9 +1,5 @@
-import ScratchJr from '../ScratchJr';
-import Project from '../ui/Project';
-import Thumbs from '../ui/Thumbs';
-import UI from '../ui/UI';
-import Undo from '../ui/Undo';
-import ScriptsPane from '../ui/ScriptsPane';
+import { enginePorts } from './ports';
+import { getModelRefAs, setModelRef, hasModelRef } from '../modelRegistry';
 import Rectangle from '../../geom/Rectangle';
 import Events from '../../utils/Events';
 import ScratchAudio from '../../utils/ScratchAudio';
@@ -52,7 +48,7 @@ export default class Stage {
         };
         
         
-        this.div.owner = this;
+        setModelRef(this.div, 'stage', this);
         this.currentZoom = 1;
         this.initialPoint = {
             x: 0,
@@ -93,7 +89,7 @@ export default class Stage {
     resetPage (obj: Page) {
         var page = obj.div;
         for (var i = 0; i < page.childElementCount; i++) {
-            var spr = page.childNodes[i].owner as Sprite;
+            var spr = getModelRefAs<Sprite>(page.childNodes[i] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -104,8 +100,8 @@ export default class Stage {
     }
 
     resetPages () {
-        for (var i = 0; i < ScratchJr.stage.pages.length; i++) {
-            Stage.prototype.resetPage(ScratchJr.stage.pages[i]);
+        for (var i = 0; i < enginePorts().getStage().pages.length; i++) {
+            Stage.prototype.resetPage(enginePorts().getStage().pages[i]);
         }
     }
 
@@ -120,17 +116,17 @@ export default class Stage {
         if (n > this.pages.length) {
             return;
         }
-        if (Events.dragthumbnail && Events.dragthumbnail.owner) {
+        if (Events.dragthumbnail && hasModelRef(Events.dragthumbnail)) {
             return;
         }
         this.setPage(this.pages[n - 1], true);
     }
 
     setPage (page: Page, isOn: boolean) {
-        ScratchJr.stopStrips();
-        var sc = ScratchJr.getSprite() ? gn(ScratchJr.stage.currentPage.currentSpriteName + '_scripts')! : undefined;
+        enginePorts().stopStrips();
+        var sc = enginePorts().getSprite() ? gn(enginePorts().getStage().currentPage.currentSpriteName + '_scripts')! : undefined;
         if (sc) {
-            const scriptsOwner = sc.owner as Scripts;
+            const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
             scriptsOwner.deactivate();
         }
         this.currentPage.div.style.visibility = 'hidden';
@@ -139,9 +135,9 @@ export default class Stage {
         this.currentPage.div.style.visibility = 'visible';
         this.currentPage.setPageSprites('visible');
         //  if (page == obj['currentPage'])	 this.currentPage.currentSpriteName = obj[page]["lastSprite"];
-        Thumbs.updateSprites();
-        Thumbs.updatePages();
-        var spr = ScratchJr.getSprite() as Sprite;
+        enginePorts().thumbsUpdateSprites();
+        enginePorts().thumbsUpdatePages();
+        var spr = enginePorts().getSprite() as Sprite;
         if (spr) {
             spr.activate();
         }
@@ -151,10 +147,10 @@ export default class Stage {
     }
 
     loadPageThreads () {
-        ScratchJr.blur();
+        enginePorts().blur();
         var page = this.currentPage;
         for (var i = 0; i < page.div.childElementCount; i++) {
-            var spr = page.div.childNodes[i].owner as Sprite;
+            var spr = getModelRefAs<Sprite>(page.div.childNodes[i] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -163,11 +159,11 @@ export default class Stage {
             if (!sc) {
                 continue;
             }
-            const scriptsOwner = sc.owner as Scripts;
+            const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
             var topblocks = scriptsOwner.getBlocksType(['onflag', 'ontouch']);
             for (var j = 0; j < topblocks.length; j++) {
                 var b = topblocks[j];
-                ScratchJr.runtime.addRunScript(spr, b);
+                enginePorts().getRuntime().addRunScript(spr, b);
             }
         }
     }
@@ -178,9 +174,9 @@ export default class Stage {
 
     copySprite (el: HTMLElement, thumb: HTMLElement) {
         ScratchAudio.sndFX('copy.wav');
-        Thumbs.overpage(thumb);
-        var data = Project.encodeSprite(el.owner as string);
-        if (gn(thumb.owner as string)!.owner == this.currentPage) {
+        enginePorts().thumbsOverpage(thumb);
+        var data = enginePorts().projectEncodeSprite(getModelRefAs<string>(el as HTMLElement, 'pagethumb')!);
+        if (getModelRefAs<Page>(gn(getModelRefAs<string>(thumb, 'pagethumb')!)!, 'page') == this.currentPage) {
             data.xcoor = Number(data.xcoor) + 10;
             data.ycoor = Number(data.ycoor) + 10;
             data.homex = data.xcoor;
@@ -190,28 +186,28 @@ export default class Stage {
         if (Number(a[a.length - 1]).toString() != 'NaN') {
             a.pop();
         }
-        var page = gn(thumb.owner as string)!.owner as Page;
+        var page = getModelRefAs<Page>(gn(getModelRefAs<string>(thumb as HTMLElement, 'pagethumb')!)!, 'page')!;
         var name = getIdFor(a.join(' '));
         data.id = name;
         var stg = this;
         var whenDone = function (spr: Sprite) {
-            if (spr.page.id == ScratchJr.stage.currentPage.id) {
+            if (spr.page.id == enginePorts().getStage().currentPage.id) {
                 spr.div.style.visibility = 'visible';
             }
             if (!page.currentSpriteName) {
                 page.currentSpriteName = spr.id;
             }
-            Thumbs.updateSprites();
-            Thumbs.updatePages();
-            const ownerPage = gn(thumb.owner as string)!.owner as Page;
-            Undo.record({
+            enginePorts().thumbsUpdateSprites();
+            enginePorts().thumbsUpdatePages();
+            const ownerPage = getModelRefAs<Page>(gn(getModelRefAs<string>(thumb as HTMLElement, 'pagethumb')!)!, 'page')!;
+            enginePorts().undoRecord({
                 action: 'copy',
                 who: name,
                 where: ownerPage.id
             });
-            ScratchJr.storyStart('Stage.prototype.copySprite');
+            enginePorts().storyStart('Stage.prototype.copySprite');
         };
-        Project.recreateObject(page, name, data, whenDone, page.id == stg.currentPage.id);
+        enginePorts().projectRecreateObject(page, name, data, whenDone, page.id == stg.currentPage.id);
     }
 
 
@@ -220,9 +216,9 @@ export default class Stage {
 
     deletePage (str: string, data?: unknown) {
         //  reserve a next id to be able to Undo deleting the first page
-        ScratchJr.storyStart('Stage.prototype.deletePage'); // Record a change for sample projects in story-starter mode
+        enginePorts().storyStart('Stage.prototype.deletePage'); // Record a change for sample projects in story-starter mode
         var pageid = getIdFor('page');
-        var sprAttr: Record<string, unknown> = UI.mascotData();
+        var sprAttr: Record<string, unknown> = enginePorts().uiMascotData();
         var newp: Record<string, unknown> = {};
         var catid = sprAttr.id as string;
         newp.sprites = [catid];
@@ -230,7 +226,7 @@ export default class Stage {
         newp.lastSprite = catid;
         newp[catid] = sprAttr;
         newp.layers = [catid];
-        var page = gn(str)!.owner as Page;
+        var page = getModelRefAs<Page>(gn(str) as HTMLElement, 'page')!;
         var indx = this.getPagesID().indexOf(str);
         if (indx < 0) {
             return;
@@ -238,7 +234,7 @@ export default class Stage {
         var form = namedForms.activetextbox;
         var cnv = form.textsprite;
         if (cnv && gn(cnv.id!)!) {
-            ScratchJr.blur();
+            enginePorts().blur();
         }
         this.removePageBlocks(str);
         this.pages.splice(indx, 1);
@@ -253,10 +249,10 @@ export default class Stage {
             if (str == this.currentPage.id) {
                 this.setViewPage(this.pages[0]);
             }
-            Thumbs.updateSprites();
-            Thumbs.updatePages();
+            enginePorts().thumbsUpdateSprites();
+            enginePorts().thumbsUpdatePages();
             if (!data) {
-                Undo.record({
+                enginePorts().undoRecord({
                     action: 'deletepage',
                     where: str,
                     who: str
@@ -264,11 +260,11 @@ export default class Stage {
             }
         }
         function refreshPage () {
-            ScratchJr.stage.setViewPage(ScratchJr.stage.currentPage);
-            Thumbs.updateSprites();
-            Thumbs.updatePages();
+            enginePorts().getStage().setViewPage(enginePorts().getStage().currentPage);
+            enginePorts().thumbsUpdateSprites();
+            enginePorts().thumbsUpdatePages();
             if (!data) {
-                Undo.record({
+                enginePorts().undoRecord({
                     action: 'deletepage',
                     where: str,
                     who: str
@@ -288,7 +284,7 @@ export default class Stage {
         for (var n = 0; n < this.pages.length; n++) {
             var page = this.pages[n];
             for (var i = 0; i < page.div.childElementCount; i++) {
-                var spr = page.div.childNodes[i].owner as Sprite;
+                var spr = getModelRefAs<Sprite>(page.div.childNodes[i] as HTMLElement, 'sprite')!;
                 if (!spr) {
                     continue;
                 }
@@ -296,7 +292,7 @@ export default class Stage {
                 if (!sc) {
                     continue;
                 }
-                const scriptsOwner = sc.owner as Scripts;
+                const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
                 var gotoblocks: Block[] = scriptsOwner.getBlocksType(['gotopage']);
                 for (var j = 0; j < gotoblocks.length; j++) {
                     var b = gotoblocks[j];
@@ -327,11 +323,11 @@ export default class Stage {
             return;
         }*/
         
-        if (ScratchJr.onHold) {
+        if (enginePorts().isOnHold()) {
             return;
         }
         e.preventDefault();
-        ScratchJr.blur();
+        enginePorts().blur();
         if (!this.currentPage) {
             return;
         }
@@ -339,42 +335,43 @@ export default class Stage {
             return;
         }
         var pt = this.getStagePt(e);
-        setCanvasSize(ScratchJr.workingCanvas, 480, 360);
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
+        setCanvasSize(enginePorts().getWorkingCanvas(), 480, 360);
+        var ctx = enginePorts().getWorkingCanvas().getContext('2d')!;
         // mousedown originates on stage DOM elements
         const targetEl = e.target as HTMLElement;
         var target = (targetEl.nodeName == 'CANVAS') ? this.checkShaking(pt, targetEl) : targetEl;
-        if (ScratchJr.shaking && (target.id == 'deletesprite')) {
-            this.removeSprite(ScratchJr.shaking.owner as Sprite);
+        const shaking = enginePorts().getShaking();
+        if (shaking && (target.id == 'deletesprite')) {
+            this.removeSprite(getModelRefAs<Sprite>(shaking as HTMLElement, 'sprite')!);
             return;
         }
         ctx.clearRect(0, 0, 480, 360);
         var hitobj = this.whoIsIt(ctx, pt);
-        if (ScratchJr.shaking && hitobj && (hitobj.id == ScratchJr.shaking.id)) { // check grid case
-            var sprname = ScratchJr.shaking.id;
-            const sprnameOwner = gn(sprname)!.owner as Sprite;
+        if (shaking && hitobj && (hitobj.id == shaking.id)) { // check grid case
+            var sprname = shaking.id;
+            const sprnameOwner = getModelRefAs<Sprite>(gn(sprname) as HTMLElement, 'sprite')!;
         if (((pt.x - sprnameOwner.screenLeft()) < 45) && ((pt.y - sprnameOwner.screenTop()) < 45)) {
-                this.removeSprite(ScratchJr.shaking.owner as Sprite);
+                this.removeSprite(getModelRefAs<Sprite>(shaking as HTMLElement, 'sprite')!);
                 return;
             }
         }
         if (!hitobj) {
-            ScratchJr.clearSelection();
+            enginePorts().clearSelection();
             return;
         }
-        if (ScratchJr.shaking) {
-            ScratchJr.clearSelection();
+        if (enginePorts().getShaking()) {
+            enginePorts().clearSelection();
         } else {
             this.mouseDownOnSprite(hitobj, pt);
         }
     }
 
     checkShaking (pt: {x: number; y: number}, target: HTMLElement): HTMLElement {
-        if (!ScratchJr.shaking) {
+        if (!enginePorts().getShaking()) {
             return target;
         }
-        var dx = globalx(gn('deletesprite')!) - globalx(ScratchJr.stage.pagesdiv);
-        var dy = globaly(gn('deletesprite')!) - globaly(ScratchJr.stage.pagesdiv);
+        var dx = globalx(gn('deletesprite')!) - globalx(enginePorts().getStage().pagesdiv);
+        var dy = globaly(gn('deletesprite')!) - globaly(enginePorts().getStage().pagesdiv);
         var w = gn('deletesprite')!.offsetWidth;
         var h = gn('deletesprite')!.offsetHeight;
         var rect = new Rectangle(dx, dy, w, h);
@@ -388,7 +385,7 @@ export default class Stage {
         };
         Events.dragthumbnail = spr.div;
         Events.clearEvents();
-        if (!ScratchJr.inFullscreen && ScratchJr.isEditable()) {
+        if (!enginePorts().isInFullscreen() && enginePorts().isEditable()) {
             Events.holdit(spr.div, this.startShaking);
         }
         this.setEvents();
@@ -399,7 +396,7 @@ export default class Stage {
         var spr: Sprite | undefined;
         var pixel: Uint8ClampedArray;
         for (var i = page.childElementCount - 1; i > -1; i--) {
-            spr = page.childNodes[i].owner as Sprite;
+            spr = getModelRefAs<Sprite>(page.childNodes[i] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -415,7 +412,7 @@ export default class Stage {
         var fuzzy = 5;
         ctx.clearRect(0, 0, 480, 360);
         for (var j = page.childElementCount - 1; j > -1; j--) {
-            spr = page.childNodes[j].owner as Sprite;
+            spr = getModelRefAs<Sprite>(page.childNodes[j] as HTMLElement, 'sprite')!;
             if (!spr) {
                 continue;
             }
@@ -458,34 +455,34 @@ export default class Stage {
     }
 
     startShaking (b: HTMLElement) {
-        if (!b.owner) {
+        if (!hasModelRef(b)) {
             return;
         }
         Events.clearEvents();
-        ScratchJr.shaking = b;
-        ScratchJr.stopShaking = ScratchJr.stage.stopShaking;
-        (b.owner as Sprite).startShaking();
+        enginePorts().setShaking(b);
+        enginePorts().setStopShaking(() => enginePorts().getStage().stopShaking(enginePorts().getShaking()!));
+        (getModelRefAs<Sprite>(b as HTMLElement, 'sprite')!).startShaking();
     }
 
     stopShaking (b: HTMLElement) {
-        if (!b.owner) {
+        if (!hasModelRef(b)) {
             return;
         }
-        (b.owner as Sprite).stopShaking();
-        ScratchJr.shaking = undefined;
-        ScratchJr.stopShaking = undefined;
+        (getModelRefAs<Sprite>(b as HTMLElement, 'sprite')!).stopShaking();
+        enginePorts().setShaking(undefined);
+        enginePorts().setStopShaking(undefined);
     }
 
     startSpriteDrag (e?: MouseEvent) {
-        var spr = Events.dragthumbnail.owner as Sprite;
-        spr.threads = ScratchJr.runtime.removeRunScript(spr);
+        var spr = getModelRefAs<Sprite>(Events.dragthumbnail as HTMLElement, 'sprite')!;
+        spr.threads = enginePorts().getRuntime().removeRunScript(spr);
         this.currentPage.div.appendChild(Events.dragthumbnail);
         this.deltaPoint = {
             x: this.initialPoint.x,
             y: this.initialPoint.y
         };
         Events.dragged = true;
-        ScratchJr.changed = true;
+        enginePorts().markChanged();
     }
 
     mouseMove (e: MouseEvent) {
@@ -494,7 +491,7 @@ export default class Stage {
         }
         var pt = this.getStagePt(e);
         var delta = Vector.diff(pt, this.initialPoint);
-        var dist = ScratchJr.inFullscreen ? 15 : 5;
+        var dist = enginePorts().isInFullscreen() ? 15 : 5;
         if (!Events.dragged && (Vector.len(delta) > dist)) {
             this.startSpriteDrag(e);
         }
@@ -505,7 +502,7 @@ export default class Stage {
             clearTimeout(Events.timeoutEvent);
         }
         Events.timeoutEvent = undefined;
-        var spr = Events.dragthumbnail.owner as Sprite;
+        var spr = getModelRefAs<Sprite>(Events.dragthumbnail as HTMLElement, 'sprite')!;
         delta = this.wrapDelta(spr, Vector.diff(pt, this.deltaPoint));
         spr.xcoor += delta.x;
         spr.ycoor += delta.y;
@@ -559,7 +556,7 @@ export default class Stage {
     }
 
     mouseUp (e: MouseEvent) {
-        var spr = Events.dragthumbnail.owner as Sprite;
+        var spr = getModelRefAs<Sprite>(Events.dragthumbnail as HTMLElement, 'sprite')!;
         if (Events.timeoutEvent) {
             clearTimeout(Events.timeoutEvent);
         }
@@ -569,8 +566,9 @@ export default class Stage {
         } else {
             this.moveElementBy(spr);
             if (spr.type == 'sprite') {
-                ScratchJr.runtime.threadsRunning = ScratchJr.runtime.threadsRunning.concat(spr.threads);
-                ScratchJr.startCurrentPageStrips(['ontouch']);
+                var rt = enginePorts().getRuntime();
+rt.threadsRunning = rt.threadsRunning.concat(spr.threads);
+                enginePorts().startCurrentPageStrips(['ontouch']);
             }
         }
         Events.clearEvents();
@@ -579,19 +577,19 @@ export default class Stage {
     }
 
     moveElementBy (spr: Sprite) {
-        if (!ScratchJr.inFullscreen) {
+        if (!enginePorts().isInFullscreen()) {
             spr.homex = spr.xcoor;
             spr.homey = spr.ycoor;
             spr.homeflip = spr.flip;
         }
-        Thumbs.updatePages();
+        enginePorts().thumbsUpdatePages();
     }
 
     clickOnSprite (e: Event, spr: Sprite) {
         e.preventDefault();
-        ScratchJr.clearSelection();
-        ScratchJr.startScriptsFor(spr, ['onclick']);
-        ScratchJr.startCurrentPageStrips(['ontouch']);
+        enginePorts().clearSelection();
+        enginePorts().startScriptsFor(spr, ['onclick']);
+        enginePorts().startCurrentPageStrips(['ontouch']);
     }
 
 
@@ -599,8 +597,8 @@ export default class Stage {
     /////////////////////////////////'
 
     removeSprite (sprite: Sprite) {
-        ScratchJr.shaking = undefined;
-        ScratchJr.stopShaking = undefined;
+        enginePorts().setShaking(undefined);
+        enginePorts().setStopShaking(undefined);
         ScratchAudio.sndFX('cut.wav');
         if (sprite.type == 'text') {
             sprite.deleteText(true);
@@ -612,21 +610,21 @@ export default class Stage {
     }
 
     removeCharacter (spr: Sprite) {
-        ScratchJr.runtime.stopThreadSprite(spr);
+        enginePorts().getRuntime().stopThreadSprite(spr);
         this.removeFromPage(spr);
-        Undo.record({
+        enginePorts().undoRecord({
             action: 'deletesprite',
             who: spr.id,
-            where: ScratchJr.stage.currentPage.id
+            where: enginePorts().getStage().currentPage.id
         });
-        ScratchJr.storyStart('Stage.prototype.removeCharacter');
-        Thumbs.updateSprites();
+        enginePorts().storyStart('Stage.prototype.removeCharacter');
+        enginePorts().thumbsUpdateSprites();
     }
 
     updatePageBlocks () {
-        for (var i = 0; i < ScratchJr.stage.pages.length; i++) {
-            var page = ScratchJr.stage.pages[i];
-            ScriptsPane.updateScriptsPageBlocks(JSON.parse(page.sprites));
+        for (var i = 0; i < enginePorts().getStage().pages.length; i++) {
+            var page = enginePorts().getStage().pages[i];
+            enginePorts().scriptsPaneUpdateScriptsPageBlocks(JSON.parse(page.sprites));
         }
     }
 
@@ -640,7 +638,7 @@ export default class Stage {
             return;
         }
         var th = spr.thumbnail;
-        var sprite = ScratchJr.getSprite() as Sprite;
+        var sprite = enginePorts().getSprite() as Sprite;
         list.splice(n, 1);
         spr.div.parentNode!.removeChild(spr.div);
         if (sc) {
@@ -650,7 +648,7 @@ export default class Stage {
         th.parentNode!.removeChild(th);
         if (sprite && (sprite.id == spr.id)) {
             var sprites = page.getSprites();
-            page.setCurrentSprite((sprites.length > 0) ? gn(sprites[0])!.owner as Sprite : undefined);
+            page.setCurrentSprite((sprites.length > 0) ? getModelRefAs<Sprite>(gn(sprites[0]) as HTMLElement, 'sprite')! : undefined);
         }
     }
 
@@ -659,7 +657,7 @@ export default class Stage {
         for (var n = 0; n < this.pages.length; n++) {
             var page = this.pages[n];
             for (var i = 0; i < page.div.childElementCount; i++) {
-                var spr = page.div.childNodes[i].owner as Sprite;
+                var spr = getModelRefAs<Sprite>(page.div.childNodes[i] as HTMLElement, 'sprite')!;
                 if (!spr) {
                     continue;
                 }
@@ -667,7 +665,7 @@ export default class Stage {
                 if (!sc) {
                     continue;
                 }
-                const scriptsOwner = sc.owner as Scripts;
+                const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
                 var gotoblocks: Block[] = scriptsOwner.getBlocksType(['gotopage']);
                 for (var j = 0; j < gotoblocks.length; j++) {
                     var b = gotoblocks[j];
@@ -681,9 +679,9 @@ export default class Stage {
     }
 
     clickOnElement (e: Event, spr: HTMLElement) {
-        const owner = spr.owner as Sprite;
+        const owner = getModelRefAs<Sprite>(spr as HTMLElement, 'sprite')!;
         if (owner.type == 'text') {
-            if (!ScratchJr.inFullscreen) {
+            if (!enginePorts().isInFullscreen()) {
                 owner.clickOnText(e);
             }
         } else if (owner.type == 'sprite') {
@@ -727,11 +725,11 @@ export default class Stage {
         var stg = gn('stage')!;
         var mask = newDiv(gn('stageframe')!, stg.offsetLeft + 1, stg.offsetTop + 1, 482, 362, {
                 position: 'absolute',
-                zIndex: ScratchJr.layerTop + 20,
+                zIndex: enginePorts().getLayerTop() + 20,
                 visibility: 'hidden'
             });
         mask.setAttribute('id', 'pagemask');
-        mask.appendChild(ScratchJr.workingCanvas);
+        mask.appendChild(enginePorts().getWorkingCanvas());
     }
 
     on () {
@@ -748,7 +746,7 @@ export default class Stage {
         var h = spr.outline.height;
         var mask = newDiv(gn('stageframe')!, stg.offsetLeft + 1, stg.offsetTop + 1, w, h, {
                 position: 'absolute',
-                zIndex: ScratchJr.layerTop + 20,
+                zIndex: enginePorts().getLayerTop() + 20,
                 visibility: 'hidden'
             });
         mask.setAttribute('id', 'spritemask');
