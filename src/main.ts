@@ -94,6 +94,10 @@ app.whenReady().then(async () => {
         fsMenu.push({ label: 'Restore projects', click: () => dataStore!.restoreProjects() });
     }
     fsMenu.push({
+        label: 'Export Project (.sjr)...',
+        click: () => { const w = getWindow(); if (w && !w.isDestroyed()) w.webContents.send('export-project-request'); },
+    });
+    fsMenu.push({
         label: 'Export Stage as PNG...',
         click: () => { const w = getWindow(); if (w && !w.isDestroyed()) w.webContents.send('export-stage-request'); },
     });

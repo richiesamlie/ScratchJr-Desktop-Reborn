@@ -80,6 +80,9 @@ interface IpcBridge {
     sendAppClosedAcked(): void;
 
     // ---- Stage image export ----
+    onExportProjectRequest(callback: () => void): void;
+    /** Resolves with the saved file path, or null when cancelled/failed */
+    sendExportedSjr(dataB64: string, suggestedName: string): Promise<string | null>;
     onExportStageRequest(callback: () => void): void;
     /** Resolves with the saved file path, or null when cancelled/failed */
     sendExportedPng(dataUrl: string, suggestedName: string): Promise<string | null>;

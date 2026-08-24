@@ -429,6 +429,15 @@ async function main() {
             }
         }
 
+        // ---- Scenario 6: .sjr export bridge wiring ----
+        {
+            const wired = await s3.eval(`(function(){
+                return typeof window.scratchjr.onExportProjectRequest === 'function' &&
+                       typeof window.scratchjr.sendExportedSjr === 'function';
+            })()`);
+            console.log('interact: [sjr-export] bridge wired=' + wired);
+            if (!wired) failures.push('.sjr export bridge channels missing');
+        }
         s3.close();
     } catch (err) {
         failures.push(err.message + '\n' + (err.stack || '').split('\n').slice(0, 4).join('\n'));

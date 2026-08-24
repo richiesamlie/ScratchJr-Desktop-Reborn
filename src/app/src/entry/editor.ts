@@ -71,6 +71,28 @@ setEnginePorts({
     projectEncodeStrip: (b) => Project.encodeStrip(b),
 });
 
+// File > Export Project (.sjr)... : zip the current project and hand the
+// base64 payload to main for the save dialog.
+window.scratchjr!.onExportProjectRequest(() => {
+    try {
+        const ref = ScratchJr.currentProject;
+        if (!ref) return;
+        void import('../iPad/IO').then(({ default: IO }) => {
+            IO.zipProject(ref, (contents) => {
+                let name = '';
+                try {
+                    name = (document.forms as unknown as { projectname: { myproject: HTMLInputElement } })
+                        .projectname.myproject.value || '';
+                } catch (_) { /* form not present */ }
+                if (!name.trim()) name = 'project';
+                void window.scratchjr!.sendExportedSjr(contents, name.trim() + '.sjr');
+            });
+        });
+    } catch (err) {
+        console.error('export project failed:', err);
+    }
+});
+
 // File > Export Stage as PNG... : compose the current page at 2x and hand
 // the data URL to main for the save dialog.
 window.scratchjr!.onExportStageRequest(() => {

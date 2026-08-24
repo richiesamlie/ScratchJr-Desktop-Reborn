@@ -53,6 +53,11 @@ contextBridge.exposeInMainWorld('scratchjr', {
     sendAppClosedAcked: () => ipcRenderer.send('app-closed-acked'),
 
     // ---- Stage image export ----
+    onExportProjectRequest: (callback: () => void) => {
+        ipcRenderer.on('export-project-request', () => callback());
+    },
+    sendExportedSjr: (dataB64: string, suggestedName: string) =>
+        ipcRenderer.invoke('save-sjr-file', { dataB64, suggestedName }),
     onExportStageRequest: (callback: () => void) => {
         ipcRenderer.on('export-stage-request', () => callback());
     },

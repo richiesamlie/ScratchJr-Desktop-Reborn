@@ -50,6 +50,7 @@
 - **Native Update Checker**: Check for new releases directly from `File` → `Check for Updates...`. Launch-time checks are silent, and conditional (ETag) requests keep the app rate-limit-friendly with the GitHub API.
 - **Working Keyboard Shortcuts**: `Ctrl+S` save, `Ctrl+Z` / `Ctrl+Shift+Z` undo/redo, `Ctrl+N` new project.
 - **`.sjr` Import**: Drag a `.sjr` project file anywhere onto the lobby to import it — assets are merged, duplicates deduplicated, and the project shows up with a gift bow.
+- **`.sjr` Export**: `File` → `Export Project (.sjr)...` saves the current project as a shareable `.sjr` file that can be re-imported on any device.
 - **Stage Image Export**: `File` → `Export Stage as PNG...` renders the current page at 2× resolution (960×720) to a PNG you choose.
 - **Configurable MSI Installer**: Supports silent deployment and uninstallation options (`REMOVE_DATABASE=1`).
 

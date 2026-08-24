@@ -253,6 +253,25 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         }
     });
 
+    // ---- Project (.sjr) export ----
+    ipcMain.handle('save-sjr-file', async (_event: IpcMainInvokeEvent, arg: { dataB64: string; suggestedName: string }) => {
+        try {
+            if (!arg?.dataB64) return null;
+            const safeName = (arg.suggestedName || 'project').replace(/[\\/:*?"<>|]/g, '_');
+            const win = getWindow();
+            const res = await dialog.showSaveDialog(win!, {
+                defaultPath: safeName.toLowerCase().endsWith('.sjr') ? safeName : safeName + '.sjr',
+                filters: [{ name: 'ScratchJr project', extensions: ['sjr'] }],
+            });
+            if (res.canceled || !res.filePath) return null;
+            await fs.promises.writeFile(res.filePath, Buffer.from(arg.dataB64, 'base64'));
+            debugLog('project exported:', res.filePath);
+            return res.filePath;
+        } catch (e) {
+            debugLog('save-sjr-file failed:', e);
+            return null;
+        }
+    });
     // ---- Stage image export ----
     ipcMain.handle('save-stage-png', async (_event: IpcMainInvokeEvent, arg: { dataUrl: string; suggestedName: string }) => {
         try {
