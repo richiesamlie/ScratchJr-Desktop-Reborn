@@ -29,18 +29,26 @@
 - **Atomic Database Writes**: Saves to a temporary file before renaming, preventing corruption if the app is abruptly closed.
 - **Automatic Backup & Recovery**: Creates rolling `.bak` snapshots on every save and runs `PRAGMA integrity_check` on launch, auto-recovering from backup if needed.
 - **Debounced Persistence**: Rapid changes are coalesced safely and flushed immediately during app shutdown to prevent data loss.
+- **File-Backed Media**: Sprites, backgrounds, sounds, and thumbnails live as files under `Documents\ScratchJR\media` instead of base64 rows inside the database. Existing databases are migrated automatically on first launch (with a backup and byte-for-byte verification), and older databases remain readable.
 
 ### 🛡️ Security & Modern Architecture
 - **Sandboxed Renderer**: Built on **Electron 43** with strict `contextIsolation`, preventing direct Node.js execution in the browser process.
-- **Content Security Policy & Sanitization**: Restrictive CSP on all pages, SQL parameterization, and strict file path boundaries.
+- **Eval-Free Renderer + Hardened CSP**: CSS preprocessing no longer compiles expressions with `Function()`; every page's Content Security Policy dropped `'unsafe-eval'`.
+- **No SQL Over IPC**: The renderer sends typed database intents; the main process composes parameterized SQL from an allowlist of tables and columns. There is no renderer-supplied SQL text to sanitize, and strict file-path containment guards all resource reads.
+
+### 🏗️ Clean Engine/UI Separation
+- **Typed Port Seam**: The block engine (`editor/engine`, `editor/blocks`) has zero runtime imports of UI singletons or global state — everything flows through the typed `EnginePorts` interface, installed once at boot.
+- **Model Registry**: The invisible `div.owner` expando object graph was replaced by `modelRegistry.ts`, a kind-tagged WeakMap element→model registry (blocks, scripts, sprites, pages, stage, thumbnails).
+- **Per-Page Bundles**: esbuild code splitting gives each screen only its own code — the lobby and start screen no longer parse the block engine or paint editor.
 
 ### ⚡ Strict TypeScript & Testing
 - **100% Strict TypeScript**: Entire codebase migrated to TypeScript with strict type checking (`strict: true`, zero `any`).
-- **Comprehensive Test Suite**: 121 automated tests covering database persistence, project serialization, IPC contracts, and editor logic.
+- **Comprehensive Test Suite**: 127 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, update-check ETag caching, and the CSS preprocessor grammar.
 
 ### 🌍 Classroom & Fleet Deployment
 - **`--lang` CLI Flag**: Launch with explicit language overrides (e.g., `ScratchJr.exe --lang=fr`), ideal for school environments.
-- **Native Update Checker**: Check for new releases directly from `File` → `Check for Updates...`.
+- **Native Update Checker**: Check for new releases directly from `File` → `Check for Updates...`. Launch-time checks are silent, and conditional (ETag) requests keep the app rate-limit-friendly with the GitHub API.
+- **Working Keyboard Shortcuts**: `Ctrl+S` save, `Ctrl+Z` / `Ctrl+Shift+Z` undo/redo, `Ctrl+N` new project.
 - **Configurable MSI Installer**: Supports silent deployment and uninstallation options (`REMOVE_DATABASE=1`).
 
 For architecture diagrams, IPC documentation, and developer guides, visit the **[Wiki](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/wiki)**.
@@ -62,10 +70,22 @@ npm start
 npm test
 npm run typecheck
 
+# End-to-end harnesses (boot the real app via Chrome DevTools Protocol)
+npm run smoke      # boot -> lobby -> editor -> help -> media round-trip
+npm run interact   # real pointer drags: sprite move, block docking, undo replay
+
 # Package portable ZIP or MSI
 npm run make:zip
 npm run make
 ```
+
+---
+
+## Changes in this fork
+
+See [CHANGELOG.md](CHANGELOG.md) for the full version history. Highlights of
+the fork versus the original tablet codebase are listed under
+[Features & Improvements](#features--improvements) above.
 
 ---
 
