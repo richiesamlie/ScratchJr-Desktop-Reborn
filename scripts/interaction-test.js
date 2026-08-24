@@ -364,6 +364,71 @@ async function main() {
             if (!reverted) failures.push('undo did not restore dragged sprite position');
         }
 
+        // ---- Scenario 4: .sjr export -> import round-trip ----
+        {
+            const qCount = `(async () => {
+                const res = await window.scratchjr.database_query(JSON.stringify({
+                    op: 'select', table: 'projects', items: ['id'],
+                    where: [{ col: 'deleted', op: '=', value: 'NO' }]
+                }));
+                return JSON.parse(res).length;
+            })()`;
+            const countBefore = await s3.eval(qCount);
+
+            // Kick off export without awaiting across the bridge; poll for the
+            // result stored on window (long-lived awaited promises can be
+            // collected if the context churns).
+            await s3.eval(`(function(){
+                window.__exportedB64 = null;
+                window.__ioDebug.zipProject(window.ScratchJr.currentProject, function (c) {
+                    window.__exportedB64 = c;
+                });
+            })()`);
+            let b64 = null;
+            for (let i = 0; i < 50 && !b64; i++) {
+                await sleep(200);
+                b64 = await s3.eval('window.__exportedB64');
+            }
+            if (!b64 || b64.length < 100) throw new Error('zipProject produced no data');
+            console.log('interact: [sjr-roundtrip] exported ' + b64.length + ' chars');
+
+            await s3.eval(`(function(){
+                var data = window.__exportedB64;
+                window.__exportedB64 = null;
+                window.__ioDebug.loadProjectFromSjr(data);
+            })()`);
+
+            let countAfter = countBefore;
+            for (let i = 0; i < 25; i++) {
+                await sleep(400);
+                countAfter = await s3.eval(qCount);
+                if (countAfter > countBefore) break;
+            }
+            console.log('interact: [sjr-roundtrip] projects ' + countBefore + ' -> ' + countAfter);
+            if (countAfter <= countBefore) {
+                failures.push('.sjr import round-trip did not create a project row');
+            }
+        }
+
+        // ---- Scenario 5: stage PNG export compositor + bridge wiring ----
+        {
+            const info = await s3.eval(`(function(){
+                var page = ScratchJr.stage.currentPage;
+                var canvas = page.renderStageToCanvas(2);
+                var url = canvas.toDataURL('image/png');
+                return {
+                    ok: url.indexOf('data:image/png;base64,') === 0,
+                    w: canvas.width, h: canvas.height,
+                    bridge: typeof window.scratchjr.onExportStageRequest === 'function' &&
+                            typeof window.scratchjr.sendExportedPng === 'function'
+                };
+            })()`);
+            console.log('interact: [export-png] ' + JSON.stringify(info));
+            if (!(info.ok && info.w === 960 && info.h === 720 && info.bridge)) {
+                failures.push('stage PNG export compositor/bridge check failed: ' + JSON.stringify(info));
+            }
+        }
+
         s3.close();
     } catch (err) {
         failures.push(err.message + '\n' + (err.stack || '').split('\n').slice(0, 4).join('\n'));

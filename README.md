@@ -49,6 +49,8 @@
 - **`--lang` CLI Flag**: Launch with explicit language overrides (e.g., `ScratchJr.exe --lang=fr`), ideal for school environments.
 - **Native Update Checker**: Check for new releases directly from `File` → `Check for Updates...`. Launch-time checks are silent, and conditional (ETag) requests keep the app rate-limit-friendly with the GitHub API.
 - **Working Keyboard Shortcuts**: `Ctrl+S` save, `Ctrl+Z` / `Ctrl+Shift+Z` undo/redo, `Ctrl+N` new project.
+- **`.sjr` Import**: Drag a `.sjr` project file anywhere onto the lobby to import it — assets are merged, duplicates deduplicated, and the project shows up with a gift bow.
+- **Stage Image Export**: `File` → `Export Stage as PNG...` renders the current page at 2× resolution (960×720) to a PNG you choose.
 - **Configurable MSI Installer**: Supports silent deployment and uninstallation options (`REMOVE_DATABASE=1`).
 
 For architecture diagrams, IPC documentation, and developer guides, visit the **[Wiki](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/wiki)**.

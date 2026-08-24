@@ -52,6 +52,13 @@ contextBridge.exposeInMainWorld('scratchjr', {
     // ---- Lifecycle (fire-and-forget) ----
     sendAppClosedAcked: () => ipcRenderer.send('app-closed-acked'),
 
+    // ---- Stage image export ----
+    onExportStageRequest: (callback: () => void) => {
+        ipcRenderer.on('export-stage-request', () => callback());
+    },
+    sendExportedPng: (dataUrl: string, suggestedName: string) =>
+        ipcRenderer.invoke('save-stage-png', { dataUrl, suggestedName }),
+
     // ---- Event listeners (main → renderer push) ----
     onDatabaseRestored: (callback: () => void) => {
         ipcRenderer.on('databaseRestored', () => callback());

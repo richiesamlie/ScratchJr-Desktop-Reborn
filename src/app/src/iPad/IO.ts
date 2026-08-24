@@ -9,20 +9,6 @@ import SVG2Canvas from '../utils/SVG2Canvas';
 const database = 'projects';
 const collectLibraryAssets = false;
 
-// jszip 3.10 typings removed the deprecated sync APIs (load/asText/asBinary);
-// they still exist at runtime. Cast once for the sync share-import path.
-interface LegacyZipArchive {
-    load(data: string, options: { base64: boolean }): void;
-    forEach(callback: (relativePath: string, file: LegacyZipEntry) => void): void;
-    generate(options: { compression: string }): unknown;
-}
-
-interface LegacyZipEntry {
-    dir: boolean;
-    asText(): string;
-    asBinary(): string;
-}
-
 // Project row bag as passed between the lobby/editor and the projects table.
 // All fields optional: callers construct partial bags and JSON bags are
 // structurally compatible (Record<string, unknown>).
@@ -454,10 +440,12 @@ export default class IO {
 
             // Finish as soon as every asset has landed — replaces the old
             // 200ms expected/actual counter polling.
-            Promise.all(pendingAssets).then(function () {
-                finished((zipFile as unknown as LegacyZipArchive).generate({
-                    'compression': 'STORE'
-                }) as string);
+            Promise.all(pendingAssets).then(async function () {
+                const contents = await (zipFile as JSZip).generateAsync({
+                    type: 'base64',
+                    compression: 'STORE',
+                });
+                finished(contents);
             });
         });
     }
@@ -522,74 +510,77 @@ export default class IO {
         });
     }
 
-    // Receive a base64-encoded zip from iOS (upon open a project)
-    static loadProjectFromSjr (b64data: string) {
+    // Receive a base64-encoded zip (a .sjr project) and merge its assets.
+    static async loadProjectFromSjr (b64data: string) {
         // Together, these two provide a "progress" indication
         // that lets us know when to refresh the lobby (when sE/sA = 1)
         var saveExpected = 0; // How many assets we expect to save - updated as we process the zip
         var saveActual = 0; // How many assets actually saved - updated as we make IO saves
 
-        var receivedZip = new JSZip() as unknown as LegacyZipArchive;
-        receivedZip.load(b64data, {
-            'base64': true
-        });
+        var receivedZip = await JSZip.loadAsync(b64data, { base64: true });
 
         // To store character MD5 -> character name map
         // The character name is stored in the project JSON; when we load
         // the actual SVG asset, we need the associated name for storage in the DB
         var characterNames: Record<string, string> = {};
 
-        // First find the data.json project file
-        
-        // REVIEW: this used to be recievedZip.filter but was never returning false to filter anything...  
-        // switching to forEach instead.
-        receivedZip.forEach(function (relativePath, file) { 
-            if (file.dir) {
-                return;
-            }
+        type ZipEntryLike = { dir: boolean; async (type: string): Promise<string> };
+        var dataEntry: ZipEntryLike | null = null;
+        var assetEntries: Array<{ relativePath: string; file: ZipEntryLike }> = [];
+        receivedZip.forEach(function (relativePath, file) {
+            if (file.dir) return;
+            var f = file as unknown as ZipEntryLike;
             var fullName = relativePath.split('/').pop();
-            if (fullName == 'data.json') {
-                var jsonData = JSON.parse(file.asText());
-
-                // To require an upgrade, change the major version numbers in .html files and here...
-                var currentVersion = 1;
-                var projectVersion = parseInt(jsonData.version.replace('iOSv', '')) || 0;
-
-                if (projectVersion > currentVersion) {
-                    throw new Error('Project created in a new version of ScratchJr. Please upgrade ScratchJr.');
-                }
-
-                IO.uniqueProjectName(jsonData, function (jsonData) {
-                    jsonData.isgift = '1'; // Project will display with a bow and ribbon
-                    IO.createProject(jsonData, function () {});
-                });
-
-                // Build map of character filename -> character name
-                var projectData = jsonData.json;
-                for (var p = 0; p < projectData.pages.length; p++) {
-                    var pageReference = projectData.pages[p];
-                    var page = projectData[pageReference];
-                    for (var s = 0; s < page.sprites.length; s++) {
-                        var spriteReference = page.sprites[s];
-                        var sprite = page[spriteReference];
-                        // Store a database-friendly sprite name
-                        if (sprite.type == 'sprite') {
-                            characterNames[sprite.md5] = (
-                                ((unescape(sprite.name)).replace(/[0-9]/g, '')).replace(/\s*/g, '')
-                            );
-                        }
-                    }
-                }
-            }
+            if (fullName === 'data.json') dataEntry = f;
+            else assetEntries.push({ relativePath, file: f });
         });
 
-        // Filter out each asset type for storage
-        // REVIEW: this used to be recievedZip.filter but was never returning false to filter anything...  
-        // switching to forEach instead.
-        receivedZip.forEach(function (relativePath, file) { 
-            if (file.dir) {
-                return;
+        // ---- Pass 1: project row + character-name map from data.json ----
+        if (!dataEntry) {
+            debugLog('loadProjectFromSjr: no data.json found in archive');
+            return;
+        }
+        var jsonData = JSON.parse(await (dataEntry as ZipEntryLike).async('text')) as {
+            version: string;
+            json: Record<string, unknown> & { pages: string[] };
+        };
+
+        // To require an upgrade, change the major version numbers in .html files and here...
+        var currentVersion = 1;
+        var projectVersion = parseInt(jsonData.version.replace('iOSv', '')) || 0;
+
+        if (projectVersion > currentVersion) {
+            throw new Error('Project created in a new version of ScratchJr. Please upgrade ScratchJr.');
+        }
+
+        await new Promise<void>(function (resolve) {
+            IO.uniqueProjectName(jsonData as unknown as Parameters<typeof IO.uniqueProjectName>[0], function (jd) {
+                (jd as { isgift?: string }).isgift = '1'; // Project will display with a bow and ribbon
+                IO.createProject(jd as unknown as ProjectRecord, function () { resolve(); });
+            });
+        });
+
+        // Build map of character filename -> character name
+        var projectData = jsonData.json;
+        for (var p = 0; p < projectData.pages.length; p++) {
+            var pageReference = projectData.pages[p];
+            var page = projectData[pageReference] as { sprites: string[] } & Record<string, { type: string; md5: string; name: string }>;
+            for (var s = 0; s < page.sprites.length; s++) {
+                var spriteReference = page.sprites[s];
+                var sprite = page[spriteReference];
+                // Store a database-friendly sprite name
+                if (sprite.type == 'sprite') {
+                    characterNames[sprite.md5] = (
+                        ((unescape(sprite.name)).replace(/[0-9]/g, '')).replace(/\s*/g, '')
+                    );
+                }
             }
+        }
+
+        // ---- Pass 2: assets ----
+        for (var e = 0; e < assetEntries.length; e++) {
+            var relativePath = assetEntries[e].relativePath;
+            var file = assetEntries[e].file;
             saveExpected++; // We expect to save something for each non-directory
 
             var subFolder = relativePath.split('/')[1]; // should be {backgrounds, characters, thumbnails, sounds}
@@ -600,17 +591,17 @@ export default class IO {
             var ext = fullName.split('.').pop(); // e.g. svg
 
             if (!name || !ext) {
-                return;
+                continue;
             }
 
             // Don't save items we already have in the MediaLib
             if (fullName in MediaLib.keys) {
                 saveActual++;
-                return;
+                continue;
             }
 
-            // File data and base64-encoded data
-            var data = file.asBinary();
+            // File data (binary string) and base64-encoded data
+            var data = await file.async('binarystring');
             var b2data = btoa(data);
 
             if (subFolder == 'thumbnails' || subFolder == 'sounds') {
@@ -619,8 +610,6 @@ export default class IO {
                     saveActual++;
                 });
             } else if (subFolder == 'characters') {
-                // This code is messy - needs a refactor sometime for all the database calls/duplication for bkgs...
-
                 // Save the character, generate its thumbnail, and add entry to the database
                 iOS.setmedianame(b2data, name, ext, function () { // Saves the SVG
                     // Parse SVG to determine width/height
@@ -721,19 +710,26 @@ export default class IO {
             } else {
                 saveActual++; // Ignore this file - someone messed with the SJR...
             }
-        });
-
-        // For updating the Lobby UI - if we're on the lobby page when receiving a project, refresh it
-        // ponytail: 100ms counter-poll; convert to Promise.all if this branch is ever refactored
-        function refreshLobby () {
-            if (gn('hometab')! !== null) { // Check if we're on the lobby page
-                if (saveActual == saveExpected) {
-                    Lobby.setPage('home');
-                } else { // Waiting for assets to be saved
-                    setTimeout(refreshLobby, 100);
-                }
-            }
         }
-        refreshLobby();
+
+
     }
+}
+
+// Read-only debug/test seam (mirrors modelRegistry.__modelRefs): lets the
+// interaction harness exercise the .sjr export/import round-trip in-page.
+declare global {
+    interface Window {
+        __ioDebug?: {
+            zipProject: (ref: string, fcn: (contents: string) => void) => void;
+            loadProjectFromSjr: (b64data: string) => void;
+        };
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.__ioDebug = {
+        zipProject: (ref, fcn) => IO.zipProject(ref, fcn),
+        loadProjectFromSjr: (b64) => IO.loadProjectFromSjr(b64),
+    };
 }

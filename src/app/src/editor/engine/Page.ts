@@ -1,3 +1,4 @@
+import ScratchJr from '../ScratchJr';
 import { enginePorts } from './ports';
 import { bumpMediaCount, getMediaCount } from './mediaCounter';
 import { getModelRefAs, setModelRef } from '../modelRegistry';
@@ -295,6 +296,35 @@ export default class Page {
             ctx.drawImage(BlockSpecs.canvasMask, 0, 0, w, h);
             ctx.restore();
         }
+    }
+
+    /**
+     * Full-resolution stage render for image export. Same painter as the
+     * thumbnails (bkg image + stamped sprites) but at native stage size,
+     * opaque background, and no thumbnail mask.
+     */
+    renderStageToCanvas (scale = 2): HTMLCanvasElement {
+        var c = document.createElement('canvas');
+        c.width = 480 * scale;
+        c.height = 360 * scale;
+        var ctx = c.getContext('2d')!;
+        ctx.fillStyle = ScratchJr.stagecolor || '#FFFFFF';
+        ctx.fillRect(0, 0, c.width, c.height);
+        if (this.bkg.childElementCount > 0 && this.bkg.originalImg) {
+            var img = this.bkg.originalImg;
+            var imgw = img.naturalWidth ? img.naturalWidth : img.width;
+            var imgh = img.naturalHeight ? img.naturalHeight : img.height;
+            ctx.drawImage(img, 0, 0, imgw, imgh, 0, 0, c.width, c.height);
+        }
+        var scaleF = c.width / 480;
+        for (var i = 0; i < this.div.childElementCount; i++) {
+            var spr = getModelRefAs<Sprite>(this.div.childNodes[i] as HTMLElement, 'sprite');
+            if (!spr) {
+                continue;
+            }
+            this.stampSpriteAt(ctx, spr, scaleF);
+        }
+        return c;
     }
 
     stampSpriteAt (ctx: CanvasRenderingContext2D, spr: Sprite, scale: number) {

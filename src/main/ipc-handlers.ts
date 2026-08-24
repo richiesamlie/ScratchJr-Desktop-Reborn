@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { app, ipcMain, BrowserWindow, IpcMainInvokeEvent, IpcMainEvent } from 'electron';
+import { app, dialog, ipcMain, BrowserWindow, IpcMainInvokeEvent, IpcMainEvent } from 'electron';
 import {
     DEBUG, DEBUG_DATABASE, DEBUG_FILEIO, DEBUG_RESOURCEIO, DEBUG_NYI, debugLog
 } from './logging';
@@ -253,6 +253,26 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         }
     });
 
+    // ---- Stage image export ----
+    ipcMain.handle('save-stage-png', async (_event: IpcMainInvokeEvent, arg: { dataUrl: string; suggestedName: string }) => {
+        try {
+            const m = /^data:image\/png;base64,(.+)$/.exec(arg?.dataUrl ?? '');
+            if (!m) return null;
+            const safeName = (arg.suggestedName || 'stage').replace(/[\\/:*?"<>|]/g, '_');
+            const win = getWindow();
+            const res = await dialog.showSaveDialog(win!, {
+                defaultPath: safeName.endsWith('.png') ? safeName : safeName + '.png',
+                filters: [{ name: 'PNG image', extensions: ['png'] }],
+            });
+            if (res.canceled || !res.filePath) return null;
+            await fs.promises.writeFile(res.filePath, Buffer.from(m[1], 'base64'));
+            debugLog('stage exported:', res.filePath);
+            return res.filePath;
+        } catch (e) {
+            debugLog('save-stage-png failed:', e);
+            return null;
+        }
+    });
     ipcMain.on('app-closed-acked', (_event: IpcMainEvent) => {
         const dataStore = getDataStore();
         if (dataStore.databaseManager) {

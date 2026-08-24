@@ -79,6 +79,11 @@ interface IpcBridge {
     // ---- Lifecycle (fire-and-forget) ----
     sendAppClosedAcked(): void;
 
+    // ---- Stage image export ----
+    onExportStageRequest(callback: () => void): void;
+    /** Resolves with the saved file path, or null when cancelled/failed */
+    sendExportedPng(dataUrl: string, suggestedName: string): Promise<string | null>;
+
     // ---- Event listeners (main → renderer push) ----
     onDatabaseRestored(callback: () => void): void;
     onKeyboardShortcut(callback: (action: string) => void): void;

@@ -93,6 +93,10 @@ app.whenReady().then(async () => {
     if (dataStore.hasRestoreDatabase()) {
         fsMenu.push({ label: 'Restore projects', click: () => dataStore!.restoreProjects() });
     }
+    fsMenu.push({
+        label: 'Export Stage as PNG...',
+        click: () => { const w = getWindow(); if (w && !w.isDestroyed()) w.webContents.send('export-stage-request'); },
+    });
     fsMenu.push({ type: 'separator' });
     fsMenu.push({
         label: 'Check for Updates...',

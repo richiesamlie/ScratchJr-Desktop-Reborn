@@ -71,6 +71,24 @@ setEnginePorts({
     projectEncodeStrip: (b) => Project.encodeStrip(b),
 });
 
+// File > Export Stage as PNG... : compose the current page at 2x and hand
+// the data URL to main for the save dialog.
+window.scratchjr!.onExportStageRequest(() => {
+    try {
+        const page = ScratchJr.stage?.currentPage;
+        if (!page || typeof page.renderStageToCanvas !== 'function') return;
+        const dataUrl = page.renderStageToCanvas(2).toDataURL('image/png');
+        let name = '';
+        try {
+            name = (document.forms as unknown as { projectname: { myproject: HTMLInputElement } })
+                .projectname.myproject.value || '';
+        } catch (_) { /* form not present */ }
+        if (!name.trim()) name = 'stage';
+        void window.scratchjr!.sendExportedPng(dataUrl, name.trim() + '-stage.png');
+    } catch (err) {
+        console.error('export stage failed:', err);
+    }
+});
 export function editorMain () { // eslint-disable-line import/prefer-default-export
     iOS.getsettings(doNext);
     function doNext (str: string) {

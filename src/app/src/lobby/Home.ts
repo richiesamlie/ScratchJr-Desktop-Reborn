@@ -31,6 +31,7 @@ export default class Home {
         div.setAttribute('id', 'scrollarea');
         frame.onmousedown = Home.handleTouchStart;
         frame.onmouseup = Home.handleTouchEnd;
+        Home.installSjrDrop();
         Home.displayYourProjects();
     }
 
@@ -241,6 +242,46 @@ export default class Home {
     //////////////////////////
     // Gather projects
     //////////////////////////
+
+    /** Import .sjr projects by dropping them anywhere on the lobby. */
+    static installSjrDrop () {
+        window.addEventListener('dragover', function (e) {
+            e.preventDefault();
+        });
+        window.addEventListener('drop', function (e) {
+            e.preventDefault();
+            if (!e.dataTransfer || !e.dataTransfer.files) {
+                return;
+            }
+            var files: File[] = [];
+            for (var i = 0; i < e.dataTransfer.files.length; i++) {
+                var f = e.dataTransfer.files[i];
+                if (/\.sjr$/i.test(f.name)) {
+                    files.push(f);
+                }
+            }
+            for (var j = 0; j < files.length; j++) {
+                Home.importSjrFile(files[j]);
+            }
+        });
+    }
+
+    static importSjrFile (file: File) {
+        ScratchAudio.sndFX('tap.wav');
+        file.arrayBuffer().then(function (buf) {
+            var bytes = new Uint8Array(buf);
+            var binary = '';
+            var CHUNK = 0x8000;
+            for (var i = 0; i < bytes.length; i += CHUNK) {
+                binary += String.fromCharCode.apply(null, [
+                    bytes.subarray(i, i + CHUNK)
+                ] as unknown as number[]);
+            }
+            IO.loadProjectFromSjr(btoa(binary));
+        }).catch(function (err) {
+            console.error('importSjrFile failed:', err);
+        });
+    }
 
     static displayYourProjects () {
         iOS.getfile('homescroll.sjr', gotScrollsState);
