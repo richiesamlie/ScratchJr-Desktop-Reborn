@@ -73,10 +73,16 @@ export default class iOS {
     static async stmt(json: DbWriteIntent, fcn?: (result: unknown) => void) {
         try {
             var result = await tabletInterface!.database_stmt(JSON.stringify(json));
+            if (typeof result === 'number' && result < 0) {
+                // Distinct failure codes from the main process (DB_ERRORS):
+                // -1 database closed, -2 intent rejected, -3 SQL error.
+                console.error('[db] statement failed, code', result, JSON.stringify(json.op));
+            }
             if (typeof (fcn) !== 'undefined') {
                 fcn(result);
             }
         } catch (e) {
+            console.error('[db] statement IPC error:', e);
             if (typeof (fcn) !== 'undefined') {
                 fcn(-1);
             }

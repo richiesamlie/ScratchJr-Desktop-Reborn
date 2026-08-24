@@ -14,6 +14,16 @@ import {
 import { parseDbIntent } from '../lib/db-intents';
 import type { ScratchJRDataStore } from './data-store';
 
+/**
+ * Distinct failure codes for the legacy numeric statement protocol.
+ * Success stays >= 0 (rowid / changes); every failure mode gets its own
+ * negative code so the renderer can tell them apart and log the reason.
+ */
+export const DB_ERRORS = {
+    DB_CLOSED: -1,
+    INTENT_REJECTED: -2,
+    SQL_ERROR: -3,
+} as const;
 // Parse --lang=xx from command line (e.g. ScratchJr --lang=fr)
 const cliLangArg = process.argv.find((a) => a.startsWith('--lang='));
 const cliLang = cliLangArg ? cliLangArg.split('=')[1] : null;
@@ -206,7 +216,7 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
             const db = dataStore?.databaseManager;
             if (!db || !db.isOpen()) {
                 debugLog('database_stmt called but database is not open');
-                return -1;
+                return DB_ERRORS.DB_CLOSED;
             }
             const result = db.stmt({ stmt: intent.sql, values: intent.values as Array<string | number | boolean | null> });
             if (DEBUG_DATABASE) debugLog('database_stmt result:', result);
@@ -217,8 +227,10 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
             return result;
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e);
-            debugLog('database_stmt blocked:', message);
-            return -1;
+            const code = message.startsWith('unknown ') || message.includes('db intent') || message.includes('intent')
+                ? DB_ERRORS.INTENT_REJECTED : DB_ERRORS.SQL_ERROR;
+            debugLog('database_stmt blocked (' + code + '):', message);
+            return code;
         }
     });
 

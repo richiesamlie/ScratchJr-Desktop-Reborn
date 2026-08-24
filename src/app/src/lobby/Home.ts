@@ -180,7 +180,7 @@ export default class Home {
     }
 
     static gotoEditor (md5: unknown) {
-        if (!md5 || md5 === -1 || md5 === 0 || md5 === '0' || md5 === '-1') {
+        if (!md5 || Number(md5) <= 0) { // rowids are positive; anything else is a failure code
             console.error('gotoEditor: Failed to create project in database, invalid id:', md5);
             import('../editor/ui/Alert').then((m) => {
                 m.default.open(frame, gn('flip')!, 'Error creating project', '#D62222');
