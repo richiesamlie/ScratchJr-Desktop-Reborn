@@ -11,6 +11,19 @@ vi.mock('electron', () => ({
     BrowserWindow: vi.fn(),
 }));
 
+// Mock logging.ts too: it opens a real write stream at module scope
+// (app.getPath-based), which breaks on Windows CI where /tmp has no drive dir.
+vi.mock('../../src/main/logging.ts', () => ({
+    DEBUG_DATABASE: false,
+    DEBUG_CLEANASSETS: false,
+    DEBUG: false,
+    DEBUG_FILEIO: false,
+    DEBUG_NYI: false,
+    DEBUG_LOAD_DEVTOOLS: false,
+    DEBUG_RESOURCEIO: false,
+    debugLog: vi.fn(),
+    logFile: { write: vi.fn(), end: vi.fn() },
+}));
 import { compareVersions } from '../../src/main/updater.ts';
 
 describe('compareVersions', () => {
