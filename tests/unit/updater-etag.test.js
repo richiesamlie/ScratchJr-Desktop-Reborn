@@ -29,10 +29,19 @@ vi.mock('../../src/main/logging.ts', () => ({
 
 import { checkForUpdate } from '../../src/main/updater.ts';
 
+const URL = 'https://example.com/dl';
 const RELEASE = {
     tag_name: 'v1.6.2',
     body: 'notes',
-    assets: [{ name: 'ScratchJr-win32-x64.zip', browser_download_url: 'https://example.com/dl' }],
+    // All platforms, matching real release payloads: the updater picks its
+    // asset by process.platform/arch, so CI runners on any OS must find one.
+    assets: [
+        { name: 'ScratchJr-win32-x64.zip', browser_download_url: URL },
+        { name: 'ScratchJr-darwin-x64.zip', browser_download_url: URL },
+        { name: 'ScratchJr-darwin-arm64.zip', browser_download_url: URL },
+        { name: 'ScratchJr-linux-x64.zip', browser_download_url: URL },
+        { name: 'ScratchJr-linux-arm64.zip', browser_download_url: URL },
+    ],
 };
 
 function mockFetchOnce (status, body, headers = {}) {
