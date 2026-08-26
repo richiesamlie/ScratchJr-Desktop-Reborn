@@ -43,7 +43,7 @@
 
 ### ⚡ Strict TypeScript & Testing
 - **100% Strict TypeScript**: Entire codebase migrated to TypeScript with strict type checking (`strict: true`, zero `any`).
-- **Comprehensive Test Suite**: 127 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, update-check ETag caching, and the CSS preprocessor grammar.
+- **Comprehensive Test Suite**: 132 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, update-check ETag caching, the CSS preprocessor grammar, and the .sjr import/export + media-cache paths.
 
 ### 🌍 Classroom & Fleet Deployment
 - **`--lang` CLI Flag**: Launch with explicit language overrides (e.g., `ScratchJr.exe --lang=fr`), ideal for school environments.

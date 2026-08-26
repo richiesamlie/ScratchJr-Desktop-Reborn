@@ -3,6 +3,33 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.7.1] — 2026-08-26
+
+**Share & polish release.** Projects can now leave the machine as easily as
+they arrive.
+
+### Features
+- **`.sjr` Import**: drag a `.sjr` project file anywhere onto the lobby;
+  assets merge, names dedupe, and the lobby refreshes automatically.
+- **`.sjr` Export**: `File` ? `Export Project (.sjr)...` saves the open
+  project as a shareable `.sjr` (native save dialog, `.sjr` filter).
+- **Stage PNG Export**: `File` ? `Export Stage as PNG...` renders the
+  current page at 960×720 into a chosen PNG.
+
+### Fixes
+- **jszip 3 migration for the dormant share paths**: `zipProject` /
+  `loadProjectFromSjr` used jszip 2 sync APIs (`generate`/`load`/
+  `asBinary`) that are throw-stubs on the bundled jszip 3.10 — both would
+  have crashed on first use. Rewritten onto `generateAsync`/`loadAsync`.
+- **Distinct DB error codes** (`-1` closed, `-2` intent rejected,
+  `-3` SQL error) with renderer-side reason logging, replacing the single
+  ambiguous `-1` sentinel; project-open guard simplified.
+- **Media cache is LRU with a 64 MB byte budget**, replacing FIFO-by-
+  insertion at an entry count.
+
+### Housekeeping
+- Removed stale handoff docs, one-off fix scripts, and the outdated IPC
+  inventory; refreshed `docs/README.md` and main README.
 ## [v1.7.0] — 2026-08-24
 
 **Modernization release.** The legacy tablet architecture was refactored to a
