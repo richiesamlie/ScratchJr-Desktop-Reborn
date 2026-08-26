@@ -438,6 +438,63 @@ async function main() {
             console.log('interact: [sjr-export] bridge wired=' + wired);
             if (!wired) failures.push('.sjr export bridge channels missing');
         }
+        // ---- Scenario 4b: USER media is embedded in the .sjr ----
+        // Library assets are excluded by design (identical built-in library on
+        // every install); user assets must ride along. This exercises the
+        // file-backed read path feeding addMediaToZip.
+        {
+            const probeName = await s3.eval(`(function(){
+                var s = window.__modelRefs.getModelRefAs(
+                    document.getElementById('${sprId}'), 'sprite');
+                if (!s.sounds) s.sounds = [];
+                return new Promise(function (resolve) {
+                    window.iOS.setmedia(btoa('USERMEDIA-PROBE'), 'wav', function (name) {
+                        if (s.sounds.indexOf(name) < 0) s.sounds.push(name);
+                        resolve(name);
+                    });
+                });
+            })()`);
+            console.log('interact: [user-media] injected asset ' + probeName);
+
+            // Persist the sound reference into the project row.
+            const saved = await s3.eval(`(new Promise(function (resolve) {
+                window.ScratchJr.saveProject(null, function () { resolve(true); });
+            }))`);
+            if (!saved) throw new Error('saveProject failed');
+
+            // Export and poll for the payload.
+            await s3.eval(`(function(){
+                window.__sjrB64 = null;
+                window.__ioDebug.zipProject(window.ScratchJr.currentProject, function(b){ window.__sjrB64 = b; });
+            })()`);
+            let b64 = null;
+            for (let i = 0; i < 50 && !b64; i++) {
+                await sleep(200);
+                b64 = await s3.eval('window.__sjrB64');
+            }
+            if (!b64) throw new Error('zipProject produced no data (user-media probe)');
+            console.log('interact: [user-media] exported ' + b64.length + ' chars');
+
+            // Re-import: the asset must come back out of the target store.
+            await s3.eval(`(function(){
+                var data = window.__sjrB64;
+                window.__ioDebug.loadProjectFromSjr(data);
+            })()`);
+            let mediaOk = false;
+            for (let i = 0; i < 25 && !mediaOk; i++) {
+                await sleep(400);
+                mediaOk = await s3.eval(`(new Promise(function (resolve) {
+                    window.iOS.getmedia('${probeName}', function (data) {
+                        resolve(data === btoa('USERMEDIA-PROBE'));
+                    });
+                }))`);
+            }
+            console.log('interact: [user-media] re-imported content matches=' + mediaOk);
+            if (!mediaOk) {
+                failures.push('user media was not embedded in .sjr / restored on import');
+            }
+        }
+
         s3.close();
     } catch (err) {
         failures.push(err.message + '\n' + (err.stack || '').split('\n').slice(0, 4).join('\n'));
