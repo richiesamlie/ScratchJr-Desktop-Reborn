@@ -390,13 +390,6 @@ export default class Undo {
         }
     }
 
-    static flashIcon (div: HTMLElement, press: string) {
-        div.setAttribute('class', press);
-        setTimeout(function () {
-            Undo.update();
-        }, 1000);
-    }
-
     static doneLoading () {
         Thumbs.updateSprites();
         Thumbs.updatePages();

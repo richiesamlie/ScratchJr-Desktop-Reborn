@@ -330,40 +330,6 @@ export default class ScratchJr {
         return editmode != 'look';
     }
 
-    // Called when ScratchJr is brought back to focus
-    // Here, we fix up some UI elements that may not have been properly shut down when the app was paused.
-    // Note that on Android Lollipop and up we have much more limited
-    // opportunity to save progress, etc. before the app is
-    // paused, and so we just suspend the whole webview and then restore it here.
-    static onResume () {
-        // no nothing special, for now.
-        if (Record.dialogOpen) {
-            Record.recordError();
-        }
-
-        // Re-enable autosaves (clear any existing interval first to avoid duplicates)
-        autoSaveEnabled = true;
-        if (autoSaveSetInterval !== null) {
-            window.clearInterval(autoSaveSetInterval);
-        }
-        autoSaveSetInterval = window.setInterval(function () {
-            const projectWithSaving = Project as unknown as { saving: boolean };
-        if (autoSaveEnabled && !onHold && !projectWithSaving.saving && !UI.infoBoxOpen) {
-                ScratchJr.saveProject(null, function () {
-                    Alert.close();
-                });
-            }
-        }, window.Settings!.autoSaveInterval);
-    }
-
-    static onPause () {
-        autoSaveEnabled = false;
-        if (autoSaveSetInterval !== null) {
-            window.clearInterval(autoSaveSetInterval);
-            autoSaveSetInterval = null;
-        }
-    }
-
     static saveProject (e: Event | null, onDone: () => void) {
         if (ScratchJr.isEditable() && editmode == 'storyStarter' && storyStarted && !Project.error) {
             iOS.analyticsEvent('samples', 'story_starter_edited', Project.metadata!.name as string);

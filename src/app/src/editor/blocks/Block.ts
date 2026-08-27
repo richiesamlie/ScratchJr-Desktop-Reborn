@@ -323,18 +323,6 @@ export default class Block {
         }
     }
 
-    setSound (bt: string) {
-        var p = this.arg.div;
-        p.parentNode!.removeChild(p);
-        var icon = this.blockicon;
-        icon.parentNode!.removeChild(icon);
-        var op = bt;
-        var specs = BlockSpecs.defs[op] as unknown[];
-        this.setBlockshapeFromSpecs(specs);
-        this.drawBlock();
-        this.createArgument();
-    }
-
     duplicateBlock (dx: number, dy: number, spr: Sprite) {
         var op = this.blocktype;
         var specs = BlockSpecs.defs[op] as unknown[];

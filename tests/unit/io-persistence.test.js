@@ -1,17 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mockMediaLib } from './helpers/browser-globals.js';
 
 // lib.ts evaluates `typeof window.orientation` / `'ontouchstart' in window` at
-// module scope, so stub the browser globals before the IO module graph loads.
-vi.hoisted(() => {
-    globalThis.window = {
-        orientation: undefined,
-        location: { href: 'test.html' },
-        innerHeight: 768,
-        innerWidth: 1024,
-        devicePixelRatio: 1,
-        CSSRule: {},
-    };
-});
+// module scope, so stub the browser globals before the IO module graph loads
+// (the shared helper import above does that).
 
 // IO's import graph touches DOM-only modules (iOS bridge, Lobby/appEntry,
 // SVG rendering). Stub them; the persistence logic under test only needs
@@ -27,9 +19,7 @@ vi.mock('../../src/app/src/iPad/iOS.ts', () => ({
 
 vi.mock('../../src/app/src/lobby/Lobby.js', () => ({ default: {} }));
 vi.mock('../../src/app/src/utils/SVG2Canvas.js', () => ({ default: {} }));
-vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({
-    default: { path: 'media/', keys: {}, sounds: [], sprites: [], backgrounds: [] },
-}));
+vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({ default: mockMediaLib }));
 
 import IO from '../../src/app/src/iPad/IO.ts';
 import iOS from '../../src/app/src/iPad/iOS.ts';

@@ -86,7 +86,6 @@ export function compareVersions(a: string, b: string): number {
  */
 export async function checkForUpdate(): Promise<UpdateInfo> {
     const currentVersion = app.getVersion();
-    const currentTag = `v${currentVersion}`;
     const releasePageUrl = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
 
     const defaultResult: UpdateInfo = {
@@ -120,7 +119,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
 
         if (response.status === 304 && cached.release) {
             debugLog('Update check: release unchanged (304, rate-limit free)');
-            return buildUpdateInfo(cached.release, currentVersion, currentTag, releasePageUrl);
+            return buildUpdateInfo(cached.release, currentVersion, releasePageUrl);
         }
 
         if (!response.ok) {
@@ -138,7 +137,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         cached = { etag: response.headers.get('etag'), release };
         saveEtagCache(cached);
 
-        return buildUpdateInfo(release, currentVersion, currentTag, releasePageUrl);
+        return buildUpdateInfo(release, currentVersion, releasePageUrl);
     } catch (err) {
         debugLog('Update check error:', err);
         return defaultResult;
@@ -149,7 +148,6 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
 function buildUpdateInfo (
     release: NonNullable<CachedRelease['release']>,
     currentVersion: string,
-    _currentTag: string,
     releasePageUrl: string
 ): UpdateInfo {
     const latestVersion = release.tag_name.replace(/^v/, '');

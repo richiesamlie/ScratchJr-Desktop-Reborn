@@ -385,15 +385,6 @@ export default class PaintAction {
         Ghost.findTarget(evt);
     }
 
-    static isMoving (evt: PaintEvt) {
-        if (dragging) {
-            return true;
-        }
-        var pt = PaintAction.getScreenPt(evt);
-        var delta = Vector.diff(pt, Paint.initialPoint);
-        return !dragging && (Vector.len(delta) > mindist);
-    }
-
     static fingerMove (evt: PaintEvt) {
         Ghost.findTarget(evt);
     }

@@ -23,7 +23,7 @@ entry `src/app/renderer-entry.js`). Every HTML page loads **only** that bundle.
 **Verifying a packaged build:**
 
 ```bash
-node scripts/smoke.js   # boots the packaged app, expects [SCRATCHJR_READY]
+node scripts/smoke-packaged.js out/ScratchJr-win32-x64   # boots the packaged app, expects [SCRATCHJR_READY]
 # or check the bundle made it into the asar:
 node -e "const a=require('@electron/asar');const p='out/ScratchJr-win32-x64/resources/app.asar';console.log(a.extractFile(p,'src\\\\app\\\\dist\\\\app.bundle.js').length)"
 ```
@@ -129,8 +129,8 @@ git tag vX.Y.Z && git push origin vX.Y.Z  # CI builds all 6 targets + MSI + rele
   `ScratchJr.onHold` — a closed picker can no longer re-add characters via
   stale handlers or re-entrant adds (this was the "flood of characters on
   click" bug).
-- CI does not boot-verify packaged artifacts (`scripts/smoke.js` is local-only).
-  A smoke step in the workflow would catch packaging regressions like the
+- CI boot-verifies packaged artifacts with `scripts/smoke-packaged.js`
+  (build-release.yml) — added to catch packaging regressions like the
   missing-bundle one.
 - `MediaLib.keys` is populated asynchronously at runtime — tests must not depend
   on it (use the `Page`-with-data construction above).

@@ -9,7 +9,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { app, dialog, BrowserWindow } from 'electron';
-import { DEBUG_DATABASE, DEBUG_FILEIO, debugLog } from './logging';
+import { debugLog } from './logging';
 import { DatabaseManager } from './database';
 import { validateFilePath } from '../lib/path-utils';
 
@@ -55,7 +55,6 @@ export class ScratchJRDataStore {
                 this.electronBrowserWindow.webContents.send('databaseRestored', {});
             }
         };
-        if (DEBUG_DATABASE) debugLog('DatabaseManager created');
     }
 
     hasRestoreDatabase(): boolean {
@@ -72,8 +71,6 @@ export class ScratchJRDataStore {
         if (fs.existsSync(scratchRestoreDB)) {
             this.databaseManager = await DatabaseManager.initialize(scratchDBPath, scratchRestoreDB);
             this.finishInit(this.databaseManager);
-
-            if (DEBUG_DATABASE) debugLog('DatabaseManager reloaded from restored copy');
 
             this.electronBrowserWindow!.webContents.send('databaseRestored', {});
 
@@ -92,13 +89,6 @@ export class ScratchJRDataStore {
         }
     }
 
-    isInScratchJRFolder(fullPath: string): boolean {
-        if (!fullPath || fullPath.length === 0) return false;
-        const testFolder = path.dirname(fullPath);
-        const scratchJRPath = ScratchJRDataStore.getScratchJRFolder();
-        return (scratchJRPath === testFolder);
-    }
-
     static getScratchJRFolder(): string {
         const documents = app.getPath('documents');
         if (!documents) throw new Error('could not get documents folder');
@@ -109,9 +99,7 @@ export class ScratchJRDataStore {
     }
 
     static ensureDir(filePath: string): void {
-        if (!fs.existsSync(filePath)) {
-            fs.mkdirSync(filePath);
-        }
+        fs.mkdirSync(filePath, { recursive: true });
     }
 
     /**
@@ -162,24 +150,6 @@ export class ScratchJRDataStore {
         }
     }
 
-    readProjectFileAsBase64EncodedString(filename: string): Promise<string | null> {
-        const db = this.databaseManager!;
-        return db.readProjectFile(filename);
-    }
-
-    removeProjectFile(filename: string): void {
-        const db = this.databaseManager!;
-        db.removeProjectFile(filename);
-    }
-
-    writeProjectFile(file: string, contents: string): string | number {
-        const db = this.databaseManager!;
-        if (db.saveToProjectFiles(file, contents)) {
-            return file;
-        }
-        return -1;
-    }
-
     safeGetFilenameInAppDirectory(file: string, warnIfNotPresent?: boolean): string | null {
         if (!file || file === '') throw new Error('File cannot be null or empty');
 
@@ -194,7 +164,7 @@ export class ScratchJRDataStore {
             return filePath;
         }
 
-        if (DEBUG_FILEIO || warnIfNotPresent) debugLog('safeGetFilenameInAppDirectory: file does not exist.', file, filePath);
+        if (warnIfNotPresent) debugLog('safeGetFilenameInAppDirectory: file does not exist.', file, filePath);
 
         return null;
     }

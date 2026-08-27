@@ -653,27 +653,6 @@ export default class SVGTools {
     //////////////////////////////////
 
 
-    static getDataurl (copy: Element, w: number, h: number) {
-        var serializer = new XMLSerializer();
-        var header = '<svg  xmlns="' + Paint.xmlns + '"' + ' viewBox= "0 0 ' + w + ' ' + h + '"'
-            + ' width=' + '"' + w + 'px' + '"' + ' height=' + '"' + h + 'px' + '">';
-        var svgdata = header + '\n' + serializer.serializeToString(copy) + '</svg>';
-        return 'data:image/svg+xml;base64,' + btoa(svgdata);
-    }
-
-    static getLayersAbove (p: Element, index: number, w: number, h: number) {
-        var serializer = new XMLSerializer();
-        var svgdata = '<svg  xmlns="' + Paint.xmlns + '"' + ' viewBox= "0 0 ' + w + ' ' + h + '"'
-            + ' width=' + '"' + w + 'px' + '"' + ' height=' + '"' + h + 'px' + '">';
-        svgdata += '\n';
-        var startat = Math.min(index + 1, p.childElementCount);
-        for (var i = startat; i < p.childElementCount; i++) {
-            svgdata += serializer.serializeToString(p.childNodes[i]) + '\n';
-        }
-        svgdata += '</svg>';
-        return 'data:image/svg+xml;base64,' + btoa(svgdata);
-    }
-
     /////////////////////////////
     // Cloning
     /////////////////////////////

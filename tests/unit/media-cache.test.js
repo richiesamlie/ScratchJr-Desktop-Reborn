@@ -1,23 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('electron', () => ({
-    app: { isPackaged: false, getPath: vi.fn(() => '/tmp'), quit: vi.fn() },
-    ipcMain: { handle: vi.fn(), on: vi.fn() },
-    BrowserWindow: vi.fn(),
-    dialog: { showMessageBox: vi.fn(), showErrorBox: vi.fn() },
-}));
+vi.mock('electron', async () => {
+    const { electronMainMock } = await import('./helpers/main-process-env.js');
+    return electronMainMock();
+});
 
-vi.mock('../../src/main/logging.ts', () => ({
-    DEBUG_DATABASE: false,
-    DEBUG_CLEANASSETS: false,
-    DEBUG: false,
-    DEBUG_FILEIO: false,
-    DEBUG_NYI: false,
-    DEBUG_LOAD_DEVTOOLS: false,
-    DEBUG_RESOURCEIO: false,
-    debugLog: vi.fn(),
-    logFile: { write: vi.fn(), end: vi.fn() },
-}));
+vi.mock('../../src/main/logging.ts', async () => {
+    const { loggingMock } = await import('./helpers/logging-mock.js');
+    return loggingMock();
+});
 
 import { ScratchJRDataStore } from '../../src/main/data-store.ts';
 

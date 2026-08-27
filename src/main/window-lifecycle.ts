@@ -7,13 +7,23 @@
 
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { app, BrowserWindow, globalShortcut } from 'electron';
-import { DEBUG_LOAD_DEVTOOLS, debugLog } from './logging';
+import { debugLog } from './logging';
 import type { ScratchJRDataStore } from './data-store';
 import { isParentFolder } from '../lib/path-utils';
 
 let win: BrowserWindow | null = null;
 let dataStoreRef: ScratchJRDataStore | null = null;
+
+const ALLOWED_PERMISSIONS = ['media', 'mediaKeySystem'];
+
+const KEYBOARD_SHORTCUTS: Array<{ key: string; action: string }> = [
+    { key: 'CommandOrControl+S', action: 'save' },
+    { key: 'CommandOrControl+Z', action: 'undo' },
+    { key: 'CommandOrControl+N', action: 'new' },
+    { key: 'CommandOrControl+Shift+Z', action: 'redo' },
+];
 
 const windowStateFile = path.join(app.getPath('userData'), 'window-state.json');
 
@@ -70,8 +80,7 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
 
     // Security: only allow camera and microphone permissions.
     win.webContents.session.setPermissionRequestHandler((_webContents, permission, callback) => {
-        const allowed = ['media', 'mediaKeySystem'];
-        if (allowed.includes(permission)) {
+        if (ALLOWED_PERMISSIONS.includes(permission)) {
             callback(true);
         } else {
             debugLog('Blocked permission request:', permission);
@@ -81,8 +90,7 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
 
     // Security: also gate programmatic permission checks.
     win.webContents.session.setPermissionCheckHandler((_webContents, permission, _requestingOrigin) => {
-        const allowed = ['media', 'mediaKeySystem'];
-        return allowed.includes(permission);
+        return ALLOWED_PERMISSIONS.includes(permission);
     });
 
     // Security: only allow in-app file:// navigations under src/app.
@@ -91,14 +99,7 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
         let targetPath: string | null = null;
 
         try {
-            const parsed = new URL(navigationUrl);
-            if (parsed.protocol === 'file:') {
-                targetPath = decodeURIComponent(parsed.pathname);
-                if (/^\/[A-Za-z]:/.test(targetPath)) {
-                    targetPath = targetPath.slice(1);
-                }
-                targetPath = path.normalize(targetPath);
-            }
+            targetPath = fileURLToPath(navigationUrl);
         } catch (e) {
             targetPath = null;
         }
@@ -116,10 +117,6 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
             debugLog('Blocked navigation (outside app root):', navigationUrl);
         }
     });
-
-    if (DEBUG_LOAD_DEVTOOLS) {
-        win.webContents.openDevTools();
-    }
 
     win.on('resize', saveWindowState);
     win.on('move', saveWindowState);
@@ -146,26 +143,13 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
     win.webContents.on('did-finish-load', () => {
         console.log('[SCRATCHJR_READY] Renderer loaded successfully');
         globalShortcut.unregisterAll();
-        globalShortcut.register('CommandOrControl+S', () => {
-            if (win && !win.isDestroyed()) {
-                win.webContents.send('keyboard-shortcut', 'save');
-            }
-        });
-        globalShortcut.register('CommandOrControl+Z', () => {
-            if (win && !win.isDestroyed()) {
-                win.webContents.send('keyboard-shortcut', 'undo');
-            }
-        });
-        globalShortcut.register('CommandOrControl+N', () => {
-            if (win && !win.isDestroyed()) {
-                win.webContents.send('keyboard-shortcut', 'new');
-            }
-        });
-        globalShortcut.register('CommandOrControl+Shift+Z', () => {
-            if (win && !win.isDestroyed()) {
-                win.webContents.send('keyboard-shortcut', 'redo');
-            }
-        });
+        for (const { key, action } of KEYBOARD_SHORTCUTS) {
+            globalShortcut.register(key, () => {
+                if (win && !win.isDestroyed()) {
+                    win.webContents.send('keyboard-shortcut', action);
+                }
+            });
+        }
     });
 
     return win;

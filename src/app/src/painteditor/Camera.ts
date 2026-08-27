@@ -60,24 +60,6 @@ export default class Camera {
         Paint.cameraToolsOn();
     }
 
-    static prepareForLandscapeMode (cnv: HTMLCanvasElement) {
-        var result = document.createElement('canvas');
-        setCanvasSize(result, cnv.height, cnv.width);
-        var finalctx = result.getContext('2d')!;
-        var min = Math.min(cnv.width, cnv.height);
-        var max = Math.max(cnv.width, cnv.height);
-        var delta = (max - min) / 2;
-        var pt = {
-            x: (cnv.width / 2),
-            y: (cnv.height / 2)
-        };
-        finalctx.translate(pt.x, pt.y);
-        finalctx.rotate(90 * DEGTOR);
-        finalctx.translate(-pt.x, -pt.y);
-        finalctx.drawImage(cnv, delta, delta);
-        return result;
-    }
-
     static doAction (str: string) {
         switch (str) {
         case 'cameraflip':

@@ -1159,20 +1159,6 @@ Math.floor(h));
         }
     }
 
-    drawCloseButton () {
-        const canvasDiv = this.div as HTMLCanvasElement;
-        var ctx = canvasDiv.getContext('2d')!;
-        var img = document.createElement('img');
-        img.src = 'assets/ui/closeit.svg';
-        if (!img.complete) {
-            img.onload = function () {
-                ctx.drawImage(img, 0, 0);
-            };
-        } else {
-            ctx.drawImage(img, 0, 0);
-        }
-    }
-
     //////////////////////////////////////////
     // Save data
     /////////////////////////////////////////

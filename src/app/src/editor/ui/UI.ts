@@ -921,19 +921,6 @@ export default class UI {
     //   Tools
     /////////////////////////////////////
 
-    static layoutToolbar (div: HTMLElement) {
-        var h = 56;
-        var w = 66 * 2;
-        var tb = newDiv(div, 220, 0, w, h, {
-            position: 'absolute'
-        });
-        tb.setAttribute('id', 'toolbar');
-        var addt = newHTML('div', 'addText', tb);
-        addt.onmousedown = UI.addText;
-        var changebkg = newHTML('div', 'changeBkg', tb);
-        changebkg.onmousedown = UI.addBackground;
-    }
-
     static addSprite (e: MouseEvent) {
         if (ScratchJr.onHold) {
             return;

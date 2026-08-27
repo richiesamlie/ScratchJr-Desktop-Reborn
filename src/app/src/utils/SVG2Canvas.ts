@@ -511,12 +511,6 @@ export default class SVG2Canvas {
         ctx.restore();
     }
 
-    static getLastPathCommand (spr: Element) {
-        var d = spr.getAttribute('d')!;
-        var commands = d.match(/[A-DF-Za-df-z][^A-Za-df-z]*/g)!;
-        return (commands.length > 0) ? commands[commands.length - 1].charAt(0) : null;
-    }
-
     static isCloseDPath (elem: Element) {
         if (elem.tagName != 'path') {
             return true;

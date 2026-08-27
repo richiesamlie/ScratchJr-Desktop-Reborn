@@ -192,23 +192,6 @@ export default class Layer {
         return res;
     }
 
-    static inContactWith (p: Element, mt: Element, factor: number, n: number) {
-        var res: Element[] = [];
-        for (var i = n; i < p.childElementCount; i++) {
-            var elem = p.childNodes[i] as Element;
-            if (elem.id == mt.id) {
-                continue;
-            }
-            if (elem.getAttribute('stencil') == 'yes') {
-                continue;
-            }
-            if (Layer.overlapBox(mt, elem) > 0) {
-                res.push(elem);
-            }
-        }
-        return res;
-    }
-
     static includesBox (e1: Element, e2: Element) {
         var box1 = SVGTools.getBox(e1);
         var box2 = SVGTools.getBox(e2);
@@ -226,21 +209,6 @@ export default class Layer {
             return 1;
         }
         return ((boxi.width * boxi.height) / (box2.width * box2.height)) == 1;
-    }
-
-
-    static getContainedMost (p: Element, elem: Element, max: number, factor: number) {
-        p = elem.parentNode as Element;
-        for (var i = 0; i < max; i++) {
-            var node = p.childNodes[i] as Element;
-            if (node.id == elem.id) {
-                continue;
-            }
-            if (Layer.overlapBoxBy(elem, node, factor)) {
-                return i;
-            }
-        }
-        return null;
     }
 
     static overlapBox (e1: Element, e2: Element) {

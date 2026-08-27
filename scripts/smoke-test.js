@@ -8,15 +8,10 @@
  */
 
 const { spawn } = require('child_process');
-const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const { argOf, sleep, waitForPage, Session, waitReady } = require('./cdp-session');
 
-const args = process.argv.slice(2);
-function argOf(name, dflt) {
-    const i = args.indexOf(name);
-    return i >= 0 ? args[i + 1] : dflt;
-}
 const PORT = Number(argOf('--port', '9334'));
 const TIMEOUT_MS = Number(argOf('--timeout', '90000'));
 const BASE = `http://127.0.0.1:${PORT}`;
@@ -31,115 +26,6 @@ try {
 if (typeof electronPath !== 'string') {
     console.error('smoke: resolved electron is not a path string — run from project root with plain node.');
     process.exit(2);
-}
-
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function fetchJson(urlPath) {
-    return new Promise((resolve, reject) => {
-        const req = http.get(BASE + urlPath, (res) => {
-            let data = '';
-            res.on('data', (c) => { data += c; });
-            res.on('end', () => {
-                try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
-            });
-        });
-        req.on('error', reject);
-        req.setTimeout(2000, () => { req.destroy(new Error('http timeout')); });
-    });
-}
-
-/** Poll /json/list until a page target matching urlPart shows up. */
-async function waitForPage(urlPart, deadline) {
-    while (Date.now() < deadline) {
-        try {
-            const targets = await fetchJson('/json/list');
-            const page = targets.find((t) => t.type === 'page' && t.url.includes(urlPart));
-            if (page) return page;
-        } catch (_) { /* debugger endpoint not up yet */ }
-        await sleep(250);
-    }
-    throw new Error(`smoke: timed out waiting for page matching "${urlPart}"`);
-}
-
-/** Minimal CDP-over-WebSocket session for one page target. */
-class Session {
-    constructor(wsUrl) {
-        this.wsUrl = wsUrl;
-        this.ws = null;
-        this.nextId = 1;
-        this.pending = new Map();
-        this.exceptions = [];
-        this.consoleErrors = [];
-    }
-
-    connect() {
-        return new Promise((resolve, reject) => {
-            const ws = new WebSocket(this.wsUrl);
-            this.ws = ws;
-            ws.onopen = () => resolve();
-            ws.onerror = (e) => reject(new Error('ws error'));
-            ws.onmessage = (ev) => {
-                const msg = JSON.parse(ev.data);
-                if (msg.id && this.pending.has(msg.id)) {
-                    const { resolve: res, reject: rej } = this.pending.get(msg.id);
-                    this.pending.delete(msg.id);
-                    if (msg.error) rej(new Error(msg.error.message));
-                    else res(msg.result);
-                    return;
-                }
-                if (msg.method === 'Runtime.exceptionThrown') {
-                    const d = msg.params.exceptionDetails;
-                    this.exceptions.push(d.text + (d.exception && d.exception.description ? ': ' + d.exception.description : ''));
-                }
-                if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') {
-                    const text = msg.params.args.map((a) => a.value !== undefined ? String(a.value) : (a.description || '')).join(' ');
-                    this.consoleErrors.push(text);
-                }
-            };
-        });
-    }
-
-    send(method, params = {}) {
-        return new Promise((resolve, reject) => {
-            const id = this.nextId++;
-            this.pending.set(id, { resolve, reject });
-            this.ws.send(JSON.stringify({ id, method, params }));
-        });
-    }
-
-    async enable() {
-        await this.send('Runtime.enable');
-    }
-
-    /** Evaluate an expression; returns the JSON value. */
-    async eval(expr) {
-        const res = await this.send('Runtime.evaluate', {
-            expression: expr,
-            returnByValue: true,
-            awaitPromise: true,
-        });
-        if (res.exceptionDetails) {
-            throw new Error('eval failed: ' + (res.exceptionDetails.exception?.description || res.exceptionDetails.text));
-        }
-        return res.result.value;
-    }
-
-    close() {
-        try { this.ws.close(); } catch (_) { /* already gone */ }
-    }
-}
-
-async function waitReady(session, extraExpr, label, deadline) {
-    // extraExpr must become true once the page finished initializing.
-    while (Date.now() < deadline) {
-        const ok = await session.eval(
-            `(document.readyState === 'complete' && !!window.scratchjr && !!(${extraExpr}))`
-        ).catch(() => false);
-        if (ok) return;
-        await sleep(300);
-    }
-    throw new Error(`smoke: ${label} never became ready`);
 }
 
 async function main() {
@@ -163,11 +49,11 @@ async function main() {
     const deadline0 = Date.now() + TIMEOUT_MS;
     try {
         // ---- Phase 1: start screen ----
-        const t1 = await waitForPage('index.html', deadline0);
+        const t1 = await waitForPage(BASE, 'index.html', deadline0, 'smoke');
         const s1 = new Session(t1.webSocketDebuggerUrl);
         await s1.connect();
         await s1.enable();
-        await waitReady(s1, 'true', 'start screen', deadline0);
+        await waitReady(s1, 'true', 'start screen', deadline0, 'smoke');
         await sleep(1500); // let async init (audio, settings) settle
         console.log(`smoke: [start] loaded ${t1.url}`);
         const startExc = s1.exceptions.length;
@@ -175,11 +61,11 @@ async function main() {
         // ---- Phase 2: lobby (home.html) via the app's own navigation ----
         await s1.eval(`window.location.href = 'home.html';`);
         s1.close();
-        const t2 = await waitForPage('home.html', deadline0);
+        const t2 = await waitForPage(BASE, 'home.html', deadline0, 'smoke');
         const s2 = new Session(t2.webSocketDebuggerUrl);
         await s2.connect();
         await s2.enable();
-        await waitReady(s2, "!!document.getElementById('newproject')", 'lobby', deadline0);
+        await waitReady(s2, "!!document.getElementById('newproject')", 'lobby', deadline0, 'smoke');
         console.log('smoke: [lobby] loaded, new-project thumb present');
         const lobbyExc = s2.exceptions.length;
 
@@ -196,11 +82,11 @@ async function main() {
         if (!clicked) throw new Error('smoke: could not dispatch click on new-project thumb');
         s2.close();
 
-        const t3 = await waitForPage('editor.html', deadline0);
+        const t3 = await waitForPage(BASE, 'editor.html', deadline0, 'smoke');
         const s3 = new Session(t3.webSocketDebuggerUrl);
         await s3.connect();
         await s3.enable();
-        await waitReady(s3, "!!document.getElementById('blockspalette')", 'editor', deadline0);
+        await waitReady(s3, "!!document.getElementById('blockspalette')", 'editor', deadline0, 'smoke');
         await sleep(2500); // let editor finish async asset/db loads
         const editorOk = await s3.eval(
             `(!!window.ScratchJr) + '|' + (!!document.getElementById('stage'))`
@@ -245,11 +131,11 @@ async function main() {
         // ---- Phase 6: in-app help fragment ('book' tab -> Lobby.loadLink -> loadPage('inapp*')) ----
         await s3.eval(`window.location.href = 'home.html?place=book';`);
         s3.close();
-        const t4 = await waitForPage('home.html?place=book', deadline0);
+        const t4 = await waitForPage(BASE, 'home.html?place=book', deadline0, 'smoke');
         const s4 = new Session(t4.webSocketDebuggerUrl);
         await s4.connect();
         await s4.enable();
-        await waitReady(s4, "!!document.querySelector('.inappSubpage')", 'help page', deadline0);
+        await waitReady(s4, "!!document.querySelector('.inappSubpage')", 'help page', deadline0, 'smoke');
         await sleep(1200);
         console.log(`smoke: [help] loaded ${t4.url}, exceptions=${s4.exceptions.length}`);
         if (s4.exceptions.length > 0) {

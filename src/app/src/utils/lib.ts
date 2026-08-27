@@ -362,39 +362,6 @@ interface TransitionOptions {
     onComplete?: () => void;
 }
 
-export function CSSTransition (el: HTMLElement, obj: TransitionOptions) {
-    // default
-    var duration = 1;
-    var transition = 'ease';
-    var style: Record<string, string | number> = {
-        left: el.offsetLeft + 'px',
-        top: el.offsetTop + 'px'
-    };
-    if (obj.duration) {
-        duration = obj.duration;
-    }
-    if (obj.transition) {
-        transition = obj.transition;
-    }
-    if (obj.style) {
-        style = obj.style;
-    }
-    var items = '';
-    for (var key in style) {
-        items += key + ' ' + duration + 's ' + transition + ', ';
-    }
-    items = items.substring(0, items.length - 2);
-    el.style.webkitTransition = items;
-    el.addEventListener('webkitTransitionEnd', transitionDene, true);
-    setProps(el.style, style);
-    function transitionDene () {
-        el.style.webkitTransition = '';
-        if (obj.onComplete) {
-            obj.onComplete();
-        }
-    }
-}
-
 export function CSSTransition3D (el: HTMLElement, obj: TransitionOptions) {
     // default
     var duration = 1;
@@ -551,23 +518,6 @@ export function gn (str: string) {
     return document.getElementById(str);
 }
 
-export function newForm (parent: HTMLElement, str: string, x: number, y: number, w: number, h: number, styles?: Record<string, string | number>) {
-    var el = document.createElement('form');
-    el.style.position = 'absolute';
-    el.style.top = y + 'px';
-    el.style.left = x + 'px';
-    if (w) {
-        el.style.width = w + 'px';
-    }
-    if (h) {
-        el.style.height = h + 'px';
-    }
-    setProps(el.style, styles);
-    parent.appendChild(el);
-    el.name = str;
-    return el;
-}
-
 export function newTextInput (p: HTMLElement, type: string, str?: string, mstyle?: Record<string, string | number>) {
     var input = document.createElement('input');
     input.value = str!;
@@ -690,40 +640,6 @@ export function getHex (num: number) {
         return '0' + hex;
     }
     return hex;
-}
-
-// findKeyframesRule ("swing");
-
-export function findKeyframesRule (rule: string) {
-    var ss = document.styleSheets;
-    for (var i = 0; i < ss.length; ++i) {
-        for (var j = 0; j < ss[i].cssRules.length; ++j) {
-            const ruleEntry = ss[i].cssRules[j];
-            // The prefixed constant and the styleSheet.rules collection are
-            // IE-era APIs absent from the standard CSSRule type — guard them.
-            if (!('styleSheet' in ruleEntry)) {
-                continue;
-            }
-            const legacySheet = ruleEntry.styleSheet;
-            if (!legacySheet || typeof legacySheet !== 'object' || !('rules' in legacySheet)) {
-                continue;
-            }
-            const styles = legacySheet.rules;
-            if (!Array.isArray(styles)) {
-                continue;
-            }
-            if (!('WEBKIT_KEYFRAMES_RULE' in window.CSSRule)) {
-                continue;
-            }
-            const keyframesConstant = window.CSSRule.WEBKIT_KEYFRAMES_RULE;
-            for (var k = 0; k < styles.length; ++k) {
-                if (styles[k].type == keyframesConstant && styles[k].name == rule) {
-                    return styles[k];
-                }
-            }
-        }
-    } // rule not found
-    return null;
 }
 
 export function colorToRGBA (color: string, opacity: string) {

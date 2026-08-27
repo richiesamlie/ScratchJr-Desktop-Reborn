@@ -168,15 +168,6 @@ export default class BlockSpecs {
         return img;
     }
 
-
-    static refreshLoading () {
-        for (var key in loadassets) {
-            if (loadassets[key].complete) {
-                loadCount--;
-            }
-        }
-    }
-
     static setupCategories () {
         return [
             [

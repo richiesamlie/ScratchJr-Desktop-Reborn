@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { app, dialog, ipcMain, BrowserWindow, IpcMainInvokeEvent, IpcMainEvent } from 'electron';
 import {
-    DEBUG, DEBUG_DATABASE, DEBUG_FILEIO, DEBUG_RESOURCEIO, DEBUG_NYI, debugLog
+    DEBUG, debugLog
 } from './logging';
 import { parseDbIntent } from '../lib/db-intents';
 import type { ScratchJRDataStore } from './data-store';
@@ -37,7 +37,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_cleanassets', (_event: IpcMainInvokeEvent, fileType: string) => {
-        if (DEBUG_NYI) debugLog('cleanAssets - ', fileType);
         try {
             const dataStore = getDataStore();
             const db = dataStore.databaseManager;
@@ -45,43 +44,40 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
                 db.cleanProjectFiles(fileType);
             }
         } catch (err) {
-            if (DEBUG_NYI) debugLog('cleanAssets error:', err);
+            debugLog('cleanAssets error:', err);
         }
         return true;
     });
 
     ipcMain.handle('io_setfile', (_event: IpcMainInvokeEvent, arg: { name: string; contents: string }) => {
-        if (DEBUG_FILEIO) debugLog('io_setfile', arg);
         try {
-            return getDataStore().writeProjectFile(arg.name, arg.contents);
+            const db = getDataStore().databaseManager;
+            if (!db) return false;
+            if (db.saveToProjectFiles(arg.name, arg.contents)) {
+                return arg.name;
+            }
+            return -1;
         } catch (e) {
             debugLog('io_setfile error:', e);
             return false;
         }
     });
 
-    ipcMain.handle('io_getfile', async (_event: IpcMainInvokeEvent, arg: string) => {
-        if (DEBUG_FILEIO) debugLog('io_getfile', arg);
+    // io_getfile and io_getmedia read the same project media payload.
+    const readProjectMedia = async (_event: IpcMainInvokeEvent, name: string): Promise<string | null> => {
         try {
-            return await getDataStore().readProjectFileAsBase64EncodedString(arg);
+            const db = getDataStore().databaseManager;
+            if (!db) return null;
+            return await db.readProjectFile(name);
         } catch (e) {
-            debugLog('io_getfile error:', e);
+            debugLog('io_getfile/io_getmedia error:', e);
             return null;
         }
-    });
-
-    ipcMain.handle('io_getmedia', async (_event: IpcMainInvokeEvent, filename: string) => {
-        if (DEBUG_FILEIO) debugLog('io_getmedia', filename);
-        try {
-            return await getDataStore().readProjectFileAsBase64EncodedString(filename);
-        } catch (e) {
-            debugLog('io_getmedia error:', e);
-            return null;
-        }
-    });
+    };
+    ipcMain.handle('io_getfile', readProjectMedia);
+    ipcMain.handle('io_getmedia', readProjectMedia);
 
     ipcMain.handle('io_getmediadata', (_event: IpcMainInvokeEvent, key: string, offset: number, length: number) => {
-        if (DEBUG_FILEIO) debugLog('io_getmediadata', key, offset, length);
         const mediaString = getDataStore().getCachedMedia(key);
         if (mediaString) {
             try {
@@ -95,15 +91,15 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_getmediadone', (_event: IpcMainInvokeEvent, key: string) => {
-        if (DEBUG_FILEIO) debugLog('io_getmediadone', key);
         getDataStore().removeFromMediaCache(key);
         return true;
     });
 
     ipcMain.handle('io_getmedialen', async (_event: IpcMainInvokeEvent, file: string, key: string) => {
-        if (DEBUG_FILEIO) debugLog('io_getmedialen', file, key);
         const dataStore = getDataStore();
-        const encodedStr = await dataStore.readProjectFileAsBase64EncodedString(file);
+        const db = dataStore.databaseManager;
+        if (!db) return 0;
+        const encodedStr = await db.readProjectFile(file);
         if (encodedStr) {
             dataStore.cacheMedia(key, encodedStr);
         }
@@ -111,11 +107,12 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_setmedia', (_event: IpcMainInvokeEvent, base64ContentStr: string, ext: string) => {
-        if (DEBUG_FILEIO) debugLog('io_setmedia - write file', ext);
         try {
             const dataStore = getDataStore();
             const filename = `${dataStore.getMD5(base64ContentStr)}.${ext}`;
-            dataStore.writeProjectFile(filename, base64ContentStr);
+            const db = dataStore.databaseManager;
+            if (!db) return null;
+            db.saveToProjectFiles(filename, base64ContentStr);
             return filename;
         } catch (e) {
             debugLog('io_setmedia error:', e);
@@ -124,10 +121,11 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_setmedianame', (_event: IpcMainInvokeEvent, encodedData: string, key: string, ext: string) => {
-        if (DEBUG_FILEIO) debugLog('io_setmedianame', key, ext);
         try {
             const filename = `${key}.${ext}`;
-            getDataStore().writeProjectFile(filename, encodedData);
+            const db = getDataStore().databaseManager;
+            if (!db) return null;
+            db.saveToProjectFiles(filename, encodedData);
             return filename;
         } catch (e) {
             debugLog('io_setmedianame error:', e);
@@ -136,7 +134,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_getsettings', () => {
-        if (DEBUG_RESOURCEIO) debugLog('io_getsettings');
         try {
             const documents = app.getPath('documents');
             return `${path.join(documents, 'ScratchJR')},false,YES,YES`;
@@ -147,7 +144,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_getmd5', (_event: IpcMainInvokeEvent, data: string) => {
-        if (DEBUG_FILEIO) debugLog('io_getmd5');
         try {
             return getDataStore().getMD5(data);
         } catch (e) {
@@ -157,9 +153,10 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_remove', (_event: IpcMainInvokeEvent, filename: string) => {
-        if (DEBUG_FILEIO) debugLog('io_remove: ', filename);
         try {
-            getDataStore().removeProjectFile(filename);
+            const db = getDataStore().databaseManager;
+            if (!db) return false;
+            db.removeProjectFile(filename);
             return true;
         } catch (e) {
             debugLog('io_remove error:', e);
@@ -168,7 +165,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_gettextresource', (_event: IpcMainInvokeEvent, filename: string) => {
-        if (DEBUG_RESOURCEIO) debugLog('io_gettextresource', filename);
         const filePath = getDataStore().safeGetFilenameInAppDirectory(filename, true);
         if (filePath) {
             return fs.readFileSync(filePath, 'utf8');
@@ -178,21 +174,18 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('io_getAudioData', async (_event: IpcMainInvokeEvent, audioName: string) => {
-        if (DEBUG_FILEIO) debugLog('io_getAudioData - looking for', audioName);
         const dataStore = getDataStore();
         let filePath = dataStore.safeGetFilenameInAppDirectory(audioName, false);
         if (!filePath) {
             filePath = dataStore.safeGetFilenameInAppDirectory('sounds/' + audioName, false);
         }
         if (!filePath) {
-            if (DEBUG_FILEIO) debugLog('...trying to look in the PROJECTFILE table', audioName);
-            const projectDBFile = await dataStore.readProjectFileAsBase64EncodedString(audioName);
-            if (DEBUG_FILEIO && !projectDBFile) debugLog('...WARNING: unable to find: ', audioName);
+            const db = dataStore.databaseManager;
+            const projectDBFile = db ? await db.readProjectFile(audioName) : null;
             return projectDBFile;
         }
         const data = fs.readFileSync(filePath);
         if (!data) {
-            if (DEBUG_FILEIO) debugLog('io_getAudioData - could not find on disk', audioName, filePath);
             return null;
         }
         const dataStr = Buffer.from(data).toString('base64');
@@ -206,7 +199,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('database_stmt', (_event: IpcMainInvokeEvent, json: string) => {
-        if (DEBUG_DATABASE) debugLog('database_stmt', json);
         try {
             // Renderer sends a structured intent; SQL is composed here from
             // allowlisted tables/columns only. No renderer SQL text exists.
@@ -219,7 +211,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
                 return DB_ERRORS.DB_CLOSED;
             }
             const result = db.stmt({ stmt: intent.sql, values: intent.values as Array<string | number | boolean | null> });
-            if (DEBUG_DATABASE) debugLog('database_stmt result:', result);
             // Only persist to disk if the statement succeeded
             if (result >= 0) {
                 db.savePending();
@@ -235,7 +226,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('database_query', (_event: IpcMainInvokeEvent, json: string) => {
-        if (DEBUG_DATABASE) debugLog('database_query', json);
         try {
             const intent = parseDbIntent(JSON.parse(json));
             if (intent.kind !== 'select') throw new Error('database_query only accepts select ops');

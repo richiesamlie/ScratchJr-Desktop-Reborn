@@ -180,10 +180,6 @@
             "node": true
         }
     },
-    "eslintIgnore": [
-        "./src/app/dist/*",
-        "src/app/dist/**"
-    ],
     "dependencies": {
         "sql.js": "^1.8.0"
     },

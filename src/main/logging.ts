@@ -31,14 +31,7 @@ console.log = function (...args: unknown[]) {
 };
 console.error = console.log;
 
-// Debug flags
 const DEBUG = isDev;
-const DEBUG_DATABASE = DEBUG && false;
-const DEBUG_FILEIO = DEBUG && false;
-const DEBUG_RESOURCEIO = DEBUG && false;
-const DEBUG_CLEANASSETS = DEBUG && false;
-const DEBUG_NYI = DEBUG && false;
-const DEBUG_LOAD_DEVTOOLS = false;
 
 function debugLog(...args: unknown[]): void {
   if (DEBUG) {
@@ -47,15 +40,7 @@ function debugLog(...args: unknown[]): void {
 }
 
 export {
-  isDev,
   DEBUG,
-  DEBUG_DATABASE,
-  DEBUG_FILEIO,
-  DEBUG_RESOURCEIO,
-  DEBUG_CLEANASSETS,
-  DEBUG_NYI,
-  DEBUG_LOAD_DEVTOOLS,
   debugLog,
   logFile,
-  logStdout,
 };

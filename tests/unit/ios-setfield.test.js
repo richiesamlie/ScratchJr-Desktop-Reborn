@@ -1,22 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { mockMediaLib } from './helpers/browser-globals.js';
 
-// Mirror io-persistence.test.js browser-global stubs.
-vi.hoisted(() => {
-    globalThis.window = {
-        orientation: undefined,
-        location: { href: 'test.html' },
-        innerHeight: 768,
-        innerWidth: 1024,
-        devicePixelRatio: 1,
-        CSSRule: {},
-    };
-});
-
+// Browser-global stubs mirror io-persistence.test.js via the shared helper.
 vi.mock('../../src/app/src/lobby/Lobby.js', () => ({ default: {} }));
 vi.mock('../../src/app/src/utils/SVG2Canvas.js', () => ({ default: {} }));
-vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({
-    default: { path: 'media/', keys: {}, sounds: [], sprites: [], backgrounds: [] },
-}));
+vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({ default: mockMediaLib }));
 
 // Real iOS module (not mocked): setfield's intent shape is the contract under test.
 import iOS from '../../src/app/src/iPad/iOS.ts';

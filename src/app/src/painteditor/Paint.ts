@@ -214,15 +214,6 @@ export default class Paint {
     //Paint Editor Gestures
 
 
-    static blockGestures (e: TouchEvent) {
-        if (!e.touches) {
-            return;
-        }
-        if (e.touches.length == 4) {
-            Paint.ignore(e);
-        }
-    }
-
     static detectGesture (e: MouseEvent | TouchEvent) {
        /* if (!e.touches) {
             return;
@@ -398,17 +389,6 @@ export default class Paint {
             Paint.saveSprite(Paint.changePageSprite);
         }
         ScratchJr.onBackButtonCallback.pop();
-    }
-
-    static saveEditState (fcn?: (result: unknown) => void) {
-        Camera.close();
-        ScratchJr.unfocus();
-        ScratchAudio.sndFX('tap.wav');
-        if ((spriteId == null) && (currentName == null)) {
-            Paint.savePageImage();
-        } else {
-            Paint.saveSprite();
-        }
     }
 
     /////////////////////////

@@ -1,23 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
+import { mockMediaLib } from './helpers/browser-globals.js';
 
-// Browser-global stubs mirroring the other renderer tests. css_vh/css_vw do
-// math against window.innerHeight/innerWidth.
-vi.hoisted(() => {
-    globalThis.window = {
-        orientation: undefined,
-        location: { href: 'test.html' },
-        innerHeight: 768,
-        innerWidth: 1024,
-        devicePixelRatio: 1,
-        CSSRule: {},
-    };
-});
+// Browser-global stubs mirroring the other renderer tests (window comes from
+// the shared helper). css_vh/css_vw do math against innerHeight/innerWidth.
 
 vi.mock('../../src/app/src/lobby/Lobby.js', () => ({ default: {} }));
 vi.mock('../../src/app/src/utils/SVG2Canvas.js', () => ({ default: {} }));
-vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({
-    default: { path: 'media/', keys: {}, sounds: [], sprites: [], backgrounds: [] },
-}));
+vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({ default: mockMediaLib }));
 
 import { preprocess } from '../../src/app/src/utils/lib.ts';
 

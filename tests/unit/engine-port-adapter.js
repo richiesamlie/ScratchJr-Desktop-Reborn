@@ -36,7 +36,6 @@ import Project from '../../src/app/src/editor/ui/Project.ts';
         getSprite: () => ScratchJr.getSprite(),
         getShaking: () => state.shaking,
         setShaking (b) { state.shaking = b; },
-        getStopShaking: () => state.stopShaking,
         setStopShaking (f) { state.stopShaking = f; },
         stopStrips () {},
         unfocus () {},

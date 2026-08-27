@@ -4,11 +4,6 @@ on:
   push:
     tags:
       - "v*.*.*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to build (e.g. v1.3.8). Leave empty to build the latest tag."
-        required: false
 
 concurrency:
   group: release-${{ github.ref }}
@@ -88,20 +83,11 @@ jobs:
       - name: Verify artifact version
         shell: bash
         run: |
-          EXPECTED_VERSION=$(node -p "require('./package.json').version")
-          echo "Expected version: $EXPECTED_VERSION"
-          # Extract version from the packaged app name directory in out/
-          PACKAGED_DIR=$(find out -maxdepth 1 -type d -name "ScratchJr*" | head -1)
-          if [ -n "$PACKAGED_DIR" ]; then
-            echo "Packaged directory: $PACKAGED_DIR"
-          fi
-          echo "Artifact: ${{ matrix.artifact_name }}"
           # Verify the zip file exists and is non-empty
           if [ ! -s "${{ matrix.artifact_name }}" ]; then
             echo "::error::Artifact ${{ matrix.artifact_name }} is missing or empty"
             exit 1
           fi
-          echo "Artifact size: $(du -h ${{ matrix.artifact_name }} | cut -f1)"
 
       - name: Build MSI installer (Windows only)
         if: runner.os == 'Windows'

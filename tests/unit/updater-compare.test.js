@@ -1,29 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
 
 // updater.ts imports electron (and logging.ts uses app.getPath at module scope)
-vi.mock('electron', () => ({
-    app: {
-        getVersion: vi.fn(() => '1.6.2'),
-        getPath: vi.fn(() => '/tmp'),
-        isPackaged: false,
-    },
-    shell: { openExternal: vi.fn() },
-    BrowserWindow: vi.fn(),
-}));
+vi.mock('electron', async () => {
+    const { electronUpdaterMock } = await import('./helpers/main-process-env.js');
+    return electronUpdaterMock();
+});
 
 // Mock logging.ts too: it opens a real write stream at module scope
 // (app.getPath-based), which breaks on Windows CI where /tmp has no drive dir.
-vi.mock('../../src/main/logging.ts', () => ({
-    DEBUG_DATABASE: false,
-    DEBUG_CLEANASSETS: false,
-    DEBUG: false,
-    DEBUG_FILEIO: false,
-    DEBUG_NYI: false,
-    DEBUG_LOAD_DEVTOOLS: false,
-    DEBUG_RESOURCEIO: false,
-    debugLog: vi.fn(),
-    logFile: { write: vi.fn(), end: vi.fn() },
-}));
+vi.mock('../../src/main/logging.ts', async () => {
+    const { loggingMock } = await import('./helpers/logging-mock.js');
+    return loggingMock();
+});
 import { compareVersions } from '../../src/main/updater.ts';
 
 describe('compareVersions', () => {

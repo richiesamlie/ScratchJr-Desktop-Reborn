@@ -163,15 +163,6 @@ interface ScratchJrSettings {
     [key: string]: unknown;
 }
 
-interface UpdateInfo {
-    available: boolean;
-    currentVersion: string;
-    latestVersion: string;
-    downloadUrl: string;
-    releasePageUrl: string;
-    releaseNotes: string;
-}
-
 interface Document {
     ongesturestart?: unknown;
 }

@@ -247,46 +247,6 @@ export default class Transform {
         return rot;
     }
 
-    static getValid (elem: Element) {
-        if (!elem) {
-            return null;
-        }
-        var tl = Transform.getList(elem);
-        if (!tl) {
-            return null;
-        }
-        if (tl && tl.numberOfItems > 0) {
-            var k = tl.numberOfItems;
-            while (k--) {
-                var xform = tl.getItem(k);
-                if (xform.type == 0) {
-                    tl.removeItem(k);
-                }
-                if ((xform.matrix as unknown as { isIdentity: () => boolean }).isIdentity()) {
-                    tl.removeItem(k);
-                } else if (xform.type == 4) { // remove zero-degree rotations
-                    if (xform.angle == 0) {
-                        tl.removeItem(k);
-                    }
-                    if (xform.angle == 360) {
-                        tl.removeItem(k);
-                    }
-                }
-            }
-            if (tl.numberOfItems == 1 && Transform.getRotationAngle(elem)) {
-                return null;
-            }
-        }
-        // if this element had no transforms, we are done
-        if (tl.numberOfItems == 0) {
-            if (elem.getAttribute('transform')) {
-                elem.removeAttribute('transform');
-            }
-            return null;
-        }
-        return tl;
-    }
-
     static getCombinedMatrices (elem: Element) {
         var tl = Transform.getList(elem);
         if (tl == null) {

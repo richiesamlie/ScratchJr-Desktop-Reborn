@@ -4,9 +4,7 @@ const os = require('os');
 const fs = require('fs');
 let iconFile;
 let platform = os.platform();
-let {version} = require('./package.json');
 const iconFileWindows = path.resolve(__dirname, "src/icons/win/icon.ico");
-const installerGifWindows = path.resolve(__dirname, "src/icons/win/installerGif.gif");
 const copyrightDate = "Copyright (c) 2016, Massachusetts Institute of Technology";
 
 const iconFileMac = path.resolve(__dirname, "src/icons/mac/icon.icns");

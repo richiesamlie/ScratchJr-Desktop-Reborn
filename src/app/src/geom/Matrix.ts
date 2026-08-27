@@ -7,11 +7,6 @@ interface MatrixLike {
 export default class Matrix implements MatrixLike {
     a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
 
-    identity(): void {
-        this.a = 1; this.b = 0; this.c = 0;
-        this.d = 1; this.e = 0; this.f = 0;
-    }
-
     setMatrix(mtx: MatrixLike): void {
         this.a = mtx.a; this.b = mtx.b; this.c = mtx.c;
         this.d = mtx.d; this.e = mtx.e; this.f = mtx.f;

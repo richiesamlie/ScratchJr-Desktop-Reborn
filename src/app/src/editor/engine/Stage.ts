@@ -716,48 +716,4 @@ rt.threadsRunning = rt.threadsRunning.concat(spr.threads);
         }
         p.div.parentNode!.removeChild(p.div);
     }
-
-
-    //Debugging hit masks
-    ///////////////////////////
-
-    sd () {
-        var stg = gn('stage')!;
-        var mask = newDiv(gn('stageframe')!, stg.offsetLeft + 1, stg.offsetTop + 1, 482, 362, {
-                position: 'absolute',
-                zIndex: enginePorts().getLayerTop() + 20,
-                visibility: 'hidden'
-            });
-        mask.setAttribute('id', 'pagemask');
-        mask.appendChild(enginePorts().getWorkingCanvas());
-    }
-
-    on () {
-        gn('pagemask')!.style.visibility = 'visible';
-    }
-
-    off () {
-        gn('pagemask')!.style.visibility = 'hidden';
-    }
-
-    sm (spr: Sprite) {
-        var stg = gn('stage')!;
-        var w = spr.outline.width;
-        var h = spr.outline.height;
-        var mask = newDiv(gn('stageframe')!, stg.offsetLeft + 1, stg.offsetTop + 1, w, h, {
-                position: 'absolute',
-                zIndex: enginePorts().getLayerTop() + 20,
-                visibility: 'hidden'
-            });
-        mask.setAttribute('id', 'spritemask');
-        mask.appendChild(spr.outline);
-    }
-
-    son () {
-        gn('spritemask')!.style.visibility = 'visible';
-    }
-
-    soff () {
-        gn('spritemask')!.style.visibility = 'hidden';
-    }
 }

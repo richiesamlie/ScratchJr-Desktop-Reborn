@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { DEBUG_DATABASE, DEBUG_CLEANASSETS, debugLog } from './logging';
+import { debugLog } from './logging';
 
 interface SqlJsDatabase {
     prepare(stmt: string, values?: unknown[]): SqlJsStatement;
@@ -31,9 +31,6 @@ interface SqlJsStatic {
 interface QueryJson {
     stmt?: string;
     values?: Array<string | number | boolean | null>;
-    cond?: string;
-    items?: string[];
-    order?: string;
 }
 
 export class DatabaseManager {
@@ -51,24 +48,17 @@ export class DatabaseManager {
     private _saveDelay = 100; // ms
 
     constructor(databaseFilename: string, databaseRestoreFilename: string | undefined, SQL: SqlJsStatic) {
-        if (DEBUG_DATABASE) debugLog('DatabaseManager created');
-
         this.databaseFilename = databaseFilename;
         this.databaseRestoreFilename = databaseRestoreFilename;
         this.databaseBackupFilename = databaseFilename + '.bak';
         this._SQL = SQL;
 
-        const isFirstTimeRun = !fs.existsSync(this.databaseFilename);
-        if (isFirstTimeRun) {
-            this.initTables(SQL);
-            this.runMigrations();
-            this.save();
-        } else {
+        if (fs.existsSync(this.databaseFilename)) {
             this.open(SQL);
-            this.initTables(SQL);
-            this.runMigrations();
-            this.save();
         }
+        this.initTables(SQL);
+        this.runMigrations();
+        this.save();
     }
 
     static async initialize(databaseFilename: string, databaseRestoreFilename?: string): Promise<DatabaseManager> {
@@ -76,6 +66,26 @@ export class DatabaseManager {
         const initSqlJs = require('sql.js');
         const SQL: SqlJsStatic = await initSqlJs({});
         return new DatabaseManager(databaseFilename, databaseRestoreFilename, SQL);
+    }
+
+    /**
+     * Recover from the backup file: re-open from the restored copy and notify,
+     * or fall back to a brand-new empty database.
+     */
+    private recoverFromBackup(SQL: SqlJsStatic): void {
+        if (this.autoRecover()) {
+            debugLog('Auto-recovery succeeded');
+            // Re-open from the now-recovered file
+            const recoveredBuffer = fs.readFileSync(this.databaseFilename);
+            this.db = new SQL.Database(recoveredBuffer);
+            this.db.handleError = this.handleError;
+            if (this.onAutoRecovery) {
+                this.onAutoRecovery();
+            }
+        } else {
+            debugLog('Auto-recovery failed — creating fresh database');
+            this.freshDatabase(SQL);
+        }
     }
 
     open(SQL: SqlJsStatic): void {
@@ -87,15 +97,7 @@ export class DatabaseManager {
             debugLog('Failed to read database file — attempting auto-recovery:', e);
             this.db = null;
             // Skip straight to recovery
-            if (this.autoRecover()) {
-                debugLog('Auto-recovery succeeded (file unreadable)');
-                const recoveredBuffer = fs.readFileSync(this.databaseFilename);
-                this.db = new SQL.Database(recoveredBuffer);
-                this.db.handleError = this.handleError;
-                if (this.onAutoRecovery) this.onAutoRecovery();
-            } else {
-                this.freshDatabase(SQL);
-            }
+            this.recoverFromBackup(SQL);
             return;
         }
 
@@ -111,19 +113,7 @@ export class DatabaseManager {
         if (!this.db || !this.checkIntegrity()) {
             debugLog('Database corruption detected on open — attempting auto-recovery');
             this.close();
-            if (this.autoRecover()) {
-                debugLog('Auto-recovery succeeded');
-                // Re-open from the now-recovered file
-                const recoveredBuffer = fs.readFileSync(this.databaseFilename);
-                this.db = new SQL.Database(recoveredBuffer);
-                this.db.handleError = this.handleError;
-                if (this.onAutoRecovery) {
-                    this.onAutoRecovery();
-                }
-            } else {
-                debugLog('Auto-recovery failed — creating fresh database');
-                this.freshDatabase(SQL);
-            }
+            this.recoverFromBackup(SQL);
         }
 
         if (this.databaseRestoreFilename) {
@@ -295,7 +285,6 @@ export class DatabaseManager {
             values: [`%${name}%`],
         };
         if (this.query(queryFindFileInProjects).length > 0) {
-            if (DEBUG_CLEANASSETS) debugLog('...project is currently using: ', name);
             return true;
         }
 
@@ -304,7 +293,6 @@ export class DatabaseManager {
             values: [name],
         };
         if (this.query(queryFindFileInUsershapes).length > 0) {
-            if (DEBUG_CLEANASSETS) debugLog('...user shapes is using: ', name);
             return true;
         }
 
@@ -313,7 +301,6 @@ export class DatabaseManager {
             values: [name],
         };
         if (this.query(queryFindFileInUserbkgs).length > 0) {
-            if (DEBUG_CLEANASSETS) debugLog('...user backgrounds is using: ', name);
             return true;
         }
 
@@ -347,9 +334,7 @@ export class DatabaseManager {
         }
 
         for (const name of names) {
-            if (DEBUG_CLEANASSETS) debugLog('checking if in use: ', name);
             if (!this.mediaInUse(name)) {
-                if (DEBUG_CLEANASSETS) debugLog('...not in use, removing: ', name);
                 this.removeProjectFile(name);
             }
         }
@@ -385,18 +370,12 @@ export class DatabaseManager {
                 debugLog('removeProjectFile: failed to unlink', fileMD5, e);
             }
         }
-        const json: QueryJson = {};
-        json.stmt = `delete from PROJECTFILES where MD5 = ?`;
-        json.values = [fileMD5];
-        this.stmt(json);
+        this.deleteProjectFileRow(fileMD5);
     }
 
-    /** Delete only the PROJECTFILES row (used by migration after verified copy). */
+    /** Delete only the PROJECTFILES row (shared by removal and migration). */
     private deleteProjectFileRow(fileMD5: string): void {
-        const json: QueryJson = {};
-        json.stmt = `delete from PROJECTFILES where MD5 = ?`;
-        json.values = [fileMD5];
-        this.stmt(json);
+        this.stmt({ stmt: 'delete from PROJECTFILES where MD5 = ?', values: [fileMD5] });
     }
 
     /**
@@ -458,10 +437,6 @@ export class DatabaseManager {
         return true;
     }
 
-    getRowData(res: SqlJsStatement): Record<string, unknown> {
-        return res.getAsObject();
-    }
-
     initTables(SQL?: SqlJsStatic): void {
         if (!this.db) {
             if (!SQL) throw new Error('SQL instance required to create database');
@@ -469,19 +444,10 @@ export class DatabaseManager {
             this.db.handleError = this.handleError;
         }
 
-        if (DEBUG_DATABASE) debugLog('making tables...');
-
         this.db.exec('CREATE TABLE IF NOT EXISTS PROJECTS (ID INTEGER PRIMARY KEY AUTOINCREMENT, CTIME DATETIME DEFAULT CURRENT_TIMESTAMP, MTIME DATETIME, ALTMD5 TEXT, POS INTEGER, NAME TEXT, JSON TEXT, THUMBNAIL TEXT, OWNER TEXT, GALLERY TEXT, DELETED TEXT, VERSION TEXT)\n');
         this.db.exec('CREATE TABLE IF NOT EXISTS USERSHAPES (ID INTEGER PRIMARY KEY AUTOINCREMENT, CTIME DATETIME DEFAULT CURRENT_TIMESTAMP, MD5 TEXT, ALTMD5 TEXT, WIDTH TEXT, HEIGHT TEXT, EXT TEXT, NAME TEXT, OWNER TEXT, SCALE TEXT, VERSION TEXT)\n');
         this.db.exec('CREATE TABLE IF NOT EXISTS USERBKGS (ID INTEGER PRIMARY KEY AUTOINCREMENT, CTIME DATETIME DEFAULT CURRENT_TIMESTAMP, MD5 TEXT, ALTMD5 TEXT, WIDTH TEXT, HEIGHT TEXT, EXT TEXT, OWNER TEXT,  VERSION TEXT)\n');
         this.db.exec('CREATE TABLE IF NOT EXISTS PROJECTFILES (MD5 TEXT PRIMARY KEY, CONTENTS TEXT)\n');
-    }
-
-    clearTables(): void {
-        if (!this.db) return;
-        this.db.exec('DELETE FROM PROJECTS');
-        this.db.exec('DELETE FROM USERSHAPES');
-        this.db.exec('DELETE FROM USERBKGS');
     }
 
     runMigrations(): void {
@@ -493,17 +459,14 @@ export class DatabaseManager {
         }
     }
 
-    stmt(jsonStrOrJsonObj: string | QueryJson): number {
+    stmt(json: QueryJson): number {
         if (!this.db) {
             debugLog('stmt() called but database is not open');
             return -1;
         }
         try {
-            const json: QueryJson = (typeof jsonStrOrJsonObj === 'string') ? JSON.parse(jsonStrOrJsonObj) : jsonStrOrJsonObj || {};
             const stmtStr = json.stmt!;
             const values = json.values;
-
-            if (DEBUG_DATABASE) debugLog('DatabaseManager executing stmt', stmtStr, values);
 
             const statement = this.db.prepare(stmtStr, values);
 
@@ -531,19 +494,17 @@ export class DatabaseManager {
                 statement.free();
             }
         } catch (e) {
-            debugLog('stmt failed:', e instanceof Error ? e.message : e, jsonStrOrJsonObj);
+            debugLog('stmt failed:', e instanceof Error ? e.message : e, json);
             return -1;
         }
     }
 
-    query(jsonStrOrJsonObj: string | QueryJson): Record<string, unknown>[] {
+    query(json: QueryJson): Record<string, unknown>[] {
         if (!this.db) {
             debugLog('query() called but database is not open');
             return [];
         }
         try {
-            const json: QueryJson = (typeof jsonStrOrJsonObj === 'string') ? JSON.parse(jsonStrOrJsonObj) : jsonStrOrJsonObj || {};
-
             const stmtStr = json.stmt!;
             const values = json.values;
 
@@ -560,7 +521,7 @@ export class DatabaseManager {
                 statement.free();
             }
         } catch (e) {
-            if (DEBUG_DATABASE) debugLog('query failed', jsonStrOrJsonObj, e);
+            debugLog('query failed', json, e);
             return [];
         }
     }

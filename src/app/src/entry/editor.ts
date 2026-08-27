@@ -31,7 +31,6 @@ setEnginePorts({
     getSprite: () => ScratchJr.getSprite(),
     getShaking: () => ScratchJr.shaking,
     setShaking: (b) => { ScratchJr.shaking = b; },
-    getStopShaking: () => ScratchJr.stopShaking,
     setStopShaking: (f) => { ScratchJr.stopShaking = f; },
     // god-object behavior
     stopStrips: () => ScratchJr.stopStrips(),

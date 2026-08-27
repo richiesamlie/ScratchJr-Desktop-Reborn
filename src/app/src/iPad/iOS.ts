@@ -318,25 +318,12 @@ export default class iOS {
         tabletInterface!.scratchjr_captureimage(fcn as () => void);
     }
 
-    static hidesplash (fcn?: () => void) {
-        if (isiOS) {
-            tabletInterface!.hideSplash();
-        }
-        if (fcn) {
-            fcn();
-        }
-    }
-
     static trace (str: unknown) {
         console.log(str); // eslint-disable-line no-console
     }
 
     static parse (str: string) {
         console.log(JSON.parse(str)); // eslint-disable-line no-console
-    }
-
-    static tracemedia (str: string) {
-        console.log(atob(str)); // eslint-disable-line no-console
     }
 
     ignore () {
@@ -387,17 +374,6 @@ export default class iOS {
         }
         let usageLabel = label ? AppUsage.currentUsage + label : AppUsage.currentUsage;
         tabletInterface!.analyticsEvent(category, action, usageLabel, value);
-    }
-
-    // Web Wiew delegate call backs
-
-    static pageError (desc: string) {
-        console.log('XCODE ERROR:', desc); // eslint-disable-line no-console
-        if (window.location.href.indexOf('home.html') > -1) {
-            if (Lobby.errorTimer) {
-                Lobby.errorLoading(desc);
-            }
-        }
     }
 }
 

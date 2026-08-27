@@ -493,13 +493,6 @@ export default class Scripts {
         return res;
     }
 
-    redisplay () {
-        var list = this.gettopblocks();
-        for (var n = 0; n < list.length; n++) {
-            this.layout(list[n]);
-        }
-    }
-
     getBlocksType (list: string[]) {
         var res: Block[] = [];
         var blocks = this.getBlocks();

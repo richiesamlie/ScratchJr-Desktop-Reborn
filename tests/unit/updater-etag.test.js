@@ -1,31 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 
 // updater.ts imports electron (and logging.ts uses app.getPath at module scope)
-const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'updater-test-'));
-vi.mock('electron', () => ({
-    app: {
-        getVersion: vi.fn(() => '1.6.2'),
-        getPath: vi.fn(() => tmpDir),
-        isPackaged: false,
-    },
-    shell: { openExternal: vi.fn() },
-    BrowserWindow: vi.fn(),
+// vi.hoisted runs before all imports, so the factory and the assertions below
+// share one initialized tmpdir binding.
+const { tmpDir } = vi.hoisted(() => ({
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    tmpDir: require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'updater-test-')),
 }));
 
-vi.mock('../../src/main/logging.ts', () => ({
-    DEBUG_DATABASE: false,
-    DEBUG_CLEANASSETS: false,
-    DEBUG: false,
-    DEBUG_FILEIO: false,
-    DEBUG_NYI: false,
-    DEBUG_LOAD_DEVTOOLS: false,
-    DEBUG_RESOURCEIO: false,
-    debugLog: vi.fn(),
-    logFile: { write: vi.fn(), end: vi.fn() },
-}));
+vi.mock('electron', async () => {
+    const { electronUpdaterMock } = await import('./helpers/main-process-env.js');
+    return electronUpdaterMock(tmpDir);
+});
+
+vi.mock('../../src/main/logging.ts', async () => {
+    const { loggingMock } = await import('./helpers/logging-mock.js');
+    return loggingMock();
+});
 
 import { checkForUpdate } from '../../src/main/updater.ts';
 

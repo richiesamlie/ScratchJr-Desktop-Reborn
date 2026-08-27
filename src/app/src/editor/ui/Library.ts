@@ -161,24 +161,6 @@ export default class Library {
         IO.query(key, json, Library.displayAssets);
     }
 
-    static skipUserAssets () {
-        var div = gn('scrollarea')!;
-        Library.addEmptyThumb(div, (type == 'costumes') ? (118 * scaleMultiplier) : (120 * scaleMultiplier), (type == 'costumes') ? (90 * scaleMultiplier) : (90 * scaleMultiplier));
-        Library.addHR(div);
-        Library.displayLibAssets((type == 'costumes') ? MediaLib.sprites : MediaLib.backgrounds);
-    }
-
-    static getpadding (div: HTMLElement) {
-        var w = Math.min(getDocumentWidth(), libFrame!.offsetWidth);
-        var dw = (div.childNodes[1] as HTMLElement).offsetLeft - (div.childNodes[0] as HTMLElement).offsetLeft;
-        var qty = Math.floor(w / dw);
-        var pad = Math.floor((w - (qty * dw)) / 2);
-        if (pad < 10) {
-            return Math.floor((w - ((qty - 1) * dw)) / 2);
-        }
-        return pad;
-    }
-
     static displayAssets (str: string) {
         nativeJr = true;
         var div = gn('scrollarea')!;
@@ -270,16 +252,6 @@ export default class Library {
             fcn(evt, tb);
         };
         return tb;
-    }
-
-    static userAssetThumbnail (img: HTMLImageElement, cnv: HTMLCanvasElement, sizew: number, sizeh: number) {
-        var scale = Math.min(sizew / img.width, sizeh / img.height);
-        var currentCtx = cnv.getContext('2d')!;
-        var iw = Math.floor(scale * img.width);
-        var ih = Math.floor(scale * img.height);
-        var ix = Math.floor((sizew - (scale * img.width)) / 2);
-        var iy = Math.floor((sizeh - (scale * img.height)) / 2);
-        currentCtx.drawImage(img, 0, 0, img.width, img.height, ix, iy, iw, ih);
     }
 
     static addEmptyThumb (parent: HTMLElement, w: number, h: number) {

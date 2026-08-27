@@ -8,56 +8,25 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import Project from '../../src/app/src/editor/ui/Project.js';
 import Scripts from '../../src/app/src/editor/ui/Scripts.js';
 import Sprite from '../../src/app/src/editor/engine/Sprite.js';
-import Page from '../../src/app/src/editor/engine/Page.js';
 import ScratchJr from '../../src/app/src/editor/ScratchJr.js';
 import Thumbs from '../../src/app/src/editor/ui/Thumbs.js';
-import iOS from '../../src/app/src/iPad/iOS.js';
 import BlockSpecs from '../../src/app/src/editor/blocks/BlockSpecs.js';
 import Thread from '../../src/app/src/editor/engine/Thread.js';
 import Prims from '../../src/app/src/editor/engine/Prims.js';
 import Undo from '../../src/app/src/editor/ui/Undo.js';
 import { gn } from '../../src/app/src/utils/lib.js';
-
-function resetDom () {
-    document.body.innerHTML = '';
-    const scriptscontainer = document.createElement('div');
-    scriptscontainer.id = 'scriptscontainer';
-    document.body.appendChild(scriptscontainer);
-    const pagesdiv = document.createElement('div');
-    pagesdiv.id = 'pagesdiv';
-    document.body.appendChild(pagesdiv);
-    // The speech balloon sizes itself against the stage's zoom.
-    const stage = document.createElement('div');
-    stage.id = 'stage';
-    document.body.appendChild(stage);
-    window.__modelRefs.setModelRef(stage, 'stage', { currentZoom: 1 });
-    ScratchJr.stage = {
-        pagesdiv,
-        pages: [],
-        currentPage: null,
-    };
-    // The Repeat primitive sets ScratchJr.runtime.yield; the static is
-    // getter-only, so stub it via defineProperty.
-    Object.defineProperty(ScratchJr, 'runtime', { value: { yield: false }, configurable: true });
-}
-
-// Sprite construction kicks off async media loading through the native
-// bridge; the format tests don't need images.
-function stubMedia () {
-    iOS.getmedia = async () => {};
-    iOS.path = '';
-}
+import { resetRendererDom, stubMedia, stripShape, makePage, makeCatSprite } from './helpers/editor-fixtures.js';
 
 describe('script strip round-trip (project file format)', () => {
     beforeEach(() => {
-        resetDom();
+        resetRendererDom();
         stubMedia();
         BlockSpecs.initBlocks();
     });
 
     it('recreates blocks and re-encodes the same blocktype/arg/nesting', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const sc = new Scripts(spr);
 
         const strip = [
@@ -78,9 +47,6 @@ describe('script strip round-trip (project file format)', () => {
 
         // Re-encoding yields the same structure (positions are relaid out, so
         // only blocktype/arg/nesting are compared).
-        function stripShape (s) {
-            return s.map(t => [t[0], t[1], Array.isArray(t[4]) ? stripShape(t[4]) : null]);
-        }
         // encodeStrip walks the .next chain, so the first block encodes the
         // whole strip.
         const reencoded = Project.encodeStrip(blocks[0]);
@@ -88,8 +54,8 @@ describe('script strip round-trip (project file format)', () => {
     });
 
     it('round-trips a strip with an arg block and page navigation target', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const sc = new Scripts(spr);
 
         // gotopage is arg-encoded via hasargs even though its arg is a number.
@@ -108,7 +74,9 @@ describe('script strip round-trip (project file format)', () => {
     });
 
     it('re-creating a sprite with the same id registers it once in page.sprites', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
+        const page = makePage();
+        // Shared attrs object on purpose: the second construction must see
+        // whatever the first left behind.
         const attr = { type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] };
         new Sprite(attr);
         // A second creation with the same id (reload / undo replay) must not
@@ -120,7 +88,7 @@ describe('script strip round-trip (project file format)', () => {
 
 describe('Thumbs.getPagePos (scroll-aware page strip caret math)', () => {
     beforeEach(() => {
-        resetDom();
+        resetRendererDom();
         const pagecc = document.createElement('div');
         pagecc.id = 'pagecc';
         document.body.appendChild(pagecc);
@@ -170,14 +138,14 @@ describe('Thumbs.getPagePos (scroll-aware page strip caret math)', () => {
 
 describe('page encode/decode round-trip (page bag format)', () => {
     beforeEach(() => {
-        resetDom();
+        resetRendererDom();
         stubMedia();
         BlockSpecs.initBlocks();
     });
 
     it('encodePage produces the page bag and recreatePage decodes it', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         spr.code.recreateStrip([
             ['hop', 2, 0, 0],
             ['repeat', 3, 0, 10, [['say', 'Hi', 0, 0]]],
@@ -211,7 +179,7 @@ describe('page encode/decode round-trip (page bag format)', () => {
 
 describe('runtime primitive execution', () => {
     beforeEach(() => {
-        resetDom();
+        resetRendererDom();
         stubMedia();
         BlockSpecs.initBlocks();
     });
@@ -223,8 +191,8 @@ describe('runtime primitive execution', () => {
     }
 
     it('Home moves the sprite back to its home position', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const thread = makeThread([['home', 'null', 0, 0]], spr);
 
         spr.homex = 0;
@@ -240,8 +208,8 @@ describe('runtime primitive execution', () => {
     });
 
     it('SetSpeed applies 2^arg to the sprite speed', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const thread = makeThread([['setspeed', 2, 0, 0]], spr);
 
         Prims.SetSpeed(thread);
@@ -251,8 +219,8 @@ describe('runtime primitive execution', () => {
     });
 
     it('Show and Hide flip visibility synchronously at full speed', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         spr.speed = 4;
         const showThread = makeThread([['show', 'null', 0, 0]], spr);
         const hideThread = makeThread([['hide', 'null', 0, 0]], spr);
@@ -269,8 +237,8 @@ describe('runtime primitive execution', () => {
     });
 
     it('Hop starts a multi-tick jump from the hop table', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const thread = makeThread([['hop', 2, 0, 0]], spr);
         const startY = 80;
         spr.ycoor = startY;
@@ -286,8 +254,8 @@ describe('runtime primitive execution', () => {
     });
 
     it('Repeat enters the nested strip and counts down on the block', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const thread = makeThread([['repeat', 3, 0, 10, [['hop', 2, 0, 0]]]], spr);
         const repeatBlock = thread.firstBlock;
 
@@ -301,8 +269,8 @@ describe('runtime primitive execution', () => {
     });
 
     it('Say opens the speech balloon and holds the block', () => {
-        const page = new Page('page1', { lastSprite: '', sprites: [], layers: [], num: 1 });
-        const spr = new Sprite({ type: 'sprite', page, md5: 'm1', id: 'cat', name: 'Cat', sounds: [] });
+        const page = makePage();
+        const spr = makeCatSprite(page);
         const thread = makeThread([['say', 'Hello', 0, 0]], spr);
         // The balloon SVG template loads async via IO.requestFromServer in
         // initBlocks; provide the markers drawBalloon rewrites.
@@ -319,7 +287,7 @@ describe('runtime primitive execution', () => {
 
 describe('Undo page-order snapshot', () => {
     beforeEach(() => {
-        resetDom();
+        resetRendererDom();
         stubMedia();
         BlockSpecs.initBlocks();
     });

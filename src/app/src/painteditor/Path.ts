@@ -293,22 +293,6 @@ export default class Path {
     /////////////////////////
 
 
-    static convertPoints (shape: Element) {
-        var plist = Path.getPolyPoints(shape);
-        var d = 'M' + plist[0].x + ',' + plist[0].y;
-        for (var i = 1; i < plist.length; i++) {
-            d += Path.lineSeg(plist[i]);
-        }
-        d += 'z';
-        var attr = Path.getStylingFrom(shape);
-        attr.d = d;
-        attr.id = getIdFor('path');
-        attr['stroke-miterlimit'] = shape.getAttribute('stroke-miterlimit');
-        var path = SVGTools.addChild(gn('layer1')! as Element, 'path', attr);
-        shape.parentNode!.removeChild(shape);
-        return path;
-    }
-
     static getStylingFrom (elem: Element) {
         var c = elem.getAttribute('fill');
         var s = elem.getAttribute('stroke');
@@ -505,14 +489,6 @@ export default class Path {
 
     static maxDistance () {
         return 20 / Paint.currentZoom;
-    }
-
-    static importPath (elem: Element) {
-        var d = elem.getAttribute('d');
-        var list = SVG2Canvas.getCommandList(d!)!;
-        var imported = Path.adaptPath(list);
-        var path = SVG2Canvas.arrayToString(imported);
-        elem.setAttribute('d', path);
     }
 
     static adaptPath (list: (string | number)[][]) {
@@ -814,14 +790,6 @@ export default class Path {
         return pointslist;
     }
 
-    static getDots () {
-        var pointslist: HTMLElement[] = [];
-        for (var i = 0; i < gn('pathdots')!.childElementCount; i++) {
-            pointslist.push(gn('pathdots')!.childNodes[i] as HTMLElement);
-        }
-        return pointslist;
-    }
-
     static addDot (shape: Element | null) {
         var g = gn('pathdots')!;
         g.parentNode!.removeChild(g);
@@ -1010,10 +978,6 @@ export default class Path {
         return null;
     }
 
-    static hitLine (shape: Element, pt: Point) {
-        return Path.getPointIndex(shape, pt) > -1;
-    }
-
     static getPointIndex (shape: Element, pt: Point) {
         var rot = Transform.extract(shape, 4);
         var newpt = Transform.point(pt.x, pt.y, rot.matrix.inverse());
@@ -1055,12 +1019,6 @@ export default class Path {
         var d = elem.getAttribute('d');
         var list = Path.getAnchorpoints(d!);
         return list[0];
-    }
-
-    static getLastPoint (elem: Element) {
-        var d = elem.getAttribute('d');
-        var list = Path.getAnchorpoints(d!);
-        return list[list.length - 1];
     }
 
     static join (cs: Element, mt: Element, pt: Point) {

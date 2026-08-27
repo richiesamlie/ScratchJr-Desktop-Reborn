@@ -257,16 +257,6 @@ export default class Events {
         }
     }
 
-    static moveThumbnail (el: HTMLElement, dx: number, dy: number) {
-        if (!el) {
-            return;
-        }
-        el.top = el.top! + dy;
-        el.left = el.left! + dx;
-        el.style.top = el.top + 'px';
-        el.style.left = el.left + 'px';
-    }
-
     static move3D (el: HTMLElement, dx: number, dy: number) {
         if (!el) {
             return;

@@ -27,7 +27,6 @@ export interface EnginePorts {
     getSprite (): Sprite | undefined;
     getShaking (): HTMLElement | undefined;
     setShaking (b: HTMLElement | undefined): void;
-    getStopShaking (): ((b: HTMLElement) => void) | undefined;
     setStopShaking (f: ((b: HTMLElement) => void) | undefined): void;
 
     // ---- god-object behavior ----

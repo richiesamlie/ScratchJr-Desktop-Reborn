@@ -32,10 +32,6 @@ export default class SVGImage {
         SVGImage.createImageFromFeed(mt, str);
     }
 
-    static replaceImage (img: Element, str: string) {
-        img.setAttributeNS(Paint.xmlnslink, 'xlink:href', 'data:image/png;base64,' + str);
-    }
-
     static createImageFromFeed (mt: Element, str: string) {
         var p = mt.parentNode as Element;
         var isbkg = (mt.id == 'staticbkg');

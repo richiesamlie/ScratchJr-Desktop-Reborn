@@ -1,31 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
+import { setupSqliteEnv, cleanupSqliteEnv } from './helpers/main-process-env.js';
 
 // Mirror database-save.test.js mocks
-vi.mock('electron', () => ({
-    app: { isPackaged: false, getPath: () => '/tmp', quit: vi.fn() },
-    ipcMain: { handle: vi.fn(), on: vi.fn() },
-    BrowserWindow: vi.fn(),
-    contextBridge: { exposeInMainWorld: vi.fn() },
-    ipcRenderer: { invoke: vi.fn(), send: vi.fn(), on: vi.fn() },
-    globalShortcut: { registerAll: vi.fn(), unregisterAll: vi.fn() },
-    dialog: { showMessageBox: vi.fn(), showErrorBox: vi.fn() },
-    webFrame: { setVisualZoomLevelLimits: vi.fn() },
-}));
+vi.mock('electron', async () => {
+    const { electronMainMock } = await import('./helpers/main-process-env.js');
+    return electronMainMock();
+});
 
-vi.mock('../../src/main/logging.ts', () => ({
-    DEBUG_DATABASE: false,
-    DEBUG_CLEANASSETS: false,
-    DEBUG: false,
-    DEBUG_FILEIO: false,
-    DEBUG_NYI: false,
-    DEBUG_LOAD_DEVTOOLS: false,
-    DEBUG_RESOURCEIO: false,
-    debugLog: vi.fn(),
-    logFile: { write: vi.fn(), end: vi.fn() },
-}));
+vi.mock('../../src/main/logging.ts', async () => {
+    const { loggingMock } = await import('./helpers/logging-mock.js');
+    return loggingMock();
+});
 
 import { DatabaseManager } from '../../src/main/database.ts';
 
@@ -35,15 +22,12 @@ let mediaDir;
 let sqlJs;
 
 beforeEach(async () => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'media-test-'));
-    dbPath = path.join(tmpDir, 'test.sqllite');
+    ({ tmpDir, dbPath, sqlJs } = await setupSqliteEnv('media-test-'));
     mediaDir = path.join(tmpDir, 'media');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    sqlJs = await require('sql.js')();
 });
 
 afterEach(() => {
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch (_) { /* ignore */ }
+    cleanupSqliteEnv(tmpDir);
 });
 
 const B64 = Buffer.from('hello scratchjr media').toString('base64');

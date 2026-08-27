@@ -103,13 +103,6 @@ export default class Palette {
         ScratchJr.clearSelection();
     }
 
-    static isRecorded (ths: HTMLElement) {
-        var val = getModelRefAs<Block>(ths, 'block')!.getArgValue() as string;
-        const activeScripts = getModelRefAs<Scripts>(ScratchJr.getActiveScript(), 'scripts')!;
-        var list = activeScripts.spr.sounds;
-        return list.indexOf(val) > 0;
-    }
-
     static removeSound (ths: HTMLElement) {
         ScratchAudio.sndFX('cut.wav');
         var indx = getModelRefAs<Block>(ths, 'block')!.getArgValue() as number;
@@ -168,15 +161,6 @@ export default class Palette {
         ScratchJr.stopShaking = Palette.stopShaking;
         b.setAttribute('class', 'shakeme');
         newHTML('div', 'deletesound', b);
-    }
-
-    static clickBlock (e: Event | null, b: HTMLElement) {
-        if (ScratchJr.shaking && (b == ScratchJr.shaking)) {
-            Palette.removeSound(b);
-        } else {
-            ScratchJr.clearSelection();
-            Palette.showHelp(e, b);
-        }
     }
 
     static stopShaking (b: HTMLElement) {
@@ -337,12 +321,6 @@ export default class Palette {
         };
     }
 
-    static getPaletteSize () {
-        var first = gn('palette')!.childNodes[0] as HTMLElement;
-        var last = gn('palette')!.childNodes[gn('palette')!.childElementCount - 1] as HTMLElement;
-        return last.offsetLeft + last.offsetWidth - first.offsetLeft;
-    }
-
     static clickOnCategory (e: Event) {
         if (!e) {
             return;
@@ -402,22 +380,6 @@ export default class Palette {
         }
         if (numcat == 3) {
             Palette.selectCategory(3);
-        }
-    }
-
-    static showSelectors (b: boolean) {
-        var n = numcat;
-        var div = gn('selectors')!;
-        for (var i = 0; i < div.childElementCount; i++) {
-            var sel = div.childNodes[i] as HTMLElement;
-            const selFirst = sel.childNodes[0] as HTMLElement;
-            const selSecond = sel.childNodes[1] as HTMLElement;
-            const selThird = sel.childNodes[2] as HTMLElement;
-            const selFourth = sel.childNodes[3] as HTMLElement;
-            selFirst.style.visibility = (sel.index != n) && b ? 'visible' : 'hidden';
-            selSecond.style.visibility = (sel.index == n) && b ? 'visible' : 'hidden';
-            selThird.style.visibility = (sel.index != n) && b ? 'visible' : 'hidden';
-            selFourth.style.visibility = (sel.index == n) && b ? 'visible' : 'hidden';
         }
     }
 
@@ -495,12 +457,6 @@ export default class Palette {
         Record.appear();
     }
 
-    static inStatesPalette () {
-        var div = gn('selectors')!;
-        var sel = div.childNodes[div.childElementCount - 1];
-        return (sel.childNodes[0] as HTMLElement).style.visibility == 'hidden';
-    }
-
     // move to scratch jr app
     static getLandingPlace (el: HTMLElement, e: MouseEvent | TouchEvent | null, scale?: number) {
         scale = typeof scale !== 'undefined' ? scale : 1;
@@ -539,16 +495,6 @@ export default class Palette {
     static overlapsWith (el: HTMLElement, box: Rectangle) {
         var box2 = new Rectangle(globalx(el), globaly(el), el.offsetWidth, el.offsetHeight);
         return box.intersects(box2);
-    }
-
-    static overlapsWith2 (el: HTMLElement, box: Rectangle) {
-        var box2 = new Rectangle(el.offsetLeft, el.offsetTop, el.offsetWidth, el.offsetHeight);
-        return box.intersects(box2);
-    }
-
-
-    static getBlockfromChild (div: HTMLElement | null) {
-        return findUpModelRefEl(div);
     }
 
     static getHittedThumb (el: HTMLElement, div: HTMLElement, scale?: number) {
