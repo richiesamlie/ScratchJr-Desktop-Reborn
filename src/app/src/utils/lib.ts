@@ -7,8 +7,10 @@ export const DEGTOR = Math.PI / 180;
 //export const WINDOW_INNER_WIDTH = window.innerWidth;
 export const scaleMultiplier = 1.0;  //WINDOW_INNER_HEIGHT / 768.0;
 
-export const isiOS = (typeof AndroidInterface == 'undefined');
-export const isAndroid = (typeof AndroidInterface != 'undefined');
+export const isDesktop = true;
+export const isElectron = true;
+export const isiOS = false;
+export const isAndroid = false;
 
 export function libInit () {
     frame = document.getElementById('frame')!;

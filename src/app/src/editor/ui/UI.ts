@@ -15,16 +15,16 @@ import Stage from '../engine/Stage';
 import ScriptsPane from './ScriptsPane';
 import Undo from './Undo';
 import Library from './Library';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
-import MediaLib from '../../iPad/MediaLib';
+import PlatformBridge from '../../platform/PlatformBridge';
+import IO from '../../platform/IO';
+import MediaLib from '../../platform/MediaLib';
 import Paint from '../../painteditor/Paint';
 import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import { getModelRefAs } from '../modelRegistry';
 import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, isTouch, newDiv,
-    newTextInput, isAndroid, getDocumentWidth, getDocumentHeight, setProps, globalx} from '../../utils/lib';
+    newTextInput, getDocumentWidth, getDocumentHeight, setProps, globalx} from '../../utils/lib';
 
 // Named-form access: document.forms.projectname.myproject
 const namedForms = document.forms as unknown as Record<string, HTMLFormElement & Record<string, HTMLInputElement>>;
@@ -221,26 +221,19 @@ export default class UI {
             var shareEmail = newHTML('div', 'infoboxShareButton', shareButtons);
             shareEmail.id = 'infoboxShareButtonEmail';
             shareEmail.textContent = Localization.localize('SHARING_BY_EMAIL');
+            shareEmail.style.float = 'left';
 
-            if (isAndroid) {
-                shareEmail.style.margin = 'auto';
-            } else {
-                shareEmail.style.float = 'left';
-            }
+            var shareAirdrop = newHTML('div', 'infoboxShareButton', shareButtons);
+            shareAirdrop.id = 'infoboxShareButtonAirdrop';
+            shareAirdrop.textContent = Localization.localize('SHARING_BY_AIRDROP');
+            shareAirdrop.style.float = 'right';
+            shareAirdrop.onmousedown = function (e: MouseEvent) {
+                UI.parentalGate(e, function (e: MouseEvent) {
+                    UI.infoDoShare(e, nameField, shareLoadingGif, 1);
+                });
+            };
 
-            if (!isAndroid) {
-                var shareAirdrop = newHTML('div', 'infoboxShareButton', shareButtons);
-                shareAirdrop.id = 'infoboxShareButtonAirdrop';
-                shareAirdrop.textContent = Localization.localize('SHARING_BY_AIRDROP');
-                shareAirdrop.style.float = 'right';
-                shareAirdrop.onmousedown = function (e: MouseEvent) {
-                    UI.parentalGate(e, function (e: MouseEvent) {
-                        UI.infoDoShare(e, nameField, shareLoadingGif, 1);
-                    });
-                };
-            }
-
-            iOS.deviceName(function (name) {
+            PlatformBridge.deviceName(function (name) {
                 gn('deviceName')!.textContent = name;
             });
 
@@ -335,7 +328,7 @@ export default class UI {
 
         setTimeout(saveAndShare, 500); // 500ms delay to wait for loading GIF to show and keyboard to hide
 
-        iOS.analyticsEvent('editor', 'share_button', (shareType == 0) ? 'email' : 'airdrop');
+        PlatformBridge.analyticsEvent('editor', 'share_button', (shareType == 0) ? 'email' : 'airdrop');
 
         function saveAndShare () {
             // Save the project's new name
@@ -354,8 +347,8 @@ export default class UI {
                     var emailSubject = Localization.localize('SHARING_EMAIL_SUBJECT', {
                         PROJECT_NAME: IO.shareName
                     });
-                    // iOS signature declares string; the bridge receives the numeric share type (0 email / 1 airdrop)
-                    iOS.sendSjrToShareDialog(IO.zipFileName, emailSubject, Localization.localize('SHARING_EMAIL_TEXT'), shareType as unknown as string, contents);
+                    // Host bridge signature receives the numeric share type (0 email / 1 airdrop)
+                    PlatformBridge.sendSjrToShareDialog(IO.zipFileName, emailSubject, Localization.localize('SHARING_EMAIL_TEXT'), shareType as unknown as string, contents);
 
                     shareLoadingGif.style.visibility = 'hidden';
                 });
@@ -382,13 +375,6 @@ export default class UI {
         ti.onfocus = function (e: FocusEvent) {
             e.preventDefault();
             ti.oldvalue = ti.value;
-            if (isAndroid) {
-                AndroidInterface.scratchjr_setsoftkeyboardscrolllocation(
-                    ti.getBoundingClientRect().top * devicePixelRatio,
-                    ti.getBoundingClientRect().bottom * devicePixelRatio
-                );
-                AndroidInterface.scratchjr_forceShowKeyboard();
-            }
         };
         ti.onkeypress = function (evt: KeyboardEvent) {
             handleNamePress(evt);
@@ -410,7 +396,7 @@ export default class UI {
     static handleTextFieldSave (dontHide?: boolean) {
         // Handle story-starter mode project
         if (ScratchJr.isEditable() && ScratchJr.editmode == 'storyStarter' && !Project.error) {
-            iOS.analyticsEvent('samples', 'story_starter_edited', Project.metadata!.name as string);
+            PlatformBridge.analyticsEvent('samples', 'story_starter_edited', Project.metadata!.name as string);
             // Get the new project name
             var sampleName = Localization.localize('SAMPLE_' + Project.metadata!.name);
             IO.uniqueProjectName({
@@ -444,7 +430,7 @@ export default class UI {
         }
         Project.metadata!.name = pname;
         ScratchJr.changed = true;
-        iOS.setfield(iOS.database, Project.metadata!.id as string, 'name', pname);
+        PlatformBridge.setfield(PlatformBridge.database, Project.metadata!.id as string, 'name', pname);
         if (!dontHide) {
             ScratchAudio.sndFX('exittap.wav');
             gn('infobox')!.className = 'infobox fade';
@@ -463,13 +449,6 @@ export default class UI {
         }
 
         // Prevent button from thrashing
-        setTimeout(function () {
-            projectNameTextInput!.onblur = function () {
-                if (isAndroid) {
-                    AndroidInterface.scratchjr_forceHideKeyboard();
-                }
-            };
-        }, 500);
         projectNameTextInput!.onblur = function () {
             if (ScratchJr.isEditable()) {
                 namedForms.projectname.myproject.focus();
@@ -960,11 +939,6 @@ export default class UI {
         }
         e.preventDefault();
         e.stopPropagation();
-        if (isAndroid) {
-            if (gn('textbox')!.style.visibility === 'visible') {
-                return;
-            }
-        }
         ScratchJr.unfocus(e);
         ScratchJr.stage.currentPage.createText();
     }
@@ -976,11 +950,6 @@ export default class UI {
     static createFormForText (p: HTMLElement) {
         var tf = newHTML('div', 'pagetext off', p);
         tf.setAttribute('id', 'textbox');
-        if (isAndroid) {
-            tf.onmousedown = function (e: MouseEvent) {
-                e.preventDefault();
-            };
-        }
         var activetb = newHTML('form', 'pageform', tf) as HTMLFormElement;
         activetb.name = 'activetextbox';
         activetb.id = 'myform';

@@ -4,9 +4,9 @@ import { bumpMediaCount, getMediaCount } from './mediaCounter';
 import { getModelRefAs, setModelRef } from '../modelRegistry';
 import Sprite from './Sprite';
 import BlockSpecs from '../blocks/BlockSpecs';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
-import MediaLib from '../../iPad/MediaLib';
+import PlatformBridge from '../../platform/PlatformBridge';
+import IO from '../../platform/IO';
+import MediaLib from '../../platform/MediaLib';
 import Matrix from '../../geom/Matrix';
 import Vector from '../../geom/Vector';
 import {newHTML, newDiv, gn,
@@ -136,7 +136,7 @@ export default class Page {
         }
         var me = this;
         var keys = MediaLib.keys as Record<string, unknown>;
-        var url = (keys[name]) ? MediaLib.path + name : (name.indexOf('/') < 0) ? iOS.path + name : name;
+        var url = (keys[name]) ? MediaLib.path + name : (name.indexOf('/') < 0) ? PlatformBridge.path + name : name;
         var md5 = (keys[name]) ? MediaLib.path + name : name;
 
         if (md5.substr(md5.length - 3) == 'png') {
@@ -148,7 +148,7 @@ export default class Page {
         if (md5.indexOf('/') > -1) {
             IO.requestFromServer(md5, doNext);
         } else {
-            iOS.getmedia(md5, nextStep);
+            PlatformBridge.getmedia(md5, nextStep);
         }
         function nextStep (base64: string) {
             doNext(atob(base64));
@@ -156,7 +156,7 @@ export default class Page {
         function doNext (str: string) {
             str = str.replace(/>\s*</g, '><');
             me.setSVG(str);
-            if ((str.indexOf('xlink:href') < 0) && iOS.path) {
+            if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
                 me.setBackgroundImage(url, fcn); // does not have embedded images
             } else {
                 var base64 = IO.getImageDataURL(me.md5!, btoa(str));

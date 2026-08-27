@@ -1,7 +1,7 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 
 import Cookie from './Cookie';
-import IO from '../iPad/IO';
+import IO from '../platform/IO';
 
 let currentLocale!: string;
 let localizationMessages: Record<string, string> = {};

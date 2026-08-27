@@ -94,4 +94,4 @@ UI must end above that line.
   `Sprite.getSpriteData()`/`Page.encodePage()`, read it in
   `Page.loadPageData()`/`Project.recreateObject()`, and extend the round-trip
   tests.
-- **New IPC channel**: follow the checklist in [ipc-inventory.md](./ipc-inventory.md).
+- **New IPC channel**: define the channel in `src/preload.ts`, type it in `src/types/globals.d.ts`, and register the IPC handler in `src/main.ts` / `src/main/`.

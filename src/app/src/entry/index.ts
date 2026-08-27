@@ -1,6 +1,6 @@
 import ScratchAudio from '../utils/ScratchAudio';
-import {gn, getUrlVars, isAndroid, isiOS} from '../utils/lib';
-import iOS from '../iPad/iOS';
+import {gn, getUrlVars} from '../utils/lib';
+import PlatformBridge from '../platform/PlatformBridge';
 import Localization from '../utils/Localization';
 import AppUsage from '../utils/AppUsage';
 
@@ -48,7 +48,7 @@ function indexFirstTime () {
         gn('blueguy')!.className = 'blue show';
         gn('redguy')!.className = 'red show';
     }
-    iOS.askpermission(); // ask for sound recording
+    PlatformBridge.askpermission(); // ask for sound recording
     
    
     setTimeout(function () {
@@ -95,9 +95,6 @@ function indexLoadStart (afterUsage?: boolean) {
     document.onmousemove = function (e) {
         e.preventDefault();
     };
-    if (isAndroid) {
-        AndroidInterface.notifySplashDone();
-    }
 }
 
 function indexLoadUsage() {
@@ -130,7 +127,7 @@ function indexLoadUsage() {
 }
 
 function indexGohome () {
-    iOS.setfile('homescroll.sjr', 0, function () {
+    PlatformBridge.setfile('homescroll.sjr', 0, function () {
         doNext();
     });
     function doNext () {
@@ -169,7 +166,7 @@ function indexSetUsage (e: MouseEvent) {
         break;
     }
     // Send one-time analytics event about usage
-    iOS.analyticsEvent('lobby', 'scratchjr_usage', usageText);
+    PlatformBridge.analyticsEvent('lobby', 'scratchjr_usage', usageText);
     AppUsage.setUsage(usageText);
     ScratchAudio.sndFX('tap.wav');
     indexLoadStart(true);
@@ -186,11 +183,7 @@ function indexMoreApps () {
     // Lazy: pulls the editor UI chunk only if the parental gate is needed.
     import('../editor/ui/UI').then((m) => {
         m.default.parentalGate(null, function () {
-            if (isiOS) {
-                window.location.href = 'https://itunes.apple.com/us/developer/pbs-kids/id324323339?mt=8';
-            } else {
-                window.location.href = 'http://to.pbs.org/ScJr_GPlay';
-            }
+            window.location.href = 'https://pbskids.org/apps';
         });
     });
 }

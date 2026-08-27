@@ -6,7 +6,7 @@ import { mockMediaLib } from './helpers/browser-globals.js';
 
 vi.mock('../../src/app/src/lobby/Lobby.js', () => ({ default: {} }));
 vi.mock('../../src/app/src/utils/SVG2Canvas.js', () => ({ default: {} }));
-vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({ default: mockMediaLib }));
+vi.mock('../../src/app/src/platform/MediaLib.ts', () => ({ default: mockMediaLib }));
 
 import { preprocess } from '../../src/app/src/utils/lib.ts';
 

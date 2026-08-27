@@ -424,6 +424,7 @@ html {
     margin-left: ${css_vh(3.29)};
 }
 
+#inappPaintEditorGuide #project-view-wrapper,
 #inappPaintEditorGuide #ipad-project-view-wrapper {
     position: relative;
 }
@@ -436,6 +437,7 @@ html {
     display: inline;
 }
 
+#inappPaintEditorGuide .project-view,
 #inappPaintEditorGuide .ipad-project-view {
     margin-left: ${css_vh(14.31)};
     width: ${css_vh(96.55)};

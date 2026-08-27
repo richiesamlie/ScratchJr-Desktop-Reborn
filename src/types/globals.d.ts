@@ -287,7 +287,9 @@ interface Window {
     scratchjr?: IpcBridge;
     // Legacy global assignment kept until Phase 8 teardown
     ScratchAudio?: ScratchAudioGlobal;
-    // Set by iPad/iOS for tablet sharing callbacks
+    // Modern platform bridge for desktop host calls
+    PlatformBridge?: unknown;
+    // Backwards-compatible alias for platform bridge
     iOS?: unknown;
     // Non-standard touch handler used by Events.js
     ontouchleave?: ((this: GlobalEventHandlers, ev: TouchEvent) => void) | null;
@@ -309,6 +311,7 @@ interface Window {
 declare const ScratchJr: { saveProject(arg: unknown, cb: () => void): void };
 declare const Undo: { prevStep(e: object): void; nextStep(e: object): void };
 declare const Home: { createNewProject(): void };
+declare const PlatformBridge: { soundDone(name: string): void };
 declare const iOS: { soundDone(name: string): void };
 declare const Camera: { processimage(data: string): void };
 

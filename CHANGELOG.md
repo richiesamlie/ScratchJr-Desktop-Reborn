@@ -3,6 +3,22 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.7.3] - 2026-08-27
+
+**Platform naming normalization & cleanup.**
+
+### Refactoring & Architecture
+- **Modern Platform Module**: Replaced legacy `src/app/src/iPad/` (`iOS.ts`, `IO.ts`, `MediaLib.ts`) with modern `src/app/src/platform/` (`PlatformBridge.ts`, `IO.ts`, `MediaLib.ts`).
+- **PlatformBridge & Aliases**: Introduced `PlatformBridge` class as the primary desktop host interface with backward-compatible `iOS` export aliases and `window.PlatformBridge` / `window.iOS` bindings.
+- **Project Format Version Encapsulation**: Encapsulated project archive format version string as `PROJECT_FORMAT_VERSION = 'iOSv01'` in `platform/IO.ts` to preserve SQLite database and `.sjr` file interchange compatibility.
+- **Desktop Platform Flags**: Set `isDesktop = true`, `isElectron = true`, `isiOS = false`, `isAndroid = false` in `src/app/src/utils/lib.ts`, eliminating obsolete Android/mobile branches and soft-keyboard hooks.
+- **In-App Help Views**: Renamed `#ipad-project-view-wrapper` to `#project-view-wrapper` and `.ipad-project-view` to `.project-view` in HTML templates and stylesheets.
+
+### Testing & Verification
+- Migrated tests from `tests/unit/ios-setfield.test.js` to `tests/unit/platform-bridge-setfield.test.js` with backward-compatibility alias assertions.
+- Updated all test fixtures and mocks to use `src/app/src/platform/`.
+- All 132 automated unit tests passing; clean strict typecheck and linter.
+
 ## [v1.7.2] - 2026-08-27
 
 **Code cleanup release.** No user-facing behavior changes.

@@ -491,6 +491,7 @@ html {
     margin-left: ${css_vh(9.05)};
 }
 
+#inappInterfaceGuide  #project-view-wrapper,
 #inappInterfaceGuide  #ipad-project-view-wrapper {
 	position: relative;
 }
@@ -503,6 +504,7 @@ html {
 	display: inline;
 }
 
+#inappInterfaceGuide  .project-view,
 #inappInterfaceGuide  .ipad-project-view {
 	margin-left: ${css_vh(14.31)};
 	float: left;

@@ -4,7 +4,7 @@
 import Page from '../../../src/app/src/editor/engine/Page.js';
 import Sprite from '../../../src/app/src/editor/engine/Sprite.js';
 import ScratchJr from '../../../src/app/src/editor/ScratchJr.js';
-import iOS from '../../../src/app/src/iPad/iOS.js';
+import PlatformBridge from '../../../src/app/src/platform/PlatformBridge.js';
 
 function appendDiv (id) {
     const div = document.createElement('div');
@@ -58,8 +58,8 @@ export function resetRendererDom () {
 // Sprite construction kicks off async media loading through the native
 // bridge; the format tests don't need images.
 export function stubMedia () {
-    iOS.getmedia = async () => {};
-    iOS.path = '';
+    PlatformBridge.getmedia = async () => {};
+    PlatformBridge.path = '';
 }
 
 /** [blocktype, arg, nested-strip-shape] tuples; positions are dropped */

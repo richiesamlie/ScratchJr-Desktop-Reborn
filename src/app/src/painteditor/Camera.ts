@@ -1,5 +1,5 @@
 import ScratchJr from '../editor/ScratchJr';
-import iOS from '../iPad/iOS';
+import PlatformBridge from '../platform/PlatformBridge';
 import ScratchAudio from '../utils/ScratchAudio';
 import Paint from './Paint';
 import PaintUndo from './PaintUndo';
@@ -9,7 +9,7 @@ import SVG2Canvas from '../utils/SVG2Canvas';
 import Rectangle from '../geom/Rectangle';
 import Layer from './Layer';
 import Ghost from './Ghost';
-import {gn, globalx, globaly, DEGTOR, setCanvasSize, isAndroid} from '../utils/lib';
+import {gn, globalx, globaly, DEGTOR, setCanvasSize} from '../utils/lib';
 
 let view = 'front';
 let target: Element | null = null;
@@ -56,7 +56,7 @@ export default class Camera {
         data.mw = Paint.workspaceWidth;
         data.mh = Paint.workspaceHeight;
         data.image = mask.toDataURL('image/png');
-        iOS.startfeed(data, iOS.trace);
+        PlatformBridge.startfeed(data, PlatformBridge.trace);
         Paint.cameraToolsOn();
     }
 
@@ -65,7 +65,7 @@ export default class Camera {
         case 'cameraflip':
             ScratchAudio.sndFX('tap.wav');
             view = (view == 'front') ? 'back' : 'front';
-            iOS.choosecamera(view, Camera.flip);
+            PlatformBridge.choosecamera(view, Camera.flip);
             break;
         case 'camerasnap':
             Camera.snapShot();
@@ -86,38 +86,23 @@ export default class Camera {
         target = null;
         view = 'front';
         Camera.active = false;
-        iOS.stopfeed();
+        PlatformBridge.stopfeed();
         Paint.cameraToolsOff();
-        if (isAndroid) {
-            ScratchJr.onBackButtonCallback.pop();
-        }
     }
 
     static snapShot () {
-        iOS.captureimage('Camera.processimage'); // javascript call back;
+        PlatformBridge.captureimage('Camera.processimage'); // javascript call back;
     }
 
     static getLayerMask (elem: Element) {
         // draw background
-        var w, h;
-        if (isAndroid) {
-            var mainCanvas = gn('maincanvas')!;
-            var mainCanvasRect = mainCanvas.getBoundingClientRect();
-            w = mainCanvasRect.width;
-            h = mainCanvasRect.height;
-        } else {
-            w = Paint.workspaceWidth;
-            h = Paint.workspaceHeight;
-        }
+        var w = Paint.workspaceWidth;
+        var h = Paint.workspaceHeight;
         var cnv = document.createElement('canvas');
         setCanvasSize(cnv, w, h);
         var ctx = cnv.getContext('2d')!;
         ctx.fillStyle = ScratchJr.stagecolor;
         ctx.fillRect(0, 0, cnv.width, cnv.height);
-        if (isAndroid) {
-            ctx.save();
-            ctx.scale(Paint.currentZoom, Paint.currentZoom);
-        }
         SVG2Canvas.drawImage(gn('paintgrid')! as Element, ctx);
 
         var isgroup = (elem.parentNode && ((elem.parentNode as Element).id != 'layer1'));
@@ -137,9 +122,6 @@ export default class Camera {
         }
         Camera.drawLayers(gn('layer1')! as Element, ctx, index + 1,
             (gn('layer1')! as Element).childElementCount);
-        if (isAndroid) {
-            ctx.restore();
-        }
         return cnv;
     }
 

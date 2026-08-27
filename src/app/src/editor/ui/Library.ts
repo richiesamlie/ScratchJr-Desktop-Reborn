@@ -1,8 +1,8 @@
 
 import ScratchJr from '../ScratchJr';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
-import MediaLib from '../../iPad/MediaLib';
+import PlatformBridge from '../../platform/PlatformBridge';
+import IO from '../../platform/IO';
+import MediaLib from '../../platform/MediaLib';
 import Paint from '../../painteditor/Paint';
 import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
@@ -413,12 +413,12 @@ export default class Library {
             // (this is possible if we receive a duplicate project, for example)
             Library.assetThumbnailUnique(data.altmd5 as string, type!, function (isUnique: boolean) {
                 if (isUnique) {
-                    iOS.remove(data.altmd5 as string, iOS.trace);
+                    PlatformBridge.remove(data.altmd5 as string, PlatformBridge.trace);
                 }
             });
         }
 
-        IO.deleteobject(key, data.id as string, iOS.trace);
+        IO.deleteobject(key, data.id as string, PlatformBridge.trace);
     }
 
     static parseAssetData (data: Record<string, unknown>): Record<string, unknown> {
@@ -538,7 +538,7 @@ export default class Library {
             if (!((selectedOne as string) in MediaLib.keys)) {
                 analyticsName = 'user_asset';
             }
-            iOS.analyticsEvent('editor', 'new_character', analyticsName);
+            PlatformBridge.analyticsEvent('editor', 'new_character', analyticsName);
         }
         Library.close(e);
     }

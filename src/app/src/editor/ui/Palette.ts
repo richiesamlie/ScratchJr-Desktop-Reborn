@@ -8,8 +8,8 @@ import BlockSpecs from '../blocks/BlockSpecs';
 import ScriptsPane from './ScriptsPane';
 import Undo from './Undo';
 import { getModelRefAs, hasModelRef, findUpModelRefEl } from '../modelRegistry';
-import iOS from '../../iPad/iOS';
-import MediaLib from '../../iPad/MediaLib';
+import PlatformBridge from '../../platform/PlatformBridge';
+import MediaLib from '../../platform/MediaLib';
 import Events from '../../utils/Events';
 import type Scripts from '../ui/Scripts.js';
 import type Sprite from '../engine/Sprite';
@@ -538,7 +538,7 @@ export default class Palette {
         e.preventDefault();
         switch (Palette.getLandingPlace(element, e)) {
         case 'scripts':
-            iOS.analyticsEvent('editor', 'new_block', getModelRefAs<Block>(element, 'block')!.blocktype);
+            PlatformBridge.analyticsEvent('editor', 'new_block', getModelRefAs<Block>(element, 'block')!.blocktype);
             var sc = ScratchJr.getActiveScript();
             var dx = localx(sc, element.left!);
             var dy = localy(sc, element.top!);

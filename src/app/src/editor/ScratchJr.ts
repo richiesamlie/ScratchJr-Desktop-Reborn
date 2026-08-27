@@ -13,8 +13,8 @@ import Undo from './ui/Undo';
 import Alert from './ui/Alert';
 import Palette from './ui/Palette';
 import Record from './ui/Record';
-import IO from '../iPad/IO';
-import iOS from '../iPad/iOS';
+import IO from '../platform/IO';
+import PlatformBridge from '../platform/PlatformBridge';
 import UI from './ui/UI';
 import Menu from './blocks/Menu';
 import Library from './ui/Library';
@@ -25,7 +25,7 @@ import BlockSpecs from './blocks/BlockSpecs';
 import Runtime from './engine/Runtime';
 import Localization from '../utils/Localization';
 import {libInit, gn, scaleMultiplier, newHTML,
-    isAndroid, getUrlVars, CSSTransition3D, frame} from '../utils/lib';
+    getUrlVars, CSSTransition3D, frame} from '../utils/lib';
 
 // Named-form access
 const namedForms = document.forms as unknown as {
@@ -203,7 +203,7 @@ export default class ScratchJr {
         document.body.scrollTop = 0;
         time = Date.now();
         var urlvars = getUrlVars();
-        iOS.hascamera();
+        PlatformBridge.hascamera();
         ScratchJr.log('starting the app');
         BlockSpecs.initBlocks();
         Project.loadIcon = document.createElement('img');
@@ -332,7 +332,7 @@ export default class ScratchJr {
 
     static saveProject (e: Event | null, onDone: () => void) {
         if (ScratchJr.isEditable() && editmode == 'storyStarter' && storyStarted && !Project.error) {
-            iOS.analyticsEvent('samples', 'story_starter_edited', Project.metadata!.name as string);
+            PlatformBridge.analyticsEvent('samples', 'story_starter_edited', Project.metadata!.name as string);
             // Localize sample project names
             var sampleName = Localization.localize('SAMPLE_' + Project.metadata!.name);
             // Get the new project name
@@ -372,9 +372,9 @@ export default class ScratchJr {
 
     static flippage () {
         Alert.close();
-        iOS.cleanassets('wav', doNext);
+        PlatformBridge.cleanassets('wav', doNext);
         function doNext () {
-            iOS.cleanassets('svg', ScratchJr.switchPage);
+            PlatformBridge.cleanassets('svg', ScratchJr.switchPage);
         }
     }
 
@@ -512,7 +512,7 @@ export default class ScratchJr {
         ScratchJr.displayStatus('none');
         inFullscreen = true;
         UI.enterFullScreen();
-        iOS.analyticsEvent('editor', 'full_screen_entered');
+        PlatformBridge.analyticsEvent('editor', 'full_screen_entered');
         document.body.style.background = 'black';
     }
 
@@ -610,16 +610,8 @@ export default class ScratchJr {
         namedForms.editable.style.left = dx + 'px';
         var top = pt.y + 55 * scaleMultiplier;
         namedForms.editable.style.top = top + 'px';
-        if (isAndroid) {
-            AndroidInterface.scratchjr_setsoftkeyboardscrolllocation(
-                top * window.devicePixelRatio, (top + h) * window.devicePixelRatio
-            );
-        }
         namedForms.editable.className = 'textform on';
         ti.value = String(b.argValue);
-        if (isAndroid) {
-            AndroidInterface.scratchjr_forceShowKeyboard();
-        }
         ti.focus();
     }
 
@@ -654,9 +646,6 @@ export default class ScratchJr {
         activeFocus = undefined;
         document.body.scrollTop = 0;
         document.body.scrollLeft = 0;
-        if (isAndroid) {
-            AndroidInterface.scratchjr_forceHideKeyboard();
-        }
     }
 
     /////////////////////////////////////////

@@ -91,7 +91,7 @@ bridges.
 Per-test setup:
 
 - `resetDom()` — fresh `#scriptscontainer`, `#pagesdiv`, stub `ScratchJr.stage`
-- `stubMedia()` — stub `iOS.getmedia` (sprite construction kicks off async media loads)
+- `stubMedia()` — stub `PlatformBridge.getmedia` (sprite construction kicks off async media loads)
 - `BlockSpecs.initBlocks()` — populates block defs (module load does not)
 - Construct `Page` with data (`{ lastSprite: '', sprites: [], layers: [], num: 1 }`)
   — an empty constructor triggers `emptyPage()` → `createCat()` → `MediaLib` (unavailable in tests)

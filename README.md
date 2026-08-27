@@ -37,6 +37,7 @@
 - **No SQL Over IPC**: The renderer sends typed database intents; the main process composes parameterized SQL from an allowlist of tables and columns. There is no renderer-supplied SQL text to sanitize, and strict file-path containment guards all resource reads.
 
 ### 🏗️ Clean Engine/UI Separation
+- **Modern Platform Bridge**: Legacy tablet/iOS wrappers are replaced by a modular `src/app/src/platform/` layer (`PlatformBridge`, `IO`, `MediaLib`) with backward-compatible aliases, eliminating dead mobile hooks.
 - **Typed Port Seam**: The block engine (`editor/engine`, `editor/blocks`) has zero runtime imports of UI singletons or global state — everything flows through the typed `EnginePorts` interface, installed once at boot.
 - **Model Registry**: The invisible `div.owner` expando object graph was replaced by `modelRegistry.ts`, a kind-tagged WeakMap element→model registry (blocks, scripts, sprites, pages, stage, thumbnails).
 - **Per-Page Bundles**: esbuild code splitting gives each screen only its own code — the lobby and start screen no longer parse the block engine or paint editor.

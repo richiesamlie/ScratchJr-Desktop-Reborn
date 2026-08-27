@@ -4,14 +4,14 @@ import BlockSpecs from '../editor/blocks/BlockSpecs';
 import SVGTools from './SVGTools';
 import SVG2Canvas from '../utils/SVG2Canvas';
 import Ghost from './Ghost';
-import iOS from '../iPad/iOS';
+import PlatformBridge from '../platform/PlatformBridge';
 
 // Named-form access: document.forms.spriteform
 const namedForms = document.forms as unknown as {
     spriteform: HTMLFormElement & { name: HTMLInputElement };
 };
-import IO from '../iPad/IO';
-import MediaLib from '../iPad/MediaLib';
+import IO from '../platform/IO';
+import MediaLib from '../platform/MediaLib';
 import Localization from '../utils/Localization';
 import Alert from '../editor/ui/Alert';
 import PaintAction from './PaintAction';
@@ -24,7 +24,7 @@ import Events from '../utils/Events';
 import Transform from './Transform';
 import Vector from '../geom/Vector';
 import type {Point} from '../geom/Vector';
-import {gn, newHTML, setCanvasSize, getIdFor, isAndroid, setProps, hitRect, frame} from '../utils/lib';
+import {gn, newHTML, setCanvasSize, getIdFor, setProps, hitRect, frame} from '../utils/lib';
 
 // The costume name input carries a local `firstTime` expando flag (see nameFocus).
 interface PaintNameInput extends HTMLInputElement {
@@ -177,7 +177,7 @@ export default class Paint {
     }
 
     static open (bkg: boolean, md5: string | undefined, sname?: string, cname?: string, cscale?: string | number, sw?: number, sh?: number) {
-        iOS.analyticsEvent('editor', 'paint_editor_opened', bkg ? 'bkg' : 'character');
+        PlatformBridge.analyticsEvent('editor', 'paint_editor_opened', bkg ? 'bkg' : 'character');
         PaintUndo.buffer = [];
         PaintUndo.index = 0;
         maxZoom = 5;
@@ -475,14 +475,8 @@ export default class Paint {
     }
 
     static setCanvasTransform (value: number) {
-        if (isAndroid) { // Use 3D translate to increase speed
-            gn('maincanvas')!.style.webkitTransform = 'translate3d(' + gn('maincanvas')!.dx + 'px,'
-                + gn('maincanvas')!.dy + 'px, 0px) scale(' + value + ',' + value + ')';
-        } else { // Use 2D translate to maintain sharpness
-            gn('maincanvas')!.style.webkitTransform = 'translate(' + gn('maincanvas')!.dx + 'px,'
-                + gn('maincanvas')!.dy + 'px) scale(' + value + ',' + value + ')';
-
-        }
+        gn('maincanvas')!.style.webkitTransform = 'translate(' + gn('maincanvas')!.dx + 'px,'
+            + gn('maincanvas')!.dy + 'px) scale(' + value + ',' + value + ')';
     }
 
     static adjustPos (delta: Point) {
@@ -614,12 +608,6 @@ export default class Paint {
         var ti = e.target as PaintNameInput;
         ti.firstTime = true;
         ScratchJr.activeFocus = ti as unknown as typeof ScratchJr.activeFocus;
-        if (isAndroid) {
-            AndroidInterface.scratchjr_setsoftkeyboardscrolllocation(
-                ti.getBoundingClientRect().top * window.devicePixelRatio,
-                ti.getBoundingClientRect().bottom * window.devicePixelRatio
-            );
-        }
         setTimeout(function () {
             ti.setSelectionRange(ti.value.length, ti.value.length);
         }, 1);
@@ -747,7 +735,7 @@ export default class Paint {
         var rightpal = newHTML('div', 'side', div);
         Paint.addSidePalette(rightpal, 'selectortools', ['select', 'rotate']);
         Paint.addSidePalette(rightpal, 'edittools', ['stamper', 'scissors']);
-        Paint.addSidePalette(rightpal, 'filltools', (iOS.camera == '1' && Camera.available) ? ['camera', 'paintbucket'] : ['paintbucket']);
+        Paint.addSidePalette(rightpal, 'filltools', (PlatformBridge.camera == '1' && Camera.available) ? ['camera', 'paintbucket'] : ['paintbucket']);
     }
 
     static addSidePalette (p: HTMLElement, id: string, list: string[]) {
@@ -773,10 +761,6 @@ export default class Paint {
         var fc = newHTML('div', 'flipcamera', topbar);
         fc.setAttribute('id', 'cameraflip');
         fc.setAttribute('key', 'cameraflip');
-        if (isAndroid && !AndroidInterface.scratchjr_has_multiple_cameras()) {
-            fc.style.display = 'none';
-        }
-
         fc.onmousedown = Paint.setMode;
         var captureContainer = newHTML('div', 'snapshot-container', gn('backdrop')!);
         captureContainer.setAttribute('id', 'capture-container');
@@ -1069,7 +1053,7 @@ export default class Paint {
             Paint.loadChar(md5);
         } else if (!(MediaLib.keys as Record<string, unknown>)[md5]) {
             // Load user asset
-            iOS.getmedia(md5, nextStep);
+            PlatformBridge.getmedia(md5, nextStep);
         } else {
             // Load library asset
             Paint.getBkg(MediaLib.path + md5);
@@ -1156,7 +1140,7 @@ export default class Paint {
             Paint.loadChar(md5);
         } else if (!(MediaLib.keys as Record<string, unknown>)[md5]) {
             // Load user asset
-            iOS.getmedia(md5, nextStep);
+            PlatformBridge.getmedia(md5, nextStep);
         } else {
             // Load library asset
             Paint.loadChar(MediaLib.path + md5);
@@ -1252,9 +1236,9 @@ export default class Paint {
     static addToBkgLib (fcn?: (result: unknown) => void) {
         var dataurl = IO.getThumbnail(svgdata!, 480, 360, 120, 90);
         var pngBase64 = dataurl.split(',')[1];
-        iOS.setmedia(pngBase64, 'png', setBkgRecord);
+        PlatformBridge.setmedia(pngBase64, 'png', setBkgRecord);
         function setBkgRecord (pngmd5: string) {
-            iOS.stmt({
+            PlatformBridge.stmt({
                 op: 'insert', table: 'userbkgs',
                 row: {
                     md5: saveMD5, altmd5: pngmd5, version: ScratchJr.version,
@@ -1306,6 +1290,7 @@ export default class Paint {
         IO.query('usershapes', mobj, function (str: string) {
             Paint.checkDuplicate(str, fcn);
         });
+        Paint.changePageSprite();
     }
 
     static checkDuplicate (str: string, fcn?: (result: unknown) => void) {
@@ -1344,9 +1329,9 @@ export default class Paint {
         var h = box.height.toString();
         var dataurl = IO.getThumbnail(svgdata!, w, h, 120, 90);
         var pngBase64 = dataurl.split(',')[1];
-        iOS.setmedia(pngBase64, 'png', setCostumeRecord);
+        PlatformBridge.setmedia(pngBase64, 'png', setCostumeRecord);
         function setCostumeRecord (pngmd5: string) {
-            iOS.stmt({
+            PlatformBridge.stmt({
                 op: 'insert', table: 'usershapes',
                 row: {
                     scale, md5: saveMD5, altmd5: pngmd5, version: ScratchJr.version,

@@ -1,15 +1,15 @@
 import {gn} from '../utils/lib';
 import Localization from '../utils/Localization';
-import iOS from '../iPad/iOS';
+import PlatformBridge from '../platform/PlatformBridge';
 import Lobby from '../lobby/Lobby';
 
 export function homeMain () {  // eslint-disable-line import/prefer-default-export
     gn('logotab')!.onmousedown = homeGoBack;
     homeStrings();
-    iOS.getsettings(doNext);
+    PlatformBridge.getsettings(doNext);
     function doNext (str: string) {
         var list = str.split(',');
-        iOS.path = list[1] == '0' ? list[0] + '/' : undefined;
+        PlatformBridge.path = list[1] == '0' ? list[0] + '/' : undefined;
         Lobby.appinit(window.Settings!.scratchJrVersion);
     }
 }

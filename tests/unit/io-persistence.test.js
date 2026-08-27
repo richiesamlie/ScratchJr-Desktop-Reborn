@@ -5,10 +5,10 @@ import { mockMediaLib } from './helpers/browser-globals.js';
 // module scope, so stub the browser globals before the IO module graph loads
 // (the shared helper import above does that).
 
-// IO's import graph touches DOM-only modules (iOS bridge, Lobby/appEntry,
+// IO's import graph touches DOM-only modules (PlatformBridge, Lobby/appEntry,
 // SVG rendering). Stub them; the persistence logic under test only needs
-// iOS.query + the MediaLib shape.
-vi.mock('../../src/app/src/iPad/iOS.ts', () => ({
+// PlatformBridge.query + the MediaLib shape.
+vi.mock('../../src/app/src/platform/PlatformBridge.ts', () => ({
     default: {
         query: vi.fn(),
         stmt: vi.fn(),
@@ -19,10 +19,10 @@ vi.mock('../../src/app/src/iPad/iOS.ts', () => ({
 
 vi.mock('../../src/app/src/lobby/Lobby.js', () => ({ default: {} }));
 vi.mock('../../src/app/src/utils/SVG2Canvas.js', () => ({ default: {} }));
-vi.mock('../../src/app/src/iPad/MediaLib.ts', () => ({ default: mockMediaLib }));
+vi.mock('../../src/app/src/platform/MediaLib.ts', () => ({ default: mockMediaLib }));
 
-import IO from '../../src/app/src/iPad/IO.ts';
-import iOS from '../../src/app/src/iPad/iOS.ts';
+import IO from '../../src/app/src/platform/IO.ts';
+import PlatformBridge from '../../src/app/src/platform/PlatformBridge.ts';
 
 describe('IO persistence helpers', () => {
     it('parseProjectData lowercases keys', () => {
@@ -44,36 +44,36 @@ describe('IO.uniqueProjectName (save round-trip naming)', () => {
     let project;
 
     beforeEach(() => {
-        iOS.query.mockReset();
+        PlatformBridge.query.mockReset();
         project = { name: 'My project', version: 'v1' };
     });
 
     it('keeps a unique project name unchanged', async () => {
-        iOS.query.mockImplementation((json, fcn) => fcn(JSON.stringify([])));
+        PlatformBridge.query.mockImplementation((json, fcn) => fcn(JSON.stringify([])));
         await new Promise((resolve) => IO.uniqueProjectName(project, resolve));
         expect(project.name).toBe('My project');
     });
 
     it('renames an unnumbered duplicate to "name 2"', async () => {
-        iOS.query.mockImplementation((json, fcn) => fcn(JSON.stringify([{ name: 'My project' }])));
+        PlatformBridge.query.mockImplementation((json, fcn) => fcn(JSON.stringify([{ name: 'My project' }])));
         await new Promise((resolve) => IO.uniqueProjectName(project, resolve));
         expect(project.name).toBe('My project 2');
     });
 
     it('bumps a numbered duplicate above the highest existing number', async () => {
-        iOS.query.mockImplementation((json, fcn) => fcn(JSON.stringify([{ name: 'My project 5' }])));
+        PlatformBridge.query.mockImplementation((json, fcn) => fcn(JSON.stringify([{ name: 'My project 5' }])));
         await new Promise((resolve) => IO.uniqueProjectName(project, resolve));
         expect(project.name).toBe('My project 6');
     });
 
     it('appends " 1" when useOne is set and the name is unique', async () => {
-        iOS.query.mockImplementation((json, fcn) => fcn(JSON.stringify([])));
+        PlatformBridge.query.mockImplementation((json, fcn) => fcn(JSON.stringify([])));
         await new Promise((resolve) => IO.uniqueProjectName(project, resolve, true));
         expect(project.name).toBe('My project 1');
     });
 
     it('does not lower an existing numbered name (keeps gift numbering)', async () => {
-        iOS.query.mockImplementation((json, fcn) => fcn(JSON.stringify([{ name: 'My project 2' }])));
+        PlatformBridge.query.mockImplementation((json, fcn) => fcn(JSON.stringify([{ name: 'My project 2' }])));
         project.name = 'My project 3';
         await new Promise((resolve) => IO.uniqueProjectName(project, resolve));
         expect(project.name).toBe('My project 3');

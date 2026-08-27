@@ -1,22 +1,12 @@
-import {gn, isiOS, getUrlVars} from '../utils/lib';
+import {gn, getUrlVars} from '../utils/lib';
 
 let place: string;
 
 export function gettingStartedMain () { // eslint-disable-line import/prefer-default-export
     gn('closeHelp')!.onclick = gettingStartedCloseMe;
     gn('closeHelp')!.onmousedown = gettingStartedCloseMe;
-    // Legacy: .type is assigned on the <video> element itself (normally a <source> prop)
-    var videoObj = gn('myVideo')! as HTMLVideoElement & { type: string };
-    if (isiOS) {
-        // On iOS we can load from server
-        videoObj.src = 'assets/lobby/intro.mp4';
-    } else {
-        // On Android we need to copy to a temporary directory first:
-        setTimeout(function () {
-            videoObj.type = 'video/mp4';
-            videoObj.src = AndroidInterface.scratchjr_getgettingstartedvideopath();
-        }, 1000);
-    }
+    var videoObj = gn('myVideo')! as HTMLVideoElement;
+    videoObj.src = 'assets/lobby/intro.mp4';
     videoObj.poster = 'assets/lobby/poster.png';
 
     var urlvars = getUrlVars();

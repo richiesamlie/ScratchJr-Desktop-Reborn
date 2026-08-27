@@ -7,7 +7,7 @@ import Palette from '../editor/ui/Palette';
 import Undo from '../editor/ui/Undo';
 import Scripts from '../editor/ui/Scripts';
 import ScriptsPane from '../editor/ui/ScriptsPane';
-import iOS from '../iPad/iOS';
+import PlatformBridge from '../platform/PlatformBridge';
 import Camera from '../painteditor/Camera';
 import Record from '../editor/ui/Record';
 
@@ -76,7 +76,7 @@ window.scratchjr!.onExportProjectRequest(() => {
     try {
         const ref = ScratchJr.currentProject;
         if (!ref) return;
-        void import('../iPad/IO').then(({ default: IO }) => {
+        void import('../platform/IO').then(({ default: IO }) => {
             IO.zipProject(ref, (contents) => {
                 let name = '';
                 try {
@@ -111,10 +111,10 @@ window.scratchjr!.onExportStageRequest(() => {
     }
 });
 export function editorMain () { // eslint-disable-line import/prefer-default-export
-    iOS.getsettings(doNext);
+    PlatformBridge.getsettings(doNext);
     function doNext (str: string) {
         var list = str.split(',');
-        iOS.path = list[1] == '0' ? list[0] + '/' : undefined;
+        PlatformBridge.path = list[1] == '0' ? list[0] + '/' : undefined;
         if (list.length > 2) {
             Record.available = (list[2] == 'YES');
         }

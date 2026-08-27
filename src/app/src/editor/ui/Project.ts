@@ -6,14 +6,14 @@ import Palette from './Palette';
 import UI from './UI';
 import Page from '../engine/Page';
 import Sprite from '../engine/Sprite';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
+import PlatformBridge from '../../platform/PlatformBridge';
+import IO from '../../platform/IO';
 import Paint from '../../painteditor/Paint';
 import SVG2Canvas from '../../utils/SVG2Canvas';
 import type Scripts from './Scripts';
 import type Block from '../blocks/Block';
 import {frame, gn, newHTML, scaleMultiplier, getIdFor,
-    isAndroid, setProps, setCanvasSize} from '../../utils/lib';
+    setProps, setCanvasSize} from '../../utils/lib';
 
 let metadata: Record<string, unknown> | null = null;
 import { getMediaCount as _getMediaCount, setMediaCount as _setMediaCount, bumpMediaCount as _bumpMediaCount } from '../engine/mediaCounter';
@@ -175,9 +175,6 @@ export default class Project {
             ScratchJr.storyStarted = false;
             UI.needsScroll();
             ScratchJr.log('all thumbnails updated', ScratchJr.getTime(), 'sec');
-            if (isAndroid) {
-                AndroidInterface.notifyEditorDoneLoading();
-            }
         }
     }
 
@@ -467,7 +464,7 @@ export default class Project {
     // callback(true/false)
     static thumbnailUnique (thumbnailMD5: string, projectID: string, callback: (isUnique: boolean) => void) {
         var json: DbSelectIntent = {
-            op: 'select', table: iOS.database,
+            op: 'select', table: PlatformBridge.database,
             items: ['name', 'thumbnail', 'id'],
             where: [
                 { col: 'deleted', op: '=', value: 'NO' },
@@ -475,7 +472,7 @@ export default class Project {
                 { col: 'gallery', op: 'IS NULL' },
             ],
         };
-        IO.query(iOS.database, json, function (result: string) {
+        IO.query(PlatformBridge.database, json, function (result: string) {
             var pdata = JSON.parse(result);
             var isUnique = true;
             for (var p = 0; p < pdata.length; p++) {
@@ -530,7 +527,7 @@ export default class Project {
                 if (thumb && thumb.md5.indexOf('samples/') < 0) { // In case we've exited story-starter mode
                     Project.thumbnailUnique(thumb.md5, id, function (isUnique) {
                         if (isUnique) {
-                            iOS.remove(thumb.md5, iOS.trace); // remove thumb;
+                            PlatformBridge.remove(thumb.md5, PlatformBridge.trace); // remove thumb;
                         }
                     });
                 }
@@ -545,7 +542,7 @@ export default class Project {
         function getMD5 (dataurl: string) {
             var parts = dataurl.split(',');
             var pngBase64 = parts.length > 1 ? parts[1] : '';
-            iOS.getmd5(pngBase64, function (str: string | null) {
+            PlatformBridge.getmd5(pngBase64, function (str: string | null) {
                 if (!str) {
                     resetSaving();
                     return;
@@ -557,7 +554,7 @@ export default class Project {
         function savePNG (md5: string, pngBase64: string) {
             var projectName = ScratchJr.currentProject || 'unknown';
             var filename = projectName + '_' + md5;
-            iOS.setmedianame(pngBase64, filename, 'png', doNext as (result: unknown) => void);
+            PlatformBridge.setmedianame(pngBase64, filename, 'png', doNext as (result: unknown) => void);
         }
 
         function doNext (md5: string) {

@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////
 
 import Lobby from './Lobby.js';
-import iOS from '../iPad/iOS';
-import IO from '../iPad/IO';
+import PlatformBridge from '../platform/PlatformBridge';
+import IO from '../platform/IO';
 import Localization from '../utils/Localization';
 import ScratchAudio from '../utils/ScratchAudio';
 import Vector from '../geom/Vector';
@@ -140,7 +140,7 @@ export default class Home {
             if (md5 && (md5 == 'newproject')) {
                 Home.createNewProject();
             } else if (md5) {
-                iOS.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
+                PlatformBridge.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
                     doNext();
                 });
             }
@@ -151,10 +151,10 @@ export default class Home {
             import('../editor/ui/Project').then((m) => {
                 m.default.thumbnailUnique(Home.actionTarget!.thumb!, Home.actionTarget!.id, function (isUnique) {
                     if (isUnique) {
-                        iOS.remove(Home.actionTarget!.thumb!, iOS.trace);
+                        PlatformBridge.remove(Home.actionTarget!.thumb!, PlatformBridge.trace);
                     }
                 });
-                iOS.setfield(iOS.database, Home.actionTarget!.id, 'deleted', 'YES', Home.removeProjThumb);
+                PlatformBridge.setfield(PlatformBridge.database, Home.actionTarget!.id, 'deleted', 'YES', Home.removeProjThumb);
             });
             break;
         default:
@@ -165,13 +165,13 @@ export default class Home {
             break;
         }
         function doNext () {
-            iOS.analyticsEvent('lobby', 'existing_project_edited');
+            PlatformBridge.analyticsEvent('lobby', 'existing_project_edited');
             window.location.href = 'editor.html?pmd5=' + md5 + '&mode=edit';
         }
     }
 
     static createNewProject () {
-        iOS.analyticsEvent('lobby', 'project_created');
+        PlatformBridge.analyticsEvent('lobby', 'project_created');
         var obj: Record<string, string> = {};
         var prefix = Localization.localize('NEW_PROJECT_PREFIX');
         obj.name = Home.getNextName(prefix || 'Project');
@@ -188,7 +188,7 @@ export default class Home {
             });
             return;
         }
-        iOS.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
+        PlatformBridge.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
             doNext(md5);
         });
         function doNext (md5: unknown) {
@@ -284,12 +284,12 @@ export default class Home {
     }
 
     static displayYourProjects () {
-        iOS.getfile('homescroll.sjr', gotScrollsState);
+        PlatformBridge.getfile('homescroll.sjr', gotScrollsState);
         function gotScrollsState (str: string) {
             var num = Number(atob(str));
             scrollvalue = (num.toString() == 'NaN') ? 0 : num;
             var json: DbSelectIntent = {
-                op: 'select', table: iOS.database,
+                op: 'select', table: PlatformBridge.database,
                 items: ['name', 'thumbnail', 'id', 'isgift'],
                 where: [
                     { col: 'deleted', op: '=', value: 'NO' },
@@ -298,7 +298,7 @@ export default class Home {
                 ],
                 order: { col: 'ctime', dir: 'desc' },
             };
-            IO.query(iOS.database, json, Home.displayProjects);
+            IO.query(PlatformBridge.database, json, Home.displayProjects);
         }
     }
 

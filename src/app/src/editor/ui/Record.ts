@@ -2,11 +2,11 @@ import ScratchJr from '../ScratchJr';
 import { getModelRefAs } from '../modelRegistry';
 import Palette from './Palette';
 import Undo from './Undo';
-import iOS from '../../iPad/iOS';
+import PlatformBridge from '../../platform/PlatformBridge';
 import ScratchAudio from '../../utils/ScratchAudio';
 import type Sprite from '../engine/Sprite';
 import type Page from '../engine/Page';
-import {frame, gn, newHTML, isAndroid, setProps} from '../../utils/lib';
+import {frame, gn, newHTML, setProps} from '../../utils/lib';
 
 let interval: NodeJS.Timeout | null = null;
 let recordedSound: string | null = null;
@@ -146,7 +146,7 @@ export default class Record {
             if (isRecording) {
                 Record.stopRecording(); // Stop if we're already recording
             } else {
-                iOS.sndrecord(Record.startRecording as (result: unknown) => void); // Start a recording
+                PlatformBridge.sndrecord(Record.startRecording as (result: unknown) => void); // Start a recording
             }
         }
     }
@@ -166,7 +166,7 @@ export default class Record {
             Record.soundname = filename;
             Record.toggleButtonUI('record', true);
             var poll = function () {
-                iOS.volume(Record.updateVolume, Record.recordError);
+                PlatformBridge.volume(Record.updateVolume, Record.recordError);
             };
             interval = setInterval(poll, 33);
             timeLimit = setTimeout(function () {
@@ -199,12 +199,12 @@ export default class Record {
 
     // Start playing the sound and switch UI appropriately
     static startPlaying () {
-        iOS.startplay(Record.timeOutPlay);
+        PlatformBridge.startplay(Record.timeOutPlay);
         Record.toggleButtonUI('play', true);
         isPlaying = true;
     }
 
-    // Gets the sound duration from iOS and changes play UI state after time
+    // Gets the sound duration from host bridge and changes play UI state after time
     static timeOutPlay (timeout: number | string) { // duration from the native audio bridge (may be numeric string)
         if (parseInt(String(timeout)) < 0) {
             timeout = 0.1; // Error - stop playing immediately
@@ -241,7 +241,7 @@ export default class Record {
 
     // Stop playing the sound and switch UI appropriately
     static stopPlayingSound (fcn?: () => void) {
-        iOS.stopplay(fcn!);
+        PlatformBridge.stopplay(fcn!);
         Record.toggleButtonUI('play', false);
         isPlaying = false;
         window.clearTimeout(playTimeLimit!);
@@ -268,7 +268,7 @@ export default class Record {
     static volumeCheckStopped (fcn?: () => void) {
         isRecording = false;
         Record.recordUIoff();
-        iOS.recordstop(fcn);
+        PlatformBridge.recordstop(fcn);
     }
 
     // Press OK (check)
@@ -289,12 +289,12 @@ export default class Record {
     }
 
     static closeContinueSave () {
-        iOS.recorddisappear('YES', Record.registerProjectSound);
+        PlatformBridge.recorddisappear('YES', Record.registerProjectSound);
     }
 
     static closeContinueRemove () {
         // don't get the sound - proceed right to tearDown
-        iOS.recorddisappear('NO', Record.tearDownRecorder);
+        PlatformBridge.recorddisappear('NO', Record.tearDownRecorder);
     }
 
     static registerProjectSound () {
@@ -314,17 +314,12 @@ export default class Record {
             Record.tearDownRecorder();
             Palette.selectCategory(3);
         }
-        if (!isAndroid) {
-            ScratchAudio.loadFromLocal('Documents', recordedSound!, whenDone);
-        } else {
-            // On Android, just pass URL
-            ScratchAudio.loadFromLocal('', recordedSound!, whenDone);
-        }
+        ScratchAudio.loadFromLocal('Documents', recordedSound!, whenDone);
     }
 
     // Called on error - remove everything and hide the recorder
     static killRecorder (e?: MouseEvent) {
-        // Inform iOS and then tear-down
+        // Inform host bridge and then tear-down
         if (isPlaying) {
             Record.stopPlayingSound(Record.closeContinueRemove); // stop playing and tear-down
         } else {

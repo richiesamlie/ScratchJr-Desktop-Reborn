@@ -2,9 +2,9 @@
 // Home Screen
 //////////////////////////////////////////////////
 
-import {libInit, getUrlVars, gn, isAndroid, newHTML, preprocessAndLoad} from '../utils/lib';
+import {libInit, getUrlVars, gn, newHTML, preprocessAndLoad} from '../utils/lib';
 import ScratchAudio from '../utils/ScratchAudio';
-import iOS from '../iPad/iOS';
+import PlatformBridge from '../platform/PlatformBridge';
 import Localization from '../utils/Localization';
 import Cookie from '../utils/Cookie';
 
@@ -87,9 +87,6 @@ export default class Lobby {
                 Lobby.setSubMenu('blocks');
             }
         };
-        if (isAndroid) {
-            AndroidInterface.notifyDoneLoading();
-        }
     }
 
     static setPage (page: string) {
@@ -100,7 +97,7 @@ export default class Lobby {
             var doNext = function (page: string) {
                 Lobby.changePage(page);
             };
-            iOS.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
+            PlatformBridge.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
                 doNext(page);
             });
         } else {
@@ -205,7 +202,7 @@ export default class Lobby {
                 ScratchAudio.sndFX('tap.wav');
                 let newLocale = window.Settings!.supportedLocales[(e.target as HTMLElement).textContent!];
                 Cookie.set('localization', newLocale);
-                iOS.analyticsEvent('lobby', 'language_changed', newLocale);
+                PlatformBridge.analyticsEvent('lobby', 'language_changed', newLocale);
                 window.location.href = '?place=gear';
             };
         }

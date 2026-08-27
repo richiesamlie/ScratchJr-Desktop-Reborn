@@ -10,7 +10,7 @@ import Sprite from '../../src/app/src/editor/engine/Sprite.js';
 import ScratchJr from '../../src/app/src/editor/ScratchJr.js';
 import Undo from '../../src/app/src/editor/ui/Undo.js';
 import BlockSpecs from '../../src/app/src/editor/blocks/BlockSpecs.js';
-import iOS from '../../src/app/src/iPad/iOS.js';
+import PlatformBridge from '../../src/app/src/platform/PlatformBridge.js';
 import { resetGoldenDom, stubMedia, stripShape, makePage } from './helpers/editor-fixtures.js';
 
 const STRIP_A = [['hop', 2, 0, 0], ['say', 'Hello', 0, 0]];

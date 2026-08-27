@@ -1,5 +1,5 @@
 import Localization from '../../utils/Localization';
-import IO from '../../iPad/IO';
+import IO from '../../platform/IO';
 import type Block from './Block';
 import type Sprite from '../engine/Sprite';
 

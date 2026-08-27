@@ -1,6 +1,5 @@
-import {isAndroid} from './lib';
 import Sound from './Sound';
-import iOS from '../iPad/iOS';
+import PlatformBridge from '../platform/PlatformBridge';
 
 ////////////////////////////////////////////////////
 /// Sound Playing
@@ -28,22 +27,15 @@ export default class ScratchAudio {
         ScratchAudio.sndFXWithVolume(name, 1.0);
     }
 
-    static sndFXWithVolume (name: string, volume: number) {
-        if (!isAndroid) {
-            if (!uiSounds[name]) {
-                return;
-            }
-            uiSounds[name].play();
-        } else {
-            AndroidInterface.audio_sndfxwithvolume(name, volume);
+    static sndFXWithVolume (name: string, _volume: number) {
+        if (!uiSounds[name]) {
+            return;
         }
+        uiSounds[name].play();
     }
 
     static init (prefix?: string) {
         if (!prefix) {
-            prefix = '';
-        }
-        if (!isAndroid) {
             prefix = 'HTML5/';
         }
         uiSounds = {};
@@ -56,26 +48,18 @@ export default class ScratchAudio {
 
     static addSound (url: string, snd: string, dict: Record<string, Sound>, fcn?: (name: string) => void) {
         var name = snd;
-        if (!isAndroid) {
-            var whenDone =  function (str: unknown) {
-                if (str != 'error') {
-                    var result = snd.split(',');
-                    dict[snd] = new Sound(result[0], result[1]);
-                } else {
-                    name = 'error';
-                }
-                if (fcn) {
-                    fcn(name);
-                }
-            };
-            iOS.registerSound(url, snd, whenDone);
-        } else {
-            // In Android, this is handled outside of JavaScript, so just place a stub here.
-            dict[snd] = new Sound(url + snd);
-            if (fcn) {
-                fcn(snd);
+        var whenDone = function (str: unknown) {
+            if (str != 'error') {
+                var result = snd.split(',');
+                dict[snd] = new Sound(result[0], result[1]);
+            } else {
+                name = 'error';
             }
-        }
+            if (fcn) {
+                fcn(name);
+            }
+        };
+        PlatformBridge.registerSound(url, snd, whenDone);
     }
 
     static soundDone (name: string) {
@@ -88,10 +72,8 @@ export default class ScratchAudio {
             return;
         }
         var dir = '';
-        if (!isAndroid) {
-            if (md5.indexOf('/') > -1) dir = 'HTML5/';
-            else if (md5.indexOf('wav') > -1) dir = 'Documents';
-        }
+        if (md5.indexOf('/') > -1) dir = 'HTML5/';
+        else if (md5.indexOf('wav') > -1) dir = 'Documents';
         ScratchAudio.loadFromLocal(dir, md5, fcn);
     }
 

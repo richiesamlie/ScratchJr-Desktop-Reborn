@@ -1,9 +1,9 @@
 import {preprocessAndLoadCss} from './src/utils/lib';
 import Localization from './src/utils/Localization';
 import AppUsage from './src/utils/AppUsage';
-import iOS from './src/iPad/iOS';
-import IO from './src/iPad/IO';
-import MediaLib from './src/iPad/MediaLib';
+import PlatformBridge from './src/platform/PlatformBridge';
+import IO from './src/platform/IO';
+import MediaLib from './src/platform/MediaLib';
 
 /** @param {string} settingsRoot @param {() => void} whenDone */
 function loadSettings (settingsRoot, whenDone) {
@@ -18,10 +18,10 @@ function loadSettings (settingsRoot, whenDone) {
 // and vice versa. The in-app help pages call loadPage('inapp*') at runtime
 // (see Lobby.loadLink), so those chunks are pulled on demand too.
 const pageEntries = {
-	index: () => import('./src/entry/index').then((m) => iOS.waitForInterface(m.indexMain)),
-	home: () => import('./src/entry/home').then((m) => iOS.waitForInterface(m.homeMain)),
-	editor: () => import('./src/entry/editor').then((m) => iOS.waitForInterface(m.editorMain)),
-	gettingStarted: () => import('./src/entry/gettingstarted').then((m) => iOS.waitForInterface(m.gettingStartedMain)),
+	index: () => import('./src/entry/index').then((m) => PlatformBridge.waitForInterface(m.indexMain)),
+	home: () => import('./src/entry/home').then((m) => PlatformBridge.waitForInterface(m.homeMain)),
+	editor: () => import('./src/entry/editor').then((m) => PlatformBridge.waitForInterface(m.editorMain)),
+	gettingStarted: () => import('./src/entry/gettingstarted').then((m) => PlatformBridge.waitForInterface(m.gettingStartedMain)),
 	inappAbout: () => import('./src/entry/inapp').then((m) => m.inappAbout()),
 	inappInterfaceGuide: () => import('./src/entry/inapp').then((m) => m.inappInterfaceGuide()),
 	inappPaintEditorGuide: () => import('./src/entry/inapp').then((m) => m.inappPaintEditorGuide()),

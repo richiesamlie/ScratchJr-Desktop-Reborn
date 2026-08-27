@@ -10,9 +10,9 @@
 import { enginePorts } from './ports';
 import { getModelRefAs, setModelRef } from '../modelRegistry';
 import BlockSpecs from '../blocks/BlockSpecs';
-import iOS from '../../iPad/iOS';
-import IO from '../../iPad/IO';
-import MediaLib from '../../iPad/MediaLib';
+import PlatformBridge from '../../platform/PlatformBridge';
+import IO from '../../platform/IO';
+import MediaLib from '../../platform/MediaLib';
 import SVG2Canvas from '../../utils/SVG2Canvas';
 import SVGTools from '../../painteditor/SVGTools';
 import Rectangle from '../../geom/Rectangle';
@@ -22,8 +22,8 @@ import ScratchAudio from '../../utils/ScratchAudio';
 import type Scripts from '../ui/Scripts';
 import {newHTML, newDiv, newP, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
-    DEGTOR, getIdFor, setProps, isTouch, isiOS,
-    isAndroid, fitInRect, scaleMultiplier, setCanvasSize,
+    DEGTOR, getIdFor, setProps, isTouch, isDesktop, isAndroid,
+    fitInRect, scaleMultiplier, setCanvasSize,
     globaly, globalx, rgbToHex} from '../../utils/lib';
 import type Stage from './Stage';
 import type Page from './Page';
@@ -130,12 +130,12 @@ export default class Sprite {
         var md5 = this.md5;
         var spr = this;
         var keys = MediaLib.keys as Record<string, unknown>;
-        var url = (keys[md5]) ? MediaLib.path + md5 : (md5.indexOf('/') < 0) ? iOS.path + md5 : md5;
+        var url = (keys[md5]) ? MediaLib.path + md5 : (md5.indexOf('/') < 0) ? PlatformBridge.path + md5 : md5;
         md5 = (keys[md5]) ? MediaLib.path + md5 : md5;
         if (md5.indexOf('/') > -1) {
             IO.requestFromServer(md5, doNext);
         } else {
-            iOS.getmedia(md5, nextStep);
+            PlatformBridge.getmedia(md5, nextStep);
         }
         function nextStep (base64: string) {
             doNext(atob(base64));
@@ -143,7 +143,7 @@ export default class Sprite {
         function doNext (str: string) {
             str = str.replace(/>\s*</g, '><');
             spr.setSVG(str);
-            if ((str.indexOf('xlink:href') < 0) && iOS.path) {
+            if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
                 whenDone(url); // does not have embedded images
             } else {
                 var base64 = IO.getImageDataURL(spr.md5, btoa(str));
@@ -1117,7 +1117,7 @@ Math.floor(h));
         this.setTransform(mtx);
         shake.appendChild(this.div);
         var cb = newHTML('div', (this.type == 'sprite') ? 'deletesprite' : 'deletetext', shake);
-        if (isiOS && this.type == 'sprite') {
+        if (isDesktop && this.type == 'sprite') {
             cb.style.zoom = Math.floor((1 / this.scale) * 100) + '%';
         }
         if ((globalx(cb) - globalx(enginePorts().getStage().div)) < 0) {

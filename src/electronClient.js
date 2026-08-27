@@ -177,8 +177,8 @@ class ElectronDesktopInterface {
             audio.onended = function() {
                 // we need to tell ScratchJR the sound is done
                 // so that it will progress to the next block.
-                /** @type {any} */ (window).iOS.soundDone(name); // eslint-disable-line no-undef
-
+                const hostBridge = /** @type {any} */ (window).PlatformBridge || /** @type {any} */ (window).iOS;
+                if (hostBridge) hostBridge.soundDone(name);
             };
             
             this.currentAudio[name] = audio;
@@ -238,7 +238,8 @@ class ElectronDesktopInterface {
          	// tell scratch the empty sound has finished - otherwise
          	// the green blocks will not progress
          	setTimeout(function() {
-         		/** @type {any} */ (window).iOS.soundDone(name); // eslint-disable-line no-undef 
+         		const hostBridge = /** @type {any} */ (window).PlatformBridge || /** @type {any} */ (window).iOS;
+         		if (hostBridge) hostBridge.soundDone(name);
          	}, 1);
          
             return;
