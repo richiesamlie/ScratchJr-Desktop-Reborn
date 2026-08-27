@@ -21,6 +21,7 @@ export interface UpdateInfo {
     downloadUrl: string;
     releasePageUrl: string;
     releaseNotes: string;
+    error?: string;
 }
 
 interface CachedRelease {
@@ -101,7 +102,10 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
 
-        const headers: Record<string, string> = { 'Accept': 'application/vnd.github.v3+json' };
+        const headers: Record<string, string> = {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': `ScratchJr-Desktop/${currentVersion} (${process.platform})`,
+        };
         let cached = loadEtagCache();
         if (cached.etag) {
             // 304 responses are not counted against the unauthenticated quota.
@@ -125,7 +129,16 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         if (!response.ok) {
             const remaining = response.headers.get('x-ratelimit-remaining');
             debugLog('Update check failed: HTTP', response.status, remaining !== null ? `(quota left: ${remaining})` : '');
-            return defaultResult;
+            if (response.status === 403 && remaining === '0') {
+                return {
+                    ...defaultResult,
+                    error: 'GitHub API rate limit reached. Please try again later or visit the releases page.',
+                };
+            }
+            return {
+                ...defaultResult,
+                error: `Unable to check for updates (HTTP ${response.status}).`,
+            };
         }
 
         const release = await response.json() as CachedRelease['release'];
@@ -140,7 +153,10 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         return buildUpdateInfo(release, currentVersion, releasePageUrl);
     } catch (err) {
         debugLog('Update check error:', err);
-        return defaultResult;
+        return {
+            ...defaultResult,
+            error: 'Could not connect to update server. Please check your internet connection.',
+        };
     }
 }
 

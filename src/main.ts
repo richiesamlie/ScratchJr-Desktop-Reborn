@@ -65,6 +65,18 @@ ${info.releaseNotes ? info.releaseNotes.slice(0, 500) : ''}`,
         } else if (result === 1) {
             openExternalUrl(info.releasePageUrl);
         }
+    } else if (info.error && announceUpToDate) {
+        dialog.showMessageBox(win!, {
+            type: 'warning',
+            buttons: ['View Releases', 'OK'],
+            defaultId: 0,
+            title: 'Update Check',
+            message: info.error,
+        }).then(({ response }) => {
+            if (response === 0) {
+                openExternalUrl(info.releasePageUrl);
+            }
+        });
     } else if (announceUpToDate) {
         dialog.showMessageBox(win!, {
             type: 'info',
