@@ -27,6 +27,17 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   plus echo-only verify lines removed; `docs/development.md` now points at the
   real packaged smoke command.
 
+### Fixes
+- **Release-version drift guard**: `scripts/build-renderer.js` now rewrites
+  `src/app/settings.json`'s `scratchJrVersion` to match `package.json` at
+  every build, so the in-app About / project metadata screens always show
+  the current version instead of a stale baked-in value.
+- **CI version consistency**: the release workflow now refuses to publish if
+  the pushed tag's `vX.Y.Z` doesn't equal `package.json` `version` (no more
+  MSI artifacts shipping a different label than the tag), and verifies the
+  packaged `settings.json` `scratchJrVersion` matches the tag at the end
+  of the build.
+
 ### Verification
 - `npm run lint` 0 · `npm run typecheck` 0 · `tsc -p tsconfig.main.json` 0
 - `npm test` 131/131 passing · `npm run smoke` PASS

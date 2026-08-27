@@ -30,6 +30,24 @@ const options = {
 };
 
 async function main() {
+    // Keep the in-app Settings.scratchJrVersion in lockstep with package.json
+    // so the About / project metadata screens always report the built version.
+    // Done as a string replacement on the JSON (single source of truth = package.json).
+    const pkg = require(path.resolve(__dirname, '..', 'package.json'));
+    const settingsPath = path.resolve(__dirname, '..', 'src', 'app', 'settings.json');
+    const fs = require('fs');
+    const before = fs.readFileSync(settingsPath, 'utf8');
+    const after = before.replace(
+        /"scratchJrVersion"\s*:\s*"desktop-v[^"]*"/,
+        `"scratchJrVersion": "desktop-v${pkg.version}"`
+    );
+    if (after === before) {
+        console.warn(`build-renderer: settings.json had no scratchJrVersion to update (expected key "desktop-v...").`);
+    } else {
+        fs.writeFileSync(settingsPath, after);
+        console.log(`build-renderer: settings.json scratchJrVersion = desktop-v${pkg.version}`);
+    }
+
     if (isWatch) {
         const ctx = await esbuild.context(options);
         await ctx.watch();

@@ -45,6 +45,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify package.json matches tag
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
+            echo "::error::Run \`npm version <new> --no-git-tag-version\`, commit, then re-tag."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} matches package.json (${PKG_VERSION})."
+
       - name: Lint
         run: npm run lint
 
@@ -87,6 +99,22 @@ jobs:
           if [ ! -s "${{ matrix.artifact_name }}" ]; then
             echo "::error::Artifact ${{ matrix.artifact_name }} is missing or empty"
             exit 1
+          fi
+
+          # Verify the packaged app's bundled settings.json reports the tag version.
+          # (Forge wires package.json version into the MSI/zip metadata, but the
+          # in-app Settings.scratchJrVersion comes from src/app/settings.json which
+          # build-renderer.js rewrites in lockstep — guard against that ever drifting.)
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          SETTINGS_FILE=$(find out -name 'settings.json' -path '*/src/app/*' | head -1)
+          if [ -n "$SETTINGS_FILE" ]; then
+            SETTINGS_VERSION=$(node -p "require('./${SETTINGS_FILE}').scratchJrVersion")
+            EXPECTED="desktop-v${TAG_VERSION}"
+            if [ "$SETTINGS_VERSION" != "$EXPECTED" ]; then
+              echo "::error::Packaged settings.json scratchJrVersion = $SETTINGS_VERSION, expected $EXPECTED"
+              exit 1
+            fi
+            echo "Packaged settings.json scratchJrVersion = $SETTINGS_VERSION (matches tag)"
           fi
 
       - name: Build MSI installer (Windows only)
