@@ -3,7 +3,35 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [v1.7.1] — 2026-08-26
+## [v1.7.2] - 2026-08-27
+
+**Code cleanup release.** No user-facing behavior changes.
+
+### Cleanup
+- **Dead code removed** (~970 lines): 46 renderer methods/functions that were
+  never called (Path, Layer, SVGTools, Camera, Sprite, UI, Undo, Events, Block,
+  BlockSpecs, Matrix, SVG2Canvas), plus the whole Stage debug-mask block and
+  unimported `STAGE_WIDTH`/`STAGE_HEIGHT` constants.
+- **Deduplication**: shared CDP plumbing extracted to `scripts/cdp-session.js`
+  (used by `npm run smoke` and `npm run interact`); four test helper modules
+  single-sourced under `tests/unit/helpers/` â€” zero test assertions changed.
+- **Main-process shrink**: removed six never-true `DEBUG_*` flags and their
+  ~34 guards; eliminated data-store pass-through wrappers; merged the duplicated
+  auto-recovery block in `open()`; dropped the unused `string` variant of
+  `stmt()`/`query()`; `ensureDir` â†’ `fs.mkdirSync({ recursive: true })`;
+  `globalShortcut` registrations table-driven; `io_getfile`/`io_getmedia`
+  share one handler; unused `_currentTag` parameter and duplicate
+  `UpdateInfo` interface removed.
+- **Config/CI**: dead `eslintIgnore` key, stale `.eslintignore` line, unused
+  `forge.config.js` variables, and the unused workflow_dispatch `tag` input
+  plus echo-only verify lines removed; `docs/development.md` now points at the
+  real packaged smoke command.
+
+### Verification
+- `npm run lint` 0 Â· `npm run typecheck` 0 Â· `tsc -p tsconfig.main.json` 0
+- `npm test` 131/131 passing Â· `npm run smoke` PASS
+
+## [v1.7.1] ï¿½ 2026-08-26
 
 **Share & polish release.** Projects can now leave the machine as easily as
 they arrive.
@@ -14,12 +42,12 @@ they arrive.
 - **`.sjr` Export**: `File` ? `Export Project (.sjr)...` saves the open
   project as a shareable `.sjr` (native save dialog, `.sjr` filter).
 - **Stage PNG Export**: `File` ? `Export Stage as PNG...` renders the
-  current page at 960×720 into a chosen PNG.
+  current page at 960ï¿½720 into a chosen PNG.
 
 ### Fixes
 - **jszip 3 migration for the dormant share paths**: `zipProject` /
   `loadProjectFromSjr` used jszip 2 sync APIs (`generate`/`load`/
-  `asBinary`) that are throw-stubs on the bundled jszip 3.10 — both would
+  `asBinary`) that are throw-stubs on the bundled jszip 3.10 ï¿½ both would
   have crashed on first use. Rewritten onto `generateAsync`/`loadAsync`.
 - **Distinct DB error codes** (`-1` closed, `-2` intent rejected,
   `-3` SQL error) with renderer-side reason logging, replacing the single
@@ -30,7 +58,7 @@ they arrive.
 ### Housekeeping
 - Removed stale handoff docs, one-off fix scripts, and the outdated IPC
   inventory; refreshed `docs/README.md` and main README.
-## [v1.7.0] — 2026-08-24
+## [v1.7.0] ï¿½ 2026-08-24
 
 **Modernization release.** The legacy tablet architecture was refactored to a
 typed, tested, sandboxed desktop architecture while preserving full project
@@ -51,7 +79,7 @@ compatibility.
 ### Architecture
 - **Engine/UI separation:** all `editor/engine` + `editor/blocks` modules now
   talk to UI singletons through a typed `EnginePorts` seam and to editor state
-  through a kind-tagged model registry (`modelRegistry.ts`) — the invisible
+  through a kind-tagged model registry (`modelRegistry.ts`) ï¿½ the invisible
   `div.owner` expando object graph is gone.
 - **Per-page bundles:** esbuild code splitting gives each screen only its own
   code (lobby/start no longer parse the block engine or paint editor).
