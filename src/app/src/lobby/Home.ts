@@ -176,7 +176,7 @@ export default class Home {
         ScratchAudio.sndFX('snap.wav');
         var json: DbSelectIntent = {
             op: 'select', table: PlatformBridge.database,
-            items: ['*'],
+            items: ['id', 'name', 'version', 'json', 'thumbnail', 'isgift'],
             where: [
                 { col: 'id', op: '=', value: projectId },
                 { col: 'deleted', op: '=', value: 'NO' },
@@ -194,7 +194,7 @@ export default class Home {
                 var copyName = Home.getNextName(copyPrefix);
                 var newProjectRecord: Record<string, unknown> = {
                     name: copyName,
-                    version: version || window.Settings?.scratchJrVersion || '1.0.0',
+                    version: source.version || version || window.Settings?.scratchJrVersion || '1.0.0',
                     mtime: (new Date()).getTime().toString(),
                     isgift: '0',
                 };
@@ -440,8 +440,36 @@ export default class Home {
             ribbonVertical.style.visibility = 'visible';
         }
 
-        newHTML('div', 'closex', tb);
-        newHTML('div', 'duplicatebtn', tb);
+        var closex = newHTML('div', 'closex', tb);
+        var dup = newHTML('div', 'duplicatebtn', tb);
+
+        closex.onclick = function (evt: MouseEvent) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            if (closex.style.visibility === 'visible') {
+                ScratchAudio.sndFX('cut.wav');
+                import('../editor/ui/Project').then((m) => {
+                    m.default.thumbnailUnique(tb.thumb!, String(id), function (isUnique) {
+                        if (isUnique) {
+                            PlatformBridge.remove(tb.thumb!, PlatformBridge.trace);
+                        }
+                    });
+                    PlatformBridge.setfield(PlatformBridge.database, String(id), 'deleted', 'YES', function () {
+                        if (tb.parentNode) {
+                            tb.parentNode.removeChild(tb);
+                        }
+                    });
+                });
+            }
+        };
+
+        dup.onclick = function (evt: MouseEvent) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            if (dup.style.visibility === 'visible') {
+                Home.duplicateProject(String(id));
+            }
+        };
 
         tb.oncontextmenu = function (evt: MouseEvent) {
             evt.preventDefault();
