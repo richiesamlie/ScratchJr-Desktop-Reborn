@@ -184,17 +184,24 @@ export default class Home {
         };
         IO.query(PlatformBridge.database, json, function (res: string) {
             try {
-                var rows = typeof res === 'string' ? JSON.parse(res) : res;
-                if (!rows || rows.length === 0) {
+                var rawRows = typeof res === 'string' ? JSON.parse(res) : res;
+                if (!rawRows || rawRows.length === 0) {
                     return;
                 }
-                var source = rows[0];
+                var source = IO.parseProjectData(rawRows[0]) as {
+                    id?: string;
+                    name?: string;
+                    version?: string;
+                    json?: string | object;
+                    thumbnail?: string | object;
+                    isgift?: string;
+                };
                 var baseName = (source.name || 'Project').replace(/\s*\(Copy(\s*\d+)?\)$/i, '');
                 var copyPrefix = baseName + ' (Copy)';
                 var copyName = Home.getNextName(copyPrefix);
                 var newProjectRecord: Record<string, unknown> = {
                     name: copyName,
-                    version: version || window.Settings?.scratchJrVersion || 'desktop-v1.7.4',
+                    version: source.version || version || window.Settings?.scratchJrVersion || '1.0.0',
                     mtime: (new Date()).getTime().toString(),
                     isgift: '0',
                 };
