@@ -14,6 +14,7 @@ let frame: HTMLElement;
 let scrollvalue: number;
 let version: string;
 let timeoutEvent: NodeJS.Timeout | null = null;
+let isDuplicating = false;
 
 export default class Home {
     // Dynamic statics used by the touch handlers below
@@ -170,9 +171,10 @@ export default class Home {
     }
 
     static duplicateProject (projectId: string) {
-        if (!projectId || projectId === 'newproject') {
+        if (isDuplicating || !projectId || projectId === 'newproject') {
             return;
         }
+        isDuplicating = true;
         ScratchAudio.sndFX('snap.wav');
         var json: DbSelectIntent = {
             op: 'select', table: PlatformBridge.database,
@@ -186,6 +188,7 @@ export default class Home {
             try {
                 var rawRows = typeof res === 'string' ? JSON.parse(res) : res;
                 if (!rawRows || rawRows.length === 0) {
+                    isDuplicating = false;
                     return;
                 }
                 var source = IO.parseProjectData(rawRows[0]) as {
@@ -212,12 +215,14 @@ export default class Home {
                     newProjectRecord.thumbnail = source.thumbnail;
                 }
                 IO.createProject(newProjectRecord as unknown as Parameters<typeof IO.createProject>[0], function (newId: unknown) {
+                    isDuplicating = false;
                     if (newId && Number(newId) > 0) {
                         PlatformBridge.analyticsEvent('lobby', 'project_duplicated');
                         Home.displayYourProjects();
                     }
                 });
             } catch (err) {
+                isDuplicating = false;
                 console.error('duplicateProject failed:', err);
             }
         });
@@ -446,36 +451,8 @@ export default class Home {
             ribbonVertical.style.visibility = 'visible';
         }
 
-        var closex = newHTML('div', 'closex', tb);
-        var dup = newHTML('div', 'duplicatebtn', tb);
-
-        closex.onclick = function (evt: MouseEvent) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            if (closex.style.visibility === 'visible') {
-                ScratchAudio.sndFX('cut.wav');
-                import('../editor/ui/Project').then((m) => {
-                    m.default.thumbnailUnique(tb.thumb!, String(id), function (isUnique) {
-                        if (isUnique) {
-                            PlatformBridge.remove(tb.thumb!, PlatformBridge.trace);
-                        }
-                    });
-                    PlatformBridge.setfield(PlatformBridge.database, String(id), 'deleted', 'YES', function () {
-                        if (tb.parentNode) {
-                            tb.parentNode.removeChild(tb);
-                        }
-                    });
-                });
-            }
-        };
-
-        dup.onclick = function (evt: MouseEvent) {
-            evt.preventDefault();
-            evt.stopPropagation();
-            if (dup.style.visibility === 'visible') {
-                Home.duplicateProject(String(id));
-            }
-        };
+        newHTML('div', 'closex', tb);
+        newHTML('div', 'duplicatebtn', tb);
 
         tb.oncontextmenu = function (evt: MouseEvent) {
             evt.preventDefault();
