@@ -184,7 +184,7 @@ export default class Home {
         };
         IO.query(PlatformBridge.database, json, function (res: string) {
             try {
-                var rows = JSON.parse(res);
+                var rows = typeof res === 'string' ? JSON.parse(res) : res;
                 if (!rows || rows.length === 0) {
                     return;
                 }
@@ -194,15 +194,15 @@ export default class Home {
                 var copyName = Home.getNextName(copyPrefix);
                 var newProjectRecord: Record<string, unknown> = {
                     name: copyName,
-                    version: source.version || version || window.Settings?.scratchJrVersion || '1.0.0',
+                    version: version || window.Settings?.scratchJrVersion || 'desktop-v1.7.4',
                     mtime: (new Date()).getTime().toString(),
                     isgift: '0',
                 };
                 if (source.json) {
-                    newProjectRecord.json = (typeof source.json === 'string') ? JSON.parse(source.json) : source.json;
+                    newProjectRecord.json = source.json;
                 }
                 if (source.thumbnail) {
-                    newProjectRecord.thumbnail = (typeof source.thumbnail === 'string') ? JSON.parse(source.thumbnail) : source.thumbnail;
+                    newProjectRecord.thumbnail = source.thumbnail;
                 }
                 IO.createProject(newProjectRecord as unknown as Parameters<typeof IO.createProject>[0], function (newId: unknown) {
                     if (newId && Number(newId) > 0) {
@@ -382,7 +382,6 @@ export default class Home {
                 items: ['name', 'thumbnail', 'id', 'isgift'],
                 where: [
                     { col: 'deleted', op: '=', value: 'NO' },
-                    { col: 'version', op: '=', value: version || window.Settings!.scratchJrVersion },
                     { col: 'gallery', op: 'IS NULL' },
                 ],
                 order: { col: 'ctime', dir: 'desc' },

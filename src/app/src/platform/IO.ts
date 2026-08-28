@@ -223,10 +223,10 @@ export default class IO {
             isgift: obj.isgift ? obj.isgift : '0',
         };
         if (obj.json) {
-            row.json = JSON.stringify(obj.json);
+            row.json = typeof obj.json === 'string' ? obj.json : JSON.stringify(obj.json);
         }
         if (obj.thumbnail) {
-            row.thumbnail = JSON.stringify(obj.thumbnail);
+            row.thumbnail = typeof obj.thumbnail === 'string' ? obj.thumbnail : JSON.stringify(obj.thumbnail);
         }
         PlatformBridge.stmt({ op: 'insert', table: database, row }, fcn);
     }
