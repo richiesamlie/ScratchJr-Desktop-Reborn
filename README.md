@@ -19,6 +19,11 @@
 
 ## Features & Improvements
 
+### 🖼️ Custom Image Import (Characters & Backdrops)
+- **1-Click Import & Drag-and-Drop**: Import photos, drawings, and clipart directly into the Character Library and Backdrop Library modals via the new Import Media button or by dragging files onto the screen.
+- **Universal Image Support**: Works with `.png`, `.jpg`, `.jpeg`, and `.svg` files with automatic filename cleaning and thumbnail generation.
+- **Full Engine Compatibility**: Raster images are automatically wrapped in standard SVG containers with intrinsic aspect ratios preserved, allowing full interaction with physics, stage collision, animation blocks, and cross-device `.sjr` exports.
+
 ### 🎨 Paint Editor & Creative Tools
 - **New Straight Line & Star Shape Tools**: Dedicated vector line tool and 5-pointed star generator with full paintbucket fill compatibility.
 - **Geometric Constraint Snapping**: Hold `Shift` to draw perfect squares, circles, equilateral triangles, and 45° angle straight lines.

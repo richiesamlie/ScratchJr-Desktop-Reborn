@@ -44,6 +44,17 @@ export default class Library {
     static init () {
         libFrame = document.getElementById('libframe')!;
         libFrame.style.minHeight = Math.max(getDocumentHeight(), frame.offsetHeight) + 'px';
+        
+        libFrame.ondragover = function (e: DragEvent) {
+            e.preventDefault();
+        };
+        libFrame.ondrop = function (e: DragEvent) {
+            e.preventDefault();
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                Library.handleImportFile(e.dataTransfer.files[0]);
+            }
+        };
+
         var topbar = newHTML('div', 'topbar', libFrame);
         topbar.setAttribute('id', 'topbar');
         var actions = newHTML('div', 'actions', topbar);
@@ -129,6 +140,25 @@ export default class Library {
 
     static layoutHeader () {
         var buttons = newHTML('div', 'bkgbuttons', gn('libactions')!);
+        var importme = newHTML('div', 'importicon', buttons);
+        importme.id = 'library_importme';
+        importme.onmousedown = Library.triggerImport;
+
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'library_file_input';
+        fileInput.accept = '.png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml';
+        fileInput.style.display = 'none';
+        fileInput.onchange = function (e: Event) {
+            var target = e.target as HTMLInputElement;
+            if (target && target.files && target.files.length > 0) {
+                Library.handleImportFile(target.files[0]);
+                target.value = '';
+            }
+        };
+        var parentEl = libFrame || gn('libframe') || document.body;
+        parentEl.appendChild(fileInput);
+
         var paintme = newHTML('div', 'painticon', buttons);
         paintme.id = 'library_paintme';
         paintme.onmousedown = Library.editResource;
@@ -136,6 +166,185 @@ export default class Library {
         okbut.setAttribute('id', 'okbut');
         var cancelbut = newHTML('div', 'cancelicon', buttons);
         cancelbut.onmousedown = Library.cancelPick;
+    }
+
+    static triggerImport (e?: Event) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        var input = gn('library_file_input') as HTMLInputElement | null;
+        if (input) {
+            input.click();
+        }
+    }
+
+    static sanitizeImportName (fileName: string): string {
+        var clean = fileName.replace(/\.[^/.]+$/, '');
+        clean = clean.replace(/[0-9]/g, '').replace(/[^a-zA-Z_\- ]/g, '').trim();
+        if (clean.length > 0) {
+            return clean;
+        }
+        var defaultStr = Localization.localize('LIBRARY_CHARACTER');
+        return (defaultStr && !defaultStr.startsWith('String missing')) ? defaultStr : 'Character';
+    }
+
+    static handleImportFile (file: File) {
+        if (!file || !type) {
+            return;
+        }
+        var ext = file.name.split('.').pop()?.toLowerCase() || '';
+        if (!['png', 'jpg', 'jpeg', 'svg'].includes(ext)) {
+            return;
+        }
+
+        var assetName = Library.sanitizeImportName(file.name);
+        var isCostume = (type === 'costumes');
+        var reader = new FileReader();
+
+        if (ext === 'svg') {
+            reader.onload = function () {
+                var svgText = reader.result as string;
+                if (!svgText) return;
+                var parser = new DOMParser();
+                var doc = parser.parseFromString(svgText, 'image/svg+xml');
+                var svgElem = doc.documentElement;
+                
+                var vb = svgElem.getAttribute('viewBox');
+                var w = 480;
+                var h = 360;
+                if (vb) {
+                    var parts = vb.split(/[\s,]+/).filter(Boolean).map(Number);
+                    if (parts.length >= 4 && parts[2] > 0 && parts[3] > 0) {
+                        w = parts[2];
+                        h = parts[3];
+                    }
+                } else {
+                    w = Number(svgElem.getAttribute('width')) || (isCostume ? 150 : 480);
+                    h = Number(svgElem.getAttribute('height')) || (isCostume ? 150 : 360);
+                }
+
+                var dataurl = IO.getThumbnail(svgText, w, h, 120, 90);
+                var pngBase64 = dataurl.split(',')[1];
+                var svgBase64 = btoa(unescape(encodeURIComponent(svgText)));
+
+                PlatformBridge.setmedia(svgBase64, 'svg', function (svgMd5: string) {
+                    PlatformBridge.setmedia(pngBase64, 'png', function (pngMd5: string) {
+                        var key = isCostume ? 'usershapes' : 'userbkgs';
+                        var row: Record<string, DbValue> = isCostume
+                            ? {
+                                scale: 0.5,
+                                md5: svgMd5,
+                                altmd5: pngMd5,
+                                version: ScratchJr.version,
+                                width: String(Math.round(w)),
+                                height: String(Math.round(h)),
+                                ext: 'svg',
+                                name: assetName,
+                            }
+                            : {
+                                md5: svgMd5,
+                                altmd5: pngMd5,
+                                version: ScratchJr.version,
+                                width: '480',
+                                height: '360',
+                                ext: 'svg',
+                            };
+
+                        PlatformBridge.stmt({ op: 'insert', table: key, row }, function () {
+                            ScratchAudio.sndFX('snap.wav');
+                            Library.clean();
+                            Library.createScrollPanel();
+                            Library.addThumbnails(type!);
+                        });
+                    });
+                });
+            };
+            reader.readAsText(file);
+        } else {
+            // PNG or JPEG
+            reader.onload = function () {
+                var dataUrl = reader.result as string;
+                if (!dataUrl) return;
+                var img = new Image();
+                img.onload = function () {
+                    var naturalW = img.naturalWidth || img.width || (isCostume ? 150 : 480);
+                    var naturalH = img.naturalHeight || img.height || (isCostume ? 150 : 360);
+                    
+                    var w = naturalW;
+                    var h = naturalH;
+                    if (isCostume) {
+                        // Fit within a sensible character bounding box
+                        var maxDim = 400;
+                        if (w > maxDim || h > maxDim) {
+                            var aspect = w / h;
+                            if (aspect > 1) {
+                                w = maxDim;
+                                h = Math.round(maxDim / aspect);
+                            } else {
+                                h = maxDim;
+                                w = Math.round(maxDim * aspect);
+                            }
+                        }
+                    } else {
+                        w = 480;
+                        h = 360;
+                    }
+
+                    // Create wrapped SVG with embedded raster image
+                    var wrappedSvg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><image width="${w}" height="${h}" xlink:href="${dataUrl}"/></svg>`;
+
+                    // Generate crisp 120x90 canvas thumbnail
+                    var cnv = document.createElement('canvas');
+                    cnv.width = 120;
+                    cnv.height = 90;
+                    var ctx = cnv.getContext('2d')!;
+                    var scale = Math.min(120 / naturalW, 90 / naturalH);
+                    var drawW = naturalW * scale;
+                    var drawH = naturalH * scale;
+                    var drawX = (120 - drawW) / 2;
+                    var drawY = (90 - drawH) / 2;
+                    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+                    var pngThumbDataUrl = cnv.toDataURL('image/png');
+                    var pngThumbBase64 = pngThumbDataUrl.split(',')[1];
+                    var svgBase64 = btoa(unescape(encodeURIComponent(wrappedSvg)));
+
+                    PlatformBridge.setmedia(svgBase64, 'svg', function (svgMd5: string) {
+                        PlatformBridge.setmedia(pngThumbBase64, 'png', function (pngMd5: string) {
+                            var key = isCostume ? 'usershapes' : 'userbkgs';
+                            var row: Record<string, DbValue> = isCostume
+                                ? {
+                                    scale: 0.5,
+                                    md5: svgMd5,
+                                    altmd5: pngMd5,
+                                    version: ScratchJr.version,
+                                    width: String(Math.round(w)),
+                                    height: String(Math.round(h)),
+                                    ext: 'svg',
+                                    name: assetName,
+                                }
+                                : {
+                                    md5: svgMd5,
+                                    altmd5: pngMd5,
+                                    version: ScratchJr.version,
+                                    width: '480',
+                                    height: '360',
+                                    ext: 'svg',
+                                };
+
+                            PlatformBridge.stmt({ op: 'insert', table: key, row }, function () {
+                                ScratchAudio.sndFX('snap.wav');
+                                Library.clean();
+                                Library.createScrollPanel();
+                                Library.addThumbnails(type!);
+                            });
+                        });
+                    });
+                };
+                img.src = dataUrl;
+            };
+            reader.readAsDataURL(file);
+        }
     }
 
     static cancelPick (e: Event) {
@@ -155,7 +364,7 @@ export default class Library {
             op: 'select', table: key,
             items: ((type == 'costumes')
                 ? ['md5', 'altmd5', 'name', 'scale', 'width', 'height'] : ['altmd5', 'md5', 'width', 'height']),
-            where: [{ col: 'ext', op: '=', value: 'svg' }, { col: 'version', op: '=', value: ScratchJr.version }],
+            where: [{ col: 'version', op: '=', value: ScratchJr.version }],
             order: { col: 'ctime', dir: 'desc' },
         };
         IO.query(key, json, Library.displayAssets);
@@ -562,3 +771,6 @@ export default class Library {
         return Math.round(Math.sqrt((dx * dx) + (dy * dy)));
     }
 }
+
+window.Library = Library;
+

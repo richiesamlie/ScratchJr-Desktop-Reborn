@@ -3,6 +3,25 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.7.5] - 2026-08-28
+
+**Custom Image Import for Characters & Backdrops, drag-and-drop file loading, and robust raster-to-SVG wrapping.**
+
+### Features & Enhancements
+- **Custom Image Import (Characters & Backdrops)**:
+  - Added dedicated **Import Media Button** (`importmedia.svg`) to both Character and Backdrop library modals.
+  - Added native **Drag-and-Drop** file loading onto the open library modal for quick desktop asset additions.
+  - Supports `.png`, `.jpg`, `.jpeg`, and `.svg` image formats with automatic filename sanitization.
+  - Seamless raster-to-SVG wrapping with embedded image data to guarantee full compatibility with physics, scaling, animations, paint editor overlays, and `.sjr` cross-device sharing.
+  - Generates crisp 120x90 canvas thumbnails and registers imported assets directly into the SQLite database.
+- **Library Query Normalization**:
+  - Relaxed query filters so user-imported assets with various image formats display immediately.
+  - Added debounce guard and unified event flow to prevent double duplication in lobby.
+
+### Testing & Verification
+- Added `tests/unit/custom-image-import.test.js` verifying image filename sanitization and library header initialization.
+- 143 automated unit tests across 17 test files; full end-to-end CDP simulation verifying PNG and JPG image imports in Electron.
+
 ## [v1.7.4] - 2026-08-28
 
 **Kid-friendly Paint Editor shape tools, project remix duplication, and scoped desktop shortcuts.**

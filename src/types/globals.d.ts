@@ -305,12 +305,14 @@ interface Window {
     ScratchJr?: { saveProject(arg: unknown, cb: () => void): void };
     Undo?: { prevStep(e: object): void; nextStep(e: object): void };
     Home?: { createNewProject(): void };
+    Library?: unknown;
 }
 
 /** Editor globals referenced by electronClient.js (assigned to window by the bundle) */
 declare const ScratchJr: { saveProject(arg: unknown, cb: () => void): void };
 declare const Undo: { prevStep(e: object): void; nextStep(e: object): void };
 declare const Home: { createNewProject(): void };
+declare const Library: unknown;
 declare const PlatformBridge: { soundDone(name: string): void };
 declare const iOS: { soundDone(name: string): void };
 declare const Camera: { processimage(data: string): void };

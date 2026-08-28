@@ -80,7 +80,7 @@
     display: block;
     margin: ${css_vh(0.00)};
     padding: ${css_vh(0.00)};
-    width: ${css_vh(31.25)};
+    width: ${css_vh(42.0)};
     height: ${css_vh(8.46)};
 }
 
@@ -94,6 +94,18 @@
     background: like
 }
 
+.importicon {
+    display: inline-block;
+    position: relative;
+    margin: ${css_vh(0.00)} ${css_vh(0.91)} ${css_vh(0.00)};
+    width: ${css_vh(8.46)};
+    height: ${css_vh(8.46)};
+    background: url('../assets/ui/importmedia.svg') no-repeat center center;
+    background-size: 100%;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
 .painticon {
     display: inline-block;
     position: relative;
@@ -103,6 +115,7 @@
     background: url('../assets/paint/paintbrush.svg');
     background-size: ${css_vh(8.46)} ${css_vh(8.46)};
     background-size: 100%;
+    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -114,6 +127,7 @@
     height: ${css_vh(8.46)};
     background: url('../assets/paint/ok.svg');
     background-size: 100%;
+    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -125,9 +139,13 @@
     height: ${css_vh(8.46)};
     background: url('../assets/paint/cancel.svg');
     background-size: 100.5%; /* webview pixelates the image unless we do this */
+    cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
 
+.importicon:active {
+    transform: scale(0.92);
+}
 .okicon:active {
      background: url('../assets/paint/okPressed.svg');
      background-size: 100%;
