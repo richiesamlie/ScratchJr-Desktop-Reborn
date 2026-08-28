@@ -8,7 +8,7 @@
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { app, BrowserWindow, globalShortcut } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { debugLog } from './logging';
 import type { ScratchJRDataStore } from './data-store';
 import { isParentFolder } from '../lib/path-utils';
@@ -17,13 +17,6 @@ let win: BrowserWindow | null = null;
 let dataStoreRef: ScratchJRDataStore | null = null;
 
 const ALLOWED_PERMISSIONS = ['media', 'mediaKeySystem'];
-
-const KEYBOARD_SHORTCUTS: Array<{ key: string; action: string }> = [
-    { key: 'CommandOrControl+S', action: 'save' },
-    { key: 'CommandOrControl+Z', action: 'undo' },
-    { key: 'CommandOrControl+N', action: 'new' },
-    { key: 'CommandOrControl+Shift+Z', action: 'redo' },
-];
 
 const windowStateFile = path.join(app.getPath('userData'), 'window-state.json');
 
@@ -140,16 +133,26 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
         }, 10000);
     });
 
+    // Window-scoped keyboard shortcuts (never intercept background apps)
+    win.webContents.on('before-input-event', (_event, input) => {
+        if (input.type !== 'keyDown') return;
+        const isCmdOrCtrl = process.platform === 'darwin' ? input.meta : input.control;
+        if (!isCmdOrCtrl) return;
+
+        const key = input.key.toLowerCase();
+        if (key === 's' && !input.shift && !input.alt) {
+            win?.webContents.send('keyboard-shortcut', 'save');
+        } else if (key === 'z' && !input.shift && !input.alt) {
+            win?.webContents.send('keyboard-shortcut', 'undo');
+        } else if ((key === 'z' && input.shift) || (key === 'y' && !input.shift)) {
+            win?.webContents.send('keyboard-shortcut', 'redo');
+        } else if (key === 'n' && !input.shift && !input.alt) {
+            win?.webContents.send('keyboard-shortcut', 'new');
+        }
+    });
+
     win.webContents.on('did-finish-load', () => {
         console.log('[SCRATCHJR_READY] Renderer loaded successfully');
-        globalShortcut.unregisterAll();
-        for (const { key, action } of KEYBOARD_SHORTCUTS) {
-            globalShortcut.register(key, () => {
-                if (win && !win.isDestroyed()) {
-                    win.webContents.send('keyboard-shortcut', action);
-                }
-            });
-        }
     });
 
     return win;

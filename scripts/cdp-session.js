@@ -141,4 +141,27 @@ async function waitReady(session, extraExpr, label, deadline, prefix) {
     throw new Error(prefix + ': ' + label + ' never became ready');
 }
 
-module.exports = { argOf, sleep, waitForPage, Session, waitReady };
+async function centerOf(session, expr) {
+    const r = await session.eval('(' + expr + ').getBoundingClientRect().toJSON()');
+    return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) };
+}
+
+async function dragMouse(session, from, to, steps = 15, stepMs = 20) {
+    await session.send('Input.dispatchMouseEvent', {
+        type: 'mousePressed', x: from.x, y: from.y, button: 'left', clickCount: 1,
+    });
+    await sleep(60);
+    for (let i = 1; i <= steps; i++) {
+        const x = Math.round(from.x + (to.x - from.x) * (i / steps));
+        const y = Math.round(from.y + (to.y - from.y) * (i / steps));
+        await session.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, buttons: 1 });
+        await sleep(stepMs);
+    }
+    await sleep(60);
+    await session.send('Input.dispatchMouseEvent', {
+        type: 'mouseReleased', x: to.x, y: to.y, button: 'left', clickCount: 1,
+    });
+    await sleep(100);
+}
+
+module.exports = { argOf, sleep, waitForPage, Session, waitReady, centerOf, dragMouse };

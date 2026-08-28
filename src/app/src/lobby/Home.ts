@@ -54,9 +54,8 @@ export default class Home {
         Home.holding = false;
         // if ((t.nodeName == "INPUT") || (t.nodeName == "FORM")) return;
         var mytarget = Home.getMouseTarget(e);
-        if ((mytarget != Home.actionTarget) && Home.actionTarget && (Home.actionTarget.childElementCount > 2)) {
-            const actionChild = Home.actionTarget.childNodes[Home.actionTarget.childElementCount - 1] as HTMLElement;
-            actionChild.style.visibility = 'hidden';
+        if ((mytarget != Home.actionTarget) && Home.actionTarget) {
+            Home.hideProjectControls(Home.actionTarget);
         }
         Home.actionTarget = mytarget;
         Home.initialPt = Events.getTargetPoint(e);
@@ -66,10 +65,8 @@ export default class Home {
         function holdit () {
             frame.onmousemove = Home.handleMove;
             var repeat = function () {
-                if (Home.actionTarget && (Home.actionTarget.childElementCount > 2)) {
-                    const actionChild = Home.actionTarget.childNodes[Home.actionTarget.childElementCount - 1] as HTMLElement;
-                    actionChild.style.visibility = 'visible';
-
+                if (Home.actionTarget) {
+                    Home.showProjectControls(Home.actionTarget);
                     Home.holding = true;
                 }
             };
@@ -145,6 +142,11 @@ export default class Home {
                 });
             }
             break;
+        case 'duplicate':
+            if (md5 && (md5 !== 'newproject')) {
+                Home.duplicateProject(md5);
+            }
+            break;
         case 'delete':
             ScratchAudio.sndFX('cut.wav');
             // Lazy: the editor chunk (Project/Alert) loads only when deleting.
@@ -158,15 +160,87 @@ export default class Home {
             });
             break;
         default:
-            if (Home.actionTarget && (Home.actionTarget.childElementCount > 2)) {
-                const actionChild = Home.actionTarget.childNodes[Home.actionTarget.childElementCount - 1] as HTMLElement;
-                actionChild.style.visibility = 'hidden';
-            }
+            Home.hideProjectControls(Home.actionTarget);
             break;
         }
         function doNext () {
             PlatformBridge.analyticsEvent('lobby', 'existing_project_edited');
             window.location.href = 'editor.html?pmd5=' + md5 + '&mode=edit';
+        }
+    }
+
+    static duplicateProject (projectId: string) {
+        if (!projectId || projectId === 'newproject') {
+            return;
+        }
+        ScratchAudio.sndFX('snap.wav');
+        var json: DbSelectIntent = {
+            op: 'select', table: PlatformBridge.database,
+            items: ['*'],
+            where: [
+                { col: 'id', op: '=', value: projectId },
+                { col: 'deleted', op: '=', value: 'NO' },
+            ],
+        };
+        IO.query(PlatformBridge.database, json, function (res: string) {
+            try {
+                var rows = JSON.parse(res);
+                if (!rows || rows.length === 0) {
+                    return;
+                }
+                var source = rows[0];
+                var baseName = (source.name || 'Project').replace(/\s*\(Copy(\s*\d+)?\)$/i, '');
+                var copyPrefix = baseName + ' (Copy)';
+                var copyName = Home.getNextName(copyPrefix);
+                var newProjectRecord: Record<string, unknown> = {
+                    name: copyName,
+                    version: version || window.Settings?.scratchJrVersion || '1.0.0',
+                    mtime: (new Date()).getTime().toString(),
+                    isgift: '0',
+                };
+                if (source.json) {
+                    newProjectRecord.json = (typeof source.json === 'string') ? JSON.parse(source.json) : source.json;
+                }
+                if (source.thumbnail) {
+                    newProjectRecord.thumbnail = (typeof source.thumbnail === 'string') ? JSON.parse(source.thumbnail) : source.thumbnail;
+                }
+                IO.createProject(newProjectRecord as unknown as Parameters<typeof IO.createProject>[0], function (newId: unknown) {
+                    if (newId && Number(newId) > 0) {
+                        PlatformBridge.analyticsEvent('lobby', 'project_duplicated');
+                        Home.displayYourProjects();
+                    }
+                });
+            } catch (err) {
+                console.error('duplicateProject failed:', err);
+            }
+        });
+    }
+
+    static showProjectControls (targetEl: HTMLElement | null) {
+        if (!targetEl) {
+            return;
+        }
+        var closex = targetEl.querySelector('.closex') as HTMLElement | null;
+        var dup = targetEl.querySelector('.duplicatebtn') as HTMLElement | null;
+        if (closex) {
+            closex.style.visibility = 'visible';
+        }
+        if (dup) {
+            dup.style.visibility = 'visible';
+        }
+    }
+
+    static hideProjectControls (targetEl: HTMLElement | null) {
+        if (!targetEl) {
+            return;
+        }
+        var closex = targetEl.querySelector('.closex') as HTMLElement | null;
+        var dup = targetEl.querySelector('.duplicatebtn') as HTMLElement | null;
+        if (closex) {
+            closex.style.visibility = 'hidden';
+        }
+        if (dup) {
+            dup.style.visibility = 'hidden';
         }
     }
 
@@ -199,16 +273,26 @@ export default class Home {
     // Project names are given by reading the DOM elements of existing projects...
     static getNextName (name: string) {
         var pn: string[] = [];
-        var div = gn('scrollarea')!;
-        for (var i = 0; i < div.childElementCount; i++) {
-            const child = div.childNodes[i] as HTMLElement;
-            if (child.id == 'newproject') {
-                continue;
+        var div = gn('scrollarea');
+        if (div) {
+            for (var i = 0; i < div.childElementCount; i++) {
+                const child = div.childNodes[i] as HTMLElement;
+                if (child.id === 'newproject') {
+                    continue;
+                }
+                const titleNode = child.querySelector ? child.querySelector('.projecttitle h4') : null;
+                if (titleNode && titleNode.textContent) {
+                    pn.push(titleNode.textContent.trim());
+                } else if (child.childNodes && child.childNodes[1] && child.childNodes[1].childNodes[0]) {
+                    pn.push((child.childNodes[1].childNodes[0].textContent || '').trim());
+                }
             }
-            pn.push(div.childNodes[i].childNodes[1].childNodes[0].textContent!);
+        }
+        if (pn.indexOf(name) === -1 && pn.indexOf(name + ' 1') === -1) {
+            return name.toLowerCase().includes('copy') ? name : name + ' 1';
         }
         var n = 1;
-        while (pn.indexOf(name + ' ' + n) > -1) {
+        while (pn.indexOf(name + ' ' + n) > -1 || (pn.indexOf(name) > -1 && n === 1)) {
             n++;
         }
         return name + ' ' + n;
@@ -226,14 +310,19 @@ export default class Home {
             return 'none';
         }
         var shown = false;
-        if (Home.actionTarget.childElementCount > 2) {
-            const actionChild = Home.actionTarget.childNodes[Home.actionTarget.childElementCount - 1] as HTMLElement;
-            shown = actionChild.style.visibility == 'visible';
+        var closex = Home.actionTarget.querySelector ? (Home.actionTarget.querySelector('.closex') as HTMLElement | null) : null;
+        var dup = Home.actionTarget.querySelector ? (Home.actionTarget.querySelector('.duplicatebtn') as HTMLElement | null) : null;
+        if ((closex && closex.style.visibility === 'visible') || (dup && dup.style.visibility === 'visible')) {
+            shown = true;
         }
-        if (e && shown) {
-            var t = e.target;
-            if ((t as HTMLElement).getAttribute('class') == 'closex') {
+        if (e && shown && e.target) {
+            var t = e.target as HTMLElement;
+            var cls = t.getAttribute ? (t.getAttribute('class') || '') : '';
+            if (cls.indexOf('closex') > -1) {
                 return 'delete';
+            }
+            if (cls.indexOf('duplicatebtn') > -1) {
+                return 'duplicate';
             }
         }
         return 'project';
@@ -352,6 +441,16 @@ export default class Home {
         }
 
         newHTML('div', 'closex', tb);
+        newHTML('div', 'duplicatebtn', tb);
+
+        tb.oncontextmenu = function (evt: MouseEvent) {
+            evt.preventDefault();
+            evt.stopPropagation();
+            if (tb.id !== 'newproject') {
+                Home.actionTarget = tb;
+                Home.showProjectControls(tb);
+            }
+        };
     }
 
     static insertThumbnail (p: HTMLElement, w: number, h: number, data: { md5?: string; pagecount?: number }) {

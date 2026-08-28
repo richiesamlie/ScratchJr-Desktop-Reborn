@@ -3,6 +3,29 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.7.4] - 2026-08-28
+
+**Kid-friendly Paint Editor shape tools, project remix duplication, and scoped desktop shortcuts.**
+
+### Features & Enhancements
+- **Paint Editor Shape Tools**:
+  - Added dedicated **Straight Line Tool** (`line`) with 45° angle snapping via `Shift`.
+  - Added **5-Pointed Star Tool** (`star`) generating smooth vector paths with full paintbucket fill support.
+  - Added geometric constraint snapping: hold `Shift` while dragging to draw perfect squares, circles, and equilateral triangles.
+  - Refactored paint palette left toolbar layout with proportional icon scaling (`background-size: contain`) and centered stroke width selectors to prevent icon and preview overlaps.
+  - Enriched color swatch palette with radiant gold (`#FFD700`) and cleaned up whitespace issues in color definitions.
+- **Project Duplication ("Remix")**:
+  - Added 1-click **Duplicate/Remix** button to project tiles in the Lobby to create instant safe copies of projects with all pages, sprites, and scripts preserved.
+  - Added kid-safe **500ms press-and-hold** (or right-click) edit mode to protect children from accidental deletions or duplications.
+  - Symmetrical button placement on lobby project cards (Delete on top-left, Duplicate on top-right).
+- **Window-Scoped Keyboard Shortcuts**:
+  - Replaced Electron's OS-wide `globalShortcut` with window-scoped `before-input-event` listeners. Hotkeys (`Ctrl+S`, `Ctrl+Z`, `Ctrl+Shift+Z`/`Ctrl+Y`, `Ctrl+N`) now only execute when ScratchJr is active and focused.
+
+### Testing & Verification
+- Added `tests/unit/paint-shapes.test.js` verifying vector path generation, star vertices, and swatch palette contracts.
+- Added `tests/unit/project-duplicate.test.js` verifying unique name generation and lobby control safety states.
+- 141 automated unit tests across 16 test files; end-to-end smoke test and pointer interaction test harnesses clean.
+
 ## [v1.7.3] - 2026-08-27
 
 **Platform naming normalization & cleanup.**

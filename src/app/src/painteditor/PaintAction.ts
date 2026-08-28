@@ -151,7 +151,7 @@ export default class PaintAction {
     }
 
     static stopAction (e: PaintEvt) {
-        var list = ['path', 'ellipse', 'rect', 'tri'];
+        var list = ['path', 'line', 'ellipse', 'rect', 'tri', 'star'];
         var isCreator = list.indexOf(Paint.mode) > -1;
         if (currentShape && currentShape!.parentNode && isCreator) {
             PaintAction.removeShape(null);
@@ -319,6 +319,12 @@ export default class PaintAction {
         return g;
     }
 
+    static lineMouseDown () {
+        currentShape = SVGTools.addLine(gn('layer1')! as Element, Paint.initialPoint.x, Paint.initialPoint.y);
+    }
+    static starMouseDown () {
+        currentShape = SVGTools.addStar(gn('layer1')! as Element, Paint.initialPoint.x, Paint.initialPoint.y);
+    }
     static ellipseMouseDown () {
         currentShape = SVGTools.addEllipse(gn('layer1')! as Element, Paint.initialPoint.x, Paint.initialPoint.y);
     }
@@ -515,6 +521,47 @@ export default class PaintAction {
         }
     }
 
+    static lineMouseMove (evt: PaintEvt) {
+        var pt = PaintAction.getScreenPt(evt);
+        var delta = Vector.diff(pt, Paint.initialPoint);
+        if (!dragging && (Vector.len(delta) > mindist)) {
+            dragging = true;
+        }
+        if (!dragging) {
+            return;
+        }
+        var endX = pt.x;
+        var endY = pt.y;
+        if (evt.shiftKey) {
+            var dx = pt.x - Paint.initialPoint.x;
+            var dy = pt.y - Paint.initialPoint.y;
+            var angle = Math.atan2(dy, dx);
+            var snapAngle = Math.round(angle / (Math.PI / 4)) * (Math.PI / 4);
+            var dist = Math.hypot(dx, dy);
+            endX = Paint.initialPoint.x + Math.round(dist * Math.cos(snapAngle));
+            endY = Paint.initialPoint.y + Math.round(dist * Math.sin(snapAngle));
+        }
+        var d = 'M' + Paint.initialPoint.x + ',' + Paint.initialPoint.y + 'L' + endX + ',' + endY;
+        currentShape!.setAttribute('d', d);
+    }
+
+    static starMouseMove (evt: PaintEvt) {
+        var pt = PaintAction.getScreenPt(evt);
+        var delta = Vector.diff(pt, Paint.initialPoint);
+        if (!dragging && (Vector.len(delta) > mindist)) {
+            dragging = true;
+        }
+        if (!dragging) {
+            return;
+        }
+        var rOuter = Math.hypot(delta.x, delta.y);
+        var rInner = rOuter * 0.45;
+        var cx = Paint.initialPoint.x;
+        var cy = Paint.initialPoint.y;
+        var d = SVGTools.getStarPath(cx, cy, rOuter, rInner);
+        currentShape!.setAttribute('d', d);
+    }
+
     static triMouseMove (evt: PaintEvt) {
         var pt = PaintAction.getScreenPt(evt);
         var delta = Vector.diff(pt, Paint.initialPoint);
@@ -526,6 +573,13 @@ export default class PaintAction {
         }
         var w = delta.x;
         var h = delta.y;
+        if (evt.shiftKey) {
+            var signX = w >= 0 ? 1 : -1;
+            var signY = h >= 0 ? 1 : -1;
+            var side = Math.max(Math.abs(w), Math.abs(h));
+            w = side * signX;
+            h = side * signY;
+        }
         var x = Paint.initialPoint.x;
         var y = Paint.initialPoint.y;
         var cmds = [['M', x, y + h], ['L', x + w * 0.5, y], ['L', x + w, y + h], ['L', x, y + h], ['z']];
@@ -657,6 +711,20 @@ export default class PaintAction {
     }
 
     static triMouseUp (evt: PaintEvt) {
+        var box = SVGTools.getBox(currentShape);
+        if (SVGTools.notValidBox(box)) {
+            PaintAction.removeShape(evt);
+        }
+    }
+
+    static lineMouseUp (evt: PaintEvt) {
+        var box = SVGTools.getBox(currentShape);
+        if (SVGTools.notValidBox(box)) {
+            PaintAction.removeShape(evt);
+        }
+    }
+
+    static starMouseUp (evt: PaintEvt) {
         var box = SVGTools.getBox(currentShape);
         if (SVGTools.notValidBox(box)) {
             PaintAction.removeShape(evt);
@@ -1063,6 +1131,43 @@ Path.maxDistance()); // check the start
         PaintUndo.record();
     }
 
+    static lineClick (evt: PaintEvt) {
+        if (!currentShape) {
+            return;
+        }
+        PaintAction.removeShape(evt);
+        currentShape = SVGTools.addLine(gn('layer1')! as Element, Paint.initialPoint.x, Paint.initialPoint.y);
+        var len = 20 / Paint.currentZoom;
+        var x = Paint.initialPoint.x;
+        var y = Paint.initialPoint.y;
+        var d = 'M' + (x - len) + ',' + y + 'L' + (x + len) + ',' + y;
+        currentShape!.setAttribute('d', d);
+        PaintUndo.record();
+    }
+
+    static starClick (evt: PaintEvt) {
+        if (!currentShape) {
+            return;
+        }
+        PaintAction.removeShape(evt);
+        currentShape = SVGTools.addStar(gn('layer1')! as Element, Paint.initialPoint.x, Paint.initialPoint.y);
+        var rOuter = 20 / Paint.currentZoom;
+        var rInner = rOuter * 0.45;
+        var cx = Paint.initialPoint.x;
+        var cy = Paint.initialPoint.y;
+        var d = SVGTools.getStarPath(cx, cy, rOuter, rInner);
+        var c = currentShape!.getAttribute('stroke');
+        var attr: Record<string, string | number> = {
+            'fill': String(c),
+            'stroke-width': 2,
+            'd': d
+        };
+        for (var val in attr) {
+            currentShape!.setAttribute(val, String(attr[val]));
+        }
+        PaintUndo.record();
+    }
+
     static selectClick (evt: PaintEvt) {
         if (!timeoutEvent) {
             return;
@@ -1161,6 +1266,8 @@ Path.maxDistance()); // check the start
 let cmdForMouseDown: Record<string, ModeHandler> = {
     'select': PaintAction.selectMouseDown,
     'rotate': PaintAction.fingerDown,
+    'line': PaintAction.lineMouseDown,
+    'star': PaintAction.starMouseDown,
     'tri': PaintAction.triMouseDown,
     'rect': PaintAction.rectMouseDown,
     'path': PaintAction.pathMouseDown,
@@ -1175,6 +1282,8 @@ let cmdForMouseDown: Record<string, ModeHandler> = {
 let cmdForMouseMove: Record<string, ModeHandler> = {
     'select': PaintAction.selectMouseMove,
     'rotate': PaintAction.rotateMouseMove,
+    'line': PaintAction.lineMouseMove,
+    'star': PaintAction.starMouseMove,
     'tri': PaintAction.triMouseMove,
     'rect': PaintAction.rectMouseMove,
     'path': PaintAction.pathMouseMove,
@@ -1189,6 +1298,8 @@ let cmdForMouseMove: Record<string, ModeHandler> = {
 let cmdForMouseUp: Record<string, ModeHandler> = {
     'select': PaintAction.selectMouseUp,
     'rotate': PaintAction.rotateMouseUp,
+    'line': PaintAction.lineMouseUp,
+    'star': PaintAction.starMouseUp,
     'tri': PaintAction.triMouseUp,
     'rect': PaintAction.rectMouseUp,
     'path': PaintAction.pathMouseUp,
@@ -1203,6 +1314,8 @@ let cmdForMouseUp: Record<string, ModeHandler> = {
 let cmdForClick: Record<string, ModeHandler> = {
     'select': PaintAction.selectClick,
     'rotate': PaintAction.ignoreEvt,
+    'line': PaintAction.lineClick,
+    'star': PaintAction.starClick,
     'tri': PaintAction.triClick,
     'rect': PaintAction.rectClick,
     'path': PaintAction.pathClick,

@@ -144,15 +144,37 @@
 .samplethumb .thumb.pos7 { transform: rotateZ(1deg);}
 
 .closex {
-    position: relative;
-    float: left;
-    top: ${css_vh(-54.17)};
+    position: absolute;
+    top: ${css_vh(-1.5)};
+    left: ${css_vh(-1.5)};
     z-index: 5;
     visibility: hidden;
     width: ${css_vh(5.86)};
     height: ${css_vh(5.73)};
-    background:  url('../assets/ui/closeit.svg');
+    background:  url('../assets/ui/closeit.svg') no-repeat center center;
     background-size: 101%;
+    cursor: pointer;
+}
+
+.closex:active {
+    transform: scale(0.92);
+}
+
+.duplicatebtn {
+    position: absolute;
+    top: ${css_vh(-1.5)};
+    left: ${css_vh(24.5)};
+    z-index: 5;
+    visibility: hidden;
+    width: ${css_vh(5.86)};
+    height: ${css_vh(5.73)};
+    background: url('../assets/ui/copyit.svg') no-repeat center center;
+    background-size: 101%;
+    cursor: pointer;
+}
+
+.duplicatebtn:active {
+    transform: scale(0.92);
 }
 
 .share {

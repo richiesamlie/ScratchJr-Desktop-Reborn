@@ -147,6 +147,5 @@ app.on('activate', () => {
 });
 
 app.on('will-quit', () => {
-    const { globalShortcut } = require('electron');
-    globalShortcut.unregisterAll();
+    // Window-scoped shortcuts clean up automatically with the window
 });

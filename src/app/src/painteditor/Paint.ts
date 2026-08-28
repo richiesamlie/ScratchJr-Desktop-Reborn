@@ -275,7 +275,7 @@ export default class Paint {
 
     static gestureStart (e: MouseEvent | TouchEvent) {
         window.onmousemove = null;
-        var skipmodes = ['path', 'ellipse', 'rect'];
+        var skipmodes = ['path', 'line', 'ellipse', 'rect', 'tri', 'star'];
         if (skipmodes.indexOf(mode) > -1) {
             if (PaintAction.currentshape && PaintAction.currentshape.parentNode) {
                 PaintAction.currentshape.parentNode.removeChild(PaintAction.currentshape);
@@ -665,7 +665,7 @@ export default class Paint {
     static setupEditPalette (pal: HTMLElement) {
         var section = newHTML('div', 'section', pal);
         section.setAttribute('id', 'painttools');
-        var list = ['path', 'ellipse', 'rect', 'tri'];
+        var list = ['path', 'line', 'ellipse', 'rect', 'tri', 'star'];
         var i = 0;
         for (i = 0; i < list.length; i++) {
             var but = newHTML('div', 'element off', section);
@@ -907,29 +907,25 @@ export default class Paint {
 
     static initSwatchList () {
         return [
-            //	"#FF5500", // new orange
             '#FFD2F2', '#FF99D6', '#FF4583', // red pinks
             '#C30001', '#FF0023', '#FF8300', '#FFB200',
-            '#FFF42E',
+            '#FFF42E', '#FFD700',
             '#FFF9C2', // pale yellow
             '#E2FFBD', //  pale green
             '#CFF500', // lime green
-            '#50D823', // problematic
-            //          "#2BFC49", // less problematic
+            '#50D823',
             '#29C130',
-            //          "#56C43B",  // ERROR?
             '#2BBF8A', // new green
             '#027607', '#114D24', //greens
             '#FFFFFF', '#CCDDE7', '#61787C', '#1C1C1C', // grays
-            '#D830A3', // sarah's pink shoes border
+            '#D830A3', // pink
             '#FF64E9', // purple pinks
-            '#D999FF', ' #A159D3', // vilote
-            '#722696', // sarah's violet
+            '#D999FF', '#A159D3', // violet
+            '#722696', // deep violet
             '#141463', '#003399', '#1D40ED',
             '#0079D3', '#009EFF', '#76C8FF',
             '#ACE0FD', '#11B7BC', '#21F9F3', '#C3FCFC', '#54311E',
             '#8E572A', '#E4B69D', '#FFCDA4', '#FFEDD7' // skin colors
-
         ];
     }
 

@@ -12,11 +12,13 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const { argOf, sleep, waitForPage, Session, waitReady } = require('./cdp-session');
+const { argOf, sleep, waitForPage, Session, waitReady, centerOf, dragMouse } = require('./cdp-session');
 
 const PORT = Number(argOf('--port', '9377'));
 const TIMEOUT_MS = Number(argOf('--timeout', '90000'));
 const BASE = 'http://127.0.0.1:' + PORT;
+
+const approx = (a, b, tol = 5) => Math.abs(a - b) <= tol;
 
 let electronPath;
 try {

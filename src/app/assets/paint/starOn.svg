@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="58px" height="54px" viewBox="0 0 58 54" enable-background="new 0 0 58 54" xml:space="preserve">
+<g id="star_on">
+	<g opacity="0.3">
+		<polygon points="29.5,10.5 34.2,22 46.6,22.9 37.1,31 39.9,43.1 29.5,36.5 18.9,43.1 21.9,31 12.4,22.9 24.8,22" fill="#C35000" stroke="#C35000" stroke-width="2" stroke-linejoin="round"/>
+	</g>
+	<polygon points="29,9 33.7,20.5 46.1,21.4 36.6,29.5 39.6,41.6 29,35 18.4,41.6 21.4,29.5 11.9,21.4 24.3,20.5" fill="none" stroke="#F36D22" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+</svg>

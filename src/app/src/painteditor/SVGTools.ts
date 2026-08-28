@@ -149,6 +149,56 @@ export default class SVGTools {
         return shape;
     }
 
+    static addLine (div: Element, x: number, y: number) {
+        var shape = document.createElementNS(Paint.xmlns, 'path');
+        var attr: Record<string, unknown> = {
+            'id': getIdFor('path'),
+            'opacity': 1,
+            'd': 'M' + x + ',' + y + 'L' + x + ',' + y
+        };
+        var drawattr = SVGTools.getPolyAttr();
+        for (var val in attr) {
+            shape.setAttribute(val, String(attr[val]));
+        }
+        for (var ps in drawattr) {
+            shape.setAttribute(ps, String(drawattr[ps]));
+        }
+        div.appendChild(shape);
+        return shape;
+    }
+
+    static getStarPath (cx: number, cy: number, rOuter: number, rInner: number): string {
+        var cmds: Array<[string, number, number]> = [];
+        var numPoints = 5;
+        for (var i = 0; i < numPoints * 2; i++) {
+            var r = (i % 2 === 0) ? rOuter : rInner;
+            var angle = -Math.PI / 2 + (i * Math.PI / numPoints);
+            var px = Math.round(cx + r * Math.cos(angle));
+            var py = Math.round(cy + r * Math.sin(angle));
+            cmds.push([i === 0 ? 'M' : 'L', px, py]);
+        }
+        cmds.push(['L', cmds[0][1], cmds[0][2]]);
+        return SVG2Canvas.arrayToString(cmds) + 'z';
+    }
+
+    static addStar (div: Element, x: number, y: number) {
+        var shape = document.createElementNS(Paint.xmlns, 'path');
+        var attr: Record<string, unknown> = {
+            'id': getIdFor('path'),
+            'opacity': 1,
+            'd': SVGTools.getStarPath(x, y, 1, 0.4)
+        };
+        var drawattr = SVGTools.getPenAttr();
+        for (var val in attr) {
+            shape.setAttribute(val, String(attr[val]));
+        }
+        for (var ps in drawattr) {
+            shape.setAttribute(ps, String(drawattr[ps]));
+        }
+        div.appendChild(shape);
+        return shape;
+    }
+
     static addTriangle (div: Element, x: number, y: number) {
         var shape = document.createElementNS(Paint.xmlns, 'path');
         var attr: Record<string, unknown> = {

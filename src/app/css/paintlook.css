@@ -288,14 +288,16 @@ spriteform.off {visibility: hidden; };
 }
 
 *.paintpalette .section {
-    display: inline-block;
-    position: absolute;
-    top: ${css_vh(0)};
+    display: block;
+    position: relative;
+    top: 0;
+    left: 0;
 }
 
 *.paintpalette .section.space {
-    margin-top: ${css_vh(3.13)};
-    top: ${css_vh(33)};
+    margin-top: ${css_vh(1.5)};
+    top: 0;
+    left: 0;
 }
 
 *.paintpalette.short {
@@ -334,10 +336,12 @@ spriteform.off {visibility: hidden; };
 /* left tools */
 
 *.paintpalette .element{
-    margin: ${css_vh(0.00)} ${css_vh(1.30)} ${css_vh(1.0)};
+    display: block;
+    position: relative;
+    margin: ${css_vh(0.00)} ${css_vh(1.30)} ${css_vh(0.50)};
     padding: ${css_vh(0.00)};
     width: ${css_vh(7.81)};
-    height: ${css_vh(7.16)};
+    height: ${css_vh(6.2)};
 }
 
 *.paintpalette .element.first{}
@@ -352,8 +356,13 @@ spriteform.off {visibility: hidden; };
 
 *.tool {
     position: absolute;
-    width: ${css_vh(8.33)};
-    height: ${css_vh(8.33)};
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: contain !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
 }
 
 *.tool.path.on {
@@ -362,6 +371,14 @@ spriteform.off {visibility: hidden; };
 }
 *.tool.path.off {
     background: url('../assets/paint/pathOff.svg') no-repeat center top;
+    background-size: 100%;
+}
+*.tool.line.on {
+    background: url('../assets/paint/lineOn.svg') no-repeat center top;
+    background-size: 100%;
+}
+*.tool.line.off {
+    background: url('../assets/paint/lineOff.svg') no-repeat center top;
     background-size: 100%;
 }
 *.tool.tri.on {
@@ -386,6 +403,14 @@ spriteform.off {visibility: hidden; };
 }
 *.tool.ellipse.off {
     background: url('../assets/paint/ellipseOff.svg') no-repeat center top;
+    background-size: 100%;
+}
+*.tool.star.on {
+    background: url('../assets/paint/starOn.svg') no-repeat center top;
+    background-size: 100%;
+}
+*.tool.star.off {
+    background: url('../assets/paint/starOff.svg') no-repeat center top;
     background-size: 100%;
 }
 
@@ -448,52 +473,48 @@ spriteform.off {visibility: hidden; };
 }
 
 *.paintpalette .pensizeholder {
-    display: inline-block;
+    display: block;
     position: relative;
-    margin: ${css_vh(0.00)};
+    margin: 0 auto ${css_vh(0.3)};
     padding: ${css_vh(0.00)};
     width: ${css_vh(10.42)};
-    height: ${css_vh(5.86)};
+    height: ${css_vh(5.0)};
 }
 
 *.paintpalette .pensizeholder.off {background: none;}
 
 *.paintpalette .pensizeholder.on {
-    background:  url('../assets/paint/pensizeselect.svg');
-    background-size: 100%;
+    background:  url('../assets/paint/pensizeselect.svg') no-repeat center center;
+    background-size: 100% 100%;
 }
 
 *.paintpalette .pensizeholder .line {
-    position: absoulte;
-    margin: ${css_vh(2.60)} ${css_vh(1.56)} ${css_vh(0.00)};
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: ${css_vh(7.03)};
-    height: ${css_vh(0.13)};
     background: #080808;
     box-shadow: ${2 * scaleMultiplier}px ${2 * scaleMultiplier}px ${5 * scaleMultiplier}px rgba(0, 0, 0, 0.3);
 }
 
 *.paintpalette .pensizeholder .line.t0 {
-    margin: ${css_vh(2.60)} ${css_vh(1.56)} ${css_vh(0.00)};
     height: ${css_vh(0.26)};
 }
 
 *.paintpalette .pensizeholder .line.t1 {
-    margin: ${css_vh(2.60)} ${css_vh(1.56)} ${css_vh(0.00)};
-    height: ${css_vh(0.26)};
-}
-
-*.paintpalette .pensizeholder .line.t2 {
-    margin: ${css_vh(2.47)} ${css_vh(1.56)} ${css_vh(0.00)};
     height: ${css_vh(0.52)};
 }
 
-*.paintpalette .pensizeholder .line.t3 {
-    margin: ${css_vh(2.08)} ${css_vh(1.56)} ${css_vh(0.00)};
+*.paintpalette .pensizeholder .line.t2 {
     height: ${css_vh(1.04)};
 }
 
+*.paintpalette .pensizeholder .line.t3 {
+    height: ${css_vh(1.56)};
+}
+
 *.paintpalette .pensizeholder .line.t4 {
-    margin: ${css_vh(1.82)} ${css_vh(1.56)} ${css_vh(0.00)};
     height: ${css_vh(2.08)};
 }
 

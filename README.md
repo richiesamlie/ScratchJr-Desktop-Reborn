@@ -19,6 +19,16 @@
 
 ## Features & Improvements
 
+### 🎨 Paint Editor & Creative Tools
+- **New Straight Line & Star Shape Tools**: Dedicated vector line tool and 5-pointed star generator with full paintbucket fill compatibility.
+- **Geometric Constraint Snapping**: Hold `Shift` to draw perfect squares, circles, equilateral triangles, and 45° angle straight lines.
+- **Enriched Color Swatches**: Vibrant color palette with bright golden yellow (`#FFD700`) and clean vector icon scaling.
+
+### 👥 Project Duplication ("Remix") & Lobby Controls
+- **1-Click Project Remix**: Duplicate any project with one click to safely experiment without losing original projects.
+- **Kid-Safe Edit Mode**: Intentional 500ms press-and-hold (or right-click) prevents accidental deletions.
+- **Scoped Desktop Shortcuts**: Keyboard shortcuts (`Ctrl+S`, `Ctrl+Z`, `Ctrl+Shift+Z`/`Ctrl+Y`, `Ctrl+N`) are strictly window-scoped and never intercept keys in background applications.
+
 ### 🎨 Expanded Workspace & Desktop Ergonomics
 - **8 Pages per Project**: Increased from the original 4-page limit to 8 pages by default (configurable via `maxPages` in `settings.json`).
 - **Scrollable Page & Character Strips**: Native mouse-wheel scrolling and responsive layout keep pages and characters easily accessible.
@@ -44,7 +54,7 @@
 
 ### ⚡ Strict TypeScript & Testing
 - **100% Strict TypeScript**: Entire codebase migrated to TypeScript with strict type checking (`strict: true`, zero `any`).
-- **Comprehensive Test Suite**: 132 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, update-check ETag caching, the CSS preprocessor grammar, and the .sjr import/export + media-cache paths.
+- **Comprehensive Test Suite**: 141 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, paint editor shapes and swatches, project duplication, update-check ETag caching, the CSS preprocessor grammar, and the .sjr import/export + media-cache paths.
 
 ### 🌍 Classroom & Fleet Deployment
 - **`--lang` CLI Flag**: Launch with explicit language overrides (e.g., `ScratchJr.exe --lang=fr`), ideal for school environments.
