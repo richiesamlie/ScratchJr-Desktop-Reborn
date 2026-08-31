@@ -39,8 +39,18 @@ const RELEASE = {
 
 function mockFetchOnce (status, body, headers = {}) {
     const calls = [];
-    globalThis.fetch = async function (_url, init) {
-        calls.push({ init });
+    globalThis.fetch = async function (url, init) {
+        if (typeof url === 'string' && url.includes('version.json')) {
+            // Bypass CDN so fallback to GitHub API is tested
+            return {
+                status: 404,
+                ok: false,
+                headers: new Map(),
+                get () { return null; },
+                json: async () => ({}),
+            };
+        }
+        calls.push({ url, init });
         return {
             status,
             ok: status >= 200 && status < 300,
@@ -60,7 +70,45 @@ afterEach(() => {
     vi.restoreAllMocks();
 });
 
-describe('checkForUpdate conditional requests', () => {
+describe('checkForUpdate conditional requests and CDN', () => {
+    it('uses static GitHub Pages CDN version.json when available without calling GitHub API', async () => {
+        const cdnManifest = {
+            version: '2.0.0',
+            release_url: 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/tag/v2.0.0',
+            notes: 'Major release',
+            downloads: {
+                'win32-x64-msi': 'https://example.com/ScratchJr.msi',
+                'win32-x64': 'https://example.com/ScratchJr-win.zip',
+                'darwin-x64': 'https://example.com/ScratchJr-mac.zip',
+                'darwin-arm64': 'https://example.com/ScratchJr-mac-arm64.zip',
+                'linux-x64': 'https://example.com/ScratchJr-linux.zip',
+                'linux-arm64': 'https://example.com/ScratchJr-linux-arm64.zip',
+            },
+        };
+
+        const calls = [];
+        globalThis.fetch = async function (url) {
+            calls.push(url);
+            if (typeof url === 'string' && url.includes('version.json')) {
+                return {
+                    status: 200,
+                    ok: true,
+                    headers: new Map(),
+                    get () { return null; },
+                    json: async () => cdnManifest,
+                };
+            }
+            throw new Error('Should not reach GitHub API when CDN succeeds');
+        };
+
+        const info = await checkForUpdate();
+        expect(info.available).toBe(true);
+        expect(info.latestVersion).toBe('2.0.0');
+        expect(info.releaseNotes).toBe('Major release');
+        expect(calls.length).toBe(1);
+        expect(calls[0]).toContain('version.json');
+    });
+
     it('stores the etag after a 200 and reports up-to-date for same version', async () => {
         const fetchMock = mockFetchOnce(200, RELEASE, { etag: '"abc123"' });
 
@@ -88,7 +136,16 @@ describe('checkForUpdate conditional requests', () => {
 
         let capturedHeaders = {};
         const calls = [];
-        globalThis.fetch = async function (_url, init) {
+        globalThis.fetch = async function (url, init) {
+            if (typeof url === 'string' && url.includes('version.json')) {
+                return {
+                    status: 404,
+                    ok: false,
+                    headers: new Map(),
+                    get () { return null; },
+                    json: async () => ({}),
+                };
+            }
             calls.push(1);
             capturedHeaders = (init && init.headers) || {};
             return {
@@ -110,7 +167,16 @@ describe('checkForUpdate conditional requests', () => {
     });
 
     it('treats a rate-limited 403 as no-update without crashing', async () => {
-        globalThis.fetch = async function () {
+        globalThis.fetch = async function (url) {
+            if (typeof url === 'string' && url.includes('version.json')) {
+                return {
+                    status: 404,
+                    ok: false,
+                    headers: new Map(),
+                    get () { return null; },
+                    json: async () => ({}),
+                };
+            }
             return {
                 status: 403,
                 ok: false,

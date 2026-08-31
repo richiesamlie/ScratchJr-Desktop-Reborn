@@ -81,9 +81,24 @@ export function compareVersions(a: string, b: string): number {
     return 0;
 }
 
+const PRIMARY_CDN_URL = `https://${REPO_OWNER}.github.io/${REPO_NAME}/version.json`;
+const FALLBACK_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
+
+interface StaticVersionManifest {
+    version: string;
+    name?: string;
+    notes?: string;
+    pub_date?: string;
+    release_url?: string;
+    downloads?: Record<string, string>;
+}
+
 /**
- * Check GitHub releases API for the latest version.
- * Returns UpdateInfo with whether an update is available.
+ * Check for updates.
+ *
+ * Uses a tiered approach:
+ * 1. Primary: Fetches static version.json from GitHub Pages CDN (unlimited rate limit, zero quota cost).
+ * 2. Fallback: Fetches GitHub Releases API with ETag conditional caching.
  */
 export async function checkForUpdate(): Promise<UpdateInfo> {
     const currentVersion = app.getVersion();
@@ -98,6 +113,54 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         releaseNotes: '',
     };
 
+    // Tier 1: Try static GitHub Pages CDN first (rate-limit free)
+    try {
+        const cdnController = new AbortController();
+        const cdnTimeout = setTimeout(() => cdnController.abort(), 5_000);
+
+        const cdnResponse = await fetch(PRIMARY_CDN_URL, {
+            signal: cdnController.signal,
+            headers: {
+                'User-Agent': `ScratchJr-Desktop/${currentVersion} (${process.platform})`,
+            },
+        });
+        clearTimeout(cdnTimeout);
+
+        if (cdnResponse.ok) {
+            const manifest = await cdnResponse.json() as StaticVersionManifest;
+            if (manifest && typeof manifest.version === 'string') {
+                const latestVersion = manifest.version.replace(/^v/, '');
+                const available = compareVersions(latestVersion, currentVersion) > 0;
+                
+                // Select platform download asset from manifest
+                let downloadUrl = manifest.release_url || releasePageUrl;
+                if (manifest.downloads) {
+                    const platform = process.platform;
+                    const arch = process.arch;
+                    const key = platform === 'win32'
+                        ? (manifest.downloads['win32-x64-msi'] ? 'win32-x64-msi' : 'win32-x64')
+                        : `${platform}-${arch}`;
+                    if (manifest.downloads[key]) {
+                        downloadUrl = manifest.downloads[key];
+                    }
+                }
+
+                debugLog(`CDN Update check: ${currentVersion} -> ${latestVersion} (available: ${available})`);
+                return {
+                    available,
+                    currentVersion,
+                    latestVersion,
+                    downloadUrl,
+                    releasePageUrl: manifest.release_url || releasePageUrl,
+                    releaseNotes: manifest.notes || '',
+                };
+            }
+        }
+    } catch (cdnErr) {
+        debugLog('CDN Update check skipped, falling back to GitHub API:', cdnErr);
+    }
+
+    // Tier 2: Fallback to GitHub Releases API with ETag caching
     try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), CHECK_TIMEOUT_MS);
@@ -112,13 +175,10 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
             headers['If-None-Match'] = cached.etag;
         }
 
-        const response = await fetch(
-            `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`,
-            {
-                signal: controller.signal,
-                headers,
-            }
-        );
+        const response = await fetch(FALLBACK_API_URL, {
+            signal: controller.signal,
+            headers,
+        });
         clearTimeout(timeout);
 
         if (response.status === 304 && cached.release) {
