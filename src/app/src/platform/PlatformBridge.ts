@@ -337,14 +337,14 @@ export default class PlatformBridge {
 
     // Process and store base64-encoded .SJR file
     static loadProjectFromSjr (b64data: string) {
-        try {
-            IO.loadProjectFromSjr(b64data);
-        } catch (err) {
-            var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err as Error).message;
-            Alert.open(gn('frame')!, gn('frame')!, errorMessage, '#ff0000');
-            console.log(err); // eslint-disable-line no-console
-            return 0;
-        }
+        IO.loadProjectFromSjr(b64data).catch(function (err: Error) {
+            var frame = gn('frame');
+            var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? err.message : '');
+            if (frame) {
+                Alert.open(frame, frame, errorMessage, '#ff0000');
+            }
+            console.error('PlatformBridge.loadProjectFromSjr error:', err);
+        });
         return 1;
     }
 

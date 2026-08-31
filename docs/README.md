@@ -2,6 +2,10 @@
 
 - **[development.md](./development.md)** — how the project is built, tested, and released, plus the editor layout/limits map and known quirks
 - **[engine.md](./engine.md)** — the editor engine architecture: module graph, runtime execution model (Runtime/Thread/Prims), file format flow, and how to extend the editor
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — verified process topology, data flows, and the invariants to keep
+- **[DEEP-ENGINEERING-AUDIT.md](./DEEP-ENGINEERING-AUDIT.md)** — 2026-08 deep audit: findings with evidence, failure matrices, prioritized roadmap, scorecard
+- **[THREAT-MODEL.md](./THREAT-MODEL.md)** — the five audit threats (malicious .sjr/media, compromised renderer, update metadata, CI) and their mitigations
+- **[SCHOOL-DEPLOYMENT.md](./SCHOOL-DEPLOYMENT.md)** — fleet deployment guide: MSI/silent install, Intune/GPO, data layout, upgrade & rollback caveats
 
 > Note: `ipc-inventory.md` and the 2026-08 handoff documents were removed as
 > outdated after the v1.7.0 architecture refactor. The authoritative IPC

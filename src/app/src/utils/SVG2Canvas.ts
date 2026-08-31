@@ -279,9 +279,12 @@ export default class SVG2Canvas {
         var newcnv = document.createElement('canvas');
         setCanvasSize(newcnv, ctx.canvas.width, ctx.canvas.height);
         var newctx = newcnv.getContext('2d')!;
-        var dataurl = image.getAttribute('xlink:href');
+        var dataurl = image.getAttribute('xlink:href') || image.getAttribute('href');
+        if (!dataurl || !dataurl.startsWith('data:')) {
+            return;
+        }
         var img = document.createElement('img');
-        img.src = dataurl!;
+        img.src = dataurl;
         if (!img.complete) {
             img.onload = function () {
                 drame(img, newctx, angle * DEGTOR, center);

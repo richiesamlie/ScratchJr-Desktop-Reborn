@@ -193,6 +193,11 @@ export default class Library {
         if (!file || !type) {
             return;
         }
+        // Limit file size to 20MB to prevent browser tab crashes
+        if (file.size > 20 * 1024 * 1024) {
+            console.error('handleImportFile: file too large (>20MB)');
+            return;
+        }
         var ext = file.name.split('.').pop()?.toLowerCase() || '';
         if (!['png', 'jpg', 'jpeg', 'svg'].includes(ext)) {
             return;
@@ -223,6 +228,10 @@ export default class Library {
                     w = Number(svgElem.getAttribute('width')) || (isCostume ? 150 : 480);
                     h = Number(svgElem.getAttribute('height')) || (isCostume ? 150 : 360);
                 }
+
+                // Clamp dimensions to prevent excessive canvas allocations
+                w = Math.min(Math.max(w, 1), 4096);
+                h = Math.min(Math.max(h, 1), 4096);
 
                 var dataurl = IO.getThumbnail(svgText, w, h, 120, 90);
                 var pngBase64 = dataurl.split(',')[1];
@@ -267,6 +276,9 @@ export default class Library {
                 var dataUrl = reader.result as string;
                 if (!dataUrl) return;
                 var img = new Image();
+                img.onerror = function () {
+                    console.error('handleImportFile: failed to decode image data');
+                };
                 img.onload = function () {
                     var naturalW = img.naturalWidth || img.width || (isCostume ? 150 : 480);
                     var naturalH = img.naturalHeight || img.height || (isCostume ? 150 : 360);

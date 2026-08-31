@@ -184,9 +184,12 @@ export default class SVGImage {
     static cloneImage (p: Element, elem: Element) {
         var img = SVGImage.getClonedImage(elem);
         var imageid = img.id;
-        var dataurl = elem.getAttribute('xlink:href');
+        var dataurl = elem.getAttribute('xlink:href') || elem.getAttribute('href');
+        if (!dataurl || !dataurl.startsWith('data:')) {
+            return;
+        }
         var html5img = document.createElement('img');
-        html5img.src = dataurl!;
+        html5img.src = dataurl;
         if (!html5img.complete) {
             html5img.onload = function () {
                 renderImage(img);

@@ -372,10 +372,11 @@ export default class ScratchJr {
 
     static flippage () {
         Alert.close();
-        PlatformBridge.cleanassets('wav', doNext);
-        function doNext () {
-            PlatformBridge.cleanassets('svg', ScratchJr.switchPage);
-        }
+        PlatformBridge.cleanassets('wav', function () {
+            PlatformBridge.cleanassets('svg', function () {
+                PlatformBridge.cleanassets('png', ScratchJr.switchPage);
+            });
+        });
     }
 
     static switchPage () {

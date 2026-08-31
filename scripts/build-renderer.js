@@ -23,7 +23,7 @@ const options = {
     bundle: true,
     format: 'esm',
     platform: 'browser',
-    target: ['chrome134'],  // Electron 43 ships Chromium 134
+    target: ['chrome150'],  // Electron 43.4.1 ships Chromium 150
     sourcemap: true,
     minify: false,  // keep readable for debugging
     logLevel: 'info',

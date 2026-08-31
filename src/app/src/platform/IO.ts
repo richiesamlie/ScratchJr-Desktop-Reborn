@@ -52,8 +52,10 @@ export default class IO {
         if (extxml.childNodes[0].nodeName == '#comment') {
             extxml.removeChild(extxml.childNodes[0]);
         }
+        var widthNum = Math.min(Math.max(Number(w) || 0, 1), 4096);
+        var heightNum = Math.min(Math.max(Number(h) || 0, 1), 4096);
         var srccnv = document.createElement('canvas');
-        setCanvasSize(srccnv, Number(w), Number(h));
+        setCanvasSize(srccnv, widthNum, heightNum);
         var ctx = srccnv.getContext('2d')!;
         for (var i = 0; i < extxml.childElementCount; i++) {
             SVG2Canvas.drawLayer(extxml.childNodes[i] as Element, ctx);
@@ -61,8 +63,10 @@ export default class IO {
         if (!destw || !desth) {
             return srccnv.toDataURL('image/png');
         }
+        var targetW = Math.min(Math.max(Number(destw) || 0, 1), 4096);
+        var targetH = Math.min(Math.max(Number(desth) || 0, 1), 4096);
         var cnv = document.createElement('canvas');
-        setCanvasSize(cnv, destw, desth);
+        setCanvasSize(cnv, targetW, targetH);
         drawThumbnail(srccnv, cnv);
         return cnv.toDataURL('image/png');
     }
@@ -94,6 +98,10 @@ export default class IO {
         }
 
         function nextStep (dataurl: string) {
+            if (IO.getExtension(md5) === 'png') {
+                fcn(IO.getImageDataURL(md5, dataurl));
+                return;
+            }
             var str = atob(dataurl);
             if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
                 fcn(PlatformBridge.path + md5);
@@ -108,40 +116,62 @@ export default class IO {
 
     static getImagesInSVG (str: string, whenDone: () => void) {
         str = str.replace(/>\s*</g, '><');
-        if (str.indexOf('xlink:href') < 0) {
+        if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
             whenDone();
         } else {
             loadInnerImages(str, whenDone);
         }
 
         function loadInnerImages (str: string, whenDone: () => void) {
-            var xmlDoc: Document | null = new DOMParser().parseFromString(str, 'text/xml');
-            var extxml: HTMLElement | null = document.importNode(xmlDoc.documentElement, true);
-            if (extxml!.childNodes[0].nodeName == '#comment') {
-                extxml!.removeChild(extxml!.childNodes[0]);
-            }
-            var images = IO.getImages(extxml!, []);
-            var imageCount = images.length;
-            for (var i = 0; i < images.length; i++) {
-                var dataurl = images[i].getAttribute('xlink:href');
-                var svgimg = document.createElement('img');
-                svgimg.src = dataurl!;
-                if (!svgimg.complete) {
-                    svgimg.onload = function () {
-                        readToLad();
-                    };
-                } else {
-                    readToLad();
+            try {
+                var xmlDoc: Document | null = new DOMParser().parseFromString(str, 'text/xml');
+                if (!xmlDoc || !xmlDoc.documentElement || xmlDoc.getElementsByTagName('parsererror').length > 0) {
+                    whenDone();
+                    return;
                 }
-            }
-
-            function readToLad () {
-                imageCount--;
-                if (imageCount < 1) {
+                var extxml: HTMLElement | null = document.importNode(xmlDoc.documentElement, true);
+                if (extxml.childNodes.length > 0 && extxml.childNodes[0].nodeName == '#comment') {
+                    extxml.removeChild(extxml.childNodes[0]);
+                }
+                var images = IO.getImages(extxml, []);
+                var imageCount = images.length;
+                if (imageCount === 0) {
                     extxml = null;
                     xmlDoc = null;
                     whenDone();
+                    return;
                 }
+                for (var i = 0; i < images.length; i++) {
+                    var dataurl = images[i].getAttribute('xlink:href') || images[i].getAttribute('href');
+                    if (dataurl && dataurl.startsWith('data:')) {
+                        var svgimg = document.createElement('img');
+                        svgimg.src = dataurl;
+                        if (!svgimg.complete) {
+                            svgimg.onload = function () {
+                                readToLad();
+                            };
+                            svgimg.onerror = function () {
+                                readToLad();
+                            };
+                        } else {
+                            readToLad();
+                        }
+                    } else {
+                        readToLad();
+                    }
+                }
+
+                function readToLad () {
+                    imageCount--;
+                    if (imageCount < 1) {
+                        extxml = null;
+                        xmlDoc = null;
+                        whenDone();
+                    }
+                }
+            } catch (err) {
+                console.error('loadInnerImages error:', err);
+                whenDone();
             }
         }
     }
@@ -462,9 +492,6 @@ export default class IO {
     }
 
     static async loadProjectFromSjr (b64data: string) {
-        var saveExpected = 0;
-        var saveActual = 0;
-
         var receivedZip = await JSZip.loadAsync(b64data, { base64: true });
 
         var characterNames: Record<string, string> = {};
@@ -481,8 +508,7 @@ export default class IO {
         });
 
         if (!dataEntry) {
-            console.error('loadProjectFromSjr: no data.json found in archive');
-            return;
+            throw new Error('No data.json found in project archive.');
         }
         var jsonData = JSON.parse(await (dataEntry as ZipEntryLike).async('text')) as {
             version: string;
@@ -496,145 +522,162 @@ export default class IO {
             throw new Error('Project created in a new version of ScratchJr. Please upgrade ScratchJr.');
         }
 
+        var projectData = jsonData.json;
+        if (projectData && projectData.pages) {
+            for (var p = 0; p < projectData.pages.length; p++) {
+                var pageReference = projectData.pages[p];
+                var page = projectData[pageReference] as { sprites: string[] } & Record<string, { type: string; md5: string; name: string }>;
+                if (page && page.sprites) {
+                    for (var s = 0; s < page.sprites.length; s++) {
+                        var spriteReference = page.sprites[s];
+                        var sprite = page[spriteReference];
+                        if (sprite && sprite.type == 'sprite') {
+                            characterNames[sprite.md5] = (
+                                ((unescape(sprite.name)).replace(/[0-9]/g, '')).replace(/\s*/g, '')
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        var assetPromises: Promise<void>[] = [];
+
+        for (var e = 0; e < assetEntries.length; e++) {
+            (function (entry) {
+                var relativePath = entry.relativePath;
+                var file = entry.file;
+                var subFolder = relativePath.split('/')[1];
+
+                var fullName = relativePath.split('/').pop()!;
+                var name = fullName.split('.')[0];
+                var ext = fullName.split('.').pop();
+
+                if (!name || !ext) {
+                    return;
+                }
+
+                if (fullName in MediaLib.keys) {
+                    return;
+                }
+
+                assetPromises.push((async function () {
+                    var data = await file.async('binarystring');
+                    var b2data = btoa(data);
+
+                    if (subFolder == 'thumbnails' || subFolder == 'sounds') {
+                        await new Promise<void>(function (resolve) {
+                            PlatformBridge.setmedianame(b2data, name, ext!, function () {
+                                resolve();
+                            });
+                        });
+                    } else if (subFolder == 'characters') {
+                        await new Promise<void>(function (resolve) {
+                            PlatformBridge.setmedianame(b2data, name, ext!, function () {
+                                var svgParser = new DOMParser().parseFromString(data, 'text/xml');
+                                var svgEl = svgParser.getElementsByTagName('svg')[0];
+                                var rawWidth = (svgEl && svgEl.width && svgEl.width.baseVal) ? svgEl.width.baseVal.value : 480;
+                                var rawHeight = (svgEl && svgEl.height && svgEl.height.baseVal) ? svgEl.height.baseVal.value : 360;
+                                var width = Math.min(Math.max(Number(rawWidth) || 0, 1), 4096);
+                                var height = Math.min(Math.max(Number(rawHeight) || 0, 1), 4096);
+                                var scale = '0.5';
+
+                                IO.getImagesInSVG(data, gotSVGImages);
+
+                                function gotSVGImages () {
+                                    var thumbnailDataURL = IO.getThumbnail(data, width, height, 120, 90);
+                                    var thumbnailPngBase64 = thumbnailDataURL.split(',')[1];
+                                    var charName = characterNames[fullName];
+
+                                    PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
+                                        var json: DbSelectIntent = {
+                                            op: 'select', table: 'usershapes',
+                                            items: ['*'],
+                                            where: [
+                                                { col: 'ext', op: '=', value: 'svg' },
+                                                { col: 'md5', op: '=', value: fullName },
+                                                { col: 'altmd5', op: '=', value: thumbnailMD5 },
+                                                { col: 'name', op: '=', value: charName },
+                                                { col: 'scale', op: '=', value: scale },
+                                                { col: 'width', op: '=', value: width.toString() },
+                                                { col: 'height', op: '=', value: height.toString() },
+                                            ],
+                                            order: { col: 'ctime', dir: 'desc' },
+                                        };
+                                        IO.query('usershapes', json, function (results) {
+                                            results = JSON.parse(results);
+                                            if (results.length == 0) {
+                                                PlatformBridge.stmt({
+                                                    op: 'insert', table: 'usershapes',
+                                                    row: {
+                                                        scale, md5: fullName, altmd5: thumbnailMD5,
+                                                        version: PROJECT_FORMAT_VERSION, width: width.toString(),
+                                                        height: height.toString(), ext: 'svg', name: charName,
+                                                    },
+                                                }, function () {
+                                                    resolve();
+                                                });
+                                            } else {
+                                                resolve();
+                                            }
+                                        });
+                                    });
+                                }
+                            });
+                        });
+                    } else if (subFolder == 'backgrounds') {
+                        await new Promise<void>(function (resolve) {
+                            PlatformBridge.setmedianame(b2data, name, ext!, function () {
+                                IO.getImagesInSVG(data, gotSVGImages);
+
+                                function gotSVGImages () {
+                                    var thumbnailDataURL = IO.getThumbnail(data, 480, 360, 120, 90);
+                                    var thumbnailPngBase64 = thumbnailDataURL.split(',')[1];
+                                    PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
+                                        var json: DbSelectIntent = {
+                                            op: 'select', table: 'userbkgs',
+                                            items: ['*'],
+                                            where: [
+                                                { col: 'ext', op: '=', value: 'svg' },
+                                                { col: 'md5', op: '=', value: fullName },
+                                                { col: 'altmd5', op: '=', value: thumbnailMD5 },
+                                            ],
+                                            order: { col: 'ctime', dir: 'desc' },
+                                        };
+                                        IO.query('userbkgs', json, function (results) {
+                                            results = JSON.parse(results);
+                                            if (results.length == 0) {
+                                                PlatformBridge.stmt({
+                                                    op: 'insert', table: 'userbkgs',
+                                                    row: {
+                                                        md5: fullName, altmd5: thumbnailMD5, version: PROJECT_FORMAT_VERSION,
+                                                        width: '480', height: '360', ext: 'svg',
+                                                    },
+                                                }, function () {
+                                                    resolve();
+                                                });
+                                            } else {
+                                                resolve();
+                                            }
+                                        });
+                                    });
+                                }
+                            });
+                        });
+                    }
+                })());
+            })(assetEntries[e]);
+        }
+
+        await Promise.all(assetPromises);
+
+        // All assets extracted and persisted safely — now create the project row
         await new Promise<void>(function (resolve) {
             IO.uniqueProjectName(jsonData as unknown as Parameters<typeof IO.uniqueProjectName>[0], function (jd) {
                 (jd as { isgift?: string }).isgift = '1';
                 IO.createProject(jd as unknown as ProjectRecord, function () { resolve(); });
             });
         });
-
-        var projectData = jsonData.json;
-        for (var p = 0; p < projectData.pages.length; p++) {
-            var pageReference = projectData.pages[p];
-            var page = projectData[pageReference] as { sprites: string[] } & Record<string, { type: string; md5: string; name: string }>;
-            for (var s = 0; s < page.sprites.length; s++) {
-                var spriteReference = page.sprites[s];
-                var sprite = page[spriteReference];
-                if (sprite.type == 'sprite') {
-                    characterNames[sprite.md5] = (
-                        ((unescape(sprite.name)).replace(/[0-9]/g, '')).replace(/\s*/g, '')
-                    );
-                }
-            }
-        }
-
-        for (var e = 0; e < assetEntries.length; e++) {
-            var relativePath = assetEntries[e].relativePath;
-            var file = assetEntries[e].file;
-            saveExpected++;
-
-            var subFolder = relativePath.split('/')[1];
-
-            var fullName = relativePath.split('/').pop()!;
-            var name = fullName.split('.')[0];
-            var ext = fullName.split('.').pop();
-
-            if (!name || !ext) {
-                continue;
-            }
-
-            if (fullName in MediaLib.keys) {
-                saveActual++;
-                continue;
-            }
-
-            var data = await file.async('binarystring');
-            var b2data = btoa(data);
-
-            if (subFolder == 'thumbnails' || subFolder == 'sounds') {
-                PlatformBridge.setmedianame(b2data, name, ext, function () {
-                    saveActual++;
-                });
-            } else if (subFolder == 'characters') {
-                PlatformBridge.setmedianame(b2data, name, ext, function () {
-                    var svgParser = new DOMParser().parseFromString(data, 'text/xml');
-                    var width = svgParser.getElementsByTagName('svg')[0].width.baseVal.value;
-                    var height = svgParser.getElementsByTagName('svg')[0].height.baseVal.value;
-                    var scale = '0.5';
-
-                    IO.getImagesInSVG(data, gotSVGImages);
-
-                    function gotSVGImages () {
-                        var thumbnailDataURL = IO.getThumbnail(data, width, height, 120, 90);
-                        var thumbnailPngBase64 = thumbnailDataURL.split(',')[1];
-                        var charName = characterNames[fullName];
-
-                        PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
-                            var json: DbSelectIntent = {
-                                op: 'select', table: 'usershapes',
-                                items: ['*'],
-                                where: [
-                                    { col: 'ext', op: '=', value: 'svg' },
-                                    { col: 'md5', op: '=', value: fullName },
-                                    { col: 'altmd5', op: '=', value: thumbnailMD5 },
-                                    { col: 'name', op: '=', value: charName },
-                                    { col: 'scale', op: '=', value: scale },
-                                    { col: 'width', op: '=', value: width.toString() },
-                                    { col: 'height', op: '=', value: height.toString() },
-                                ],
-                                order: { col: 'ctime', dir: 'desc' },
-                            };
-                            IO.query('usershapes', json, function (results) {
-                                results = JSON.parse(results);
-                                if (results.length == 0) {
-                                    PlatformBridge.stmt({
-                                        op: 'insert', table: 'usershapes',
-                                        row: {
-                                            scale, md5: fullName, altmd5: thumbnailMD5,
-                                            version: PROJECT_FORMAT_VERSION, width: width.toString(),
-                                            height: height.toString(), ext: 'svg', name: charName,
-                                        },
-                                    }, function () {
-                                        saveActual++;
-                                    });
-                                } else {
-                                    saveActual++;
-                                }
-                            });
-                        });
-                    }
-                });
-            } else if (subFolder == 'backgrounds') {
-                PlatformBridge.setmedianame(b2data, name, ext, function () {
-                    IO.getImagesInSVG(data, gotSVGImages);
-
-                    function gotSVGImages () {
-                        var thumbnailDataURL = IO.getThumbnail(data, 480, 360, 120, 90);
-                        var thumbnailPngBase64 = thumbnailDataURL.split(',')[1];
-                        PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
-                            var json: DbSelectIntent = {
-                                op: 'select', table: 'userbkgs',
-                                items: ['*'],
-                                where: [
-                                    { col: 'ext', op: '=', value: 'svg' },
-                                    { col: 'md5', op: '=', value: fullName },
-                                    { col: 'altmd5', op: '=', value: thumbnailMD5 },
-                                ],
-                                order: { col: 'ctime', dir: 'desc' },
-                            };
-                            IO.query('userbkgs', json, function (results) {
-                                results = JSON.parse(results);
-                                if (results.length == 0) {
-                                    PlatformBridge.stmt({
-                                        op: 'insert', table: 'userbkgs',
-                                        row: {
-                                            md5: fullName, altmd5: thumbnailMD5, version: PROJECT_FORMAT_VERSION,
-                                            width: '480', height: '360', ext: 'svg',
-                                        },
-                                    }, function () {
-                                        saveActual++;
-                                    });
-                                } else {
-                                    saveActual++;
-                                }
-                            });
-                        });
-                    }
-                });
-            } else {
-                saveActual++;
-            }
-        }
     }
 }
 

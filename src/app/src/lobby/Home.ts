@@ -7,6 +7,7 @@ import PlatformBridge from '../platform/PlatformBridge';
 import IO from '../platform/IO';
 import Localization from '../utils/Localization';
 import ScratchAudio from '../utils/ScratchAudio';
+import Alert from '../editor/ui/Alert';
 import Vector from '../geom/Vector';
 import {gn, newHTML, isTouch} from '../utils/lib';
 
@@ -378,9 +379,14 @@ export default class Home {
                     bytes.subarray(i, i + CHUNK)
                 ] as unknown as number[]);
             }
-            IO.loadProjectFromSjr(btoa(binary));
+            return IO.loadProjectFromSjr(btoa(binary));
         }).catch(function (err) {
             console.error('importSjrFile failed:', err);
+            var frame = gn('frame');
+            var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? (err as Error).message : '');
+            if (frame) {
+                Alert.open(frame, frame, errorMessage, '#ff0000');
+            }
         });
     }
 

@@ -43,6 +43,8 @@ export class DatabaseManager {
     private _SQL: SqlJsStatic;
     /** Set by the caller after construction if it needs to know about auto-recovery */
     onAutoRecovery: (() => void) | null = null;
+    /** Set by the caller after construction if it needs to know about unrecoverable corruption */
+    onCorruptionReset: (() => void) | null = null;
     /** Debounced save timer — coalesces rapid successive writes */
     private _saveTimer: ReturnType<typeof setTimeout> | null = null;
     private _saveDelay = 100; // ms
@@ -52,6 +54,17 @@ export class DatabaseManager {
         this.databaseRestoreFilename = databaseRestoreFilename;
         this.databaseBackupFilename = databaseFilename + '.bak';
         this._SQL = SQL;
+
+        // Clean up any orphaned .tmp file from an ungraceful shutdown
+        const tmpPath = this.databaseFilename + '.tmp';
+        if (fs.existsSync(tmpPath)) {
+            try {
+                fs.unlinkSync(tmpPath);
+                debugLog('Cleaned up orphaned database .tmp file at startup');
+            } catch (e) {
+                debugLog('Failed to remove orphaned .tmp file:', e);
+            }
+        }
 
         if (fs.existsSync(this.databaseFilename)) {
             this.open(SQL);
@@ -85,6 +98,9 @@ export class DatabaseManager {
         } else {
             debugLog('Auto-recovery failed — creating fresh database');
             this.freshDatabase(SQL);
+            if (this.onCorruptionReset) {
+                this.onCorruptionReset();
+            }
         }
     }
 
@@ -281,24 +297,24 @@ export class DatabaseManager {
     /** True when a media name is still referenced by any project/shape/background row */
     private mediaInUse(name: string): boolean {
         const queryFindFileInProjects: QueryJson = {
-            stmt: 'select ID from PROJECTS where json like ?',
-            values: [`%${name}%`],
+            stmt: 'select ID from PROJECTS where json like ? or thumbnail like ?',
+            values: [`%${name}%`, `%${name}%`],
         };
         if (this.query(queryFindFileInProjects).length > 0) {
             return true;
         }
 
         const queryFindFileInUsershapes: QueryJson = {
-            stmt: 'select MD5 from USERSHAPES where MD5 = ?',
-            values: [name],
+            stmt: 'select MD5 from USERSHAPES where MD5 = ? or ALTMD5 = ?',
+            values: [name, name],
         };
         if (this.query(queryFindFileInUsershapes).length > 0) {
             return true;
         }
 
         const queryFindFileInUserbkgs: QueryJson = {
-            stmt: 'select MD5 from USERBKGS where MD5 = ?',
-            values: [name],
+            stmt: 'select MD5 from USERBKGS where MD5 = ? or ALTMD5 = ?',
+            values: [name, name],
         };
         if (this.query(queryFindFileInUserbkgs).length > 0) {
             return true;

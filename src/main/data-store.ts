@@ -55,6 +55,20 @@ export class ScratchJRDataStore {
                 this.electronBrowserWindow.webContents.send('databaseRestored', {});
             }
         };
+        db.onCorruptionReset = () => {
+            if (this.electronBrowserWindow && !this.electronBrowserWindow.isDestroyed()) {
+                this.electronBrowserWindow.webContents.send('databaseCorruptedReset', {});
+                dialog.showMessageBox(
+                    this.electronBrowserWindow,
+                    {
+                        type: 'warning',
+                        buttons: ['OK'],
+                        title: 'Database Reset',
+                        message: 'The ScratchJr database and backup were unreadable or corrupted. A fresh project store has been created.'
+                    }
+                );
+            }
+        };
     }
 
     hasRestoreDatabase(): boolean {

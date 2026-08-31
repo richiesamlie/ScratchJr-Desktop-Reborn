@@ -45,11 +45,27 @@ if (targetPlatform === 'darwin' && process.platform === 'win32') {
     ignore: [/^\/out\//],
     appCopyright: pkg['app-copyright'] || '',
     appVersion: pkg.version,
-    // Code signing: set these env vars in CI when certificates are available
-    // CSC_LINK: path to certificate file (.p12/.pfx on Windows, .p12 on macOS)
-    // CSC_KEY_PASSWORD: certificate password
-    // APPLE_ID / APPLE_ID_PASSWORD / APPLE_TEAM_ID: for notarization (macOS)
 };
+
+if (targetPlatform === 'win32' && process.env.CSC_LINK) {
+    console.log('Enabling Windows code signing via CSC_LINK...');
+    options.windowsSign = {
+        certificateFile: process.env.CSC_LINK,
+        certificatePassword: process.env.CSC_KEY_PASSWORD || undefined,
+    };
+} else if (targetPlatform === 'darwin' && (process.env.CSC_LINK || process.env.APPLE_ID)) {
+    console.log('Enabling macOS code signing / notarization...');
+    options.osxSign = {
+        identity: process.env.CSC_NAME || undefined,
+    };
+    if (process.env.APPLE_ID && process.env.APPLE_ID_PASSWORD && process.env.APPLE_TEAM_ID) {
+        options.osxNotarize = {
+            appleId: process.env.APPLE_ID,
+            appleIdPassword: process.env.APPLE_ID_PASSWORD,
+            teamId: process.env.APPLE_TEAM_ID,
+        };
+    }
+}
 
 console.log(`Packaging ${pkg.productName || pkg.name} v${pkg.version} for ${options.platform}/${options.arch}...`);
 

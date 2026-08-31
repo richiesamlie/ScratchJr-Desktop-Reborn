@@ -32,12 +32,14 @@ jobs:
             release_suffix: windows
             artifact_name: ScratchJr-win32-x64.zip
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install Node 22 LTS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '22'
           cache: "npm"
@@ -106,10 +108,24 @@ jobs:
           # in-app Settings.scratchJrVersion comes from src/app/settings.json which
           # build-renderer.js rewrites in lockstep — guard against that ever drifting.)
           TAG_VERSION="${GITHUB_REF_NAME#v}"
+          EXPECTED="desktop-v${TAG_VERSION}"
+
+          ASAR_FILE=$(find out -name 'app.asar' | head -1)
+          if [ -n "$ASAR_FILE" ]; then
+            SETTINGS_CONTENT=$(npx --yes @electron/asar extract-file "$ASAR_FILE" "src/app/settings.json" 2>/dev/null || true)
+            if [ -n "$SETTINGS_CONTENT" ]; then
+              SETTINGS_VERSION=$(node -e "console.log(JSON.parse(process.argv[1]).scratchJrVersion)" "$SETTINGS_CONTENT")
+              if [ "$SETTINGS_VERSION" != "$EXPECTED" ]; then
+                echo "::error::Packaged asar settings.json scratchJrVersion = $SETTINGS_VERSION, expected $EXPECTED"
+                exit 1
+              fi
+              echo "Packaged asar settings.json scratchJrVersion = $SETTINGS_VERSION (matches tag)"
+            fi
+          fi
+
           SETTINGS_FILE=$(find out -name 'settings.json' -path '*/src/app/*' | head -1)
           if [ -n "$SETTINGS_FILE" ]; then
             SETTINGS_VERSION=$(node -p "require('./${SETTINGS_FILE}').scratchJrVersion")
-            EXPECTED="desktop-v${TAG_VERSION}"
             if [ "$SETTINGS_VERSION" != "$EXPECTED" ]; then
               echo "::error::Packaged settings.json scratchJrVersion = $SETTINGS_VERSION, expected $EXPECTED"
               exit 1
@@ -123,6 +139,7 @@ jobs:
         run: |
           echo "Downloading WiX 3.x binaries..."
           curl -sL "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -o wix3.zip
+          echo "6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31 *wix3.zip" | sha256sum -c -
           mkdir -p out/wix3
           unzip -q wix3.zip -d out/wix3
           echo "Building MSI..."
@@ -141,7 +158,7 @@ jobs:
           cat *.sha256
 
       - name: Smoke test packaged app
-        if: (runner.os == 'Windows' || runner.os == 'Linux') && !contains(matrix.release_suffix, 'arm64')
+        if: !contains(matrix.release_suffix, 'arm64')
         shell: bash
         run: |
           PACKAGED_DIR=$(find out -maxdepth 1 -type d -name 'ScratchJr*' | head -1)
@@ -157,7 +174,7 @@ jobs:
           fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         with:
           name: ${{ matrix.release_suffix }}-build
           path: |
@@ -177,12 +194,12 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
         with:
           path: artifacts
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
         with:
           name: ${{ github.ref_name }}
           draft: false

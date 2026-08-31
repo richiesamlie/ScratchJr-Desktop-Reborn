@@ -38,7 +38,7 @@ if (!fs.existsSync(OUT_DIR)) {
 // Generate WXS template using electron-wix-msi
 const { MSICreator } = require('electron-wix-msi');
 
-const creator = new MSICreator({
+const creatorConfig = {
     appDirectory: APP_DIR,
     outputDirectory: OUT_DIR,
     description: 'ScratchJr Desktop Edition',
@@ -48,13 +48,37 @@ const creator = new MSICreator({
     version: pkg.version,
     icon: path.join(__dirname, '..', 'src', 'icons', 'win', 'icon.ico'),
     ui: { chooseDirectory: true },
+    upgradeCode: '{E4346E7F-98B4-4602-9FAA-5AF8C9844BA7}',
+    arch: 'x64',
+    defaultInstallMode: 'perMachine',
     extensions: ['WixUIExtension', 'WixUtilExtension']
-});
+};
+
+if (process.env.CSC_LINK) {
+    creatorConfig.certificateFile = process.env.CSC_LINK;
+    if (process.env.CSC_KEY_PASSWORD) {
+        creatorConfig.certificatePassword = process.env.CSC_KEY_PASSWORD;
+    }
+}
+
+const creator = new MSICreator(creatorConfig);
 
 console.log(`Building MSI installer for ScratchJr v${pkg.version}...`);
 
 creator.create().then(({ wxsFile }) => {
     console.log('WXS template created:', wxsFile);
+
+    // Inject database cleanup custom action + property into the WXS template
+    const cleanupActionPath = path.join(__dirname, '..', 'src', 'installer', 'cleanup-action.wxs');
+    if (fs.existsSync(cleanupActionPath)) {
+        const cleanupFragment = fs.readFileSync(cleanupActionPath, 'utf8');
+        let wxsContent = fs.readFileSync(wxsFile, 'utf8');
+        if (wxsContent.includes('</Product>')) {
+            wxsContent = wxsContent.replace('</Product>', `${cleanupFragment}\n  </Product>`);
+            fs.writeFileSync(wxsFile, wxsContent, 'utf8');
+            console.log('Injected database cleanup action into WXS template.');
+        }
+    }
 
     const cwd = path.dirname(wxsFile);
     const candle = path.join(WIX_DIR, 'candle.exe');
@@ -62,7 +86,7 @@ creator.create().then(({ wxsFile }) => {
 
     // Compile
     console.log('Compiling with candle...');
-    execSync(`"${candle}" -ext WixUIExtension -ext WixUtilExtension ScratchJr.wxs`, {
+    execSync(`"${candle}" -arch x64 -ext WixUIExtension -ext WixUtilExtension ScratchJr.wxs`, {
         cwd,
         stdio: 'inherit'
     });
