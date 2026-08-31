@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="45px" height="44px" viewBox="0 0 45 44" enable-background="new 0 0 45 44" xml:space="preserve">
+<linearGradient id="SVGID_COPY_1" gradientUnits="userSpaceOnUse" x1="22.5" y1="44.4" x2="22.5" y2="-0.5">
+	<stop offset="0" style="stop-color:#FFFFFF"/>
+	<stop offset="1" style="stop-color:#FFFFFF;stop-opacity:0"/>
+</linearGradient>
+<path fill="url(#SVGID_COPY_1)" d="M22.5,44.083C10.323,44.083,0.417,34.176,0.417,22S10.323-0.083,22.5-0.083S44.583,9.823,44.583,22 S34.677,44.083,22.5,44.083z"/>
+<path fill="#0F6699" d="M22.5,43.083C10.875,43.083,1.417,33.625,1.417,22c0-11.625,9.458-21.083,21.083-21.083 S43.583,10.375,43.583,22C43.583,33.625,34.125,43.083,22.5,43.083z"/>
+<linearGradient id="SVGID_COPY_2" gradientUnits="userSpaceOnUse" x1="22.5" y1="-0.01" x2="22.5" y2="47.1">
+	<stop offset="0" style="stop-color:#35A8E0"/>
+	<stop offset="1" style="stop-color:#1E7CB8"/>
+</linearGradient>
+<path fill="url(#SVGID_COPY_2)" d="M22.5,41.083C11.978,41.083,3.417,32.522,3.417,22S11.978,2.917,22.5,2.917S41.583,11.477,41.583,22 S33.022,41.083,22.5,41.083z"/>
+<!-- Shadow sheet -->
+<rect x="13.5" y="11.5" width="13" height="15" rx="2" fill="#0F6699"/>
+<rect x="13" y="11" width="13" height="15" rx="2" fill="#FFFFFF" fill-opacity="0.85"/>
+<!-- Front sheet -->
+<rect x="18.5" y="16.5" width="14" height="16" rx="2" fill="#0F6699"/>
+<rect x="18" y="16" width="14" height="16" rx="2" fill="#FFFFFF"/>
+<!-- Plus glyph inside front sheet -->
+<line x1="25" y1="20" x2="25" y2="28" stroke="#1E7CB8" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="21" y1="24" x2="29" y2="24" stroke="#1E7CB8" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

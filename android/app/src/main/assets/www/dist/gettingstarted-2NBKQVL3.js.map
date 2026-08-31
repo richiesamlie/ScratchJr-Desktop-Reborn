@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/entry/gettingstarted.ts"],
+  "sourcesContent": ["import {gn, getUrlVars} from '../utils/lib';\n\nlet place: string;\n\nexport function gettingStartedMain () { // eslint-disable-line import/prefer-default-export\n    gn('closeHelp')!.onclick = gettingStartedCloseMe;\n    gn('closeHelp')!.onmousedown = gettingStartedCloseMe;\n    var videoObj = gn('myVideo')! as HTMLVideoElement;\n    videoObj.src = 'assets/lobby/intro.mp4';\n    videoObj.poster = 'assets/lobby/poster.png';\n\n    var urlvars = getUrlVars();\n    place = urlvars.place;\n    document.onmousemove = function (e){\n        e.preventDefault();\n    };\n}\n\n\nfunction gettingStartedCloseMe () {\n    window.location.href = 'home.html?place=' + place;\n}\n"],
+  "mappings": ";;;;;;AAEA,IAAI;AAEG,SAAS,qBAAsB;AAClC,KAAG,WAAW,EAAG,UAAU;AAC3B,KAAG,WAAW,EAAG,cAAc;AAC/B,MAAI,WAAW,GAAG,SAAS;AAC3B,WAAS,MAAM;AACf,WAAS,SAAS;AAElB,MAAI,UAAU,WAAW;AACzB,UAAQ,QAAQ;AAChB,WAAS,cAAc,SAAU,GAAE;AAC/B,MAAE,eAAe;AAAA,EACrB;AACJ;AAGA,SAAS,wBAAyB;AAC9B,SAAO,SAAS,OAAO,qBAAqB;AAChD;",
+  "names": []
+}

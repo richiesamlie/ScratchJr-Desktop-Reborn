@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/entry/editor.ts"],
+  "sourcesContent": ["import ScratchJr from '../editor/ScratchJr';\nimport iOS from '../iPad/iOS';\nimport Camera from '../painteditor/Camera';\nimport Record from '../editor/ui/Record';\n\nexport function editorMain () { // eslint-disable-line import/prefer-default-export\n    iOS.getsettings(doNext);\n    function doNext (str: string) {\n        var list = str.split(',');\n        iOS.path = list[1] == '0' ? list[0] + '/' : undefined;\n        if (list.length > 2) {\n            Record.available = (list[2] == 'YES');\n        }\n        if (list.length > 3) {\n            Camera.available = (list[3] == 'YES');\n        }\n        ScratchJr.appinit(window.Settings!.scratchJrVersion);\n    }\n}\n"],
+  "mappings": ";;;;;;;;;;;;AAKO,SAAS,aAAc;AAC1B,MAAI,YAAY,MAAM;AACtB,WAAS,OAAQ,KAAa;AAC1B,QAAI,OAAO,IAAI,MAAM,GAAG;AACxB,QAAI,OAAO,KAAK,CAAC,KAAK,MAAM,KAAK,CAAC,IAAI,MAAM;AAC5C,QAAI,KAAK,SAAS,GAAG;AACjB,aAAO,YAAa,KAAK,CAAC,KAAK;AAAA,IACnC;AACA,QAAI,KAAK,SAAS,GAAG;AACjB,aAAO,YAAa,KAAK,CAAC,KAAK;AAAA,IACnC;AACA,cAAU,QAAQ,OAAO,SAAU,gBAAgB;AAAA,EACvD;AACJ;",
+  "names": []
+}
