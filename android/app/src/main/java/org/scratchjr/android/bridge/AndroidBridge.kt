@@ -42,8 +42,8 @@ class AndroidBridge(
     @JavascriptInterface
     fun io_getsettings(): String {
         val mediaPath = db.mediaDirectory.absolutePath
-        // Returns "mediaPath,isTablet,isDebug,isAnalytics"
-        return "$mediaPath,true,false,false"
+        // Returns "mediaPath,isTablet,isDebug,isAnalytics" -> 0 for isTablet so PlatformBridge.path = mediaPath/
+        return "$mediaPath,0,YES,YES"
     }
 
     @JavascriptInterface

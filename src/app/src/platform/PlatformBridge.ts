@@ -43,9 +43,10 @@ export default class PlatformBridge {
             return;
         }
 
-        // Android device fallback (if running in mobile WebView)
-        if (typeof AndroidInterface !== 'undefined') {
-            hostInterface = AndroidInterface as unknown as ScratchJrBridge;
+        // Android device interface (injected on window.AndroidInterface or window.Android)
+        const android = (typeof window !== 'undefined' && ((window as any).AndroidInterface || (window as any).Android)) || (typeof AndroidInterface !== 'undefined' ? AndroidInterface : null);
+        if (android) {
+            hostInterface = android as unknown as ScratchJrBridge;
             if (fcn) {
                 fcn();
             }
@@ -53,18 +54,18 @@ export default class PlatformBridge {
         }
 
         // Desktop / iOS host bridge - might not be loaded yet
-        if (typeof (window.tablet) != 'object') {
-            // Come back in 100ms
-            setTimeout(function () {
-                PlatformBridge.waitForInterface(fcn);
-            }, 100);
-        } else {
-            // All set to run commands
+        if (typeof window !== 'undefined' && typeof (window.tablet) == 'object') {
             hostInterface = window.tablet;
             if (fcn) {
                 fcn();
             }
+            return;
         }
+
+        // Retry in 50ms
+        setTimeout(function () {
+            PlatformBridge.waitForInterface(fcn);
+        }, 50);
     }
 
     // Database functions
