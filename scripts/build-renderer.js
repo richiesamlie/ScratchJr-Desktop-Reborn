@@ -37,15 +37,20 @@ async function main() {
     const settingsPath = path.resolve(__dirname, '..', 'src', 'app', 'settings.json');
     const fs = require('fs');
     const before = fs.readFileSync(settingsPath, 'utf8');
-    const after = before.replace(
-        /"scratchJrVersion"\s*:\s*"desktop-v[^"]*"/,
-        `"scratchJrVersion": "desktop-v${pkg.version}"`
-    );
-    if (after === before) {
+    const regex = /"scratchJrVersion"\s*:\s*"desktop-v[^"]*"/;
+    if (!regex.test(before)) {
         console.warn(`build-renderer: settings.json had no scratchJrVersion to update (expected key "desktop-v...").`);
     } else {
-        fs.writeFileSync(settingsPath, after);
-        console.log(`build-renderer: settings.json scratchJrVersion = desktop-v${pkg.version}`);
+        const after = before.replace(
+            regex,
+            `"scratchJrVersion": "desktop-v${pkg.version}"`
+        );
+        if (after !== before) {
+            fs.writeFileSync(settingsPath, after);
+            console.log(`build-renderer: settings.json scratchJrVersion = desktop-v${pkg.version}`);
+        } else {
+            console.log(`build-renderer: settings.json scratchJrVersion is up to date (desktop-v${pkg.version})`);
+        }
     }
 
     if (isWatch) {

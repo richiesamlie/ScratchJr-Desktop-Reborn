@@ -3,6 +3,35 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.8.0] - 2026-08-31
+
+**Deep engineering audit remediations, WebRTC hardware permissions, hybrid Smartboard/pointer input resilience, and production MSI release pipeline.**
+
+### Features & Security Hardening
+- **WebRTC Hardware Permissions (Camera & Microphone)**:
+  - Whitelisted `'media'`, `'mediaKeySystem'`, `'microphone'`, `'camera'`, `'audioCapture'`, and `'videoCapture'` in main-process permission handlers (`window-lifecycle.ts`), eliminating silent hardware blocking during sound recording and character photo snapshots on Electron 43+ (Chromium 150).
+- **Hybrid Input & Smartboard Touch/Pointer Resilience**:
+  - Enhanced `Events.getTargetPoint` to defensively extract coordinates across `MouseEvent`, `TouchEvent` (active and changed touches), and `PointerEvent`, preventing `NaN` drag calculations and dropped blocks on classroom Smartboards, touchscreen laptops, and stylus pens.
+  - Concurrently bound mouse and touch move/end listeners during active drag sessions.
+- **Data Integrity & Thumbnail Protection**:
+  - Updated `DatabaseManager.mediaInUse` to verify both `json` and `thumbnail` columns in `PROJECTS`, preserving project preview PNGs and raster thumbnails (`ALTMD5`) from premature deletion during asset cleanup.
+  - Added startup detection and cleanup of orphaned SQLite `.tmp` transaction files.
+  - Surfaced user-facing alert dialogs when unrecoverable database corruption occurs.
+  - Made `.sjr` project import fully transactional (asset extraction and thumbnail validation must complete before project row insertion) with error dialogs for corrupted archives.
+  - Hardened SVG imports by confining `xlink:href` strictly to `data:` URIs and clamping canvas dimensions to $[1, 4096]\text{px}$.
+- **Supply Chain & MSI Fleet Deployment**:
+  - Pinned all 5 GitHub Actions in the release workflow to immutable 40-character commit SHAs with scoped `contents: read` permissions.
+  - Added SHA-256 integrity verification (`6ac824e...`) for WiX 3.14 binaries in CI.
+  - Pinned stable MSI `UpgradeCode` (`{E4346E7F-98B4-4602-9FAA-5AF8C9844BA7}`), default `perMachine` install mode, and injected uninstallation cleanup action for `REMOVE_DATABASE=1`.
+  - Wired code signing parameters (`windowsSign` and `osxSign`/`osxNotarize`) in packaging scripts.
+  - Updated esbuild compiler target to `chrome150`.
+
+### Documentation
+- Published comprehensive architecture guide ([`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)), security threat model ([`docs/THREAT-MODEL.md`](./docs/THREAT-MODEL.md)), school deployment runbook ([`docs/SCHOOL-DEPLOYMENT.md`](./docs/SCHOOL-DEPLOYMENT.md)), and release maintainer procedures ([`docs/RELEASE.md`](./docs/RELEASE.md)).
+
+### Testing & Verification
+- Added `tests/unit/audit-remediation.test.js` covering all remediations, reaching **153 automated unit tests** across 18 test files (100% green).
+
 ## [v1.7.5] - 2026-08-28
 
 **Custom Image Import for Characters & Backdrops, drag-and-drop file loading, and robust raster-to-SVG wrapping.**

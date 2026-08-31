@@ -59,18 +59,26 @@
 
 ### ⚡ Strict TypeScript & Testing
 - **100% Strict TypeScript**: Entire codebase migrated to TypeScript with strict type checking (`strict: true`, zero `any`).
-- **Comprehensive Test Suite**: 141 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, paint editor shapes and swatches, project duplication, update-check ETag caching, the CSS preprocessor grammar, and the .sjr import/export + media-cache paths.
+- **Comprehensive Test Suite**: 153 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, paint editor shapes and swatches, project duplication, update-check ETag caching, the CSS preprocessor grammar, .sjr import/export, WebRTC permissions, and hybrid touch/pointer input handling.
 
 ### 🌍 Classroom & Fleet Deployment
+- **Touchscreen & Smartboard Ready**: Defensive coordinate resolution across mouse, stylus, and touch inputs prevents block dropouts and paint glitches during classroom smartboard activities.
+- **Hardware Multimedia Support**: Explicit WebRTC permission handlers for camera photo insertion in Paint Editor and voice recording.
 - **`--lang` CLI Flag**: Launch with explicit language overrides (e.g., `ScratchJr.exe --lang=fr`), ideal for school environments.
 - **Native Update Checker**: Check for new releases directly from `File` → `Check for Updates...`. Launch-time checks are silent, and conditional (ETag) requests keep the app rate-limit-friendly with the GitHub API.
 - **Working Keyboard Shortcuts**: `Ctrl+S` save, `Ctrl+Z` / `Ctrl+Shift+Z` undo/redo, `Ctrl+N` new project.
-- **`.sjr` Import**: Drag a `.sjr` project file anywhere onto the lobby to import it — assets are merged, duplicates deduplicated, and the project shows up with a gift bow.
-- **`.sjr` Export**: `File` → `Export Project (.sjr)...` saves the current project as a shareable `.sjr` file that can be re-imported on any device.
+- **`.sjr` Import & Export**: Drag a `.sjr` file onto the lobby to import it with transactional asset verification, or export via `File` → `Export Project (.sjr)...`.
 - **Stage Image Export**: `File` → `Export Stage as PNG...` renders the current page at 2× resolution (960×720) to a PNG you choose.
-- **Configurable MSI Installer**: Supports silent deployment and uninstallation options (`REMOVE_DATABASE=1`).
+- **Configurable MSI Installer**: Supports silent deployment, pinned `UpgradeCode`, per-machine scopes, and uninstallation options (`REMOVE_DATABASE=1`).
 
-For architecture diagrams, IPC documentation, and developer guides, visit the **[Wiki](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/wiki)**.
+### 📚 Documentation & Architecture Guides
+- **[Architecture & Security Topology](docs/ARCHITECTURE.md)** — Process separation, IPC boundaries, and data flows.
+- **[Threat Model & Mitigations](docs/THREAT-MODEL.md)** — Security boundaries, untrusted asset validation, and network isolation.
+- **[School & Fleet Deployment Guide](docs/SCHOOL-DEPLOYMENT.md)** — MSI silent install parameters, Intune/GPO deployment, and multi-user configurations.
+- **[Release Runbook](docs/RELEASE.md)** — Release procedures and code signing verification for maintainers.
+- **[Engine Internals](docs/engine.md)** — Block engine architecture, runtime threads, and primitives.
+- **[Developer Guide](docs/development.md)** — Development setup, layout rules, and testing guide.
+- **[GitHub Wiki](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/wiki)** — Comprehensive wiki and community documentation.
 
 ---
 
