@@ -159,3 +159,35 @@ describe('Audit Remediation: Supply Chain and CI Action Pins', () => {
         expect(content).toContain('cleanup-action.wxs');
     });
 });
+
+describe('Audit Remediation: Permissions and Pointer Event Resilience', () => {
+    it('ALLOWED_PERMISSIONS includes camera, microphone, audioCapture, and videoCapture', async () => {
+        const { ALLOWED_PERMISSIONS } = await import('../../src/main/window-lifecycle.ts');
+        expect(ALLOWED_PERMISSIONS).toContain('media');
+        expect(ALLOWED_PERMISSIONS).toContain('camera');
+        expect(ALLOWED_PERMISSIONS).toContain('microphone');
+        expect(ALLOWED_PERMISSIONS).toContain('audioCapture');
+        expect(ALLOWED_PERMISSIONS).toContain('videoCapture');
+    });
+
+    it('Events.getTargetPoint extracts valid coordinates from MouseEvent, TouchEvent, or PointerEvent without returning undefined', async () => {
+        const { default: Events } = await import('../../src/app/src/utils/Events.ts');
+        
+        // MouseEvent with clientX/clientY
+        const mousePt = Events.getTargetPoint({ clientX: 120, clientY: 240 });
+        expect(mousePt).toEqual({ x: 120, y: 240 });
+
+        // TouchEvent with touches array
+        const touchPt = Events.getTargetPoint({
+            touches: [{ pageX: 300, pageY: 450 }]
+        });
+        expect(touchPt).toEqual({ x: 300, y: 450 });
+
+        // TouchEvent with changedTouches array (e.g. touchend)
+        const changedTouchPt = Events.getTargetPoint({
+            touches: [],
+            changedTouches: [{ pageX: 310, pageY: 460 }]
+        });
+        expect(changedTouchPt).toEqual({ x: 310, y: 460 });
+    });
+});

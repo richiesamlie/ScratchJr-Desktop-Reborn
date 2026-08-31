@@ -16,7 +16,14 @@ import { isParentFolder } from '../lib/path-utils';
 let win: BrowserWindow | null = null;
 let dataStoreRef: ScratchJRDataStore | null = null;
 
-const ALLOWED_PERMISSIONS = ['media', 'mediaKeySystem'];
+export const ALLOWED_PERMISSIONS = [
+    'media',
+    'mediaKeySystem',
+    'microphone',
+    'camera',
+    'audioCapture',
+    'videoCapture',
+];
 
 const windowStateFile = path.join(app.getPath('userData'), 'window-state.json');
 

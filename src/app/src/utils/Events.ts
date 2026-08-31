@@ -137,29 +137,25 @@ export default class Events {
             Events.holdit(c, athold);
         }
         updatefcn = atdrag;
-        if (isTouch) { // startDrag event setting
-            delta = 10 * scaleMultiplier;
-            window.onmousemove = function (evt) {
-                Events.mouseMove(evt);
-            };
-            window.onmouseup = function (evt) {
-                Events.mouseUp(evt);
-            };
-            window.ontouchleave = function (evt) {
-                Events.mouseUp(evt);
-            };
-            window.ontouchcancel = function (evt) {
-                Events.mouseUp(evt);
-            };
-        } else {
-            delta = 7;
-            window.onmousemove = function (evt) {
-                Events.mouseMove(evt);
-            };
-            window.onmouseup = function (evt) {
-                Events.mouseUp(evt);
-            };
-        }
+        delta = isTouch ? 10 * scaleMultiplier : 7;
+        window.onmousemove = function (evt) {
+            Events.mouseMove(evt);
+        };
+        window.onmouseup = function (evt) {
+            Events.mouseUp(evt);
+        };
+        window.ontouchmove = function (evt) {
+            Events.mouseMove(evt as unknown as MouseEvent);
+        };
+        window.ontouchend = function (evt) {
+            Events.mouseUp(evt);
+        };
+        window.ontouchleave = function (evt) {
+            Events.mouseUp(evt);
+        };
+        window.ontouchcancel = function (evt) {
+            Events.mouseUp(evt);
+        };
     }
 
     static holdit (c: HTMLElement, fcn: (c: HTMLElement) => void) {
@@ -234,15 +230,14 @@ export default class Events {
     }
 
     static clearEvents () {
-        if (isTouch) { // clearEvents
-            window.onmousemove = null;
-            window.onmouseup = null;
-        } else {
-            window.onmousemove = function (e) {
-                e.preventDefault();
-            };
-            window.onmouseup = null;
-        }
+        window.onmousemove = !isTouch ? function (e) {
+            e.preventDefault();
+        } : null;
+        window.onmouseup = null;
+        window.ontouchmove = null;
+        window.ontouchend = null;
+        window.ontouchleave = null;
+        window.ontouchcancel = null;
     }
 
     static performMouseUpAction (e: MouseEvent | TouchEvent) {
@@ -284,26 +279,28 @@ export default class Events {
     page is scrolled horizontally.
     */
 
-    static getTargetPoint (e: MouseEvent | TouchEvent) {
+    static getTargetPoint (e: MouseEvent | TouchEvent | PointerEvent) {
         const te = e as TouchEvent;
-        if (isTouch) {
-            if (te.touches && (te.touches.length > 0)) {
-                return {
-                    x: te.touches[0].pageX,
-                    y: te.touches[0].pageY
-                };
-            } else if (te.changedTouches) {
-                return {
-                    x: te.changedTouches[0].pageX,
-                    y: te.changedTouches[0].pageY
-                };
-            }
+        if (te && te.touches && (te.touches.length > 0)) {
+            return {
+                x: te.touches[0].pageX !== undefined ? te.touches[0].pageX : te.touches[0].clientX,
+                y: te.touches[0].pageY !== undefined ? te.touches[0].pageY : te.touches[0].clientY
+            };
+        }
+        if (te && te.changedTouches && (te.changedTouches.length > 0)) {
+            return {
+                x: te.changedTouches[0].pageX !== undefined ? te.changedTouches[0].pageX : te.changedTouches[0].clientX,
+                y: te.changedTouches[0].pageY !== undefined ? te.changedTouches[0].pageY : te.changedTouches[0].clientY
+            };
         }
         const me = e as MouseEvent;
-        return {
-            x: me.clientX,
-            y: me.clientY
-        };
+        if (me) {
+            return {
+                x: me.pageX !== undefined ? me.pageX : me.clientX,
+                y: me.pageY !== undefined ? me.pageY : me.clientY
+            };
+        }
+        return { x: 0, y: 0 };
     }
 
     static updatePinchCenter (e: MouseEvent | TouchEvent) {

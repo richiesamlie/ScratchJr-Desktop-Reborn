@@ -1,7 +1,7 @@
 import type {Point} from '../geom/Vector';
 
 export var frame: HTMLElement;  // eslint-disable-line import/no-mutable-exports
-export const isTouch = ('ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0));
+export const isTouch = (typeof window !== 'undefined' && ('ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)));
 export const DEGTOR = Math.PI / 180;
 //export const WINDOW_INNER_HEIGHT = window.innerHeight;
 //export const WINDOW_INNER_WIDTH = window.innerWidth;
