@@ -1,19 +1,22 @@
-# ScratchJr Reborn — Desktop Edition
+# ScratchJr Reborn — Desktop & Android
 
-> A modernized desktop port of [ScratchJr](https://scratchjr.org/) for Windows, macOS, and Linux.
+> A modernized multi-platform port of [ScratchJr](https://scratchjr.org/) for Windows, macOS, Linux, and Android.
 
 ## Downloads
 
 **[Download ScratchJr Reborn (latest release)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)**
 
-| File | Platform |
-|------|----------|
-| `ScratchJr-win32-x64.msi` | Windows x64 (installer) |
-| `ScratchJr-win32-x64.zip` | Windows x64 (portable) |
-| `ScratchJr-darwin-x64.zip` | macOS x64 |
-| `ScratchJr-darwin-arm64.zip` | macOS ARM64 |
-| `ScratchJr-linux-x64.zip` | Linux x64 |
-| `ScratchJr-linux-arm64.zip` | Linux ARM64 |
+| File | Platform | Notes |
+|------|----------|-------|
+| `ScratchJr-win32-x64.msi` | Windows x64 | Windows Installer |
+| `ScratchJr-win32-x64.zip` | Windows x64 | Portable zip |
+| `ScratchJr-darwin-x64.zip` | macOS x64 | Intel Mac |
+| `ScratchJr-darwin-arm64.zip` | macOS ARM64 | Apple Silicon (M1/M2/M3) |
+| `ScratchJr-linux-x64.zip` | Linux x64 | Linux portable |
+| `ScratchJr-linux-arm64.zip` | Linux ARM64 | Linux ARM64 |
+| `ScratchJr-android-debug.apk` | Android (Universal) | Ready to install (.apk) |
+| `ScratchJr-android-release-unsigned.apk` | Android (Universal) | Production release package |
+| `ScratchJr-android-release.aab` | Android | Google Play App Bundle |
 
 ---
 
