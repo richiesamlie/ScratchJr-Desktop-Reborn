@@ -4,15 +4,7 @@ import PlatformBridge from '../platform/PlatformBridge';
 import Lobby from '../lobby/Lobby';
 
 export function homeMain () {  // eslint-disable-line import/prefer-default-export
-    const logotab = gn('logotab');
-    if (logotab) {
-        logotab.onmousedown = homeGoBack;
-        logotab.ontouchend = function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-            homeGoBack();
-        };
-    }
+    gn('logotab')!.onmousedown = homeGoBack;
     homeStrings();
     PlatformBridge.getsettings(doNext);
     function doNext (str: string) {

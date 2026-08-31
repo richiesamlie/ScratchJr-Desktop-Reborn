@@ -18,7 +18,6 @@
         "interact": "node scripts/interaction-test.js",
         "build:main": "tsc -p tsconfig.main.json",
         "build:renderer": "node scripts/build-renderer.js",
-        "build:android": "node scripts/build-android-assets.js",
         "postinstall": "node scripts/patch-for-node26.js && node scripts/build-renderer.js"
     },
     "keywords": [],

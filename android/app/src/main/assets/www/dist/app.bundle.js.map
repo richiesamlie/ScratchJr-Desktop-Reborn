@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../renderer-entry.js"],
-  "sourcesContent": ["// Renderer entry point: boots the app (page dispatch + close handshake),\n// then re-exports appEntry for anything that wants loadPage directly.\nimport { bootApp } from './appEntry.js';\n\nbootApp();\n\nexport * from './appEntry.js';\n"],
-  "mappings": ";;;;;;;;;AAIA,QAAQ;",
-  "names": []
-}

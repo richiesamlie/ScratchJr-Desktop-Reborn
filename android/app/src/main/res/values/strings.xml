@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">ScratchJr</string>
-    <string name="camera_permission_rationale">ScratchJr needs camera access to let you take photos for your characters.</string>
-    <string name="mic_permission_rationale">ScratchJr needs microphone access to record your own sounds.</string>
-</resources>
