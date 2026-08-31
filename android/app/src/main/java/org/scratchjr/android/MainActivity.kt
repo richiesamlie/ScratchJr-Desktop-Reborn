@@ -68,8 +68,49 @@ class MainActivity : AppCompatActivity() {
 
         webView = findViewById(R.id.webview)
         setupWebView()
+        setupBackNavigation()
 
         handleIntent(intent)
+    }
+
+    private fun setupBackNavigation() {
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val currentUrl = webView.url ?: ""
+                when {
+                    currentUrl.contains("editor.html") -> {
+                        // Save project and return to lobby
+                        webView.evaluateJavascript(
+                            "if (window.ScratchJr && window.ScratchJr.saveProject) { window.ScratchJr.saveProject(null, function() { window.location.href = 'home.html'; }); } else { window.location.href = 'home.html'; }",
+                            null
+                        )
+                    }
+                    currentUrl.contains("paint.html") -> {
+                        webView.evaluateJavascript(
+                            "if (window.PaintUndo && window.PaintUndo.goBack) { window.PaintUndo.goBack(); } else { window.history.back(); }",
+                            null
+                        )
+                    }
+                    currentUrl.contains("home.html") -> {
+                        webView.evaluateJavascript(
+                            "window.location.href = 'index.html?back=yes';",
+                            null
+                        )
+                    }
+                    currentUrl.contains("gettingstarted.html") || currentUrl.contains("help.html") || currentUrl.contains("about.html") -> {
+                        webView.evaluateJavascript(
+                            "window.location.href = 'home.html';",
+                            null
+                        )
+                    }
+                    else -> {
+                        // On splash screen / index.html, finish activity
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            }
+        })
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -213,6 +254,11 @@ class MainActivity : AppCompatActivity() {
         controller.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -220,6 +266,19 @@ class MainActivity : AppCompatActivity() {
         if (hasFocus) {
             hideSystemUI()
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        webView.onPause()
+        webView.pauseTimers()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webView.onResume()
+        webView.resumeTimers()
+        hideSystemUI()
     }
 
     override fun onDestroy() {
