@@ -1,8 +1,6 @@
 div.frame {
     width: 100%;
     height: 100%;
-    min-width: 766px;
-    min-height: 745px;
     position: relative;
     user-select: none;
 }

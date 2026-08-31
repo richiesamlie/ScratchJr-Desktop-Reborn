@@ -81,8 +81,8 @@ class MainActivity : AppCompatActivity() {
         settings.allowContentAccess = true
         settings.databaseEnabled = true
         settings.mediaPlaybackRequiresUserGesture = false
-        settings.useWideViewPort = true
-        settings.loadWithOverviewMode = true
+        settings.useWideViewPort = false
+        settings.loadWithOverviewMode = false
         settings.defaultTextEncodingName = "utf-8"
 
         // Cache settings
