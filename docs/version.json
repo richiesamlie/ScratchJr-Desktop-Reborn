@@ -1,0 +1,15 @@
+{
+  "version": "1.8.0",
+  "name": "ScratchJr Reborn v1.8.0",
+  "pub_date": "2026-08-31T02:17:00Z",
+  "release_url": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/tag/v1.8.0",
+  "notes": "Deep engineering audit remediations, WebRTC hardware permissions, hybrid Smartboard/pointer input resilience, and production MSI release pipeline.",
+  "downloads": {
+    "win32-x64-msi": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.8.0/ScratchJr-win32-x64.msi",
+    "win32-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.8.0/ScratchJr-win32-x64.zip",
+    "darwin-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.8.0/ScratchJr-darwin-x64.zip",
+    "darwin-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.8.0/ScratchJr-darwin-arm64.zip",
+    "linux-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.8.0/ScratchJr-linux-x64.zip",
+    "linux-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.8.0/ScratchJr-linux-arm64.zip"
+  }
+}

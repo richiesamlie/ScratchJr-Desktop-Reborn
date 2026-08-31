@@ -81,7 +81,11 @@ export function compareVersions(a: string, b: string): number {
     return 0;
 }
 
-const PRIMARY_CDN_URL = `https://${REPO_OWNER}.github.io/${REPO_NAME}/version.json`;
+const CDN_URLS = [
+    `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/master/version.json`,
+    `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@master/version.json`,
+    `https://${REPO_OWNER}.github.io/${REPO_NAME}/version.json`,
+];
 const FALLBACK_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
 
 interface StaticVersionManifest {
@@ -97,7 +101,7 @@ interface StaticVersionManifest {
  * Check for updates.
  *
  * Uses a tiered approach:
- * 1. Primary: Fetches static version.json from GitHub Pages CDN (unlimited rate limit, zero quota cost).
+ * 1. Primary: Fetches static version.json from resilient CDN endpoints (Fastly / jsDelivr / GitHub Pages - unlimited rate limit, zero quota cost).
  * 2. Fallback: Fetches GitHub Releases API with ETag conditional caching.
  */
 export async function checkForUpdate(): Promise<UpdateInfo> {
@@ -113,51 +117,53 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         releaseNotes: '',
     };
 
-    // Tier 1: Try static GitHub Pages CDN first (rate-limit free)
-    try {
-        const cdnController = new AbortController();
-        const cdnTimeout = setTimeout(() => cdnController.abort(), 5_000);
+    // Tier 1: Try static CDN endpoints first (rate-limit free)
+    for (const cdnUrl of CDN_URLS) {
+        try {
+            const cdnController = new AbortController();
+            const cdnTimeout = setTimeout(() => cdnController.abort(), 4_000);
 
-        const cdnResponse = await fetch(PRIMARY_CDN_URL, {
-            signal: cdnController.signal,
-            headers: {
-                'User-Agent': `ScratchJr-Desktop/${currentVersion} (${process.platform})`,
-            },
-        });
-        clearTimeout(cdnTimeout);
+            const cdnResponse = await fetch(cdnUrl, {
+                signal: cdnController.signal,
+                headers: {
+                    'User-Agent': `ScratchJr-Desktop/${currentVersion} (${process.platform})`,
+                },
+            });
+            clearTimeout(cdnTimeout);
 
-        if (cdnResponse.ok) {
-            const manifest = await cdnResponse.json() as StaticVersionManifest;
-            if (manifest && typeof manifest.version === 'string') {
-                const latestVersion = manifest.version.replace(/^v/, '');
-                const available = compareVersions(latestVersion, currentVersion) > 0;
-                
-                // Select platform download asset from manifest
-                let downloadUrl = manifest.release_url || releasePageUrl;
-                if (manifest.downloads) {
-                    const platform = process.platform;
-                    const arch = process.arch;
-                    const key = platform === 'win32'
-                        ? (manifest.downloads['win32-x64-msi'] ? 'win32-x64-msi' : 'win32-x64')
-                        : `${platform}-${arch}`;
-                    if (manifest.downloads[key]) {
-                        downloadUrl = manifest.downloads[key];
+            if (cdnResponse.ok) {
+                const manifest = await cdnResponse.json() as StaticVersionManifest;
+                if (manifest && typeof manifest.version === 'string') {
+                    const latestVersion = manifest.version.replace(/^v/, '');
+                    const available = compareVersions(latestVersion, currentVersion) > 0;
+                    
+                    // Select platform download asset from manifest
+                    let downloadUrl = manifest.release_url || releasePageUrl;
+                    if (manifest.downloads) {
+                        const platform = process.platform;
+                        const arch = process.arch;
+                        const key = platform === 'win32'
+                            ? (manifest.downloads['win32-x64-msi'] ? 'win32-x64-msi' : 'win32-x64')
+                            : `${platform}-${arch}`;
+                        if (manifest.downloads[key]) {
+                            downloadUrl = manifest.downloads[key];
+                        }
                     }
-                }
 
-                debugLog(`CDN Update check: ${currentVersion} -> ${latestVersion} (available: ${available})`);
-                return {
-                    available,
-                    currentVersion,
-                    latestVersion,
-                    downloadUrl,
-                    releasePageUrl: manifest.release_url || releasePageUrl,
-                    releaseNotes: manifest.notes || '',
-                };
+                    debugLog(`CDN Update check (${cdnUrl}): ${currentVersion} -> ${latestVersion} (available: ${available})`);
+                    return {
+                        available,
+                        currentVersion,
+                        latestVersion,
+                        downloadUrl,
+                        releasePageUrl: manifest.release_url || releasePageUrl,
+                        releaseNotes: manifest.notes || '',
+                    };
+                }
             }
+        } catch (cdnErr) {
+            debugLog(`CDN Update check failed for ${cdnUrl}:`, cdnErr);
         }
-    } catch (cdnErr) {
-        debugLog('CDN Update check skipped, falling back to GitHub API:', cdnErr);
     }
 
     // Tier 2: Fallback to GitHub Releases API with ETag caching
