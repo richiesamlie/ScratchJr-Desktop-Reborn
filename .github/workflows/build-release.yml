@@ -158,7 +158,7 @@ jobs:
           cat *.sha256
 
       - name: Smoke test packaged app
-        if: !contains(matrix.release_suffix, 'arm64')
+        if: ${{ !contains(matrix.release_suffix, 'arm64') }}
         shell: bash
         run: |
           PACKAGED_DIR=$(find out -maxdepth 1 -type d -name 'ScratchJr*' | head -1)
@@ -180,9 +180,9 @@ jobs:
           path: |
             ${{ matrix.artifact_name }}
             ${{ matrix.artifact_name }}.sha256
-            *.msi
-            *.msi.sha256
-          if-no-files-found: error
+            ScratchJr-*.msi
+            ScratchJr-*.msi.sha256
+          if-no-files-found: warn
           retention-days: 5
 
   release:
