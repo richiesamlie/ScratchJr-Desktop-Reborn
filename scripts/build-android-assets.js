@@ -60,13 +60,16 @@ function main() {
         }
     }
 
-    // Host loader. Pages reference ../hostClient.js; the WebView serves pages
-    // from /assets/www/, so ../ resolves to /assets/ — the APK assets root,
-    // one level above www/. (Same ../ layout as desktop's src/.)
-    fs.copyFileSync(
-        path.join(rootDir, 'src', 'hostClient.js'),
-        path.join(rootDir, 'android', 'app', 'src', 'main', 'assets', 'hostClient.js')
-    );
+    // Host loader + shared AV classes + Android JS host shim. Pages reference
+    // ../hostClient.js; the WebView serves pages from /assets/www/, so ../
+    // resolves to /assets/ — the APK assets root, one level above www/.
+    // (Same ../ layout as desktop's src/.)
+    for (const f of ['hostClient.js', 'webav.js', 'webhost.js']) {
+        fs.copyFileSync(
+            path.join(rootDir, 'src', f),
+            path.join(rootDir, 'android', 'app', 'src', 'main', 'assets', f)
+        );
+    }
 
     // Root-level runtime resources (media.json is fetched via io_gettextresource;
     // appEntry/dispatch reads settings.json). pop.mp3 and the wav FX live in sounds/.

@@ -1,15 +1,24 @@
-// Host client loader: injects the Electron host implementation only when the
-// Electron preload bridge is present (window.scratchjr, set by preload.ts via
-// contextBridge before any page script runs).
+// Host client loader: runs on every root page before the app bundle.
 //
-// Android WebView: AndroidInterface is injected by WebView.addJavascriptInterface
-// before page load; PlatformBridge.waitForInterface binds it directly and no
-// client script is needed.
-//
-// Loaded from every root page as ../hostClient.js (sibling of electronClient.js).
+// Order matters: webav.js (host-agnostic AudioCapture/CameraPickerDialog)
+// loads first, then the host-specific client:
+//   - Electron (window.scratchjr from preload): electronClient.js
+//   - Android WebView (AndroidInterface): webhost.js (JS host shim; the
+//     native interface covers storage/DB, the shim adds camera/record)
+//   - Anything else: no host client; PlatformBridge keeps polling.
 
-if (window.scratchjr) {
-    var s = document.createElement('script');
-    s.src = '../electronClient.js';
-    document.head.appendChild(s);
-}
+(function () {
+    var av = document.createElement('script');
+    av.src = '../webav.js';
+    document.head.appendChild(av);
+
+    if (window.scratchjr) {
+        var s = document.createElement('script');
+        s.src = '../electronClient.js';
+        document.head.appendChild(s);
+    } else if (typeof AndroidInterface !== 'undefined') {
+        var h = document.createElement('script');
+        h.src = '../webhost.js';
+        document.head.appendChild(h);
+    }
+}());
