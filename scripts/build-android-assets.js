@@ -36,25 +36,46 @@ function main() {
     console.log(`Syncing assets to ${targetAssetsDir}...`);
     fs.mkdirSync(targetAssetsDir, { recursive: true });
 
-    // HTML entry pages
+    // HTML entry pages. hostClient.js loads the Electron client only when the
+    // preload bridge exists, so pages are host-neutral.
     const htmlFiles = [
         'index.html',
         'home.html',
         'editor.html',
-        'paint.html',
-        'help.html',
-        'settings.json',
-        'electronClient.js',
+        'gettingstarted.html',
     ];
 
     for (const file of htmlFiles) {
         const srcFile = path.join(srcAppDir, file);
         if (fs.existsSync(srcFile)) {
             fs.copyFileSync(srcFile, path.join(targetAssetsDir, file));
+        } else {
+            console.warn(`build-android-assets: missing ${file} (skipped)`);
         }
     }
 
-    // Asset folders
+    // Host loader. Pages reference ../hostClient.js; the WebView serves pages
+    // from /assets/www/, so ../ resolves to /assets/ — the APK assets root,
+    // one level above www/. (Same ../ layout as desktop's src/.)
+    fs.copyFileSync(
+        path.join(rootDir, 'src', 'hostClient.js'),
+        path.join(rootDir, 'android', 'app', 'src', 'main', 'assets', 'hostClient.js')
+    );
+
+    // Root-level runtime resources (media.json is fetched via io_gettextresource;
+    // appEntry/dispatch reads settings.json). pop.mp3 and the wav FX live in sounds/.
+    const rootFiles = ['media.json', 'settings.json'];
+    for (const file of rootFiles) {
+        const srcFile = path.join(srcAppDir, file);
+        if (fs.existsSync(srcFile)) {
+            fs.copyFileSync(srcFile, path.join(targetAssetsDir, file));
+        } else {
+            console.warn(`build-android-assets: missing ${file} (skipped)`);
+        }
+    }
+
+    // Asset folders. sounds/ is required by io_getAudioData's 'sounds/<name>'
+    // fallback; svglibrary/pnglibrary are the MediaLib asset roots.
     const folders = [
         'dist',
         'assets',
@@ -62,6 +83,9 @@ function main() {
         'samples',
         'css',
         'inapp',
+        'sounds',
+        'svglibrary',
+        'pnglibrary',
     ];
 
     for (const folder of folders) {

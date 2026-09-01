@@ -34,22 +34,23 @@ const pageEntries = {
  * (e.g. from the lobby) has no side effects.
  */
 export function bootApp () {
-	if (!window.scratchjr) {
-		throw new Error('ScratchJr: preload bridge missing');
-	}
-	const ipc = window.scratchjr;
-
 	window.onload = () => loadPage(document.body.dataset.scratchjrPage || window.scratchJrPage || '').catch((err) => console.error('loadPage failed:', err)); // eslint-disable-line no-console
 
 	// Close handshake lives here (not in the editor chunk) so quitting from any
 	// page acks immediately; the editor chunk saves first via window.ScratchJr.
-	ipc.onAppClose(function () {
-		if (window.ScratchJr && window.ScratchJr.saveProject) {
-			window.ScratchJr.saveProject(null, function () { ipc.sendAppClosedAcked(); });
-		} else {
-			ipc.sendAppClosedAcked();
-		}
-	});
+	// Electron preload sets window.scratchjr before any page script runs, so the
+	// handshake is skipped only on other hosts (e.g. Android WebView, where
+	// the host saves via onPause instead).
+	if (window.scratchjr) {
+		const ipc = window.scratchjr;
+		ipc.onAppClose(function () {
+			if (window.ScratchJr && window.ScratchJr.saveProject) {
+				window.ScratchJr.saveProject(null, function () { ipc.sendAppClosedAcked(); });
+			} else {
+				ipc.sendAppClosedAcked();
+			}
+		});
+	}
 }
 
 
