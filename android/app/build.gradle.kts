@@ -1,18 +1,19 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "org.scratchjr.android"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "org.scratchjr.android"
         minSdk = 24
-        targetSdk = 34
-        versionCode = 180
-        versionName = "1.8.0"
+        targetSdk = 36
+        // Experimental Android line: 1.9.0 ships as 10900 (desktop stays 1.8.0
+        // until the branches merge; see docs/ANDROID-PORT-PLAN.md).
+        versionCode = 10900
+        versionName = "1.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,8 +37,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    // AGP 9 built-in Kotlin: compiler options via the kotlin extension
+    // (kotlinOptions was removed in AGP 9).
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
 
     buildFeatures {
