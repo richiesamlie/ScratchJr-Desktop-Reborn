@@ -136,6 +136,15 @@ class MainActivity : AppCompatActivity() {
                 return assetLoader.shouldInterceptRequest(request.url)
             }
 
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                // Retry a pending .sjr import once the new page (possibly the
+                // lobby after splash) is up and its bridge is bound.
+                if (pendingSjrBase64 != null) {
+                    tryFlushSjrImport()
+                }
+            }
+
             override fun onReceivedError(
                 view: WebView?,
                 request: WebResourceRequest?,
@@ -215,6 +224,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Pending .sjr payload from a VIEW intent, flushed to the renderer once
+     * the lobby page and its bridge are ready. Survives page navigation
+     * (retried from onPageFinished) because the WebView JS context dies on
+     * every navigation; cleared after successful handoff.
+     */
+    private var pendingSjrBase64: String? = null
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -227,17 +244,46 @@ class MainActivity : AppCompatActivity() {
             try {
                 val inputStream: InputStream? = contentResolver.openInputStream(data)
                 val bytes = inputStream?.readBytes() ?: return
-                val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-                
-                // Inject incoming .sjr project into webview lobby
-                webView.post {
-                    webView.evaluateJavascript(
-                        "if (window.ScratchJr && window.ScratchJr.importSjrBase64) { window.ScratchJr.importSjrBase64('$base64'); }",
-                        null
-                    )
-                }
+                pendingSjrBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                tryFlushSjrImport()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to import .sjr from intent", e)
+            }
+        }
+    }
+
+    /**
+     * Push the queued .sjr into the renderer. The import only runs once the
+     * user reaches the lobby (PlatformBridge bound, IO.loadProjectFromSjr
+     * reachable); until then the snippet returns false and Kotlin keeps the
+     * payload for the next onPageFinished retry.
+     */
+    private fun tryFlushSjrImport() {
+        val payload = pendingSjrBase64 ?: return
+        // Base64 alphabet [A-Za-z0-9+/=] is JS-string safe; no escaping needed.
+        val js = """
+            (function() {
+                try {
+                    var page = document.body ? document.body.getAttribute('data-scratchjr-page') : null;
+                    if (page !== 'home') { return false; }
+                    if (!window.PlatformBridge || !window.PlatformBridge.loadProjectFromSjr) { return false; }
+                    window.PlatformBridge.loadProjectFromSjr('$payload');
+                    // loadProjectFromSjr is async; reload the lobby shortly so
+                    // the new project thumbnail shows (onPageFinished retries
+                    // are no-ops once Kotlin clears the payload).
+                    setTimeout(function() { window.location.reload(); }, 3000);
+                    return true;
+                } catch (e) {
+                    console.error('sjr import failed:', e);
+                    return false;
+                }
+            })()
+        """.trimIndent()
+        webView.post {
+            webView.evaluateJavascript(js) { result ->
+                if ("true" == result.trim()) {
+                    pendingSjrBase64 = null
+                }
             }
         }
     }
