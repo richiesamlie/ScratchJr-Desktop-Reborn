@@ -265,6 +265,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        // Mobile lifecycle: never rely on app termination to save. The
+        // renderer's 30s autosave is the primary mechanism; this immediate
+        // save on backgrounding is the belt-and-braces path (desktop parity:
+        // the close handshake in appEntry.js bootApp).
+        if (webView.url?.contains("editor.html") == true) {
+            webView.evaluateJavascript(
+                "if (window.ScratchJr && window.ScratchJr.saveProject) { try { window.ScratchJr.saveProject(null, function() {}); } catch (e) {} }",
+                null
+            )
+        }
+        // Stop any live camera feed / recording so we don't hold the
+        // microphone or camera in the background (P6 audio/camera lifecycle).
+        webView.evaluateJavascript(
+            "try { if (window.__androidHost) { window.__androidHost.scratchjr_stopfeed(); } } catch (e) {}",
+            null
+        )
         webView.onPause()
         webView.pauseTimers()
     }
