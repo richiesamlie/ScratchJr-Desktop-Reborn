@@ -1,6 +1,7 @@
 package org.scratchjr.android.bridge
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Base64
 import android.util.Log
@@ -41,9 +42,19 @@ class AndroidBridge(
 
     @JavascriptInterface
     fun io_getsettings(): String {
+        // CSV contract consumed by entry/home.ts + entry/editor.ts doNext:
+        //   mediaPath,isTablet,isDebug,isAnalytics
+        // isTablet '0' makes PlatformBridge.path = mediaPath + '/' — but that is a
+        // device filesystem path, useless as a URL inside the WebView origin, so
+        // every PlatformBridge.path consumer would 404 (audit finding: user PNGs
+        // broke in the first port). Desktop sends 'false' (path stays undefined and
+        // media flows through the base64 getmedia path); Android matches that.
+        // Fields 2/3 gate Record/Camera UI availability; PackageManager knows
+        // whether the hardware exists.
         val mediaPath = db.mediaDirectory.absolutePath
-        // Returns "mediaPath,isTablet,isDebug,isAnalytics" -> 0 for isTablet so PlatformBridge.path = mediaPath/
-        return "$mediaPath,0,YES,YES"
+        val hasCamera = activity.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+        val hasMic = activity.packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)
+        return "$mediaPath,false,${if (hasMic) "YES" else "NO"},${if (hasCamera) "YES" else "NO"}"
     }
 
     @JavascriptInterface
@@ -142,7 +153,30 @@ class AndroidBridge(
 
     @JavascriptInterface
     fun io_getAudioData(name: String): String? {
-        return db.readProjectFile(name)
+        // Desktop contract (ipc-handlers.ts io_getAudioData): resolve from the
+        // app's bundled sounds/ first, fall back to user media; return a
+        // data: URI that loadSoundFromDataURI can feed to an Audio element.
+        // Bundled sounds live in assets/www/sounds/.
+        val mime = when {
+            name.endsWith(".mp3", ignoreCase = true) -> "audio/mp3"
+            name.endsWith(".wav", ignoreCase = true) -> "audio/wav"
+            name.endsWith(".webm", ignoreCase = true) -> "audio/webm"
+            name.endsWith(".ogg", ignoreCase = true) -> "audio/ogg"
+            else -> return null
+        }
+        val bundled = try {
+            activity.assets.open("www/sounds/$name").use { it.readBytes() }
+        } catch (e: Exception) {
+            null
+        }
+        val bytes = bundled ?: try {
+            val b64 = db.readProjectFile(name) ?: return null
+            Base64.decode(b64, Base64.DEFAULT)
+        } catch (e: Exception) {
+            Log.e(TAG, "io_getAudioData error for $name", e)
+            null
+        } ?: return null
+        return "data:$mime;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
     }
 
     // ----------------------------------------------------

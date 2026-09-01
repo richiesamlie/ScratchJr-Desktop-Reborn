@@ -11,6 +11,8 @@ import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class AndroidDatabaseManager(private val context: Context) {
 
@@ -59,6 +61,18 @@ class AndroidDatabaseManager(private val context: Context) {
     }
 
     /**
+     * Resolves a media name to a File inside mediaDirectory, rejecting names
+     * that attempt path traversal (parity with desktop mediaFilePath,
+     * src/main/database.ts: basename must equal the requested name).
+     */
+    private fun mediaFilePath(name: String): File? {
+        if (name.isEmpty()) return null
+        val base = File(name).name
+        if (base != name || base == "." || base == ".." || base.isEmpty()) return null
+        return File(mediaDirectory, base)
+    }
+
+    /**
      * Executes structured database statement intent (insert, update, delete)
      * Returns JSON string with result (e.g. affected rows or new row id)
      */
@@ -86,53 +100,32 @@ class AndroidDatabaseManager(private val context: Context) {
             when (op) {
                 "insert" -> {
                     val row = json.getJSONObject("row")
-                    val values = ContentValues()
-                    val keys = row.keys()
-                    while (keys.hasNext()) {
-                        val key = keys.next()
-                        val value = row.opt(key)
-                        if (value == null || value == JSONObject.NULL) {
-                            values.putNull(key.uppercase())
-                        } else when (value) {
-                            is Number -> values.put(key.uppercase(), value.toDouble())
-                            is Boolean -> values.put(key.uppercase(), if (value) 1 else 0)
-                            else -> values.put(key.uppercase(), value.toString())
-                        }
-                    }
+                    val values = contentValuesFrom(row)
                     val id = db.insertWithOnConflict(table, null, values, SQLiteDatabase.CONFLICT_REPLACE)
                     id.toString()
                 }
                 "update" -> {
                     val row = json.getJSONObject("row")
                     val id = json.opt("id")
-                    val values = ContentValues()
-                    val keys = row.keys()
-                    while (keys.hasNext()) {
-                        val key = keys.next()
-                        val value = row.opt(key)
-                        if (value == null || value == JSONObject.NULL) {
-                            values.putNull(key.uppercase())
-                        } else when (value) {
-                            is Number -> values.put(key.uppercase(), value.toDouble())
-                            is Boolean -> values.put(key.uppercase(), if (value) 1 else 0)
-                            else -> values.put(key.uppercase(), value.toString())
-                        }
-                    }
-                    val affected = if (id != null && id != JSONObject.NULL) {
-                        db.update(table, values, "ID = ?", arrayOf(id.toString()))
+                    val values = contentValuesFrom(row)
+                    // The renderer always sends ids (verified: IO.ts + PlatformBridge
+                    // setfield); log-and-noop on an id-less update rather than
+                    // silently rewriting every row.
+                    if (id == null || id == JSONObject.NULL) {
+                        Log.w(TAG, "executeStmt: update without id rejected")
+                        "-1"
                     } else {
-                        db.update(table, values, null, null)
+                        db.update(table, values, "ID = ?", arrayOf(id.toString())).toString()
                     }
-                    affected.toString()
                 }
                 "delete" -> {
                     val id = json.opt("id")
-                    val affected = if (id != null && id != JSONObject.NULL) {
-                        db.delete(table, "ID = ?", arrayOf(id.toString()))
+                    if (id == null || id == JSONObject.NULL) {
+                        Log.w(TAG, "executeStmt: delete without id rejected")
+                        "-1"
                     } else {
-                        db.delete(table, null, null)
+                        db.delete(table, "ID = ?", arrayOf(id.toString())).toString()
                     }
-                    affected.toString()
                 }
                 else -> "-1"
             }
@@ -140,6 +133,23 @@ class AndroidDatabaseManager(private val context: Context) {
             Log.e(TAG, "executeStmt error with JSON: $jsonStr", e)
             "-1"
         }
+    }
+
+    private fun contentValuesFrom(row: JSONObject): ContentValues {
+        val values = ContentValues()
+        val keys = row.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val value = row.opt(key)
+            if (value == null || value == JSONObject.NULL) {
+                values.putNull(key.uppercase())
+            } else when (value) {
+                is Number -> values.put(key.uppercase(), value.toDouble())
+                is Boolean -> values.put(key.uppercase(), if (value) 1 else 0)
+                else -> values.put(key.uppercase(), value.toString())
+            }
+        }
+        return values
     }
 
     /**
@@ -243,12 +253,15 @@ class AndroidDatabaseManager(private val context: Context) {
     }
 
     /**
-     * Save base64 encoded project file to media folder with atomic .tmp rename
+     * Save base64 encoded project file to media folder.
+     * Atomic, crash-safe write: tmp file -> fsync -> rotate previous good copy
+     * to .bak -> Files.move(REPLACE_EXISTING) into place (no delete-first
+     * window; parity with desktop database.ts persistence model).
      */
     fun saveProjectFile(name: String, base64Content: String): Boolean {
         return try {
-            val targetFile = File(mediaDirectory, name)
-            val tmpFile = File(mediaDirectory, "$name.tmp")
+            val targetFile = mediaFilePath(name) ?: return false
+            val tmpFile = File(mediaDirectory, "${targetFile.name}.tmp")
 
             val bytes = Base64.decode(base64Content, Base64.DEFAULT)
             FileOutputStream(tmpFile).use { fos ->
@@ -257,10 +270,25 @@ class AndroidDatabaseManager(private val context: Context) {
                 fos.fd.sync()
             }
 
+            val bakFile = File(mediaDirectory, "${targetFile.name}.bak")
             if (targetFile.exists()) {
-                targetFile.delete()
+                // Retain the last known good copy
+                try {
+                    Files.move(
+                        targetFile.toPath(),
+                        bakFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING
+                    )
+                } catch (e: Exception) {
+                    Log.w(TAG, "saveProjectFile: bak rotation failed for ${targetFile.name}", e)
+                }
             }
-            tmpFile.renameTo(targetFile)
+
+            Files.move(
+                tmpFile.toPath(),
+                targetFile.toPath(),
+                StandardCopyOption.REPLACE_EXISTING
+            )
             true
         } catch (e: Exception) {
             Log.e(TAG, "saveProjectFile failed for $name", e)
@@ -272,7 +300,7 @@ class AndroidDatabaseManager(private val context: Context) {
      * Read project file as base64 string
      */
     fun readProjectFile(name: String): String? {
-        val file = File(mediaDirectory, name)
+        val file = mediaFilePath(name) ?: return null
         if (file.exists()) {
             return try {
                 val bytes = file.readBytes()
@@ -309,8 +337,8 @@ class AndroidDatabaseManager(private val context: Context) {
      */
     fun removeProjectFile(name: String): Boolean {
         var removed = false
-        val file = File(mediaDirectory, name)
-        if (file.exists()) {
+        val file = mediaFilePath(name)
+        if (file != null && file.exists()) {
             removed = file.delete()
         }
         try {
@@ -323,12 +351,17 @@ class AndroidDatabaseManager(private val context: Context) {
     }
 
     /**
-     * Clean unused project files of given extension (e.g. 'png', 'svg', 'webm')
-     * Retains active project JSON references, ALTMD5, and PROJECT THUMBNAILS.
+     * Clean unused project files of given extension (e.g. 'png', 'svg', 'webm').
+     * Media-in-use rules mirror desktop mediaInUse (database.ts:298-327):
+     * PROJECTS json/thumbnail LIKE, USERSHAPES/USERBKGS md5/altmd5 equality.
      */
     fun cleanProjectFiles(fileType: String): Boolean {
-        try {
-            val extension = if (fileType.startsWith(".")) fileType else ".$fileType"
+        return try {
+            var type = fileType
+            if (type == "wav") {
+                type = "webm"
+            }
+            val extension = if (type.startsWith(".")) type else ".$type"
             val files = mediaDirectory.listFiles { f -> f.name.endsWith(extension) } ?: return true
 
             for (file in files) {
@@ -338,39 +371,37 @@ class AndroidDatabaseManager(private val context: Context) {
                     Log.d(TAG, "cleanProjectFiles: deleted unused file $filename")
                 }
             }
-            return true
+            true
         } catch (e: Exception) {
             Log.e(TAG, "cleanProjectFiles error", e)
-            return false
+            false
         }
     }
 
     /**
-     * Check if a media file is in use across PROJECTS, USERSHAPES, or USERBKGS
+     * Check if a media file is in use (desktop parity: LIKE on PROJECTS
+     * json/thumbnail; exact match on USERSHAPES/USERBKGS md5/altmd5)
      */
     private fun isMediaInUse(filename: String): Boolean {
         val pattern = "%$filename%"
 
-        // 1. Check PROJECTS (both JSON payload and THUMBNAIL column)
         db.rawQuery(
-            "SELECT 1 FROM PROJECTS WHERE (JSON LIKE ? OR THUMBNAIL LIKE ? OR ALTMD5 LIKE ?) LIMIT 1",
-            arrayOf(pattern, pattern, pattern)
-        ).use { cursor ->
-            if (cursor.moveToFirst()) return true
-        }
-
-        // 2. Check USERSHAPES
-        db.rawQuery(
-            "SELECT 1 FROM USERSHAPES WHERE (MD5 LIKE ? OR ALTMD5 LIKE ?) LIMIT 1",
+            "SELECT 1 FROM PROJECTS WHERE (JSON LIKE ? OR THUMBNAIL LIKE ?) LIMIT 1",
             arrayOf(pattern, pattern)
         ).use { cursor ->
             if (cursor.moveToFirst()) return true
         }
 
-        // 3. Check USERBKGS
         db.rawQuery(
-            "SELECT 1 FROM USERBKGS WHERE (MD5 LIKE ? OR ALTMD5 LIKE ?) LIMIT 1",
-            arrayOf(pattern, pattern)
+            "SELECT 1 FROM USERSHAPES WHERE (MD5 = ? OR ALTMD5 = ?) LIMIT 1",
+            arrayOf(filename, filename)
+        ).use { cursor ->
+            if (cursor.moveToFirst()) return true
+        }
+
+        db.rawQuery(
+            "SELECT 1 FROM USERBKGS WHERE (MD5 = ? OR ALTMD5 = ?) LIMIT 1",
+            arrayOf(filename, filename)
         ).use { cursor ->
             if (cursor.moveToFirst()) return true
         }

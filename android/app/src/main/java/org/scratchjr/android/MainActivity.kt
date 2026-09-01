@@ -85,19 +85,13 @@ class MainActivity : AppCompatActivity() {
                             null
                         )
                     }
-                    currentUrl.contains("paint.html") -> {
-                        webView.evaluateJavascript(
-                            "if (window.PaintUndo && window.PaintUndo.goBack) { window.PaintUndo.goBack(); } else { window.history.back(); }",
-                            null
-                        )
-                    }
                     currentUrl.contains("home.html") -> {
                         webView.evaluateJavascript(
                             "window.location.href = 'index.html?back=yes';",
                             null
                         )
                     }
-                    currentUrl.contains("gettingstarted.html") || currentUrl.contains("help.html") || currentUrl.contains("about.html") -> {
+                    currentUrl.contains("gettingstarted.html") -> {
                         webView.evaluateJavascript(
                             "window.location.href = 'home.html';",
                             null
