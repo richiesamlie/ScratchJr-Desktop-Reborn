@@ -36,7 +36,8 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
     }
 
-    private lateinit var webView: WebView
+    lateinit var webView: WebView
+        private set
     private lateinit var dbManager: AndroidDatabaseManager
     private lateinit var bridge: AndroidBridge
     private var fileChooserCallback: ValueCallback<Array<Uri>>? = null

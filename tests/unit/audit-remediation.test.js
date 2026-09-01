@@ -142,11 +142,11 @@ describe('Audit Remediation: Supply Chain and CI Action Pins', () => {
         expect(content).toContain('sha256sum');
     });
 
-    it('F-05 / P1-004: build-renderer targets chrome150 matching Chromium 150', () => {
+    it('F-05 / P1-004: build-renderer defaults to chrome150 (Chromium 150) with env override for Android', () => {
         const scriptPath = path.resolve(__dirname, '../../scripts/build-renderer.js');
         const content = fs.readFileSync(scriptPath, 'utf8');
 
-        expect(content).toContain("target: ['chrome150']");
+        expect(content).toContain("process.env.ESBUILD_TARGET || 'chrome150'");
     });
 
     it('F-02 / P0-002: build-msi sets stable upgradeCode and arch x64', () => {

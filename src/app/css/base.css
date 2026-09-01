@@ -17,7 +17,6 @@ html {
 body {
     width: 100%;
     height: 100%;
-    min-width: 1020px;
     overflow-y: hidden;
     overflow-x: hidden;
 }

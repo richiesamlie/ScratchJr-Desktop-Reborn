@@ -4,9 +4,20 @@ import PlatformBridge from '../platform/PlatformBridge';
 import Localization from '../utils/Localization';
 import AppUsage from '../utils/AppUsage';
 
+function bindTap (id: string, handler: (e: any) => void) {
+    const el = gn(id);
+    if (!el) return;
+    el.onmousedown = handler;
+    el.ontouchend = function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handler(e);
+    };
+}
+
 export function indexMain () { // eslint-disable-line import/prefer-default-export
-    gn('gettings')!.onmousedown = indexGettingstarted;
-    gn('startcode')!.onmousedown = indexGohome;
+    bindTap('gettings', indexGettingstarted);
+    bindTap('startcode', indexGohome);
     ScratchAudio.init();
     var urlvars = getUrlVars();
     if (urlvars.back) {
@@ -20,14 +31,14 @@ export function indexMain () { // eslint-disable-line import/prefer-default-expo
         gn('startButton')!.textContent = Localization.localize('PBS_START');
         gn('gettings')!.textContent = Localization.localize('PBS_HOW_TO');
 
-        gn('startButton')!.onmousedown = indexGohome;
-        gn('pbschars')!.onmousedown = indexGohome;
+        bindTap('startButton', indexGohome);
+        bindTap('pbschars', indexGohome);
 
-        gn('topbar-moreapps')!.onmousedown = indexMoreApps;
-        gn('topbar-settings')!.onmousedown = indexGoSettings;
-        gn('topbar-info')!.onmousedown = indexInfo;
+        bindTap('topbar-moreapps', indexMoreApps);
+        bindTap('topbar-settings', indexGoSettings);
+        bindTap('topbar-info', indexInfo);
     } else {
-        gn('gear')!.onmousedown = indexGoSettings;
+        bindTap('gear', indexGoSettings);
     }
 
     setTimeout(function () {
@@ -79,6 +90,7 @@ function indexLoadStart (afterUsage?: boolean) {
         gn('blueguy')!.className = 'blue hide';
         gn('redguy')!.className = 'red hide';
         gn('gear')!.className = 'gear show';
+        bindTap('gear', indexGoSettings);
         
         if (afterUsage) {
             gn('catface')!.className = 'catface show';
@@ -92,6 +104,8 @@ function indexLoadStart (afterUsage?: boolean) {
     }
     gn('gettings')!.className = 'gettings show';
     gn('startcode')!.className = 'startcode show';
+    bindTap('gettings', indexGettingstarted);
+    bindTap('startcode', indexGohome);
     document.onmousemove = function (e) {
         e.preventDefault();
     };
@@ -119,10 +133,10 @@ function indexLoadUsage() {
     gn('usageHome')!.className = 'usageHome show';
     gn('usageOther')!.className = 'usageOther show';
     gn('usageNoanswer')!.className = 'usageNoanswer show';
-    gn('usageSchool')!.onmousedown = indexSetUsage;
-    gn('usageHome')!.onmousedown = indexSetUsage;
-    gn('usageOther')!.onmousedown = indexSetUsage;
-    gn('usageNoanswer')!.onmousedown = indexSetUsage;
+    bindTap('usageSchool', indexSetUsage);
+    bindTap('usageHome', indexSetUsage);
+    bindTap('usageOther', indexSetUsage);
+    bindTap('usageNoanswer', indexSetUsage);
 
 }
 
