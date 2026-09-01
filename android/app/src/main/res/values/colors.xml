@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="scratchjr_primary">#48C0D4</color>
+    <color name="scratchjr_primary_dark">#2B8E9E</color>
+    <color name="scratchjr_accent">#FF9B00</color>
+    <color name="scratchjr_background">#3B8A99</color>
+</resources>
