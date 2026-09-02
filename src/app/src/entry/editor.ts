@@ -77,17 +77,30 @@ setEnginePorts({
 if (window.scratchjr) {
     window.scratchjr.onExportProjectRequest(() => {
         try {
-            const ref = ScratchJr.currentProject;
-            if (!ref) return;
-            void import('../platform/IO').then(({ default: IO }) => {
-                IO.zipProject(ref, (contents) => {
-                    let name = '';
-                    try {
-                        name = (document.forms as unknown as { projectname: { myproject: HTMLInputElement } })
-                            .projectname.myproject.value || '';
-                    } catch (_) { /* form not present */ }
-                    if (!name.trim()) name = 'project';
-                    void window.scratchjr!.sendExportedSjr(contents, name.trim() + '.sjr');
+            // Save first: an unsaved project has NULL json/thumbnail in the
+            // DB row, and zipProject reads that row — export would produce a
+            // .sjr with no content and no thumbnail. Force the save even when
+            // nothing changed, so a fresh project gets json+thumbnail written.
+            // (Skip for samples/story-starters: those rows already have data,
+            // and saving would overwrite the shared sample.)
+            if (!ScratchJr.isSampleOrStarter()) {
+                ScratchJr.changed = true;
+            }
+            ScratchJr.saveProject(null, function () {
+                // saveProject may create a new project (story-starter mode),
+                // so read currentProject from the callback, not before.
+                const ref = ScratchJr.currentProject;
+                if (!ref) return;
+                void import('../platform/IO').then(({ default: IO }) => {
+                    IO.zipProject(ref, (contents) => {
+                        let name = '';
+                        try {
+                            name = (document.forms as unknown as { projectname: { myproject: HTMLInputElement } })
+                                .projectname.myproject.value || '';
+                        } catch (_) { /* form not present */ }
+                        if (!name.trim()) name = 'project';
+                        void window.scratchjr!.sendExportedSjr(contents, name.trim() + '.sjr');
+                    });
                 });
             });
         } catch (err) {
