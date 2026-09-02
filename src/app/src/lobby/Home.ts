@@ -153,6 +153,21 @@ export default class Home {
                 Home.duplicateProject(md5);
             }
             break;
+        case 'export':
+            if (md5 && (md5 !== 'newproject')) {
+                ScratchAudio.sndFX('tap.wav');
+                import('../platform/IO').then(({ default: IO }) => {
+                    IO.zipProject(md5, (contents: string) => {
+                        var name = Home.actionTarget?.querySelector('.projecttitle h4')?.textContent || 'Project';
+                        if (window.scratchjr && window.scratchjr.sendExportedSjr) {
+                            window.scratchjr.sendExportedSjr(contents, name + '.sjr');
+                        } else if (PlatformBridge.sendSjrToShareDialog) {
+                            PlatformBridge.sendSjrToShareDialog(name + '.sjr', name, '', '0', contents);
+                        }
+                    });
+                });
+            }
+            break;
         case 'delete':
             ScratchAudio.sndFX('cut.wav');
             // Lazy: the editor chunk (Project/Alert) loads only when deleting.
@@ -238,9 +253,13 @@ export default class Home {
             return;
         }
         var closex = targetEl.querySelector('.closex') as HTMLElement | null;
+        var exportbtn = targetEl.querySelector('.exportbtn') as HTMLElement | null;
         var dup = targetEl.querySelector('.duplicatebtn') as HTMLElement | null;
         if (closex) {
             closex.style.visibility = 'visible';
+        }
+        if (exportbtn) {
+            exportbtn.style.visibility = 'visible';
         }
         if (dup) {
             dup.style.visibility = 'visible';
@@ -252,9 +271,13 @@ export default class Home {
             return;
         }
         var closex = targetEl.querySelector('.closex') as HTMLElement | null;
+        var exportbtn = targetEl.querySelector('.exportbtn') as HTMLElement | null;
         var dup = targetEl.querySelector('.duplicatebtn') as HTMLElement | null;
         if (closex) {
             closex.style.visibility = 'hidden';
+        }
+        if (exportbtn) {
+            exportbtn.style.visibility = 'hidden';
         }
         if (dup) {
             dup.style.visibility = 'hidden';
@@ -328,8 +351,9 @@ export default class Home {
         }
         var shown = false;
         var closex = Home.actionTarget.querySelector ? (Home.actionTarget.querySelector('.closex') as HTMLElement | null) : null;
+        var exportbtn = Home.actionTarget.querySelector ? (Home.actionTarget.querySelector('.exportbtn') as HTMLElement | null) : null;
         var dup = Home.actionTarget.querySelector ? (Home.actionTarget.querySelector('.duplicatebtn') as HTMLElement | null) : null;
-        if ((closex && closex.style.visibility === 'visible') || (dup && dup.style.visibility === 'visible')) {
+        if ((closex && closex.style.visibility === 'visible') || (exportbtn && exportbtn.style.visibility === 'visible') || (dup && dup.style.visibility === 'visible')) {
             shown = true;
         }
         if (e && shown && e.target) {
@@ -337,6 +361,9 @@ export default class Home {
             var cls = t.getAttribute ? (t.getAttribute('class') || '') : '';
             if (cls.indexOf('closex') > -1) {
                 return 'delete';
+            }
+            if (cls.indexOf('exportbtn') > -1) {
+                return 'export';
             }
             if (cls.indexOf('duplicatebtn') > -1) {
                 return 'duplicate';
@@ -374,24 +401,25 @@ export default class Home {
 
     static importSjrFile (file: File) {
         ScratchAudio.sndFX('tap.wav');
-        file.arrayBuffer().then(function (buf) {
-            var bytes = new Uint8Array(buf);
-            var binary = '';
-            var CHUNK = 0x8000;
-            for (var i = 0; i < bytes.length; i += CHUNK) {
-                binary += String.fromCharCode.apply(null, [
-                    bytes.subarray(i, i + CHUNK)
-                ] as unknown as number[]);
-            }
-            return IO.loadProjectFromSjr(btoa(binary));
-        }).catch(function (err) {
-            console.error('importSjrFile failed:', err);
-            var frame = gn('frame');
-            var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? (err as Error).message : '');
-            if (frame) {
-                Alert.open(frame, frame, errorMessage, '#ff0000');
-            }
-        });
+        var reader = new FileReader();
+        reader.onload = function () {
+            var res = (reader.result as string) || '';
+            var b64 = res.indexOf(',') > -1 ? res.split(',')[1] : res;
+            IO.loadProjectFromSjr(b64).then(function () {
+                window.location.reload();
+            }).catch(function (err: Error) {
+                console.error('importSjrFile failed:', err);
+                var frame = gn('frame');
+                var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? err.message : '');
+                if (frame) {
+                    Alert.open(frame, frame, errorMessage, '#ff0000');
+                }
+            });
+        };
+        reader.onerror = function (err) {
+            console.error('FileReader error:', err);
+        };
+        reader.readAsDataURL(file);
     }
 
     static displayYourProjects () {
@@ -462,6 +490,7 @@ export default class Home {
         }
 
         newHTML('div', 'closex', tb);
+        newHTML('div', 'exportbtn', tb);
         newHTML('div', 'duplicatebtn', tb);
 
         tb.oncontextmenu = function (evt: MouseEvent) {

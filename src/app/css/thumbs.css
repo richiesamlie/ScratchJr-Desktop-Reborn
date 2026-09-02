@@ -177,6 +177,23 @@
     transform: scale(0.92);
 }
 
+.exportbtn {
+    position: absolute;
+    top: ${css_vh(-1.5)};
+    left: ${css_vh(11.5)};
+    z-index: 5;
+    visibility: hidden;
+    width: ${css_vh(5.86)};
+    height: ${css_vh(5.73)};
+    background: url('../assets/ui/exportit.svg') no-repeat center center;
+    background-size: 101%;
+    cursor: pointer;
+}
+
+.exportbtn:active {
+    transform: scale(0.92);
+}
+
 .share {
     position: relative;
     top: ${css_vh(-22.14)};

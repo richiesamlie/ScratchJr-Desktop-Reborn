@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="45px" height="44px" viewBox="0 0 45 44" enable-background="new 0 0 45 44" xml:space="preserve">
+<linearGradient id="SVGID_EXP_1" gradientUnits="userSpaceOnUse" x1="22.5" y1="44.4" x2="22.5" y2="-0.5">
+	<stop offset="0" style="stop-color:#FFFFFF"/>
+	<stop offset="1" style="stop-color:#FFFFFF;stop-opacity:0"/>
+</linearGradient>
+<path fill="url(#SVGID_EXP_1)" d="M22.5,44.083C10.323,44.083,0.417,34.176,0.417,22S10.323-0.083,22.5-0.083S44.583,9.823,44.583,22 S34.677,44.083,22.5,44.083z"/>
+<path fill="#1B7E3E" d="M22.5,43.083C10.875,43.083,1.417,33.625,1.417,22c0-11.625,9.458-21.083,21.083-21.083 S43.583,10.375,43.583,22C43.583,33.625,34.125,43.083,22.5,43.083z"/>
+<linearGradient id="SVGID_EXP_2" gradientUnits="userSpaceOnUse" x1="22.5" y1="-0.01" x2="22.5" y2="47.1">
+	<stop offset="0" style="stop-color:#48CC7E"/>
+	<stop offset="1" style="stop-color:#289855"/>
+</linearGradient>
+<path fill="url(#SVGID_EXP_2)" d="M22.5,41.083C11.978,41.083,3.417,32.522,3.417,22S11.978,2.917,22.5,2.917S41.583,11.477,41.583,22 S33.022,41.083,22.5,41.083z"/>
+<!-- Export tray & arrow -->
+<path d="M14,24 L14,31 C14,32.1 14.9,33 16,33 L29,33 C30.1,33 31,32.1 31,31 L31,24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="22.5" y1="12" x2="22.5" y2="26" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+<polyline points="17.5,17 22.5,12 27.5,17" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
