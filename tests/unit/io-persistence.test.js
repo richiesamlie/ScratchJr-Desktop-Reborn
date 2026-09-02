@@ -79,3 +79,31 @@ describe('IO.uniqueProjectName (save round-trip naming)', () => {
         expect(project.name).toBe('My project 3');
     });
 });
+
+describe('IO.createProject (lobby visibility defaults)', () => {
+    beforeEach(() => {
+        PlatformBridge.stmt.mockReset();
+        PlatformBridge.stmt.mockImplementation((json, fcn) => fcn && fcn(1));
+    });
+
+    it('writes ctime so the lobby ctime DESC ordering works', async () => {
+        await new Promise((resolve) => IO.createProject({ name: 'Imported' }, resolve));
+        const intent = PlatformBridge.stmt.mock.calls[0][0];
+        expect(intent.op).toBe('insert');
+        expect(intent.row.ctime).toMatch(/^\d{13}$/); // ms epoch
+        expect(intent.row.mtime).toMatch(/^\d{13}$/);
+    });
+
+    it('defaults isgift to 0 and respects an explicit isgift', async () => {
+        await new Promise((resolve) => IO.createProject({ name: 'A' }, resolve));
+        await new Promise((resolve) => IO.createProject({ name: 'B', isgift: '1' }, resolve));
+        expect(PlatformBridge.stmt.mock.calls[0][0].row.isgift).toBe('0');
+        expect(PlatformBridge.stmt.mock.calls[1][0].row.isgift).toBe('1');
+    });
+
+    it('keeps a thumbnail when provided', async () => {
+        const thumb = JSON.stringify({ pagecount: 1, md5: 'abc' });
+        await new Promise((resolve) => IO.createProject({ name: 'C', thumbnail: thumb }, resolve));
+        expect(PlatformBridge.stmt.mock.calls[0][0].row.thumbnail).toBe(thumb);
+    });
+});
