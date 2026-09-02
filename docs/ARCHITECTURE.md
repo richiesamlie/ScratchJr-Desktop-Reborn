@@ -1,10 +1,12 @@
 # Architecture — ScratchJr Desktop Reborn
 
-Verified from source at `e20a97a` (v1.7.5). Companion documents:
-`DEEP-ENGINEERING-AUDIT.md` (findings/roadmap), `THREAT-MODEL.md`
+Verified from source (v1.9.0-android). Companion documents:
+`ANDROID-PORT-PLAN.md` (Android specs & audit), `THREAT-MODEL.md`
 (boundaries), `engine.md` (editor internals), `development.md` (build).
 
 ## Process topology
+
+### 1. Desktop Host (Electron 43 / Node 24)
 
 ```text
 ┌───────────────────────────── Main (Node 24, Electron 43) ─────────────────────┐
@@ -22,7 +24,9 @@ Verified from source at `e20a97a` (v1.7.5). Companion documents:
         │ sandbox:true, contextIsolation:true, nodeIntegration:false
 ┌──────────────────────────── Renderer (Chromium 150) ────────────────────────────┐
 │ 4 pages (index/home/editor/gettingstarted), CSP default-src 'self'               │
+│  ├─ hostClient.js         detects host: delegates to electronClient or webhost  │
 │  ├─ electronClient.js     legacy window.tablet adapter (loads outside bundle)   │
+│  ├─ webhost.js / webav.js shared bridge shim & camera/mic recording subsystem    │
 │  ├─ app.bundle.js         esbuild ESM bundle, code-split per page                │
 │  │   ├─ platform/         PlatformBridge, IO (zip .sjr, thumbnails), MediaLib   │
 │  │   ├─ editor/engine/    Runtime, Thread, Prims, Stage, Sprite, Page           │
@@ -35,6 +39,33 @@ Verified from source at `e20a97a` (v1.7.5). Companion documents:
 ┌────────────────────── ~/Documents/ScratchJR (per-user data) ───────────────────┐
 │ scratchjr.sqllite (+.bak rolling backup, .restore manual) — sql.js file DB      │
 │ media/ — file-backed assets, basename-confined writes                            │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 2. Android Host (Kotlin / Android 16 API 36)
+
+```text
+┌────────────────────── Native Shell (Android API 36, AGP 9.3) ───────────────────┐
+│ MainActivity.kt (activity lifecycle, intent dispatch, immersive UI)            │
+│  ├─ AndroidBridge.kt       @JavascriptInterface bridge (28 native methods)      │
+│  │    ├─ MediaCache.kt    bounded 50-entry synchronized LRU chunking cache      │
+│  │    ├─ WebChromeClient  camera/mic permission grants                          │
+│  │    └─ FileProvider     content:// URI sharing for .sjr exports               │
+│  └─ AndroidDatabaseManager SQLiteOpenHelper with WAL mode, atomic .bak rotation │
+└─────────────────────────────────────────────────────────────────────────────────┘
+        │ @JavascriptInterface injected as `AndroidInterface`
+        │ assets served securely via androidx.webkit.WebViewAssetLoader
+┌──────────────────────────── WebView (Chrome 107+) ──────────────────────────────┐
+│ 4 pages (assets/www/*.html), hostClient.js binds webhost.js                     │
+│  ├─ webhost.js            implements ScratchJrBridge forwarding to native bridge│
+│  ├─ webav.js              MediaRecorder Opus mic recording & canvas camera capture│
+│  └─ app.bundle.js         identical renderer bundle with responsive frame scale │
+└─────────────────────────────────────────────────────────────────────────────────┘
+        │
+┌──────────────── Context.filesDir / Context.cacheDir (app sandbox) ──────────────┐
+│ databases/scratchjr.db (+WAL journal) — native SQLite per-transaction durable   │
+│ files/media/ — file-backed assets (.bak rotation on writes)                     │
+│ cache/exports/ — temporary .sjr files for Intent.createChooser system share     │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 

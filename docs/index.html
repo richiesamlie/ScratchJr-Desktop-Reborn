@@ -72,7 +72,7 @@
 <body>
     <header class="hero">
         <h1>ScratchJr Reborn</h1>
-        <p>A modernized desktop port of ScratchJr for Windows, macOS, and Linux —
+        <p>A modernized port of ScratchJr for Windows, macOS, Linux, and Android —
         with more room to create, a hardened sandbox, and a fully strict,
         tested codebase.</p>
         <a class="btn" href="https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest">Download the latest release</a>
@@ -100,12 +100,13 @@
         <section>
             <h2>Why Reborn?</h2>
             <ul class="features">
+                <li><strong>Cross-Platform</strong> — Desktop (Windows, macOS, Linux) and Native Android (tablets and smartphones) with 100% project compatibility</li>
+                <li><strong>Responsive Mobile Layout</strong> — Dynamic scaling for sub-740px smartphone displays with pixel-accurate touch coordinates</li>
                 <li><strong>More room to create</strong> — 8 pages by default (configurable), a scrollable page strip, a bigger character sidebar, and + buttons that never disappear</li>
-                <li><strong>Scrolling that just works</strong> — native mouse-wheel scrolling with a scrollbar that matches your position</li>
-                <li><strong>Safe by design</strong> — sandboxed renderer, content security policy, SQL injection guards, a narrow preload bridge</li>
-                <li><strong>Modern stack</strong> — Electron 42, Node 22/26, an esbuild-bundled renderer, fully async IPC</li>
-                <li><strong>Trustworthy codebase</strong> — all 56 renderer files in strict TypeScript with zero errors and zero <code>any</code>, 98 tests including a jsdom harness for the project file format</li>
-                <li><strong>Reliable releases</strong> — all six platforms built natively with SHA256 checksums</li>
+                <li><strong>Safe & Durable by design</strong> — sandboxed desktop renderer, SQLite WAL with atomic backup moves on Android, and strict path containment</li>
+                <li><strong>Modern native audio & camera</strong> — HTML5 Canvas snapshot feed, WebM Opus audio recording, and native system share sheet integration</li>
+                <li><strong>Trustworthy codebase</strong> — all renderer files in strict TypeScript, 154 unit tests passing, automated E2E smoke tests, and CI hygiene guards</li>
+                <li><strong>Reliable releases</strong> — multi-platform desktop packages and Android APK/AAB with SHA256 checksums</li>
             </ul>
         </section>
 
@@ -120,6 +121,7 @@
                     <tr><td>ScratchJr-darwin-arm64.zip</td><td>macOS ARM64</td></tr>
                     <tr><td>ScratchJr-linux-x64.zip</td><td>Linux x64</td></tr>
                     <tr><td>ScratchJr-linux-arm64.zip</td><td>Linux ARM64</td></tr>
+                    <tr><td>ScratchJr-v1.9.0-android.apk</td><td>Android 8.0+ (ARM64/x86_64 APK)</td></tr>
                 </tbody>
             </table>
             <p class="note">Each release includes SHA256 checksums for integrity verification.</p>
@@ -129,9 +131,10 @@
             <h2>Documentation</h2>
             <ul class="features">
                 <li><a href="README.md">Project readme</a> — downloads, enhancements, building from source</li>
-                <li><a href="development.md">Development guide</a> — build pipeline, editor layout, testing, releasing</li>
+                <li><a href="development.md">Development guide</a> — build pipeline, desktop & Android build instructions, testing, releasing</li>
+                <li><a href="ANDROID-PORT-PLAN.md">Android Port Plan & Architecture</a> — native Kotlin shell, bridge specs, and audit log</li>
                 <li><a href="engine.md">Engine architecture</a> — how the editor runtime works</li>
-                <li><a href="ipc-inventory.md">IPC inventory</a> — the async channel map</li>
+                <li><a href="ARCHITECTURE.md">System Architecture</a> — desktop & Android process topology, data flows, and security model</li>
             </ul>
         </section>
     </main>
