@@ -18,9 +18,12 @@
 | `ScratchJr-android-release-unsigned.apk` | Android (Universal) | Production release package |
 | `ScratchJr-android-release.aab` | Android | Google Play App Bundle |
 
+> **Project Status (v1.9.0)**: With the completion and verification of the cross-platform native Android port alongside the hardened desktop editions, ScratchJr Reborn has reached full feature maturity and stability. This stands as the definitive, stable milestone before any new ideas emerge.
+
 ---
 
 ## Features & Improvements
+
 
 ### 🖼️ Custom Image Import (Characters & Backdrops)
 - **1-Click Import & Drag-and-Drop**: Import photos, drawings, and clipart directly into the Character Library and Backdrop Library modals via the new Import Media button or by dragging files onto the screen.
