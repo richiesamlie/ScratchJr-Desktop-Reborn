@@ -47,46 +47,57 @@ export default class Lobby {
             gn('settings')!.style.visibility = 'hidden';
         }
 
-        gn('hometab')!.onmousedown = function () {
+        function bindTab (id: string, action: () => void) {
+            const el = gn(id);
+            if (!el) return;
+            el.onmousedown = action;
+            el.ontouchend = function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                action();
+            };
+        }
+
+        bindTab('hometab', function () {
             if (gn('hometab')!.className != 'home on') {
                 Lobby.setPage('home');
             }
-        };
-        gn('helptab')!.onmousedown = function () {
+        });
+        bindTab('helptab', function () {
             if (gn('helptab')!.className != 'help on') {
                 Lobby.setPage('help');
             }
-        };
-        gn('booktab')!.onmousedown = function () {
+        });
+        bindTab('booktab', function () {
             if (gn('booktab')!.className != 'book on') {
                 Lobby.setPage('book');
             }
-        };
-        gn('geartab')!.onmousedown = function () {
+        });
+        bindTab('geartab', function () {
             if (gn('geartab')!.className != 'gear on') {
                 Lobby.setPage('gear');
             }
-        };
-        gn('abouttab')!.onmousedown = function () {
+        });
+        bindTab('abouttab', function () {
             if (gn('abouttab')!.className != 'tab on') {
                 Lobby.setSubMenu('about');
             }
-        };
-        gn('interfacetab')!.onmousedown = function () {
+        });
+        bindTab('interfacetab', function () {
             if (gn('interfacetab')!.className != 'tab on') {
                 Lobby.setSubMenu('interface');
             }
-        };
-        gn('painttab')!.onmousedown = function () {
+        });
+        bindTab('painttab', function () {
             if (gn('painttab')!.className != 'tab on') {
                 Lobby.setSubMenu('paint');
             }
-        };
-        gn('blockstab')!.onmousedown = function () {
+        });
+        bindTab('blockstab', function () {
             if (gn('blockstab')!.className != 'tab2 on') {
                 Lobby.setSubMenu('blocks');
             }
-        };
+        });
     }
 
     static setPage (page: string) {

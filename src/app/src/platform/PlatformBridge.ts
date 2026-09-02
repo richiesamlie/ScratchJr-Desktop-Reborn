@@ -43,12 +43,24 @@ export default class PlatformBridge {
             return;
         }
 
-        // Android device fallback (if running in mobile WebView)
+        // Android device fallback (if running in mobile WebView). webhost.js
+        // provides the full ScratchJrBridge surface: native forwards for
+        // storage/DB/settings plus JS camera/record via web APIs. It loads
+        // right after this bundle (classic script chain in <head>), so poll
+        // briefly for it before falling back to the raw Java interface.
         if (typeof AndroidInterface !== 'undefined') {
-            hostInterface = AndroidInterface as unknown as ScratchJrBridge;
-            if (fcn) {
-                fcn();
-            }
+            const tryBind = (attempt: number) => {
+                const jsHost = (window as unknown as { __androidHost?: ScratchJrBridge }).__androidHost;
+                if (jsHost || attempt > 20) {
+                    hostInterface = jsHost ?? (AndroidInterface as unknown as ScratchJrBridge);
+                    if (fcn) {
+                        fcn();
+                    }
+                    return;
+                }
+                setTimeout(() => tryBind(attempt + 1), 50);
+            };
+            tryBind(0);
             return;
         }
 

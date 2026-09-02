@@ -23,7 +23,9 @@ const options = {
     bundle: true,
     format: 'esm',
     platform: 'browser',
-    target: ['chrome150'],  // Electron 43.4.1 ships Chromium 150
+    // Desktop (Electron 43.4.1) ships Chromium 150; Android builds pass
+    // ESBUILD_TARGET=chromeNN to target the oldest System WebView supported.
+    target: [process.env.ESBUILD_TARGET || 'chrome150'],
     sourcemap: true,
     minify: false,  // keep readable for debugging
     logLevel: 'info',

@@ -3,6 +3,30 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v1.9.0-android] - 2026-09-02 (Branch `mobile/android`)
+
+**Native Kotlin Android port, hardware camera & microphone capture, transactional storage, touch navigation, and cross-platform `.sjr` import/export.**
+
+### Android Port Architecture & Features
+- **Native Android Shell (Option A)**:
+  - High-performance Kotlin shell utilizing `WebViewAssetLoader` with domain `https://appassets.androidplatform.net`, `@JavascriptInterface` bridge (`AndroidBridge`), and native SQLite with Write-Ahead Logging (WAL).
+  - Target Android 16 (API 36, mandatory Play target SDK) with `minSdk 24` (Android 7.0+).
+  - Strict CI hygiene guard preventing generated build artifacts from being committed under `android/app/src/main/assets/`.
+- **Shared AV & Hardware Capture**:
+  - Unified web AV layer (`src/webav.js` and `src/webhost.js`) supporting microphone voice recording via MediaRecorder (Opus `.webm` / `.wav` data URIs) and paint-editor photo capture via `getUserMedia` and HTML5 canvas.
+  - Native runtime permissions handling for `CAMERA` and `RECORD_AUDIO` with graceful degradation when denied.
+- **Data Integrity & Storage Parity**:
+  - Full desktop SQLite intent protocol compatibility without sending raw SQL across bridge.
+  - Transactional project storage and `.bak` media rotation via atomic `Files.move(REPLACE_EXISTING)`.
+  - Process-death resilience (`onPause` immediate project flush) and lifecycle cleanup.
+- **Touch & Responsive Navigation**:
+  - Full touch input compatibility with `bindTap` shims preventing touch-delay and event blocking.
+  - Fullscreen immersive mode (`shortEdges` cutout handling, hidden system bars).
+  - Native back-button dispatch handling in `MainActivity`.
+- **Interoperability (.sjr Import & Export)**:
+  - System file intent handler (`android.intent.action.VIEW`) supporting `application/x-scratchjr-project` content URIs with transactional import into SQLite database.
+  - Native Android Share Sheet (`Intent.createChooser`) integration for project `.sjr` sharing and stage PNG export via `FileProvider`.
+
 ## [v1.8.0] - 2026-08-31
 
 **Deep engineering audit remediations, WebRTC hardware permissions, hybrid Smartboard/pointer input resilience, and production MSI release pipeline.**

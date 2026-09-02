@@ -33,6 +33,8 @@ export default class Home {
         div.setAttribute('id', 'scrollarea');
         frame.onmousedown = Home.handleTouchStart;
         frame.onmouseup = Home.handleTouchEnd;
+        frame.ontouchstart = Home.handleTouchStart as unknown as (this: GlobalEventHandlers, ev: TouchEvent) => any;
+        frame.ontouchend = Home.handleTouchEnd as unknown as (this: GlobalEventHandlers, ev: TouchEvent) => any;
         Home.installSjrDrop();
         Home.displayYourProjects();
     }
@@ -66,6 +68,7 @@ export default class Home {
         }
         function holdit () {
             frame.onmousemove = Home.handleMove;
+            frame.ontouchmove = Home.handleMove as unknown as (this: GlobalEventHandlers, ev: TouchEvent) => any;
             var repeat = function () {
                 if (Home.actionTarget) {
                     Home.showProjectControls(Home.actionTarget);
@@ -113,6 +116,7 @@ export default class Home {
             return;
         }
         frame.onmousemove = null;
+        frame.ontouchmove = null;
         if (timeoutEvent) {
             clearTimeout(timeoutEvent);
         }

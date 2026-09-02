@@ -2,7 +2,7 @@
 the caller should define the window event and call startDrag with the appropiate values
 */
 
-import {gn, scaleMultiplier, isTouch} from './lib';
+import {gn, scaleMultiplier, isTouch, currentUiScale} from './lib';
 
 // Drag elements are DOM nodes (block/thumb divs, canvases) carrying
 // drag-session expando state. While a drag is active they are treated as
@@ -280,24 +280,31 @@ export default class Events {
     */
 
     static getTargetPoint (e: MouseEvent | TouchEvent | PointerEvent) {
+        const scale = (typeof currentUiScale !== 'undefined' && currentUiScale > 0) ? currentUiScale : 1.0;
         const te = e as TouchEvent;
         if (te && te.touches && (te.touches.length > 0)) {
+            const rawX = te.touches[0].pageX !== undefined ? te.touches[0].pageX : te.touches[0].clientX;
+            const rawY = te.touches[0].pageY !== undefined ? te.touches[0].pageY : te.touches[0].clientY;
             return {
-                x: te.touches[0].pageX !== undefined ? te.touches[0].pageX : te.touches[0].clientX,
-                y: te.touches[0].pageY !== undefined ? te.touches[0].pageY : te.touches[0].clientY
+                x: rawX / scale,
+                y: rawY / scale
             };
         }
         if (te && te.changedTouches && (te.changedTouches.length > 0)) {
+            const rawX = te.changedTouches[0].pageX !== undefined ? te.changedTouches[0].pageX : te.changedTouches[0].clientX;
+            const rawY = te.changedTouches[0].pageY !== undefined ? te.changedTouches[0].pageY : te.changedTouches[0].clientY;
             return {
-                x: te.changedTouches[0].pageX !== undefined ? te.changedTouches[0].pageX : te.changedTouches[0].clientX,
-                y: te.changedTouches[0].pageY !== undefined ? te.changedTouches[0].pageY : te.changedTouches[0].clientY
+                x: rawX / scale,
+                y: rawY / scale
             };
         }
         const me = e as MouseEvent;
         if (me) {
+            const rawX = me.pageX !== undefined ? me.pageX : me.clientX;
+            const rawY = me.pageY !== undefined ? me.pageY : me.clientY;
             return {
-                x: me.pageX !== undefined ? me.pageX : me.clientX,
-                y: me.pageY !== undefined ? me.pageY : me.clientY
+                x: rawX / scale,
+                y: rawY / scale
             };
         }
         return { x: 0, y: 0 };

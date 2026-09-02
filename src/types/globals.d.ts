@@ -20,11 +20,17 @@ interface AndroidInterfaceStatic {
     scratchjr_setcamerafeed(url: string, callback?: unknown): void;
     scratchjr_stopcamerafeed(): void;
     scratchjr_getcamera(callback?: unknown): void;
-    // filled in as more call sites are typed
+    // Filled in as more call sites are typed
     [key: string]: unknown;
 }
 
 declare const AndroidInterface: AndroidInterfaceStatic;
+
+// webhost.js registers its JS host-method surface here; PlatformBridge's
+// waitForInterface Proxy prefers these over the native interface.
+interface Window {
+    __androidHost?: Record<string, unknown>;
+}
 
 declare class WebKitCSSMatrix {
     m11: number; m12: number; m13: number; m14: number;

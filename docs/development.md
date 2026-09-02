@@ -118,6 +118,67 @@ git tag vX.Y.Z && git push origin vX.Y.Z  # CI builds all 6 targets + MSI + rele
   The release step updates the existing release in place.
 - Cancelling a bad release: `gh run cancel <run-id>` (repo-owner auth).
 
+## Building for Android
+
+ScratchJr Android uses a native Kotlin shell (`WebView` + `WebViewAssetLoader` + `@JavascriptInterface`).
+
+### Prerequisites
+- JDK 17
+- Android SDK (API 36 compile/target SDK, minSdk 24)
+- `ANDROID_HOME` pointing to your Android SDK directory
+
+### Build steps
+
+```bash
+# 1. Bundle web assets (esbuild target chrome107) and sync to Android asset staging
+npm run build:android
+
+# 2. Build Debug APK
+cd android
+./gradlew assembleDebug
+
+# Or build Release APK / Google Play App Bundle
+./gradlew assembleRelease bundleRelease
+```
+
+Generated packages:
+- Debug APK: `android/app/build/outputs/apk/debug/app-debug.apk`
+- Release APK: `android/app/build/outputs/apk/release/app-release-unsigned.apk`
+- App Bundle: `android/app/build/outputs/bundle/release/app-release.aab`
+
+### Installing & Running on Device / Emulator
+
+```bash
+# Install debug APK
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
+# Grant hardware permissions
+adb shell pm grant org.scratchjr.android.debug android.permission.CAMERA
+adb shell pm grant org.scratchjr.android.debug android.permission.RECORD_AUDIO
+
+# Launch application
+adb shell am start -n org.scratchjr.android.debug/org.scratchjr.android.MainActivity
+```
+
+### Logging & Remote Debugging
+
+Filter logcat output by key component tags:
+```bash
+adb logcat -s ScratchJr-JS AndroidBridge AndroidDatabaseManager MainActivity
+```
+
+- `ScratchJr-JS` — Console messages and errors from the WebView renderer.
+- `AndroidBridge` — JavascriptInterface bridge calls, hardware availability, audio, and sharing.
+- `AndroidDatabaseManager` — SQLite intent queries, statements, and media file CRUD.
+- `MainActivity` — Activity lifecycle, intent routing (`.sjr` files), permissions, and fullscreen.
+
+To inspect the live WebView DOM and JS console:
+```bash
+$pid = (adb shell pidof org.scratchjr.android.debug).Trim()
+adb forward tcp:9222 "localabstract:webview_devtools_remote_$pid"
+# Open chrome://inspect in Chromium / Google Chrome
+```
+
 ## Known quirks & follow-ups
 
 - `src/types/globals.d.ts` expando declarations must stay mutually consistent
