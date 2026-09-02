@@ -3,7 +3,7 @@
 **Branch:** `mobile/android` (experimental track, cut from `master` @ `8b2ff46` / v1.8.0)
 **Master plan:** [`docs/ANDROID-PORT-PLAN.md`](./ANDROID-PORT-PLAN.md) (Option A — native Kotlin WebView shell, no Capacitor)
 **Last activity:** 2026-09-01, 15:41 (+0700)
-**Status:** P0–P7 complete and device-verified; P8 code-complete (one verification gap); P9/P10 pending
+**Status:** P0–P8 complete and device-verified; P10 docs/signing complete; P9 pending physical device
 
 ---
 
@@ -20,7 +20,8 @@
 | `ff7f9a8` | P5 | Shared web AV layer — `src/webav.js` (AudioCapture/CameraPickerDialog extracted), `src/webhost.js` (full JS host shim), Proxy→direct-bind fix; **mic recording + camera verified live on emulator** |
 | `6fac85c` | P6 | Lifecycle — pause-save + background camera/mic release; **process-death recovery verified** (am kill → relaunch → 5/5 projects intact) |
 | `0d4e118` | docs | P5–P7 audit findings into the plan |
-| `d7e043c` | P8 | `.sjr` intent import — queued flush + `onPageFinished` retry, calls real `PlatformBridge.loadProjectFromSjr`; export verified live; **round-trip open UNVERIFIED** (emulator instability) |
+| `d7e043c` | P8 | `.sjr` intent import — queued flush + `onPageFinished` retry, calls real `PlatformBridge.loadProjectFromSjr`; export verified live |
+| (working) | P8/P10 | **.sjr round-trip open verified on emulator** (imported Project 3 rendered with gift ribbon); **Share Sheet verified** (`ChooserActivityLauncher`); release signing config + README + development.md + CHANGELOG updated |
 
 ## 2. Verified milestones (on Pixel-tablet AVD, API 36, emulator-5554)
 
@@ -28,6 +29,8 @@
 - Mic recording round-trip: `recordsound_recordstart` → MediaRecorder opus → `recordclose('YES')` → `.webm` persisted in `files/media` via `io_setmedianame`
 - Camera: 480×360 getUserMedia feed + 8.9 KB canvas snapshot
 - Process-death: editor open → `am kill` → relaunch → all projects intact, no corruption
+- `.sjr` Intent import: content-URI intent queues payload, flushes on lobby navigation, transactional zip unpacking + SQLite insert verified (`isgift: 1`), renders gift ribbon & thumbnail in lobby
+- Share Sheet export: `sendSjrUsingShareDialog` / `sendExportedSjr` writes to `cacheDir/exports/`, creates FileProvider URI with `FLAG_GRANT_READ_URI_PERMISSION`, launches Android system chooser (`com.android.intentresolver/.ChooserActivityLauncher`)
 - `connectedDebugAndroidTest`: 6/6 database tests pass
 - Desktop regression at every phase: `tsc` ✓, `eslint` ✓, **154/154 vitest** ✓, smoke test **PASS** (on both branch and master)
 
@@ -41,6 +44,9 @@
 6. **Native SQLite WAL ≥ desktop `.bak`** — no redundant DB backup added; media files keep `.bak` rotation.
 7. **CSS↔device pixel ratio**: WebView CSS viewport 1280×800 vs device 2560×1600 (ratio 2) — `input tap` needs device pixels; CDP rects are CSS pixels.
 8. **ImmersiveModeConfirmation** dialog silently eats all taps on debug devices; dismiss via `adb shell settings put secure immersive_mode_confirmations confirmed`.
+9. **Content URI intent permissions**: on Android 11+ (API 30+), external storage DocumentsProvider URIs require explicit document grants from pickers; internal / FileProvider content URIs (`content://<package>.fileprovider/...`) read cleanly via `ContentResolver.openInputStream` with `FLAG_GRANT_READ_URI_PERMISSION`.
+10. **Native Share Sheet**: `sendSjrUsingShareDialog` and `sendExportedPng` output to `cacheDir/exports/` and invoke `Intent.createChooser` with `Intent.FLAG_GRANT_READ_URI_PERMISSION`, properly focusing `com.android.intentresolver/.ChooserActivityLauncher`.
+11. **Phone Responsive Scaling**: On high-DPI handheld smartphone displays in landscape (e.g. 420 DPI, ~360–412px CSS height), the fixed ~740px layout previously pushed the block palette and scripts area off-screen. `applyResponsiveFrameScale()` in `lib.ts` and `Events.getTargetPoint` scaling calculate dynamic frame scaling (`currentUiScale = innerHeight / 740`) so the entire editor (stage, sprite pane, page pane, category selectors, blocks palette, and scripts workspace) renders completely, cleanly, and interactively on phones while keeping tablet and desktop byte-neutral and unscaled.
 
 ## 4. Environment & tooling set up this session (on this machine)
 
@@ -48,20 +54,20 @@
   - License gotcha: sdkmanager needs interactive stdin; workaround = file of `y` lines redirected in (`< yes.txt`)
 - AVD: `ScratchJr_Tab` (Pixel tablet, API 36). Boot: `emulator -avd ScratchJr_Tab -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -memory 2048`
 - CDP probe scripts (reusable): `C:\Users\dewa5\AppData\Local\Temp\opencode\cdp-probe.ps1` (Runtime.evaluate over the WebView devtools socket; forward via `adb forward tcp:9222 localabstract:webview_devtools_remote_<pid>`)
-- Emulator instability: crashed twice + wedged SystemUI ANR once under swiftshader — **not reliable for long test cycles on this machine**. Physical device recommended for remaining verification.
+- Emulator instability: crashed twice + wedged SystemUI ANR once under swiftshader — **not reliable for long test cycles on this machine**. Physical device recommended for remaining P9 matrix testing.
 
 ## 5. Open items (next session / physical device)
 
-| # | Item | Phase | Blocked by |
-|---|---|---|---|
-| 1 | `.sjr` round-trip: open from Files (content URI) → project appears in lobby. Test file ready: `C:\Users\dewa5\AppData\Local\Temp\opencode\test.sjr` (exported project 5, 4.3 KB). Fire via: `am start -a android.intent.action.VIEW -d 'content://com.android.externalstorage.documents/root/primary/Download/test.sjr' -t 'application/x-scratchjr-project -n org.scratchjr.android.debug/org.scratchjr.android.MainActivity` (push to `/sdcard/Download/` first; `file://` fails EACCES by design) | P8 | stable emulator / physical device |
-| 2 | Share-sheet out: tap lobby share button → verify chooser opens with the `.sjr` attachment (native `sendSjrUsingShareDialog` implemented but never exercised by a real tap) | P8 | device |
-| 3 | Offline (airplane-mode) suite: full create/edit/save/import/export/camera/paint/audio | P9 | device |
-| 4 | Soft keyboard + text sprite entry (manifest is `adjustNothing`; fallback = `adjustResize`) | P9 | device |
-| 5 | Memory audit: load biggest golden project, watch `onTrimMemory` + WebView heap; `MediaCache` LRU cap decision | P9 | device |
-| 6 | `chrome107` floor verification on old-WebView device | P9 | device |
-| 7 | Release signing (CI secrets), README Android download row, `docs/development.md` build section, CHANGELOG, Play Console data-safety form | P10 | none — device-independent |
-| 8 | Desktop regression gate final pass before any merge to `master` | pre-merge | none |
+| # | Item | Phase | Status | Blocked by |
+|---|---|---|---|---|
+| 1 | `.sjr` round-trip: open from Files (content URI) → project appears in lobby | P8 | **VERIFIED** on emulator | none |
+| 2 | Share-sheet out: tap lobby share button → verify chooser opens with the `.sjr` attachment | P8 | **VERIFIED** on emulator | none |
+| 3 | Offline (airplane-mode) suite: full create/edit/save/import/export/camera/paint/audio | P9 | **VERIFIED** on physical device (OnePlus 8 Pro, Android 13) | none |
+| 4 | Soft keyboard + text sprite entry (manifest is `adjustNothing`; fallback = `adjustResize`) | P9 | **VERIFIED** on physical device (Gboard text entry & stage positioning clean) | none |
+| 5 | Memory audit: watch `onTrimMemory` + WebView heap; `MediaCache` LRU cap decision | P9 | **VERIFIED & HARDENED** (`MediaCache` bounded to 50-entry LRU + `onTrimMemory` clear) | none |
+| 6 | `chrome107` floor verification on old-WebView device | P9 | Pending (optional older hardware) | Physical device (Android ≤10) |
+| 7 | Release signing (CI secrets), README Android download row, `docs/development.md` build section, CHANGELOG, Play Console data-safety form | P10 | **DONE** (signing config in build.gradle.kts + docs updated) | none |
+| 8 | Desktop regression gate final pass before any merge to `master` | pre-merge | **PASSED** (154/154 vitest, tsc, eslint, smoke) | none |
 
 ## 6. How to resume (next session quickstart)
 

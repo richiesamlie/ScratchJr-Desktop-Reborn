@@ -27,6 +27,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
 import org.scratchjr.android.bridge.AndroidBridge
+import org.scratchjr.android.bridge.MediaCache
 import org.scratchjr.android.database.AndroidDatabaseManager
 import java.io.InputStream
 
@@ -336,6 +337,13 @@ class MainActivity : AppCompatActivity() {
         webView.onResume()
         webView.resumeTimers()
         hideSystemUI()
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_MODERATE) {
+            MediaCache.clear()
+        }
     }
 
     override fun onDestroy() {

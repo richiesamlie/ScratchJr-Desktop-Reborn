@@ -1,9 +1,18 @@
 package org.scratchjr.android.bridge
 
-import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
+import java.util.LinkedHashMap
 
 object MediaCache {
-    private val cache = ConcurrentHashMap<String, String>()
+    private const val MAX_ENTRIES = 50
+
+    private val cache = Collections.synchronizedMap(
+        object : LinkedHashMap<String, String>(MAX_ENTRIES, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
+                return size > MAX_ENTRIES
+            }
+        }
+    )
 
     fun put(key: String, data: String) {
         cache[key] = data
