@@ -5,7 +5,7 @@
 //   - Electron (window.scratchjr from preload): electronClient.js
 //   - Android WebView (AndroidInterface): webhost.js (JS host shim; the
 //     native interface covers storage/DB, the shim adds camera/record)
-//   - Anything else: no host client; PlatformBridge keeps polling.
+//   - Browser / PWA: browserClient.js (in-browser sql.js WASM + IndexedDB)
 
 (function () {
     var av = document.createElement('script');
@@ -20,5 +20,14 @@
         var h = document.createElement('script');
         h.src = '../webhost.js';
         document.head.appendChild(h);
+    } else {
+        var sql = document.createElement('script');
+        sql.src = '../sql-wasm.js';
+        document.head.appendChild(sql);
+
+        var b = document.createElement('script');
+        b.src = '../browserClient.js';
+        document.head.appendChild(b);
     }
 }());
+

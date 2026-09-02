@@ -25,3 +25,7 @@ android/.idea/
 android/captures/
 *.apk
 *.aab
+
+# Web PWA build distribution
+dist-web/
+

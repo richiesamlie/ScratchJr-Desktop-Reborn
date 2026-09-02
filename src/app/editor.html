@@ -5,8 +5,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta http-equiv="cache-control" content="no-cache">
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' data:; connect-src 'self'; font-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self'">
 <title>ScratchJr</title>
+<link rel="manifest" href="manifest.webmanifest">
 
 <script src='../hostClient.js'></script>
 <script type="module" src="dist/app.bundle.js"></script>

@@ -19,6 +19,8 @@
         "build:main": "tsc -p tsconfig.main.json",
         "build:renderer": "node scripts/build-renderer.js",
         "build:android": "node scripts/build-android-assets.js",
+        "build:web": "node scripts/build-web.js",
+        "serve:web": "node scripts/serve-web.js",
         "postinstall": "node scripts/patch-for-node26.js && node scripts/build-renderer.js"
     },
     "keywords": [],
