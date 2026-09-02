@@ -249,6 +249,7 @@ export default class IO {
             name: obj.name || 'Project',
             version: obj.version || window.Settings?.scratchJrVersion || '1.0.0',
             deleted: 'NO',
+            ctime: (new Date()).getTime().toString(),
             mtime: (new Date()).getTime().toString(),
             isgift: obj.isgift ? obj.isgift : '0',
         };
@@ -674,7 +675,10 @@ export default class IO {
         // All assets extracted and persisted safely — now create the project row
         await new Promise<void>(function (resolve) {
             IO.uniqueProjectName(jsonData as unknown as Parameters<typeof IO.uniqueProjectName>[0], function (jd) {
-                (jd as { isgift?: string }).isgift = '1';
+                var jdr = jd as { thumbnail?: unknown };
+                if (!jdr.thumbnail) {
+                    jdr.thumbnail = JSON.stringify({ pagecount: 1, md5: '' });
+                }
                 IO.createProject(jd as unknown as ProjectRecord, function () { resolve(); });
             });
         });

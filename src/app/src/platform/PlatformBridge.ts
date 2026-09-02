@@ -349,15 +349,17 @@ export default class PlatformBridge {
 
     // Process and store base64-encoded .SJR file
     static loadProjectFromSjr (b64data: string) {
-        IO.loadProjectFromSjr(b64data).catch(function (err: Error) {
+        return IO.loadProjectFromSjr(b64data).then(function () {
+            window.location.reload();
+        }).catch(function (err: Error) {
             var frame = gn('frame');
             var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? err.message : '');
             if (frame) {
                 Alert.open(frame, frame, errorMessage, '#ff0000');
             }
             console.error('PlatformBridge.loadProjectFromSjr error:', err);
+            throw err;
         });
-        return 1;
     }
 
     // Name of the host device to display on sharing dialog
