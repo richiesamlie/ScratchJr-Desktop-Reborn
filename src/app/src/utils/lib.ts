@@ -12,8 +12,51 @@ export const isElectron = true;
 export const isiOS = false;
 export const isAndroid = false;
 
+export let currentUiScale = 1.0;
+
+export function getUiScale () {
+    return currentUiScale;
+}
+
+export function applyResponsiveFrameScale () {
+    if (typeof window === 'undefined') return;
+    const minDesignHeight = 740;
+    const currentHeight = window.innerHeight;
+    const currentWidth = window.innerWidth;
+
+    if (currentHeight > 0 && currentHeight < minDesignHeight) {
+        currentUiScale = currentHeight / minDesignHeight;
+    } else {
+        currentUiScale = 1.0;
+    }
+
+    if (typeof document !== 'undefined') {
+        const frames = document.querySelectorAll<HTMLElement>('.frame, .libframe, .paintframe, #frame, #libframe, #paintframe, #tutorialmode');
+        const virtWidth = currentWidth / currentUiScale;
+        const virtHeight = currentHeight / currentUiScale;
+
+        frames.forEach(el => {
+            if (currentUiScale < 1.0) {
+                el.style.width = virtWidth + 'px';
+                el.style.height = virtHeight + 'px';
+                el.style.transform = `scale(${currentUiScale})`;
+                el.style.transformOrigin = '0 0';
+            } else {
+                el.style.width = '';
+                el.style.height = '';
+                el.style.transform = '';
+                el.style.transformOrigin = '';
+            }
+        });
+    }
+}
+
 export function libInit () {
     frame = document.getElementById('frame')!;
+    applyResponsiveFrameScale();
+    if (typeof window !== 'undefined') {
+        window.addEventListener('resize', applyResponsiveFrameScale);
+    }
 }
 function evaluatePreprocessExpression (expression: string) {
     var trimmed = expression.trim();
@@ -495,10 +538,16 @@ export function getFit (dw: number, dh: number) {
 }
 
 export function getDocumentHeight () {
+    if (typeof window !== 'undefined' && currentUiScale < 1.0) {
+        return window.innerHeight / currentUiScale;
+    }
     return Math.max(document.body.clientHeight, document.documentElement.clientHeight);
 }
 
 export function getDocumentWidth () {
+    if (typeof window !== 'undefined' && currentUiScale < 1.0) {
+        return window.innerWidth / currentUiScale;
+    }
     return Math.max(document.body.clientWidth, document.documentElement.clientWidth);
 }
 
@@ -655,11 +704,13 @@ export function colorToRGBA (color: string, opacity: string) {
  * turning them into pixel values.
  */
 export function css_vh (y: number) {
-    return (y * window.innerHeight  / 100.0) + 'px';
+    var h = (typeof window !== 'undefined' && currentUiScale < 1.0) ? (window.innerHeight / currentUiScale) : (typeof window !== 'undefined' ? window.innerHeight : 768);
+    return (y * h / 100.0) + 'px';
 }
 
 export function css_vw (x: number) {
-    return (x *  window.innerWidth / 100.0) + 'px';
+    var w = (typeof window !== 'undefined' && currentUiScale < 1.0) ? (window.innerWidth / currentUiScale) : (typeof window !== 'undefined' ? window.innerWidth : 1024);
+    return (x * w / 100.0) + 'px';
 }
 
 

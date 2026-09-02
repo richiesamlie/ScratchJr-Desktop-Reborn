@@ -24,7 +24,7 @@ import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import { getModelRefAs } from '../modelRegistry';
 import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, isTouch, newDiv,
-    newTextInput, getDocumentWidth, getDocumentHeight, setProps, globalx} from '../../utils/lib';
+    newTextInput, getDocumentWidth, getDocumentHeight, setProps, globalx, applyResponsiveFrameScale} from '../../utils/lib';
 
 // Named-form access: document.forms.projectname.myproject
 const namedForms = document.forms as unknown as Record<string, HTMLFormElement & Record<string, HTMLInputElement>>;
@@ -142,6 +142,7 @@ export default class UI {
 
     /** Tweak some elements depending on aspect ratio */
     static aspectRatioAdjustment () {
+        applyResponsiveFrameScale();
         var library = gn('library')!;
         var pages = gn('pages')!;
         var stage = gn('stage')!;
