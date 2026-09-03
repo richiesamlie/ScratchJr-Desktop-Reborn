@@ -119,23 +119,49 @@ function main() {
         }
     }
 
-    // 6. Create root index.html redirect to app/index.html
-    const rootRedirect = `<!DOCTYPE html>
+    // 6. Copy root landing page, screenshots, and version.json from docs/
+    const docsDir = path.join(rootDir, 'docs');
+    const docsFiles = [
+        'index.html',
+        'screenshot-lobby.webp',
+        'screenshot-editor.webp',
+        'screenshot-start.webp',
+        'version.json',
+        'README.md',
+        'development.md',
+        'engine.md',
+        'ARCHITECTURE.md',
+        'ANDROID-PORT-PLAN.md'
+    ];
+
+    for (const docFile of docsFiles) {
+        const srcPath = path.join(docsDir, docFile);
+        if (fs.existsSync(srcPath)) {
+            fs.copyFileSync(srcPath, path.join(distWebDir, docFile));
+        }
+    }
+
+    // 7. Create /play/ launcher redirecting to /app/index.html
+    const targetPlayDir = path.join(distWebDir, 'play');
+    fs.mkdirSync(targetPlayDir, { recursive: true });
+    const playRedirect = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="refresh" content="0; url=app/index.html">
-  <title>ScratchJr Web</title>
+  <meta http-equiv="refresh" content="0; url=../app/index.html">
+  <title>ScratchJr Web Launcher</title>
 </head>
 <body>
-  <p>Loading ScratchJr... <a href="app/index.html">Click here if not redirected</a>.</p>
+  <p>Launching ScratchJr Web... <a href="../app/index.html">Click here if not redirected</a>.</p>
 </body>
 </html>
 `;
-    fs.writeFileSync(path.join(distWebDir, 'index.html'), rootRedirect, 'utf8');
+    fs.writeFileSync(path.join(targetPlayDir, 'index.html'), playRedirect, 'utf8');
+
+    // 8. Bypass Jekyll on GitHub Pages
     fs.writeFileSync(path.join(distWebDir, '.nojekyll'), '', 'utf8');
 
-    console.log('✅ Web / PWA build complete at dist-web/');
+    console.log('✅ Web / PWA build complete at dist-web/ (landing at /, app at /play/ and /app/)');
 }
 
 main();

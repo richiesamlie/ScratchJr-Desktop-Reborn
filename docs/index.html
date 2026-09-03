@@ -25,17 +25,36 @@
         }
         header.hero h1 { font-size: 2.6rem; margin-bottom: .5rem; }
         header.hero p { font-size: 1.15rem; opacity: .92; max-width: 46rem; margin: 0 auto; }
+        .hero-actions {
+            margin-top: 1.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: .9rem;
+        }
         .btn {
             display: inline-block;
-            margin-top: 1.5rem;
-            padding: .8rem 2rem;
-            background: var(--accent);
-            color: var(--dark);
+            padding: .85rem 1.8rem;
             font-weight: 700;
             border-radius: 2rem;
             text-decoration: none;
+            transition: transform .15s, filter .15s;
         }
-        .btn:hover { filter: brightness(1.05); }
+        .btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+        .btn-primary {
+            background: var(--accent);
+            color: var(--dark);
+            box-shadow: 0 4px 12px rgba(0,0,0,.18);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.18);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.7);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.28);
+            border-color: #fff;
+        }
         main { max-width: 60rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
         section { margin-top: 2.5rem; }
         h2 {
@@ -72,10 +91,13 @@
 <body>
     <header class="hero">
         <h1>ScratchJr Reborn</h1>
-        <p>A modernized port of ScratchJr for Windows, macOS, Linux, and Android —
+        <p>A modernized port of ScratchJr for Web/PWA, Windows, macOS, Linux, and Android —
         with more room to create, a hardened sandbox, and a fully strict,
         tested codebase.</p>
-        <a class="btn" href="https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest">Download the latest release</a>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="play/">🎮 Play in Browser (Web / PWA)</a>
+            <a class="btn btn-secondary" href="https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest">Download Desktop / Android</a>
+        </div>
     </header>
 
     <main>
@@ -100,21 +122,23 @@
         <section>
             <h2>Why Reborn?</h2>
             <ul class="features">
-                <li><strong>Cross-Platform</strong> — Desktop (Windows, macOS, Linux) and Native Android (tablets and smartphones) with 100% project compatibility</li>
+                <li><strong>Universal Multi-Platform</strong> — Web/PWA (Chrome, Safari, Edge, Firefox), Desktop (Windows, macOS, Linux), and Native Android with 100% project compatibility</li>
+                <li><strong>In-Browser & PWA Offline</strong> — Run directly in any browser on Chromebooks, iPads, and PCs, or install it as an offline standalone app</li>
                 <li><strong>Responsive Mobile Layout</strong> — Dynamic scaling for sub-740px smartphone displays with pixel-accurate touch coordinates</li>
                 <li><strong>More room to create</strong> — 8 pages by default (configurable), a scrollable page strip, a bigger character sidebar, and + buttons that never disappear</li>
-                <li><strong>Safe & Durable by design</strong> — sandboxed desktop renderer, SQLite WAL with atomic backup moves on Android, and strict path containment</li>
+                <li><strong>Safe & Durable by design</strong> — sandboxed desktop renderer, in-browser SQLite with IndexedDB persistence, SQLite WAL on Android, and strict path containment</li>
                 <li><strong>Modern native audio & camera</strong> — HTML5 Canvas snapshot feed, WebM Opus audio recording, and native system share sheet integration</li>
-                <li><strong>Trustworthy codebase</strong> — all renderer files in strict TypeScript, 154 unit tests passing, automated E2E smoke tests, and CI hygiene guards</li>
-                <li><strong>Reliable releases</strong> — multi-platform desktop packages and Android APK/AAB with SHA256 checksums</li>
+                <li><strong>Trustworthy codebase</strong> — all renderer files in strict TypeScript, 157 unit tests passing, automated E2E smoke tests, and CI hygiene guards</li>
+                <li><strong>Reliable releases</strong> — multi-platform desktop packages, Android APK/AAB, and instant web app with SHA256 checksums</li>
             </ul>
         </section>
 
         <section>
-            <h2>Downloads</h2>
+            <h2>Downloads & Online Access</h2>
             <table>
-                <thead><tr><th>File</th><th>Platform</th></tr></thead>
+                <thead><tr><th>Target / File</th><th>Platform</th></tr></thead>
                 <tbody>
+                    <tr><td><strong>Web / PWA (Online)</strong></td><td><a href="play/" style="color:var(--blue);font-weight:bold;">Launch Online in Browser (No Install)</a></td></tr>
                     <tr><td>ScratchJr-win32-x64.msi</td><td>Windows x64 (installer)</td></tr>
                     <tr><td>ScratchJr-win32-x64.zip</td><td>Windows x64 (portable)</td></tr>
                     <tr><td>ScratchJr-darwin-x64.zip</td><td>macOS x64</td></tr>
