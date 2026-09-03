@@ -12,7 +12,7 @@
     "darwin-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-darwin-arm64.zip",
     "linux-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-linux-x64.zip",
     "linux-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-linux-arm64.zip",
-    "android-apk": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-v2.0.0-android.apk"
+    "android-apk": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-android.apk"
   }
 }
 
