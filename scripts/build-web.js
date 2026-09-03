@@ -133,6 +133,7 @@ function main() {
 </html>
 `;
     fs.writeFileSync(path.join(distWebDir, 'index.html'), rootRedirect, 'utf8');
+    fs.writeFileSync(path.join(distWebDir, '.nojekyll'), '', 'utf8');
 
     console.log('✅ Web / PWA build complete at dist-web/');
 }
