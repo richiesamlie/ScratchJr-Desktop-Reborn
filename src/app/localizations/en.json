@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "Space & Undersea",
     "LIBRARY_SEARCH_PLACEHOLDER": "Search...",
     "LIBRARY_NO_RESULTS": "No items found",
-    "OPEN_PROJECT_TITLE": "Open"
+    "OPEN_PROJECT_TITLE": "Open",
+    "MULTI_TAB_NOTICE": "ScratchJr is already open in another tab. This window is in safe read-only mode."
 }

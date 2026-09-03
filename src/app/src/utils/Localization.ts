@@ -104,6 +104,11 @@ export default class Localization {
         return 'String missing: ' + key;
     }
 
+    static localizeWithFallback (key: string, fallback: string, formatting?: Record<string, unknown>): string {
+        var val = Localization.localize(key, formatting);
+        return (!val || val.startsWith('String missing') || val.startsWith('Loc missing')) ? fallback : val;
+    }
+
     // For sample projects, some fields (sprite names, text on stage, and text in say blocks)
     // may have a special prefix to indicate that it should be replaced with a localized value.
     // E.g., we might have some text on the stage that says "Touch me" in English. This gets translated.

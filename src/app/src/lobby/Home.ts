@@ -55,7 +55,7 @@ export default class Home {
         tb.id = 'openproject';
         var label = newHTML('div', 'projecttitle', tb);
         var txt = newHTML('h4', undefined, label);
-        txt.textContent = Localization.localize('OPEN_PROJECT_TITLE') || 'Open';
+        txt.textContent = Localization.localizeWithFallback('OPEN_PROJECT_TITLE', 'Open');
     }
 
     static openFileDialog () {

@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "อวกาศและใต้ทะเล",
     "LIBRARY_SEARCH_PLACEHOLDER": "ค้นหา...",
     "LIBRARY_NO_RESULTS": "ไม่พบรายการ",
-    "OPEN_PROJECT_TITLE": "เปิด"
+    "OPEN_PROJECT_TITLE": "เปิด",
+    "MULTI_TAB_NOTICE": "ScratchJr ถูกเปิดอยู่ในแท็บอื่นแล้ว หน้าต่างนี้อยู่ในโหมดอ่านอย่างเดียวเพื่อความปลอดภัย"
 }

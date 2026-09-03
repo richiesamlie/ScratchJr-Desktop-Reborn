@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "Weltall & Unterwasser",
     "LIBRARY_SEARCH_PLACEHOLDER": "Suchen...",
     "LIBRARY_NO_RESULTS": "Keine Elemente gefunden",
-    "OPEN_PROJECT_TITLE": "Öffnen"
+    "OPEN_PROJECT_TITLE": "Öffnen",
+    "MULTI_TAB_NOTICE": "ScratchJr ist bereits in einem anderen Tab geöffnet. Dieses Fenster ist im schreibgeschützten Modus."
 }

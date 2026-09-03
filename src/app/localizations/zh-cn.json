@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "太空与水下",
     "LIBRARY_SEARCH_PLACEHOLDER": "搜索...",
     "LIBRARY_NO_RESULTS": "未找到相关资源",
-    "OPEN_PROJECT_TITLE": "打开"
+    "OPEN_PROJECT_TITLE": "打开",
+    "MULTI_TAB_NOTICE": "ScratchJr 已在另一个标签页中打开。此窗口处于安全只读模式。"
 }

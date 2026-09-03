@@ -255,7 +255,21 @@
         if (document.getElementById('scratchjr_multitab_notice')) return;
         var banner = document.createElement('div');
         banner.id = 'scratchjr_multitab_notice';
-        banner.textContent = 'ScratchJr is already open in another tab. This window is in safe read-only mode.';
+        var noticeText = 'ScratchJr is already open in another tab. This window is in safe read-only mode.';
+        try {
+            var loc = /** @type {any} */ (window).Localization;
+            if (loc && typeof loc.localizeWithFallback === 'function') {
+                noticeText = loc.localizeWithFallback('MULTI_TAB_NOTICE', noticeText);
+            } else if (loc && typeof loc.localize === 'function') {
+                var l = loc.localize('MULTI_TAB_NOTICE');
+                if (l && !l.startsWith('String missing') && !l.startsWith('Loc missing')) {
+                    noticeText = l;
+                }
+            }
+        } catch (_) {
+            /* localization not yet loaded, fallback to default English text */
+        }
+        banner.textContent = noticeText;
         banner.style.position = 'fixed';
         banner.style.top = '0';
         banner.style.left = '0';
@@ -384,12 +398,13 @@
     // Flush database immediately when navigating away or switching tabs
     if (typeof window !== 'undefined') {
         var onLeave = function () {
-            flushDbSave(true);
-            if (releaseExclusiveLock) {
-                var rel = releaseExclusiveLock;
-                releaseExclusiveLock = null;
-                rel();
-            }
+            flushDbSave(true).finally(function () {
+                if (releaseExclusiveLock) {
+                    var rel = releaseExclusiveLock;
+                    releaseExclusiveLock = null;
+                    rel();
+                }
+            });
         };
         window.addEventListener('beforeunload', onLeave);
         window.addEventListener('pagehide', onLeave);
@@ -433,10 +448,12 @@
                                     sqlDb = new SQL.Database(new Uint8Array(savedBytes));
                                 } catch (e) {
                                     console.warn('[browserClient] Saved database corrupt, quarantining and creating fresh DB:', e);
-                                    var corruptKey = 'db_bytes_corrupt_' + Date.now();
-                                    idbPut(STORE_SQLITE, corruptKey, savedBytes).catch(function (err) {
-                                        console.error('[browserClient] Failed to quarantine corrupt DB:', err);
-                                    });
+                                    if (hasExclusiveLock) {
+                                        var corruptKey = 'db_bytes_corrupt_' + Date.now();
+                                        idbPut(STORE_SQLITE, corruptKey, savedBytes).catch(function (err) {
+                                            console.error('[browserClient] Failed to quarantine corrupt DB:', err);
+                                        });
+                                    }
                                     sqlDb = new SQL.Database();
                                 }
                             } else {

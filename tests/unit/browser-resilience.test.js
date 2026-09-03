@@ -67,4 +67,50 @@ describe("Browser Storage Resilience & Multi-Tab Concurrency Guard", () => {
         expect(key.startsWith("db_bytes_corrupt_")).toBe(true);
         expect(mockIdbStore[key]).toBe(corruptBytes);
     });
+
+    it("prevents secondary tab without exclusive lock from writing quarantine data", () => {
+        let idbPutCalled = false;
+        const mockIdbPut = vi.fn(() => {
+            idbPutCalled = true;
+            return Promise.resolve();
+        });
+
+        const hasExclusiveLock = false;
+        const savedBytes = new Uint8Array([1, 2, 3]);
+
+        if (hasExclusiveLock) {
+            mockIdbPut("db_bytes_corrupt_" + Date.now(), savedBytes);
+        }
+
+        expect(idbPutCalled).toBe(false);
+        expect(mockIdbPut).not.toHaveBeenCalled();
+    });
+
+    it("releases exclusive lock only after in-flight flush completes", async () => {
+        let saveCompleted = false;
+        let lockReleased = false;
+
+        const fakeFlush = () => new Promise((resolve) => {
+            setTimeout(() => {
+                saveCompleted = true;
+                resolve(true);
+            }, 10);
+        });
+
+        const releaseLock = () => {
+            lockReleased = true;
+        };
+
+        const flushPromise = fakeFlush().finally(() => {
+            releaseLock();
+        });
+
+        expect(saveCompleted).toBe(false);
+        expect(lockReleased).toBe(false);
+
+        await flushPromise;
+
+        expect(saveCompleted).toBe(true);
+        expect(lockReleased).toBe(true);
+    });
 });

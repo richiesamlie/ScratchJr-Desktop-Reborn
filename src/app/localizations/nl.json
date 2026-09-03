@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "Ruimte & Onderwater",
     "LIBRARY_SEARCH_PLACEHOLDER": "Zoeken...",
     "LIBRARY_NO_RESULTS": "Geen items gevonden",
-    "OPEN_PROJECT_TITLE": "Openen"
+    "OPEN_PROJECT_TITLE": "Openen",
+    "MULTI_TAB_NOTICE": "ScratchJr is al geopend in een ander tabblad. Dit venster staat in de veilige alleen-lezen modus."
 }

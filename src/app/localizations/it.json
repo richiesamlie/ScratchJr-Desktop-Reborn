@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "Spazio e sottomarino",
     "LIBRARY_SEARCH_PLACEHOLDER": "Cerca...",
     "LIBRARY_NO_RESULTS": "Nessun elemento trovato",
-    "OPEN_PROJECT_TITLE": "Apri"
+    "OPEN_PROJECT_TITLE": "Apri",
+    "MULTI_TAB_NOTICE": "ScratchJr è già aperto in un'altra scheda. Questa finestra è in modalità di sola lettura."
 }

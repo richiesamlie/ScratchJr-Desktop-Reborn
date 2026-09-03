@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "Rymd & Under vatten",
     "LIBRARY_SEARCH_PLACEHOLDER": "Sök...",
     "LIBRARY_NO_RESULTS": "Inga objekt hittades",
-    "OPEN_PROJECT_TITLE": "Öppna"
+    "OPEN_PROJECT_TITLE": "Öppna",
+    "MULTI_TAB_NOTICE": "ScratchJr är redan öppet i en annan flik. Detta fönster är i säkert skrivskyddat läge."
 }

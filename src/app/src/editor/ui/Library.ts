@@ -78,7 +78,7 @@ export default class Library {
         searchContainer.setAttribute('id', 'libsearch');
         var input = newHTML('input', 'search-input', searchContainer) as HTMLInputElement;
         input.setAttribute('id', 'libsearchinput');
-        input.setAttribute('placeholder', Localization.localize('LIBRARY_SEARCH_PLACEHOLDER') || 'Search...');
+        input.setAttribute('placeholder', Localization.localizeWithFallback('LIBRARY_SEARCH_PLACEHOLDER', 'Search...'));
         input.value = searchQuery;
 
         var clearBtn = newHTML('div', 'search-clear', searchContainer);
@@ -527,7 +527,7 @@ export default class Library {
 
         if (filteredUser.length === 0 && filteredLib.length === 0 && (activeCat !== 'all' || query)) {
             var nodata = newHTML('div', 'noData', div);
-            nodata.textContent = Localization.localize('LIBRARY_NO_RESULTS') || 'No items found';
+            nodata.textContent = Localization.localizeWithFallback('LIBRARY_NO_RESULTS', 'No items found');
         }
     }
 

@@ -21,23 +21,23 @@ export default class LibraryEx {
     static getCategories (type: "costumes" | "backgrounds"): CategoryItem[] {
         if (type === "costumes") {
             return [
-                { id: "all", label: Localization.localize("LIBRARY_CAT_ALL") || "All" },
-                { id: "animals", label: Localization.localize("LIBRARY_CAT_ANIMALS") || "Animals" },
-                { id: "people", label: Localization.localize("LIBRARY_CAT_PEOPLE") || "People" },
-                { id: "fantasy", label: Localization.localize("LIBRARY_CAT_FANTASY") || "Fantasy" },
-                { id: "plants", label: Localization.localize("LIBRARY_CAT_PLANTS") || "Plants" },
-                { id: "nature", label: Localization.localize("LIBRARY_CAT_NATURE") || "Nature" },
-                { id: "things", label: Localization.localize("LIBRARY_CAT_THINGS") || "Things" },
-                { id: "vehicles", label: Localization.localize("LIBRARY_CAT_VEHICLES") || "Vehicles" },
-                { id: "buildings", label: Localization.localize("LIBRARY_CAT_BUILDINGS") || "Buildings" }
+                { id: "all", label: Localization.localizeWithFallback("LIBRARY_CAT_ALL", "All") },
+                { id: "animals", label: Localization.localizeWithFallback("LIBRARY_CAT_ANIMALS", "Animals") },
+                { id: "people", label: Localization.localizeWithFallback("LIBRARY_CAT_PEOPLE", "People") },
+                { id: "fantasy", label: Localization.localizeWithFallback("LIBRARY_CAT_FANTASY", "Fantasy") },
+                { id: "plants", label: Localization.localizeWithFallback("LIBRARY_CAT_PLANTS", "Plants") },
+                { id: "nature", label: Localization.localizeWithFallback("LIBRARY_CAT_NATURE", "Nature") },
+                { id: "things", label: Localization.localizeWithFallback("LIBRARY_CAT_THINGS", "Things") },
+                { id: "vehicles", label: Localization.localizeWithFallback("LIBRARY_CAT_VEHICLES", "Vehicles") },
+                { id: "buildings", label: Localization.localizeWithFallback("LIBRARY_CAT_BUILDINGS", "Buildings") }
             ];
         } else {
             return [
-                { id: "all", label: Localization.localize("LIBRARY_CAT_ALL") || "All" },
-                { id: "nature", label: Localization.localize("LIBRARY_CAT_NATURE") || "Nature" },
-                { id: "city", label: Localization.localize("LIBRARY_CAT_CITY") || "City & Outdoors" },
-                { id: "indoors", label: Localization.localize("LIBRARY_CAT_INDOORS") || "Indoors" },
-                { id: "space_water", label: Localization.localize("LIBRARY_CAT_SPACE_WATER") || "Space & Undersea" }
+                { id: "all", label: Localization.localizeWithFallback("LIBRARY_CAT_ALL", "All") },
+                { id: "nature", label: Localization.localizeWithFallback("LIBRARY_CAT_NATURE", "Nature") },
+                { id: "city", label: Localization.localizeWithFallback("LIBRARY_CAT_CITY", "City & Outdoors") },
+                { id: "indoors", label: Localization.localizeWithFallback("LIBRARY_CAT_INDOORS", "Indoors") },
+                { id: "space_water", label: Localization.localizeWithFallback("LIBRARY_CAT_SPACE_WATER", "Space & Undersea") }
             ];
         }
     }

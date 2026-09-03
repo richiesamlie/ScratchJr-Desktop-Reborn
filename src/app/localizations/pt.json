@@ -391,5 +391,6 @@
     "LIBRARY_CAT_SPACE_WATER": "Espaço e fundo do mar",
     "LIBRARY_SEARCH_PLACEHOLDER": "Pesquisar...",
     "LIBRARY_NO_RESULTS": "Nenhum item encontrado",
-    "OPEN_PROJECT_TITLE": "Abrir"
+    "OPEN_PROJECT_TITLE": "Abrir",
+    "MULTI_TAB_NOTICE": "O ScratchJr já está aberto noutra aba. Esta janela está no modo seguro apenas de leitura."
 }
