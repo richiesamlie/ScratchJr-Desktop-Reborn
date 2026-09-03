@@ -3,9 +3,9 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [Unreleased]
+## [v2.1.0] - 2026-09-03
 
-**Feature adoptions and robustness improvements inspired by `wangzongjun/ScratchJr` and `patdx/scratchjr`, across Desktop, Android, and Web/PWA.**
+**Minor Release: Horizontal Flip Block, Smart Asset Library Categorization & Search, 1-Click SJR Open Card, Web/PWA Storage Resilience, and UTF-8 Safe Serialization.**
 
 ### New Features
 - **Horizontal Flip Motion Block (`flipX`)**:
