@@ -3,6 +3,34 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.0.0] - 2026-09-03
+
+**Major Milestone Release: Universal Multi-Target Architecture (Web/PWA on GitHub Pages, Desktop for Windows/macOS/Linux, and Native Android).**
+
+### Web & PWA Port
+- **In-Browser SQLite & IndexedDB Storage**:
+  - Full client-side execution via `sql.js` (WebAssembly SQLite) paired with IndexedDB persistence (`STORE_SQLITE` and `STORE_MEDIA`), providing 100% relational query compatibility with Desktop and Android without server-side dependencies.
+  - Complete PWA offline caching via Service Worker (`sw.js`) and web app manifest (`manifest.webmanifest`).
+- **GitHub Pages Dual-Page Architecture**:
+  - Live marketing and download showcase remains at the root URL (`/`).
+  - Interactive Web App hosted at `/play/` with automatic launcher redirect and `.nojekyll` bypass.
+  - Automated CI/CD deployment via GitHub Actions (`.github/workflows/deploy-pages.yml`).
+
+### Cross-Platform Sharing & Core Bugfixes
+- **1-Click Project Export (`exportit.svg`)**:
+  - Added dedicated green export action button on project cards in the Lobby (visible on long-press or right-click).
+  - Automatically routes to native Save File dialog on Electron, native Android Share Sheet on mobile, or file download on Web.
+- **Electron Sharing Gap Resolved**:
+  - Implemented `sendSjrUsingShareDialog` on `ElectronDesktopInterface` to enable project sharing from the project Info modal.
+- **Save Before Export**:
+  - Guarded editor export requests to trigger `ScratchJr.saveProject` before zipping, preventing empty or stale `.sjr` exports.
+- **Import Resilience & SQLite Fixes**:
+  - Added `ctime` generation in `IO.createProject`, fixing project chronological sorting in Lobby.
+  - Added fallback thumbnail object in `IO.loadProjectFromSjr` to prevent cards with missing thumbnails from being dropped.
+  - Replaced corrupted 1-byte binary chunking with native `FileReader.readAsDataURL(file)`.
+- **UI & Ergonomic Polish**:
+  - Repositioned Funky Red sprite on start screen (`top: -10%; left: 76%; height: 54%; z-index: 12`) to frame the logo and match visual weight across all platforms.
+
 ## [v1.9.0-android] - 2026-09-02 (Branch `mobile/android`)
 
 **Native Kotlin Android port, hardware camera & microphone capture, transactional storage, touch navigation, and cross-platform `.sjr` import/export.**

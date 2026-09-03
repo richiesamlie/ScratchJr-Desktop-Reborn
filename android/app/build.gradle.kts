@@ -10,10 +10,9 @@ android {
         applicationId = "org.scratchjr.android"
         minSdk = 24
         targetSdk = 36
-        // Experimental Android line: 1.9.0 ships as 10900 (desktop stays 1.8.0
-        // until the branches merge; see docs/ANDROID-PORT-PLAN.md).
-        versionCode = 10900
-        versionName = "1.9.0"
+        // Unified release line: 2.0.0 ships as 20000 across Desktop, Android, and Web.
+        versionCode = 20000
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

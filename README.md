@@ -1,13 +1,15 @@
-# ScratchJr Reborn — Desktop & Android
+# ScratchJr Reborn — Web/PWA, Desktop & Android
 
-> A modernized multi-platform port of [ScratchJr](https://scratchjr.org/) for Windows, macOS, Linux, and Android.
+> A modernized multi-platform port of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
-## Downloads
+## Online & Downloads
 
-**[Download ScratchJr Reborn (latest release)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)**
+- **[🎮 Launch Online in Browser (Web / PWA)](https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/)** — No install required, runs on Chromebooks, iPads, and PCs!
+- **[Download ScratchJr Reborn (latest release)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)**
 
-| File | Platform | Notes |
+| Target / File | Platform | Notes |
 |------|----------|-------|
+| **Web / PWA** | Web (Chrome, Safari, Edge, Firefox) | [Launch in Browser](https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/) / Installable PWA |
 | `ScratchJr-win32-x64.msi` | Windows x64 | Windows Installer |
 | `ScratchJr-win32-x64.zip` | Windows x64 | Portable zip |
 | `ScratchJr-darwin-x64.zip` | macOS x64 | Intel Mac |
@@ -18,7 +20,7 @@
 | `ScratchJr-android-release-unsigned.apk` | Android (Universal) | Production release package |
 | `ScratchJr-android-release.aab` | Android | Google Play App Bundle |
 
-> **Project Status (v1.9.0)**: With the completion and verification of the cross-platform native Android port alongside the hardened desktop editions, ScratchJr Reborn has reached full feature maturity and stability. This stands as the definitive, stable milestone before any new ideas emerge.
+> **Project Status (v2.0.0)**: Major milestone celebrating the universal multi-platform release of ScratchJr Reborn across Web/PWA (GitHub Pages), Desktop (Windows, macOS, Linux), and Native Android with 100% project compatibility and automated end-to-end verification.
 
 ---
 
