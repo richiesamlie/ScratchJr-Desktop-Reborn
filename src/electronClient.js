@@ -370,6 +370,19 @@ class ElectronDesktopInterface {
         if (DEBUG_NYI) debugLog('Analytics Event!', category, action, usageLabel, value);
     }
 
+    /**
+     * Called by PlatformBridge.sendSjrToShareDialog (e.g. from Info modal).
+     * Forward to bridge.sendExportedSjr to trigger native Save File dialog.
+     * @param {string} fileName
+     * @param {string} _emailSubject
+     * @param {string} _emailBody
+     * @param {string} _shareType
+     * @param {string} b64data
+     */
+    sendSjrUsingShareDialog(fileName, _emailSubject, _emailBody, _shareType, b64data) {
+        return bridge.sendExportedSjr(b64data, fileName);
+    }
+
 
     scratchjr_stopfeed() {
         if (DEBUG_CAMERA) debugLog('scratchjr_stopfeed NYI');
