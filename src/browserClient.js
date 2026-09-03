@@ -209,13 +209,52 @@
         });
     }
 
+    // ---- In-Memory Media LRU Cache ----
+    // Avoids repetitive IndexedDB roundtrips for active sprite costumes and sound effects
+    // (Mirrors the MediaCache.kt LRU architecture used on Android)
+    var MEDIA_CACHE_LIMIT = 100;
+    /** @type {Map<string, string>} */
+    var mediaCache = new Map();
+
+    function getMediaCache(/** @type {string} */ key) {
+        if (!mediaCache.has(key)) return null;
+        var val = /** @type {string} */ (mediaCache.get(key));
+        mediaCache.delete(key);
+        mediaCache.set(key, val);
+        return val;
+    }
+
+    function putMediaCache(/** @type {string} */ key, /** @type {string} */ val) {
+        if (!key || !val) return;
+        if (mediaCache.has(key)) {
+            mediaCache.delete(key);
+        } else if (mediaCache.size >= MEDIA_CACHE_LIMIT) {
+            var firstKey = mediaCache.keys().next().value;
+            if (firstKey !== undefined) {
+                mediaCache.delete(firstKey);
+            }
+        }
+        mediaCache.set(key, val);
+    }
+
+    function removeMediaCache(/** @type {string} */ key) {
+        if (mediaCache.has(key)) {
+            mediaCache.delete(key);
+        }
+    }
+
     // ---- sql.js WebAssembly Database Manager ----
     /** @type {any} */
     var sqlDb = null;
     /** @type {any} */
     var dbInitPromise = null;
+    /** @type {any} */
+    var dbSaveTimer = null;
+    /** @type {Promise<any> | null} */
+    var pendingDbSavePromise = null;
 
-    function flushDbSave() {
+    function doActualDbSave() {
+        pendingDbSavePromise = null;
         if (!sqlDb) return Promise.resolve();
         try {
             var data = sqlDb.export();
@@ -226,6 +265,44 @@
             console.error('[browserClient] sql.js export error:', err);
             return Promise.resolve();
         }
+    }
+
+    /**
+     * @param {boolean} [immediate]
+     */
+    function flushDbSave(immediate) {
+        if (!sqlDb) return Promise.resolve();
+        if (dbSaveTimer) {
+            clearTimeout(dbSaveTimer);
+            dbSaveTimer = null;
+        }
+        if (immediate) {
+            return doActualDbSave();
+        }
+        if (!pendingDbSavePromise) {
+            pendingDbSavePromise = new Promise(function (resolve) {
+                dbSaveTimer = setTimeout(function () {
+                    dbSaveTimer = null;
+                    doActualDbSave().then(resolve);
+                }, 250);
+            });
+        }
+        return pendingDbSavePromise;
+    }
+
+    // Flush database immediately when navigating away or switching tabs
+    if (typeof window !== 'undefined') {
+        window.addEventListener('beforeunload', function () {
+            flushDbSave(true);
+        });
+        window.addEventListener('pagehide', function () {
+            flushDbSave(true);
+        });
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') {
+                flushDbSave(true);
+            }
+        });
     }
 
     function initDatabase() {
@@ -274,7 +351,7 @@
                             + 'MD5 TEXT PRIMARY KEY, CONTENTS TEXT);'
                         );
 
-                        flushDbSave().then(function () {
+                        flushDbSave(true).then(function () {
                             resolve(sqlDb);
                         });
                     }).catch(function (err) {
@@ -315,9 +392,8 @@
                 db.run(sql, values);
                 var res = db.exec('SELECT last_insert_rowid() AS id');
                 var insertId = res[0].values[0][0];
-                return flushDbSave().then(function () {
-                    return insertId;
-                });
+                flushDbSave();
+                return Promise.resolve(insertId);
             }
 
             if (op === 'update') {
@@ -343,9 +419,8 @@
                 }
                 db.run(updateSql, setVals.concat(whereVals));
                 var updatedRows = db.getRowsModified();
-                return flushDbSave().then(function () {
-                    return updatedRows;
-                });
+                flushDbSave();
+                return Promise.resolve(updatedRows);
             }
 
             if (op === 'delete') {
@@ -366,9 +441,8 @@
                 }
                 db.run(delSql, delVals);
                 var deletedRows = db.getRowsModified();
-                return flushDbSave().then(function () {
-                    return deletedRows;
-                });
+                flushDbSave();
+                return Promise.resolve(deletedRows);
             }
 
             if (op === 'select') {
@@ -504,18 +578,29 @@
             return Promise.resolve(localStorage.getItem('localization') || null);
         },
 
-        // ---- Virtual File & Media I/O ----
+        // ---- In-Memory Media LRU Cache ----
+        // Avoids repetitive IndexedDB roundtrips for active sprite costumes and sound effects
+        // (Mirrors the MediaCache.kt architecture used on Android)
+        // ---- Virtual File & Media I/O (with In-Memory LRU Cache) ----
         io_setfile: function (/** @type {string} */ name, /** @type {string} */ contents) {
+            putMediaCache(name, contents);
             return idbPut(STORE_MEDIA, name, contents);
         },
 
         io_getfile: function (/** @type {string} */ name) {
+            var inMem = getMediaCache(name);
+            if (inMem !== null) {
+                return Promise.resolve(inMem);
+            }
             return idbGet(STORE_MEDIA, name).then(function (val) {
-                return val || '';
+                var res = val || '';
+                if (res) putMediaCache(name, res);
+                return res;
             });
         },
 
         io_remove: function (/** @type {string} */ name) {
+            removeMediaCache(name);
             return idbDelete(STORE_MEDIA, name);
         },
 
@@ -531,6 +616,7 @@
             try {
                 var hash = md5(base64ContentStr);
                 var filename = hash + '.' + ext;
+                putMediaCache(filename, base64ContentStr);
                 return idbPut(STORE_MEDIA, filename, base64ContentStr).then(function () {
                     return filename;
                 });
@@ -543,6 +629,7 @@
         io_setmedianame: function (/** @type {string} */ encodedData, /** @type {string} */ key, /** @type {string} */ ext) {
             try {
                 var filename = key.endsWith('.' + ext) ? key : (key + '.' + ext);
+                putMediaCache(filename, encodedData);
                 if (sqlDb) {
                     try {
                         sqlDb.run('INSERT OR REPLACE INTO PROJECTFILES (MD5, CONTENTS) VALUES (?, ?);', [filename, encodedData]);
@@ -566,9 +653,16 @@
                 return Promise.resolve(file);
             }
 
+            var inMemory = getMediaCache(file);
+            if (inMemory !== null) {
+                return Promise.resolve(inMemory);
+            }
+
             return idbGet(STORE_MEDIA, file).then(function (cached) {
                 if (cached && typeof cached === 'string') {
-                    return cached.indexOf('data:') === 0 ? (cached.split(',')[1] || cached) : cached;
+                    var clean = cached.indexOf('data:') === 0 ? (cached.split(',')[1] || cached) : cached;
+                    putMediaCache(file, clean);
+                    return clean;
                 }
 
                 // Check SQLite PROJECTFILES table
@@ -579,7 +673,9 @@
                             var rowVal = res[0].values[0][0];
                             if (rowVal && typeof rowVal === 'string') {
                                 idbPut(STORE_MEDIA, file, rowVal).catch(function () {});
-                                return rowVal.indexOf('data:') === 0 ? (rowVal.split(',')[1] || rowVal) : rowVal;
+                                var cleanRow = rowVal.indexOf('data:') === 0 ? (rowVal.split(',')[1] || rowVal) : rowVal;
+                                putMediaCache(file, cleanRow);
+                                return cleanRow;
                             }
                         }
                     } catch (_) {
@@ -589,9 +685,17 @@
 
                 // Try with alternative extension naming
                 var altKey = file.indexOf('.') > -1 ? file.split('.')[0] : (file + '.png');
+                var altInMemory = getMediaCache(altKey);
+                if (altInMemory !== null) {
+                    return altInMemory;
+                }
+
                 return idbGet(STORE_MEDIA, altKey).then(function (altCached) {
                     if (altCached && typeof altCached === 'string') {
-                        return altCached.indexOf('data:') === 0 ? (altCached.split(',')[1] || altCached) : altCached;
+                        var cleanAlt = altCached.indexOf('data:') === 0 ? (altCached.split(',')[1] || altCached) : altCached;
+                        putMediaCache(altKey, cleanAlt);
+                        putMediaCache(file, cleanAlt);
+                        return cleanAlt;
                     }
 
                     var assetPath = file;
@@ -609,6 +713,7 @@
                                 reader.onloadend = function () {
                                     var resStr = reader.result;
                                     var b64 = String(resStr).split(',')[1] || '';
+                                    putMediaCache(file, b64);
                                     resolve(b64);
                                 };
                                 reader.readAsDataURL(blob);
@@ -768,6 +873,7 @@
 
         // ---- Export & Sharing (Browser File Downloads) ----
         sendExportedSjr: function (/** @type {string} */ dataB64, /** @type {string} */ suggestedName) {
+            flushDbSave(true);
             try {
                 var bin = atob(dataB64);
                 var bytes = new Uint8Array(bin.length);

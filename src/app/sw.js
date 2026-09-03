@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-console */
 // ScratchJr Reborn Service Worker (Offline PWA Cache)
-var CACHE_NAME = 'scratchjr-pwa-v1.9.2';
+var CACHE_NAME = 'scratchjr-pwa-v2.0.0';
 
 var PRECACHE_URLS = [
   './',
@@ -17,7 +17,12 @@ var PRECACHE_URLS = [
   './css/editor.css',
   './css/librarymodal.css',
   './css/painteditor.css',
-  './settings.json'
+  './settings.json',
+  '../sql-wasm.js',
+  '../sql-wasm.wasm',
+  '../browserClient.js',
+  '../webav.js',
+  '../hostClient.js'
 ];
 
 const sw = /** @type {any} */ (self);
@@ -47,12 +52,36 @@ self.addEventListener('activate', function (/** @type {any} */ event) {
   );
 });
 
-// Network-First for HTML/JS/JSON (with offline fallback); Cache-First for static media
+var STATIC_ASSET_REGEX = /\.(wasm|svg|png|jpg|jpeg|gif|wav|webm|mp3|ogg|woff|woff2|ttf)$/i;
+
+// Cache-First for static media and WASM; Network-First for HTML/JS/JSON (with offline fallback)
 self.addEventListener('fetch', function (/** @type {any} */ event) {
   if (event.request.method !== 'GET') return;
   var url = event.request.url;
   if (!url.startsWith('http')) return;
 
+  var isStaticAsset = STATIC_ASSET_REGEX.test(url);
+
+  if (isStaticAsset) {
+    // Cache-First for static media & wasm binaries
+    event.respondWith(
+      caches.match(event.request).then(function (cached) {
+        if (cached) return cached;
+        return fetch(event.request).then(function (networkResponse) {
+          if (networkResponse && networkResponse.status === 200) {
+            var responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then(function (cache) {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        });
+      })
+    );
+    return;
+  }
+
+  // Network-First for HTML/JS/JSON (with offline fallback)
   event.respondWith(
     fetch(event.request)
       .then(function (networkResponse) {
