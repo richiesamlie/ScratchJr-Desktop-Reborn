@@ -74,6 +74,12 @@ jobs:
           mkdir -p out-android
           find android/app/build/outputs/apk -name "*.apk" -exec cp {} out-android/ \;
           find android/app/build/outputs/bundle -name "*.aab" -exec cp {} out-android/ \;
+          if [ -f out-android/app-debug.apk ]; then
+            cp out-android/app-debug.apk out-android/ScratchJr-android.apk
+          fi
+          if [ -f out-android/app-release.aab ]; then
+            cp out-android/app-release.aab out-android/ScratchJr-android.aab
+          fi
           echo "Generated Android artifacts:"
           ls -la out-android/
 
