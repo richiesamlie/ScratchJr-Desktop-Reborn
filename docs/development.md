@@ -179,6 +179,31 @@ adb forward tcp:9222 "localabstract:webview_devtools_remote_$pid"
 # Open chrome://inspect in Chromium / Google Chrome
 ```
 
+## Web & PWA development
+
+ScratchJr Reborn includes a standalone browser-based distribution powered by `sql.js` (WebAssembly SQLite) with IndexedDB persistence, Service Worker offline caching, and PWA manifest.
+
+### Build & run locally
+
+```bash
+# 1. Compile web bundle and package dist-web/
+npm run build:web
+
+# 2. Start local static dev server
+npm run serve:web
+
+# 3. Open browser at http://localhost:3000
+# - Landing page: http://localhost:3000/
+# - Web App: http://localhost:3000/play/ or http://localhost:3000/app/
+```
+
+### Automated Web Verification
+
+```bash
+# Run headless Chrome CDP end-to-end smoke test
+node scripts/smoke-web.js
+```
+
 ## Known quirks & follow-ups
 
 - `src/types/globals.d.ts` expando declarations must stay mutually consistent
