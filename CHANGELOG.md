@@ -3,7 +3,7 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [Unreleased - Experimental] (Branch `experimental`)
+## [Unreleased]
 
 **Feature adoptions and robustness improvements inspired by `wangzongjun/ScratchJr` and `patdx/scratchjr`, across Desktop, Android, and Web/PWA.**
 
