@@ -375,5 +375,22 @@
     "USAGE_SCHOOL": "Escola",
     "USAGE_HOME": "Casa",
     "USAGE_OTHER": "Altres",
-    "USAGE_NONE": "No preguntar-ho més"
+    "USAGE_NONE": "No preguntar-ho més",
+    "BLOCK_DESC_FLIP_X": "VOLTEJAR",
+    "LIBRARY_CAT_ALL": "Tots",
+    "LIBRARY_CAT_ANIMALS": "Animals",
+    "LIBRARY_CAT_PEOPLE": "Persones",
+    "LIBRARY_CAT_FANTASY": "Fantasia",
+    "LIBRARY_CAT_PLANTS": "Plantes",
+    "LIBRARY_CAT_NATURE": "Natura",
+    "LIBRARY_CAT_THINGS": "Coses",
+    "LIBRARY_CAT_VEHICLES": "Vehicles",
+    "LIBRARY_CAT_BUILDINGS": "Edificis",
+    "LIBRARY_CAT_CITY": "Ciutat i exteriors",
+    "LIBRARY_CAT_INDOORS": "Interiors",
+    "LIBRARY_CAT_SPACE_WATER": "Espai i submarí",
+    "LIBRARY_SEARCH_PLACEHOLDER": "Cerca...",
+    "LIBRARY_NO_RESULTS": "No s'han trobat elements",
+    "OPEN_PROJECT_TITLE": "Obrir",
+    "MULTI_TAB_NOTICE": "ScratchJr ja està obert en una altra pestanya. Aquesta finestra està en mode només de lectura."
 }

@@ -713,4 +713,39 @@ export function css_vw (x: number) {
     return (x * w / 100.0) + 'px';
 }
 
+/**
+ * UTF-8 safe base64 encoding that avoids DOMException InvalidCharacterError
+ * when strings contain non-Latin1 characters (e.g. Chinese, emojis, Arabic).
+ * Uses standard TextEncoder with binary string chunking, falling back to encodeURIComponent/unescape.
+ */
+export function utf8ToBase64 (str: string): string {
+    if (typeof TextEncoder !== 'undefined') {
+        var bytes = new TextEncoder().encode(str);
+        var binary = '';
+        var chunkSize = 8192;
+        for (var i = 0; i < bytes.length; i += chunkSize) {
+            var chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk));
+        }
+        return btoa(binary);
+    }
+    return btoa(unescape(encodeURIComponent(str)));
+}
+
+/**
+ * UTF-8 safe base64 decoding.
+ * Uses standard TextDecoder, falling back to decodeURIComponent/escape.
+ */
+export function base64ToUtf8 (b64: string): string {
+    var binary = atob(b64);
+    if (typeof TextDecoder !== 'undefined') {
+        var bytes = new Uint8Array(binary.length);
+        for (var j = 0; j < binary.length; j++) {
+            bytes[j] = binary.charCodeAt(j);
+        }
+        return new TextDecoder().decode(bytes);
+    }
+    return decodeURIComponent(escape(binary));
+}
+
 

@@ -375,5 +375,22 @@
     "USAGE_SCHOOL": "学校",
     "USAGE_HOME": "家",
     "USAGE_OTHER": "其他",
-    "USAGE_NONE": "不要再问了"
+    "USAGE_NONE": "不要再问了",
+    "BLOCK_DESC_FLIP_X": "水平翻转",
+    "LIBRARY_CAT_ALL": "全部",
+    "LIBRARY_CAT_ANIMALS": "动物",
+    "LIBRARY_CAT_PEOPLE": "人物",
+    "LIBRARY_CAT_FANTASY": "奇幻",
+    "LIBRARY_CAT_PLANTS": "植物",
+    "LIBRARY_CAT_NATURE": "自然",
+    "LIBRARY_CAT_THINGS": "物品",
+    "LIBRARY_CAT_VEHICLES": "交通",
+    "LIBRARY_CAT_BUILDINGS": "建筑",
+    "LIBRARY_CAT_CITY": "城市与户外",
+    "LIBRARY_CAT_INDOORS": "室内",
+    "LIBRARY_CAT_SPACE_WATER": "太空与水下",
+    "LIBRARY_SEARCH_PLACEHOLDER": "搜索...",
+    "LIBRARY_NO_RESULTS": "未找到相关资源",
+    "OPEN_PROJECT_TITLE": "打开",
+    "MULTI_TAB_NOTICE": "ScratchJr 已在另一个标签页中打开。此窗口处于安全只读模式。"
 }

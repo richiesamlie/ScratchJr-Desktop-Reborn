@@ -24,7 +24,7 @@ import Events from '../utils/Events';
 import Transform from './Transform';
 import Vector from '../geom/Vector';
 import type {Point} from '../geom/Vector';
-import {gn, newHTML, setCanvasSize, getIdFor, setProps, hitRect, frame} from '../utils/lib';
+import {gn, newHTML, setCanvasSize, getIdFor, setProps, hitRect, frame, utf8ToBase64} from '../utils/lib';
 
 // The costume name input carries a local `firstTime` expando flag (see nameFocus).
 interface PaintNameInput extends HTMLInputElement {
@@ -173,7 +173,7 @@ export default class Paint {
 
     static setSplashShade (str: string) {
         BlockSpecs.loadCount--;
-        splashshade = 'data:image/svg+xml;base64,' + btoa(str);
+        splashshade = 'data:image/svg+xml;base64,' + utf8ToBase64(str);
     }
 
     static open (bkg: boolean, md5: string | undefined, sname?: string, cname?: string, cscale?: string | number, sw?: number, sh?: number) {
@@ -850,7 +850,7 @@ export default class Paint {
     }
 
     static setSplashColor (p: HTMLElement, str: string | null, color: string) {
-        var dataurl = 'data:image/svg+xml;base64,' + btoa(str!.replace(/#662D91/g, color));
+        var dataurl = 'data:image/svg+xml;base64,' + utf8ToBase64(str!.replace(/#662D91/g, color));
         Paint.addImageUrl(p, dataurl);
     }
 

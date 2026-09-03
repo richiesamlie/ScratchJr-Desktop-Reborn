@@ -375,5 +375,22 @@
     "USAGE_SCHOOL": "Escola",
     "USAGE_HOME": "Casa",
     "USAGE_OTHER": "Outro",
-    "USAGE_NONE": "Não voltar a perguntar."
+    "USAGE_NONE": "Não voltar a perguntar.",
+    "BLOCK_DESC_FLIP_X": "VIRAR",
+    "LIBRARY_CAT_ALL": "Todos",
+    "LIBRARY_CAT_ANIMALS": "Animais",
+    "LIBRARY_CAT_PEOPLE": "Pessoas",
+    "LIBRARY_CAT_FANTASY": "Fantasia",
+    "LIBRARY_CAT_PLANTS": "Plantas",
+    "LIBRARY_CAT_NATURE": "Natureza",
+    "LIBRARY_CAT_THINGS": "Coisas",
+    "LIBRARY_CAT_VEHICLES": "Veículos",
+    "LIBRARY_CAT_BUILDINGS": "Construções",
+    "LIBRARY_CAT_CITY": "Cidade e ao ar livre",
+    "LIBRARY_CAT_INDOORS": "Interiores",
+    "LIBRARY_CAT_SPACE_WATER": "Espaço e fundo do mar",
+    "LIBRARY_SEARCH_PLACEHOLDER": "Pesquisar...",
+    "LIBRARY_NO_RESULTS": "Nenhum item encontrado",
+    "OPEN_PROJECT_TITLE": "Abrir",
+    "MULTI_TAB_NOTICE": "O ScratchJr já está aberto noutra aba. Esta janela está no modo seguro apenas de leitura."
 }

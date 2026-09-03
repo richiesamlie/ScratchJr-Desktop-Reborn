@@ -83,6 +83,11 @@ export default class Localization {
         });
     }
 
+    static setMessages (messages: Record<string, string>, locale: string = 'en') {
+        localizationMessages = messages;
+        currentLocale = locale;
+    }
+
     // Translate a particular message given the message key and info
     static localize (key: string, formatting?: Record<string, unknown>): string {
         var message;
@@ -97,6 +102,11 @@ export default class Localization {
             return 'Loc missing: ' + key;
         }
         return 'String missing: ' + key;
+    }
+
+    static localizeWithFallback (key: string, fallback: string, formatting?: Record<string, unknown>): string {
+        var val = Localization.localize(key, formatting);
+        return (!val || val.startsWith('String missing') || val.startsWith('Loc missing')) ? fallback : val;
     }
 
     // For sample projects, some fields (sprite names, text on stage, and text in say blocks)

@@ -230,7 +230,7 @@ async function main() {
         const controlsVisible = await s4.eval(`(function(){
             var cards = document.querySelectorAll('.projectthumb');
             for (var i = 0; i < cards.length; i++) {
-                if (cards[i].id && cards[i].id !== 'newproject') {
+                if (cards[i].id && cards[i].id !== 'newproject' && cards[i].id !== 'openproject') {
                     cards[i].dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
                     var exp = cards[i].querySelector('.exportbtn');
                     return exp && exp.style.visibility === 'visible';
@@ -313,8 +313,8 @@ async function main() {
         if (!cards || cards.length !== preImportIds.length + 1) {
             throw new Error('smoke-web: imported project card missing from lobby after reload');
         }
-        const importedCard = cards[1]; // [0] is newproject placeholder, [1] is first ctime-DESC card
-        if (preImportIds.indexOf(importedCard.id) >= 0) {
+        const importedCard = cards.find((c) => c.id !== 'newproject' && c.id !== 'openproject');
+        if (!importedCard || preImportIds.indexOf(importedCard.id) >= 0) {
             throw new Error('smoke-web: no new card appeared at top of lobby');
         }
         console.log('smoke-web: [lobby-after-import] imported card at top:', JSON.stringify(importedCard));

@@ -8,7 +8,8 @@ import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import {gn, newHTML, scaleMultiplier,
-    getDocumentWidth, getDocumentHeight, setProps, newCanvas, frame} from '../../utils/lib';
+    getDocumentWidth, getDocumentHeight, setProps, newCanvas, frame, utf8ToBase64} from '../../utils/lib';
+import LibraryEx from './LibraryEx';
 
 let selectedOne: string | null = null;
 let nativeJr = true;
@@ -17,6 +18,10 @@ let shaking: HTMLElement | null = null;
 let type: string | null = null;
 let timeoutEvent: NodeJS.Timeout | null = null;
 let libFrame: HTMLElement | null = null;
+let currentCategory = 'all';
+let searchQuery = '';
+let cachedUserAssets: Record<string, unknown>[] = [];
+let cachedLibAssets: LibraryMediaItem[] = [];
 
 // Asset thumbnails carry a JSON-stringified pointer for drag-distance checks
 interface LibraryThumb extends HTMLElement {
@@ -57,6 +62,7 @@ export default class Library {
 
         var topbar = newHTML('div', 'topbar', libFrame);
         topbar.setAttribute('id', 'topbar');
+        Library.createSearch(topbar);
         var actions = newHTML('div', 'actions', topbar);
         actions.setAttribute('id', 'libactions');
         var ascontainer = newHTML('div', 'assetname-container', topbar);
@@ -67,17 +73,99 @@ export default class Library {
         Library.layoutHeader();
     }
 
+    static createSearch (topbar: HTMLElement) {
+        var searchContainer = newHTML('div', 'search-container', topbar);
+        searchContainer.setAttribute('id', 'libsearch');
+        var input = newHTML('input', 'search-input', searchContainer) as HTMLInputElement;
+        input.setAttribute('id', 'libsearchinput');
+        input.setAttribute('placeholder', Localization.localizeWithFallback('LIBRARY_SEARCH_PLACEHOLDER', 'Search...'));
+        input.value = searchQuery;
+
+        var clearBtn = newHTML('button', 'search-clear', searchContainer) as HTMLButtonElement;
+        clearBtn.setAttribute('id', 'libsearchclear');
+        clearBtn.setAttribute('type', 'button');
+        clearBtn.setAttribute('aria-label', 'Clear search');
+        clearBtn.textContent = '✕';
+        clearBtn.style.visibility = searchQuery ? 'visible' : 'hidden';
+
+        input.oninput = function () {
+            searchQuery = input.value;
+            clearBtn.style.visibility = searchQuery ? 'visible' : 'hidden';
+            Library.renderFilteredView();
+        };
+
+        var handleClear = function (e: Event) {
+            e.stopPropagation();
+            e.preventDefault();
+            input.value = '';
+            searchQuery = '';
+            clearBtn.style.visibility = 'hidden';
+            Library.renderFilteredView();
+            input.focus();
+        };
+
+        clearBtn.onmousedown = handleClear as (e: MouseEvent) => void;
+        clearBtn.onclick = handleClear;
+    }
+
     static createScrollPanel () {
         var inner = newHTML('div', 'innerlibrary', libFrame!);
         inner.setAttribute('id', 'asssetsview');
+        Library.createCategoryBar(inner);
         var div = newHTML('div', 'scrollarea', inner);
         div.setAttribute('id', 'scrollarea');
         
         Library.resizeScroll();
     }
 
+    static createCategoryBar (inner: HTMLElement) {
+        var classification = newHTML('div', 'classification', inner);
+        classification.setAttribute('id', 'libclassification');
+        classification.setAttribute('role', 'tablist');
+        var categories = LibraryEx.getCategories(type as 'costumes' | 'backgrounds');
+        for (var i = 0; i < categories.length; i++) {
+            var cat = categories[i];
+            var isActive = cat.id === currentCategory;
+            var item = newHTML('button', 'classification-item' + (isActive ? ' active' : ''), classification) as HTMLButtonElement;
+            item.setAttribute('type', 'button');
+            item.setAttribute('role', 'tab');
+            item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            item.textContent = cat.label;
+            item.setAttribute('data-cat', cat.id);
+            var onSelect = function (e: Event) {
+                var target = e.currentTarget as HTMLElement;
+                var catId = target.getAttribute('data-cat') || 'all';
+                Library.selectCategory(catId);
+            };
+            item.onmousedown = onSelect as (e: MouseEvent) => void;
+            item.onclick = onSelect;
+        }
+    }
+
+    static selectCategory (catId: string) {
+        currentCategory = catId;
+        var items = document.querySelectorAll('.classification-item');
+        for (var i = 0; i < items.length; i++) {
+            var el = items[i] as HTMLElement;
+            var isSelected = el.getAttribute('data-cat') === catId;
+            el.className = isSelected ? 'classification-item active' : 'classification-item';
+            el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+        }
+        Library.renderFilteredView();
+    }
+
     static open (libType: string) {
         type = libType;
+        currentCategory = 'all';
+        searchQuery = '';
+        var searchInput = gn('libsearchinput') as HTMLInputElement | null;
+        if (searchInput) {
+            searchInput.value = '';
+            var clearBtn = gn('libsearchclear') as HTMLElement | null;
+            if (clearBtn) {
+                clearBtn.style.visibility = 'hidden';
+            }
+        }
         gn('assetname')!.textContent = '';
         nativeJr = true;
         frame.style.display = 'none';
@@ -235,7 +323,7 @@ export default class Library {
 
                 var dataurl = IO.getThumbnail(svgText, w, h, 120, 90);
                 var pngBase64 = dataurl.split(',')[1];
-                var svgBase64 = btoa(unescape(encodeURIComponent(svgText)));
+                var svgBase64 = utf8ToBase64(svgText);
 
                 PlatformBridge.setmedia(svgBase64, 'svg', function (svgMd5: string) {
                     PlatformBridge.setmedia(pngBase64, 'png', function (pngMd5: string) {
@@ -319,7 +407,7 @@ export default class Library {
                     ctx.drawImage(img, drawX, drawY, drawW, drawH);
                     var pngThumbDataUrl = cnv.toDataURL('image/png');
                     var pngThumbBase64 = pngThumbDataUrl.split(',')[1];
-                    var svgBase64 = btoa(unescape(encodeURIComponent(wrappedSvg)));
+                    var svgBase64 = utf8ToBase64(wrappedSvg);
 
                     PlatformBridge.setmedia(svgBase64, 'svg', function (svgMd5: string) {
                         PlatformBridge.setmedia(pngThumbBase64, 'png', function (pngMd5: string) {
@@ -368,8 +456,6 @@ export default class Library {
     }
 
     static addThumbnails (type?: string) {
-        var div = gn('scrollarea')!;
-        Library.addEmptyThumb(div, (type == 'costumes') ? (118 * scaleMultiplier) : (120 * scaleMultiplier), (type == 'costumes') ? (90 * scaleMultiplier) : (90 * scaleMultiplier));
         var key = (type == 'costumes') ? 'usershapes' : 'userbkgs';
         // Student' assets
         var json: DbSelectIntent = {
@@ -383,18 +469,78 @@ export default class Library {
     }
 
     static displayAssets (str: string) {
-        nativeJr = true;
-        var div = gn('scrollarea')!;
-        var data = JSON.parse(str);
-        if (data.length > 0) {
-            for (var i = 0; i < data.length; i++) {
-                Library.addAssetThumbChoose(div, data[i], 120 * scaleMultiplier, 90 * scaleMultiplier, Library.selectAsset);
+        try {
+            cachedUserAssets = JSON.parse(str) || [];
+        } catch (_) {
+            cachedUserAssets = [];
+        }
+        cachedLibAssets = ((type == 'costumes') ? MediaLib.sprites : MediaLib.backgrounds) || [];
+        Library.renderFilteredView();
+    }
+
+    static renderFilteredView () {
+        var div = gn('scrollarea');
+        if (!div) {
+            return;
+        }
+        div.innerHTML = '';
+
+        const isCostumes = (type === 'costumes');
+        const activeCat = currentCategory;
+        const query = searchQuery;
+
+        // Filter built-in library assets
+        const filteredLib = LibraryEx.filterAssets(
+            cachedLibAssets,
+            isCostumes ? 'costumes' : 'backgrounds',
+            activeCat,
+            query
+        );
+
+        // Filter student user assets
+        let filteredUser: Record<string, unknown>[] = [];
+        if (activeCat === 'all') {
+            if (query) {
+                filteredUser = LibraryEx.filterAssets(
+                    cachedUserAssets as LibraryMediaItem[],
+                    isCostumes ? 'costumes' : 'backgrounds',
+                    activeCat,
+                    query
+                ) as Record<string, unknown>[];
+            } else {
+                filteredUser = cachedUserAssets;
             }
         }
-        Library.addHR(div);
+
+        // Draw Empty Thumb (+) to draw a blank costume or background
+        if (activeCat === 'all' && !query) {
+            Library.addEmptyThumb(
+                div,
+                isCostumes ? (118 * scaleMultiplier) : (120 * scaleMultiplier),
+                isCostumes ? (90 * scaleMultiplier) : (90 * scaleMultiplier)
+            );
+        }
+
+        nativeJr = true;
+        if (filteredUser.length > 0) {
+            for (var i = 0; i < filteredUser.length; i++) {
+                Library.addAssetThumbChoose(div, filteredUser[i], 120 * scaleMultiplier, 90 * scaleMultiplier, Library.selectAsset);
+            }
+        }
         nativeJr = false;
-        data = (type == 'costumes') ? MediaLib.sprites : MediaLib.backgrounds;
-        Library.displayLibAssets(data);
+
+        if (filteredUser.length > 0 && filteredLib.length > 0) {
+            Library.addHR(div);
+        }
+
+        if (filteredLib.length > 0) {
+            Library.displayLibAssets(filteredLib);
+        }
+
+        if (filteredUser.length === 0 && filteredLib.length === 0 && (activeCat !== 'all' || query)) {
+            var nodata = newHTML('div', 'noData', div);
+            nodata.textContent = Localization.localizeWithFallback('LIBRARY_NO_RESULTS', 'No items found');
+        }
     }
 
     static displayLibAssets (data: LibraryMediaItem[]) {
@@ -407,7 +553,7 @@ export default class Library {
         for (var i = 0; i < data.length; i++) {
             order = data[i].order;
             var key2 = order ? order.split(',')[1] : '';
-            if (key2 != key) {
+            if (key2 != key && !searchQuery && currentCategory === 'all') {
                 Library.addHR(div);
                 key = key2;
             }

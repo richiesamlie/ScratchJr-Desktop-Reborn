@@ -177,7 +177,98 @@ Assets chooser
     position: relative;
     padding: 0px;
     margin: 0px;
-    w
+}
+
+/* Category classification tabs */
+.classification {
+    display: flex;
+    flex-wrap: wrap;
+    gap: ${css_vh(1)};
+    padding: ${css_vh(0.8)} ${css_vh(2.5)} ${css_vh(1.2)};
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.classification-item {
+    padding: ${css_vh(0.6)} ${css_vh(1.8)};
+    background: rgba(255, 255, 255, 0.75);
+    border: 2px solid #6C8FA8;
+    border-radius: ${css_vh(2)};
+    font-size: ${css_vh(2.2)};
+    font-family: Roboto, sans-serif;
+    font-weight: 500;
+    color: #2F4D62;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.classification-item:hover {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.classification-item.active {
+    background: #547B99;
+    color: #ffffff;
+    border-color: #37556E;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+/* Search bar in header */
+.search-container {
+    position: absolute;
+    left: ${css_vh(2)};
+    top: ${css_vh(1.8)};
+    height: ${css_vh(5.8)};
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    border: 2px solid #547B99;
+    border-radius: ${css_vh(2.9)};
+    padding: 0 ${css_vh(1.5)};
+    z-index: 12000;
+    box-sizing: border-box;
+}
+
+.search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: ${css_vh(2.5)};
+    font-family: Roboto, sans-serif;
+    color: #243B4C;
+    width: ${css_vh(22)};
+}
+
+.search-clear {
+    margin-left: ${css_vh(1)};
+    color: #7A8E9B;
+    font-size: ${css_vh(2.2)};
+    cursor: pointer;
+    visibility: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    font-weight: bold;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
+}
+
+.search-clear:hover {
+    color: #333;
+}
+
+/* Empty search result message */
+.noData {
+    text-align: center;
+    font-size: ${css_vh(3.2)};
+    font-family: Roboto, sans-serif;
+    color: #557288;
+    margin-top: ${css_vh(10)};
+    width: 100%;
 }
 
 hr.bigdivide{

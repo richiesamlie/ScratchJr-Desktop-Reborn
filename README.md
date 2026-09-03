@@ -26,14 +26,39 @@
 
 ## Features & Improvements
 
+### 🔄 Flip Block & Creative Motion
+- **Horizontal Flip (`flipX`)**: New Blue Motion palette block to mirror sprites horizontally on the fly with native reset on "Go Home".
+- **Vector Block Graphics**: Standardized block icon matching ScratchJr's friendly visual language.
+
+### 🔍 Smart Library Categorization & Live Search
+- **Instant Search**: Live, multi-token search box with instant results and clear button.
+- **Categorized Tabs**: 12 curated categories for costumes (*Animals, People, Fantasy, Plants, Nature, Things, Vehicles, Buildings*) and backgrounds (*Nature, City & Outdoors, Indoors, Space & Undersea*).
+- **100% Native Localization**: Fully translated across all 12 supported languages.
+
+### 📂 1-Click `.sjr` Import Card & Sharing
+- **Lobby "Open" Card**: Dedicated card next to the "+" button in the lobby with native OS file dialog support across Desktop, Android, and Web.
+- **1-Click Project Export**: Dedicated export action on project cards in the lobby (long-press or right-click) routing to native Save File dialog (Desktop), Android Share Sheet, or Web download.
+- **Save-Before-Export Protection**: Automatically flushes active canvas state before generating `.sjr` archives.
+
+### 🌐 Universal Web & PWA Resilience
+- **In-Browser SQLite & IndexedDB Storage**: Full client-side execution via `sql.js` (WebAssembly SQLite) paired with IndexedDB persistence, requiring zero server-side infrastructure and zero isolation headers (runs on standard GitHub Pages).
+- **Multi-Tab Concurrency Guard**: Web Locks API (`navigator.locks`) prevents multi-tab IndexedDB write races, placing secondary tabs in safe read-only mode with a friendly banner.
+- **Storage Eviction Defense**: Automatically requests `navigator.storage.persist()` to guard saved projects against browser cache pruning.
+- **Database Corruption Quarantine**: Damaged SQLite blobs in IndexedDB are safely quarantined to `db_bytes_corrupt_<timestamp>` before resetting to a fresh database.
+- **Full Offline PWA**: Installable PWA with Service Worker (`sw.js`) and asset caching.
+
+### 📱 Native Android Shell
+- **High-Performance Kotlin Shell**: Modern Android architecture utilizing `WebViewAssetLoader`, `@JavascriptInterface` bridge (`AndroidBridge`), and native SQLite with Write-Ahead Logging (WAL).
+- **Hardware Multimedia**: Voice recording and camera photo capture with runtime permission management.
+- **System Interoperability**: Handles system `.sjr` file intents (`android.intent.action.VIEW`) and system share sheet exports via `FileProvider`.
 
 ### 🖼️ Custom Image Import (Characters & Backdrops)
-- **1-Click Import & Drag-and-Drop**: Import photos, drawings, and clipart directly into the Character Library and Backdrop Library modals via the new Import Media button or by dragging files onto the screen.
+- **1-Click Import & Drag-and-Drop**: Import photos, drawings, and clipart directly into the Character Library and Backdrop Library modals via the Import Media button or by dragging files onto the screen.
 - **Universal Image Support**: Works with `.png`, `.jpg`, `.jpeg`, and `.svg` files with automatic filename cleaning and thumbnail generation.
-- **Full Engine Compatibility**: Raster images are automatically wrapped in standard SVG containers with intrinsic aspect ratios preserved, allowing full interaction with physics, stage collision, animation blocks, and cross-device `.sjr` exports.
+- **Unicode UTF-8 Safe Serialization**: Prevents `DOMException: InvalidCharacterError` crashes on international scripts (Chinese, Arabic, emojis, etc.).
 
 ### 🎨 Paint Editor & Creative Tools
-- **New Straight Line & Star Shape Tools**: Dedicated vector line tool and 5-pointed star generator with full paintbucket fill compatibility.
+- **Straight Line & Star Shape Tools**: Dedicated vector line tool and 5-pointed star generator with full paintbucket fill compatibility.
 - **Geometric Constraint Snapping**: Hold `Shift` to draw perfect squares, circles, equilateral triangles, and 45° angle straight lines.
 - **Enriched Color Swatches**: Vibrant color palette with bright golden yellow (`#FFD700`) and clean vector icon scaling.
 
@@ -46,37 +71,34 @@
 - **8 Pages per Project**: Increased from the original 4-page limit to 8 pages by default (configurable via `maxPages` in `settings.json`).
 - **Scrollable Page & Character Strips**: Native mouse-wheel scrolling and responsive layout keep pages and characters easily accessible.
 - **Always-Visible Action Buttons**: "+" add-page and add-character buttons stay pinned on screen at any window size.
-- **Responsive Layout**: Stage, scripts workspace, and block palette scale smoothly across varying desktop display heights.
 
-### 💾 Robust Storage & Data Integrity
+### 💾 Robust Desktop Storage & Data Integrity
 - **Atomic Database Writes**: Saves to a temporary file before renaming, preventing corruption if the app is abruptly closed.
 - **Automatic Backup & Recovery**: Creates rolling `.bak` snapshots on every save and runs `PRAGMA integrity_check` on launch, auto-recovering from backup if needed.
-- **Debounced Persistence**: Rapid changes are coalesced safely and flushed immediately during app shutdown to prevent data loss.
-- **File-Backed Media**: Sprites, backgrounds, sounds, and thumbnails live as files under `Documents\ScratchJR\media` instead of base64 rows inside the database. Existing databases are migrated automatically on first launch (with a backup and byte-for-byte verification), and older databases remain readable.
+- **File-Backed Media**: Sprites, backgrounds, sounds, and thumbnails live as files under `Documents\ScratchJR\media` instead of base64 rows inside the database.
 
-### 🛡️ Security & Modern Architecture
+### 🛡️ Security & Sandboxed Architecture
 - **Sandboxed Renderer**: Built on **Electron 43** with strict `contextIsolation`, preventing direct Node.js execution in the browser process.
 - **Eval-Free Renderer + Hardened CSP**: CSS preprocessing no longer compiles expressions with `Function()`; every page's Content Security Policy dropped `'unsafe-eval'`.
-- **No SQL Over IPC**: The renderer sends typed database intents; the main process composes parameterized SQL from an allowlist of tables and columns. There is no renderer-supplied SQL text to sanitize, and strict file-path containment guards all resource reads.
+- **Typed Intent IPC**: The renderer sends typed database intents; the main process composes parameterized SQL from an allowlist of tables and columns without raw SQL execution.
 
-### 🏗️ Clean Engine/UI Separation
-- **Modern Platform Bridge**: Legacy tablet/iOS wrappers are replaced by a modular `src/app/src/platform/` layer (`PlatformBridge`, `IO`, `MediaLib`) with backward-compatible aliases, eliminating dead mobile hooks.
-- **Typed Port Seam**: The block engine (`editor/engine`, `editor/blocks`) has zero runtime imports of UI singletons or global state — everything flows through the typed `EnginePorts` interface, installed once at boot.
-- **Model Registry**: The invisible `div.owner` expando object graph was replaced by `modelRegistry.ts`, a kind-tagged WeakMap element→model registry (blocks, scripts, sprites, pages, stage, thumbnails).
-- **Per-Page Bundles**: esbuild code splitting gives each screen only its own code — the lobby and start screen no longer parse the block engine or paint editor.
+### 🏗️ Clean Engine & Platform Separation
+- **Modern Platform Bridge**: Platform-specific code is isolated in modular adapters (`electronClient.js`, `browserClient.js`, `webhost.js`) under a common seam (`src/hostClient.js`).
+- **Typed Port Seam**: The block engine (`editor/engine`, `editor/blocks`) has zero runtime imports of UI singletons — everything flows through the typed `EnginePorts` interface.
+- **Model Registry**: Replaced untyped DOM expando properties with a kind-tagged WeakMap registry (`modelRegistry.ts`).
 
-### ⚡ Strict TypeScript & Testing
+### ⚡ Strict TypeScript & Verification Gate
 - **100% Strict TypeScript**: Entire codebase migrated to TypeScript with strict type checking (`strict: true`, zero `any`).
-- **Comprehensive Test Suite**: 153 automated tests covering database intents and persistence, media migration, undo/save-reload golden flows, paint editor shapes and swatches, project duplication, update-check ETag caching, the CSS preprocessor grammar, .sjr import/export, WebRTC permissions, and hybrid touch/pointer input handling.
+- **Comprehensive Test Suite**: **179 automated unit tests** covering database intents, media migration, undo/redo flows, shape tools, flipX block, library search & categories, lobby import card, UTF-8 serialization, and browser concurrency.
+- **End-to-End Smoke Tests**: Automated Chrome DevTools Protocol (CDP) test harnesses for Web/PWA, Electron Desktop, and Android APK builds.
 
 ### 🌍 Classroom & Fleet Deployment
 - **Touchscreen & Smartboard Ready**: Defensive coordinate resolution across mouse, stylus, and touch inputs prevents block dropouts and paint glitches during classroom smartboard activities.
-- **Hardware Multimedia Support**: Explicit WebRTC permission handlers for camera photo insertion in Paint Editor and voice recording.
+- **Hardware Multimedia Support**: WebRTC permission handlers for camera photo insertion in Paint Editor and voice recording.
 - **`--lang` CLI Flag**: Launch with explicit language overrides (e.g., `ScratchJr.exe --lang=fr`), ideal for school environments.
 - **Native Update Checker**: Check for new releases directly from `File` → `Check for Updates...`. Launch-time checks are silent, and conditional (ETag) requests keep the app rate-limit-friendly with the GitHub API.
 - **Working Keyboard Shortcuts**: `Ctrl+S` save, `Ctrl+Z` / `Ctrl+Shift+Z` undo/redo, `Ctrl+N` new project.
-- **`.sjr` Import & Export**: Drag a `.sjr` file onto the lobby to import it with transactional asset verification, or export via `File` → `Export Project (.sjr)...`.
-- **Stage Image Export**: `File` → `Export Stage as PNG...` renders the current page at 2× resolution (960×720) to a PNG you choose.
+- **Stage Image Export**: `File` → `Export Stage as PNG...` renders the current page at 2× resolution (960×720) to a PNG of your choice.
 - **Configurable MSI Installer**: Supports silent deployment, pinned `UpgradeCode`, per-machine scopes, and uninstallation options (`REMOVE_DATABASE=1`).
 
 ### 📚 Documentation & Architecture Guides
@@ -98,20 +120,23 @@
 # Install dependencies
 npm install
 
-# Run in development mode
-npm start
-
-# Run tests and typecheck
+# Run unit tests and static analysis
 npm test
 npm run typecheck
+npx eslint src
 
-# End-to-end harnesses (boot the real app via Chrome DevTools Protocol)
-npm run smoke      # boot -> lobby -> editor -> help -> media round-trip
-npm run interact   # real pointer drags: sprite move, block docking, undo replay
+# Target Builds
+npm run build:renderer     # Build renderer bundle
+npm run build:web          # Build static Web / PWA to dist-web/
+npm run build:android      # Sync assets to Android project
 
-# Package portable ZIP or MSI
-npm run make:zip
-npm run make
+# End-to-End Smoke Tests
+node scripts/smoke-web.js  # Headless browser test (PWA / Web)
+node scripts/smoke-test.js # Electron desktop smoke test
+
+# Desktop Packaging (Windows / macOS / Linux)
+npm run make:zip           # Package portable ZIP
+npm run make               # Package native installer (e.g. MSI on Windows)
 ```
 
 ---
@@ -121,6 +146,19 @@ npm run make
 See [CHANGELOG.md](CHANGELOG.md) for the full version history. Highlights of
 the fork versus the original tablet codebase are listed under
 [Features & Improvements](#features--improvements) above.
+
+---
+
+## Acknowledgements & Credits
+
+ScratchJr Reborn builds upon the dedicated work of the open-source community:
+
+- **Original ScratchJr**: Created by the [Tufts DevTech Research Group](https://sites.tufts.edu/devtech/), the [Lifelong Kindergarten group at MIT Media Lab](https://www.media.mit.edu/groups/lifelong-kindergarten/overview/), and the [Playful Invention Company](http://www.playfulinvention.com/). Official source: [`scratchfoundation/scratchjr`](https://github.com/scratchfoundation/scratchjr).
+- **Desktop Electron Pioneers**: Initial desktop adaptations and WebRTC pointer/camera integration by [`jfo8000/ScratchJr-Desktop`](https://github.com/jfo8000/ScratchJr-Desktop) and [`JustSch/ScratchJr-Desktop`](https://github.com/JustSch/ScratchJr-Desktop).
+- **Feature Inspirations**:
+  - [`wangzongjun/ScratchJr`](https://github.com/wangzongjun/ScratchJr): Inspiration for the horizontal flip motion block (`flipX`), asset library categorization and search, 1-click `.sjr` import card, and UTF-8 Base64 serialization.
+  - [`patdx/scratchjr`](https://github.com/patdx/scratchjr): Inspiration for web storage resilience architectures: multi-tab concurrency protection via the Web Locks API (`navigator.locks`), browser storage eviction defense (`navigator.storage.persist()`), and database corruption quarantine.
+- **WebAssembly SQLite**: Powered by [SQL.js](https://github.com/sql-js/sql.js) and [SQLite.org](https://sqlite.org/).
 
 ---
 

@@ -375,5 +375,22 @@
     "USAGE_SCHOOL": "School",
     "USAGE_HOME": "Thuis",
     "USAGE_OTHER": "Anders",
-    "USAGE_NONE": "Niet opnieuw vragen"
+    "USAGE_NONE": "Niet opnieuw vragen",
+    "BLOCK_DESC_FLIP_X": "OMDRAAIEN",
+    "LIBRARY_CAT_ALL": "Alles",
+    "LIBRARY_CAT_ANIMALS": "Dieren",
+    "LIBRARY_CAT_PEOPLE": "Mensen",
+    "LIBRARY_CAT_FANTASY": "Fantasie",
+    "LIBRARY_CAT_PLANTS": "Planten",
+    "LIBRARY_CAT_NATURE": "Natuur",
+    "LIBRARY_CAT_THINGS": "Dingen",
+    "LIBRARY_CAT_VEHICLES": "Voertuigen",
+    "LIBRARY_CAT_BUILDINGS": "Gebouwen",
+    "LIBRARY_CAT_CITY": "Stad & Buiten",
+    "LIBRARY_CAT_INDOORS": "Binnen",
+    "LIBRARY_CAT_SPACE_WATER": "Ruimte & Onderwater",
+    "LIBRARY_SEARCH_PLACEHOLDER": "Zoeken...",
+    "LIBRARY_NO_RESULTS": "Geen items gevonden",
+    "OPEN_PROJECT_TITLE": "Openen",
+    "MULTI_TAB_NOTICE": "ScratchJr is al geopend in een ander tabblad. Dit venster staat in de veilige alleen-lezen modus."
 }

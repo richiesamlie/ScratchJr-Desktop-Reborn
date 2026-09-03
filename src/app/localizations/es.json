@@ -375,5 +375,22 @@
     "USAGE_SCHOOL": "School",
     "USAGE_HOME": "Home",
     "USAGE_OTHER": "Other",
-    "USAGE_NONE": "Don't ask again"
+    "USAGE_NONE": "Don't ask again",
+    "BLOCK_DESC_FLIP_X": "VOLTEAR",
+    "LIBRARY_CAT_ALL": "Todos",
+    "LIBRARY_CAT_ANIMALS": "Animales",
+    "LIBRARY_CAT_PEOPLE": "Personas",
+    "LIBRARY_CAT_FANTASY": "Fantasía",
+    "LIBRARY_CAT_PLANTS": "Plantas",
+    "LIBRARY_CAT_NATURE": "Naturaleza",
+    "LIBRARY_CAT_THINGS": "Cosas",
+    "LIBRARY_CAT_VEHICLES": "Vehículos",
+    "LIBRARY_CAT_BUILDINGS": "Edificios",
+    "LIBRARY_CAT_CITY": "Ciudad y exteriores",
+    "LIBRARY_CAT_INDOORS": "Interiores",
+    "LIBRARY_CAT_SPACE_WATER": "Espacio y submarino",
+    "LIBRARY_SEARCH_PLACEHOLDER": "Buscar...",
+    "LIBRARY_NO_RESULTS": "No se encontraron elementos",
+    "OPEN_PROJECT_TITLE": "Abrir",
+    "MULTI_TAB_NOTICE": "ScratchJr ya está abierto en otra pestaña. Esta ventana está en modo de solo lectura."
 }
