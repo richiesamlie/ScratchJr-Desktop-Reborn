@@ -49,6 +49,7 @@ export default class Home {
         tb.id = 'newproject';
     }
 
+    // Lobby 1-click open project card inspired by wangzongjun/ScratchJr (https://github.com/wangzongjun/ScratchJr)
     static openProjectThumbnail (parent: HTMLElement) {
         var tb = newHTML('div', 'projectthumb', parent) as ThumbElement;
         newHTML('div', 'aproject open', tb);

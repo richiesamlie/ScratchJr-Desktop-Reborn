@@ -716,6 +716,7 @@ export function css_vw (x: number) {
 /**
  * UTF-8 safe base64 encoding that avoids DOMException InvalidCharacterError
  * when strings contain non-Latin1 characters (e.g. Chinese, emojis, Arabic).
+ * Inspired by wangzongjun/ScratchJr (https://github.com/wangzongjun/ScratchJr).
  * Uses standard TextEncoder with binary string chunking, falling back to encodeURIComponent/unescape.
  */
 export function utf8ToBase64 (str: string): string {

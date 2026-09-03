@@ -303,6 +303,7 @@ export default class Sprite {
     // sprite Primitives
     //////////////////////////////////////////////////////////////////////////////
 
+    // Horizontal mirroring inspired by wangzongjun/ScratchJr (https://github.com/wangzongjun/ScratchJr)
     flipX () {
         this.flip = !this.flip;
         this.render();

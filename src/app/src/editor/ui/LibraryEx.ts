@@ -1,3 +1,4 @@
+// Library categorization and search inspired by wangzongjun/ScratchJr (https://github.com/wangzongjun/ScratchJr)
 import Localization from "../../utils/Localization";
 
 export interface CategoryItem {
