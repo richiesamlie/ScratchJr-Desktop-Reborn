@@ -9,20 +9,20 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
 
 ### New Features
 - **Horizontal Flip Motion Block (`flipX`)**:
-  - Integrated `flipX` motion block into the Blue Motion palette (`BlockSpecs.ts`, `Prims.ts`, `Sprite.ts`).
+  - Inspired by [`wangzongjun/ScratchJr`](https://github.com/wangzongjun/ScratchJr). Integrated `flipX` motion block into the Blue Motion palette (`BlockSpecs.ts`, `Prims.ts`, `Sprite.ts`).
   - Added vector block icon `FlipX.svg` with native sprite orientation flipping and reset on `goHome`.
 - **Media Library Categorization & Real-Time Search**:
-  - Added `LibraryEx.ts` classification engine for costumes and backgrounds.
+  - Inspired by [`wangzongjun/ScratchJr`](https://github.com/wangzongjun/ScratchJr). Added `LibraryEx.ts` classification engine for costumes and backgrounds.
   - Interactive category tab pills (`#libclassification`) and instant multi-token search box (`#libsearch`) in `Library.ts`.
 - **Lobby 1-Click `.sjr` Import Card**:
-  - Dedicated "Open" card next to "+" in the lobby (`Home.ts`) with cross-platform native file dialog support.
+  - Inspired by [`wangzongjun/ScratchJr`](https://github.com/wangzongjun/ScratchJr). Dedicated "Open" card next to "+" in the lobby (`Home.ts`) with cross-platform native file dialog support.
 - **Unicode UTF-8 Safe SVG & Text Base64 Serialization**:
   - Added `utf8ToBase64` / `base64ToUtf8` utilities in `lib.ts` and integrated across `Sprite.ts`, `Page.ts`, `Paint.ts`, `IO.ts`, and `Library.ts`.
   - Fixes `DOMException: InvalidCharacterError` crashes on non-Latin1 / international text and emojis.
 - **12-Language Native Localization**:
   - Full native translations for all new UI strings across all 12 supported locales (`en`, `zh-cn`, `es`, `fr`, `de`, `it`, `ja`, `nl`, `pt`, `sv`, `ca`, `th`).
 - **Browser Storage Resilience & Concurrency Protection (Web/PWA)**:
-  - Added multi-tab concurrency lock via Web Locks API (`navigator.locks.request`) to prevent multi-tab IndexedDB write races.
+  - Inspired by [`patdx/scratchjr`](https://github.com/patdx/scratchjr). Added multi-tab concurrency lock via Web Locks API (`navigator.locks.request`) to prevent multi-tab IndexedDB write races.
   - Added storage eviction protection via `navigator.storage.persist()`.
   - Added database corruption quarantine to archive damaged IndexedDB SQLite blobs under `db_bytes_corrupt_<timestamp>` before initializing fresh database.
 
