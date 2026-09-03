@@ -81,8 +81,10 @@ export default class Library {
         input.setAttribute('placeholder', Localization.localizeWithFallback('LIBRARY_SEARCH_PLACEHOLDER', 'Search...'));
         input.value = searchQuery;
 
-        var clearBtn = newHTML('div', 'search-clear', searchContainer);
+        var clearBtn = newHTML('button', 'search-clear', searchContainer) as HTMLButtonElement;
         clearBtn.setAttribute('id', 'libsearchclear');
+        clearBtn.setAttribute('type', 'button');
+        clearBtn.setAttribute('aria-label', 'Clear search');
         clearBtn.textContent = '✕';
         clearBtn.style.visibility = searchQuery ? 'visible' : 'hidden';
 
@@ -92,14 +94,18 @@ export default class Library {
             Library.renderFilteredView();
         };
 
-        clearBtn.onmousedown = function (e: MouseEvent) {
+        var handleClear = function (e: Event) {
             e.stopPropagation();
             e.preventDefault();
             input.value = '';
             searchQuery = '';
             clearBtn.style.visibility = 'hidden';
             Library.renderFilteredView();
+            input.focus();
         };
+
+        clearBtn.onmousedown = handleClear as (e: MouseEvent) => void;
+        clearBtn.onclick = handleClear;
     }
 
     static createScrollPanel () {
@@ -115,16 +121,24 @@ export default class Library {
     static createCategoryBar (inner: HTMLElement) {
         var classification = newHTML('div', 'classification', inner);
         classification.setAttribute('id', 'libclassification');
+        classification.setAttribute('role', 'tablist');
         var categories = LibraryEx.getCategories(type as 'costumes' | 'backgrounds');
         for (var i = 0; i < categories.length; i++) {
-            var item = newHTML('div', 'classification-item' + (categories[i].id === currentCategory ? ' active' : ''), classification);
-            item.textContent = categories[i].label;
-            item.setAttribute('data-cat', categories[i].id);
-            item.onmousedown = function (e: MouseEvent) {
+            var cat = categories[i];
+            var isActive = cat.id === currentCategory;
+            var item = newHTML('button', 'classification-item' + (isActive ? ' active' : ''), classification) as HTMLButtonElement;
+            item.setAttribute('type', 'button');
+            item.setAttribute('role', 'tab');
+            item.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            item.textContent = cat.label;
+            item.setAttribute('data-cat', cat.id);
+            var onSelect = function (e: Event) {
                 var target = e.currentTarget as HTMLElement;
                 var catId = target.getAttribute('data-cat') || 'all';
                 Library.selectCategory(catId);
             };
+            item.onmousedown = onSelect as (e: MouseEvent) => void;
+            item.onclick = onSelect;
         }
     }
 
@@ -133,11 +147,9 @@ export default class Library {
         var items = document.querySelectorAll('.classification-item');
         for (var i = 0; i < items.length; i++) {
             var el = items[i] as HTMLElement;
-            if (el.getAttribute('data-cat') === catId) {
-                el.className = 'classification-item active';
-            } else {
-                el.className = 'classification-item';
-            }
+            var isSelected = el.getAttribute('data-cat') === catId;
+            el.className = isSelected ? 'classification-item active' : 'classification-item';
+            el.setAttribute('aria-selected', isSelected ? 'true' : 'false');
         }
         Library.renderFilteredView();
     }

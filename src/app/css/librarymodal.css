@@ -200,6 +200,7 @@ Assets chooser
     font-weight: 500;
     color: #2F4D62;
     cursor: pointer;
+    outline: none;
     transition: background 0.15s ease, color 0.15s ease;
     -webkit-tap-highlight-color: transparent;
 }
@@ -250,6 +251,10 @@ Assets chooser
     user-select: none;
     -webkit-user-select: none;
     font-weight: bold;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
 }
 
 .search-clear:hover {

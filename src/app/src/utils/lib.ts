@@ -722,9 +722,10 @@ export function utf8ToBase64 (str: string): string {
     if (typeof TextEncoder !== 'undefined') {
         var bytes = new TextEncoder().encode(str);
         var binary = '';
-        var len = bytes.byteLength;
-        for (var i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
+        var chunkSize = 8192;
+        for (var i = 0; i < bytes.length; i += chunkSize) {
+            var chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, Array.from(chunk));
         }
         return btoa(binary);
     }

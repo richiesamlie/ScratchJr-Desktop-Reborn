@@ -284,10 +284,18 @@
         banner.style.zIndex = '999999';
         banner.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
 
-        var closeBtn = document.createElement('span');
-        closeBtn.textContent = ' ✕';
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.setAttribute('aria-label', 'Dismiss notice');
+        closeBtn.textContent = '✕';
         closeBtn.style.marginLeft = '12px';
         closeBtn.style.cursor = 'pointer';
+        closeBtn.style.background = 'transparent';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = '#fff';
+        closeBtn.style.fontSize = '14px';
+        closeBtn.style.fontWeight = 'bold';
+        closeBtn.style.padding = '0 4px';
         closeBtn.onclick = function () {
             banner.remove();
         };
