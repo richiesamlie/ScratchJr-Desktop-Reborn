@@ -243,6 +243,93 @@
         }
     }
 
+    // ---- Multi-Tab Concurrency Guard & Web Lock ----
+    // Concurrency locking (Web Locks API), storage eviction protection, and
+    // corruption quarantine inspired by patdx/scratchjr (https://github.com/patdx/scratchjr)
+    var hasExclusiveLock = true;
+    /** @type {((value?: any) => void) | null} */
+    var releaseExclusiveLock = null;
+
+    function showMultiTabNotice() {
+        if (typeof document === 'undefined') return;
+        if (document.getElementById('scratchjr_multitab_notice')) return;
+        var banner = document.createElement('div');
+        banner.id = 'scratchjr_multitab_notice';
+        banner.textContent = 'ScratchJr is already open in another tab. This window is in safe read-only mode.';
+        banner.style.position = 'fixed';
+        banner.style.top = '0';
+        banner.style.left = '0';
+        banner.style.right = '0';
+        banner.style.backgroundColor = '#c0392b';
+        banner.style.color = '#fff';
+        banner.style.padding = '8px 16px';
+        banner.style.textAlign = 'center';
+        banner.style.fontFamily = 'sans-serif';
+        banner.style.fontSize = '14px';
+        banner.style.fontWeight = 'bold';
+        banner.style.zIndex = '999999';
+        banner.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+
+        var closeBtn = document.createElement('span');
+        closeBtn.textContent = ' ✕';
+        closeBtn.style.marginLeft = '12px';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.onclick = function () {
+            banner.remove();
+        };
+        banner.appendChild(closeBtn);
+
+        var append = function () {
+            if (document.body && !document.getElementById('scratchjr_multitab_notice')) {
+                document.body.appendChild(banner);
+            }
+        };
+        if (document.body) {
+            append();
+        } else {
+            window.addEventListener('DOMContentLoaded', append);
+        }
+    }
+
+    function acquireWebLock() {
+        if (typeof navigator === 'undefined' || !navigator.locks || typeof navigator.locks.request !== 'function') {
+            return Promise.resolve(true);
+        }
+        return new Promise(function (resolve) {
+            var settled = false;
+            navigator.locks.request('scratchjr_db_lock', { ifAvailable: true }, function (lock) {
+                if (!lock) {
+                    if (!settled) {
+                        settled = true;
+                        resolve(false);
+                    }
+                    return Promise.resolve();
+                }
+                if (settled) {
+                    return Promise.resolve();
+                }
+                settled = true;
+                resolve(true);
+                return new Promise(function (rel) {
+                    releaseExclusiveLock = rel;
+                });
+            }).catch(function (err) {
+                console.warn('[browserClient] navigator.locks error:', err);
+                if (!settled) {
+                    settled = true;
+                    resolve(true);
+                }
+            });
+
+            setTimeout(function () {
+                if (!settled) {
+                    settled = true;
+                    resolve(true);
+                }
+            }, 600);
+        });
+    }
+
     // ---- sql.js WebAssembly Database Manager ----
     /** @type {any} */
     var sqlDb = null;
@@ -256,6 +343,10 @@
     function doActualDbSave() {
         pendingDbSavePromise = null;
         if (!sqlDb) return Promise.resolve();
+        if (!hasExclusiveLock) {
+            console.warn('[browserClient] Secondary tab: skipping IndexedDB save to protect active session');
+            return Promise.resolve();
+        }
         try {
             var data = sqlDb.export();
             return idbPut(STORE_SQLITE, 'db_bytes', data).catch(function (/** @type {any} */ e) {
@@ -292,12 +383,16 @@
 
     // Flush database immediately when navigating away or switching tabs
     if (typeof window !== 'undefined') {
-        window.addEventListener('beforeunload', function () {
+        var onLeave = function () {
             flushDbSave(true);
-        });
-        window.addEventListener('pagehide', function () {
-            flushDbSave(true);
-        });
+            if (releaseExclusiveLock) {
+                var rel = releaseExclusiveLock;
+                releaseExclusiveLock = null;
+                rel();
+            }
+        };
+        window.addEventListener('beforeunload', onLeave);
+        window.addEventListener('pagehide', onLeave);
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'hidden') {
                 flushDbSave(true);
@@ -307,24 +402,46 @@
 
     function initDatabase() {
         if (dbInitPromise) return dbInitPromise;
-        dbInitPromise = new Promise(function (resolve, reject) {
-            function loadSqlEngine() {
-                var locateWasm = function (/** @type {string} */ file) {
-                    return '../' + file;
-                };
-                var sqlInit = /** @type {any} */ (window).initSqlJs;
-                sqlInit({ locateFile: locateWasm }).then(function (/** @type {any} */ SQL) {
-                    idbGet(STORE_SQLITE, 'db_bytes').then(function (savedBytes) {
-                        if (savedBytes && savedBytes.length > 0) {
-                            try {
-                                sqlDb = new SQL.Database(new Uint8Array(savedBytes));
-                            } catch (e) {
-                                console.warn('[browserClient] Saved database corrupt, creating fresh DB:', e);
+        dbInitPromise = acquireWebLock().then(function (acquired) {
+            hasExclusiveLock = acquired;
+            if (!hasExclusiveLock) {
+                console.warn('[browserClient] Multi-tab detected: running in read-only mode');
+                showMultiTabNotice();
+            }
+
+            // Storage eviction defense: request persistent storage
+            if (typeof navigator !== 'undefined' && navigator.storage && typeof navigator.storage.persist === 'function') {
+                navigator.storage.persist().then(function (persisted) {
+                    if (persisted) {
+                        console.log('[browserClient] Storage will not be evicted under disk pressure');
+                    }
+                }).catch(function (err) {
+                    console.warn('[browserClient] Storage persist request failed:', err);
+                });
+            }
+
+            return new Promise(function (resolve, reject) {
+                function loadSqlEngine() {
+                    var locateWasm = function (/** @type {string} */ file) {
+                        return '../' + file;
+                    };
+                    var sqlInit = /** @type {any} */ (window).initSqlJs;
+                    sqlInit({ locateFile: locateWasm }).then(function (/** @type {any} */ SQL) {
+                        idbGet(STORE_SQLITE, 'db_bytes').then(function (savedBytes) {
+                            if (savedBytes && savedBytes.length > 0) {
+                                try {
+                                    sqlDb = new SQL.Database(new Uint8Array(savedBytes));
+                                } catch (e) {
+                                    console.warn('[browserClient] Saved database corrupt, quarantining and creating fresh DB:', e);
+                                    var corruptKey = 'db_bytes_corrupt_' + Date.now();
+                                    idbPut(STORE_SQLITE, corruptKey, savedBytes).catch(function (err) {
+                                        console.error('[browserClient] Failed to quarantine corrupt DB:', err);
+                                    });
+                                    sqlDb = new SQL.Database();
+                                }
+                            } else {
                                 sqlDb = new SQL.Database();
                             }
-                        } else {
-                            sqlDb = new SQL.Database();
-                        }
 
                         // Run standard table initialization
                         sqlDb.run(
@@ -373,8 +490,9 @@
                 }, 20);
             }
         });
-        return dbInitPromise;
-    }
+    });
+    return dbInitPromise;
+}
 
     // SQL Intent statement/query composer (matches src/lib/db-intents.ts)
     /** @param {any} intent */

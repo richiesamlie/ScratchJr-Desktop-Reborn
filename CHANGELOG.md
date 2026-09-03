@@ -5,7 +5,7 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
 
 ## [Unreleased - Experimental] (Branch `experimental`)
 
-**Feature adoptions and robustness improvements inspired by `wangzongjun/ScratchJr`, across Desktop, Android, and Web/PWA.**
+**Feature adoptions and robustness improvements inspired by `wangzongjun/ScratchJr` and `patdx/scratchjr`, across Desktop, Android, and Web/PWA.**
 
 ### New Features
 - **Horizontal Flip Motion Block (`flipX`)**:
@@ -21,6 +21,10 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Fixes `DOMException: InvalidCharacterError` crashes on non-Latin1 / international text and emojis.
 - **12-Language Native Localization**:
   - Full native translations for all new UI strings across all 12 supported locales (`en`, `zh-cn`, `es`, `fr`, `de`, `it`, `ja`, `nl`, `pt`, `sv`, `ca`, `th`).
+- **Browser Storage Resilience & Concurrency Protection (Web/PWA)**:
+  - Added multi-tab concurrency lock via Web Locks API (`navigator.locks.request`) to prevent multi-tab IndexedDB write races.
+  - Added storage eviction protection via `navigator.storage.persist()`.
+  - Added database corruption quarantine to archive damaged IndexedDB SQLite blobs under `db_bytes_corrupt_<timestamp>` before initializing fresh database.
 
 ## [v2.0.0] - 2026-09-03
 
