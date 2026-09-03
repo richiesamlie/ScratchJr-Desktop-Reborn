@@ -49,6 +49,34 @@ export default class Home {
         tb.id = 'newproject';
     }
 
+    static openProjectThumbnail (parent: HTMLElement) {
+        var tb = newHTML('div', 'projectthumb', parent) as ThumbElement;
+        newHTML('div', 'aproject open', tb);
+        tb.id = 'openproject';
+        var label = newHTML('div', 'projecttitle', tb);
+        var txt = newHTML('h4', undefined, label);
+        txt.textContent = Localization.localize('OPEN_PROJECT_TITLE') || 'Open';
+    }
+
+    static openFileDialog () {
+        var input = document.getElementById('open-project-file-input') as HTMLInputElement | null;
+        if (!input) {
+            input = document.createElement('input');
+            input.type = 'file';
+            input.id = 'open-project-file-input';
+            input.accept = '.sjr';
+            input.style.display = 'none';
+            document.body.appendChild(input);
+            input.onchange = function () {
+                if (input && input.files && input.files.length > 0) {
+                    Home.importSjrFile(input.files[0]);
+                    input.value = '';
+                }
+            };
+        }
+        input.click();
+    }
+
     //////////////////////////
     // Events
     //////////////////////////
@@ -142,6 +170,8 @@ export default class Home {
             ScratchAudio.sndFX('keydown.wav');
             if (md5 && (md5 == 'newproject')) {
                 Home.createNewProject();
+            } else if (md5 && (md5 == 'openproject')) {
+                Home.openFileDialog();
             } else if (md5) {
                 PlatformBridge.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
                     doNext();
@@ -149,12 +179,12 @@ export default class Home {
             }
             break;
         case 'duplicate':
-            if (md5 && (md5 !== 'newproject')) {
+            if (md5 && (md5 !== 'newproject') && (md5 !== 'openproject')) {
                 Home.duplicateProject(md5);
             }
             break;
         case 'export':
-            if (md5 && (md5 !== 'newproject')) {
+            if (md5 && (md5 !== 'newproject') && (md5 !== 'openproject')) {
                 ScratchAudio.sndFX('tap.wav');
                 import('../platform/IO').then(({ default: IO }) => {
                     IO.zipProject(md5, (contents: string) => {
@@ -317,7 +347,7 @@ export default class Home {
         if (div) {
             for (var i = 0; i < div.childElementCount; i++) {
                 const child = div.childNodes[i] as HTMLElement;
-                if (child.id === 'newproject') {
+                if (child.id === 'newproject' || child.id === 'openproject') {
                     continue;
                 }
                 const titleNode = child.querySelector ? child.querySelector('.projecttitle h4') : null;
@@ -447,6 +477,7 @@ export default class Home {
             div.removeChild(div.childNodes[0]);
         }
         Home.emptyProjectThumbnail(div);
+        Home.openProjectThumbnail(div);
         for (var i = 0; i < data.length; i++) {
             Home.addProjectLink(div, data[i]);
         }

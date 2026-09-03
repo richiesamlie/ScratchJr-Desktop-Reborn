@@ -83,6 +83,11 @@ export default class Localization {
         });
     }
 
+    static setMessages (messages: Record<string, string>, locale: string = 'en') {
+        localizationMessages = messages;
+        currentLocale = locale;
+    }
+
     // Translate a particular message given the message key and info
     static localize (key: string, formatting?: Record<string, unknown>): string {
         var message;

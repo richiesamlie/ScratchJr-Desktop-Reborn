@@ -3,6 +3,25 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [Unreleased - Experimental] (Branch `experimental`)
+
+**Feature adoptions and robustness improvements inspired by `wangzongjun/ScratchJr`, across Desktop, Android, and Web/PWA.**
+
+### New Features
+- **Horizontal Flip Motion Block (`flipX`)**:
+  - Integrated `flipX` motion block into the Blue Motion palette (`BlockSpecs.ts`, `Prims.ts`, `Sprite.ts`).
+  - Added vector block icon `FlipX.svg` with native sprite orientation flipping and reset on `goHome`.
+- **Media Library Categorization & Real-Time Search**:
+  - Added `LibraryEx.ts` classification engine for costumes and backgrounds.
+  - Interactive category tab pills (`#libclassification`) and instant multi-token search box (`#libsearch`) in `Library.ts`.
+- **Lobby 1-Click `.sjr` Import Card**:
+  - Dedicated "Open" card next to "+" in the lobby (`Home.ts`) with cross-platform native file dialog support.
+- **Unicode UTF-8 Safe SVG & Text Base64 Serialization**:
+  - Added `utf8ToBase64` / `base64ToUtf8` utilities in `lib.ts` and integrated across `Sprite.ts`, `Page.ts`, `Paint.ts`, `IO.ts`, and `Library.ts`.
+  - Fixes `DOMException: InvalidCharacterError` crashes on non-Latin1 / international text and emojis.
+- **12-Language Native Localization**:
+  - Full native translations for all new UI strings across all 12 supported locales (`en`, `zh-cn`, `es`, `fr`, `de`, `it`, `ja`, `nl`, `pt`, `sv`, `ca`, `th`).
+
 ## [v2.0.0] - 2026-09-03
 
 **Major Milestone Release: Universal Multi-Target Architecture (Web/PWA on GitHub Pages, Desktop for Windows/macOS/Linux, and Native Android).**

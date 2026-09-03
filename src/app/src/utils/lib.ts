@@ -713,4 +713,19 @@ export function css_vw (x: number) {
     return (x * w / 100.0) + 'px';
 }
 
+/**
+ * UTF-8 safe base64 encoding that avoids DOMException InvalidCharacterError
+ * when strings contain non-Latin1 characters (e.g. Chinese, emojis, Arabic).
+ */
+export function utf8ToBase64 (str: string): string {
+    return btoa(unescape(encodeURIComponent(str)));
+}
+
+/**
+ * UTF-8 safe base64 decoding.
+ */
+export function base64ToUtf8 (b64: string): string {
+    return decodeURIComponent(escape(atob(b64)));
+}
+
 

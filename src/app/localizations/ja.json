@@ -375,5 +375,21 @@
     "USAGE_SCHOOL": "がっこう",
     "USAGE_HOME": "ほーむ",
     "USAGE_OTHER": "そのほか",
-    "USAGE_NONE": "もうきかないでください。"
+    "USAGE_NONE": "もうきかないでください。",
+    "BLOCK_DESC_FLIP_X": "はんてん",
+    "LIBRARY_CAT_ALL": "すべて",
+    "LIBRARY_CAT_ANIMALS": "どうぶつ",
+    "LIBRARY_CAT_PEOPLE": "ひと",
+    "LIBRARY_CAT_FANTASY": "ファンタジー",
+    "LIBRARY_CAT_PLANTS": "しょくぶつ",
+    "LIBRARY_CAT_NATURE": "しぜん",
+    "LIBRARY_CAT_THINGS": "もの",
+    "LIBRARY_CAT_VEHICLES": "のりもの",
+    "LIBRARY_CAT_BUILDINGS": "たてもの",
+    "LIBRARY_CAT_CITY": "まち・そと",
+    "LIBRARY_CAT_INDOORS": "へやのなか",
+    "LIBRARY_CAT_SPACE_WATER": "うちゅう・うみのなか",
+    "LIBRARY_SEARCH_PLACEHOLDER": "けんさく...",
+    "LIBRARY_NO_RESULTS": "みつかりませんでした",
+    "OPEN_PROJECT_TITLE": "ひらく"
 }

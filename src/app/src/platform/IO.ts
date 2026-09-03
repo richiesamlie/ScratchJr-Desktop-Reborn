@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 
 import PlatformBridge from './PlatformBridge.js';
 import MediaLib from './MediaLib.js';
-import {setCanvasSize, drawThumbnail, gn} from '../utils/lib';
+import {setCanvasSize, drawThumbnail, gn, utf8ToBase64} from '../utils/lib';
 import SVG2Canvas from '../utils/SVG2Canvas';
 
 const database = 'projects';
@@ -87,7 +87,7 @@ export default class IO {
         }
 
         function gotit (str: string) {
-            var base64 = IO.getImageDataURL(md5, btoa(str));
+            var base64 = IO.getImageDataURL(md5, utf8ToBase64(str));
             if (str.indexOf('xlink:href') < 0) {
                 fcn(md5); // does not have embedded images
             } else {
@@ -228,7 +228,7 @@ export default class IO {
     }
 
     static setMedia (data: string, type: string, fcn?: (result: string) => void) {
-        PlatformBridge.setmedia(btoa(data), type, fcn);
+        PlatformBridge.setmedia(utf8ToBase64(data), type, fcn);
     }
 
     static query (type: string, obj: Omit<DbSelectIntent, 'op' | 'table'>, fcn: (result: string) => void) {

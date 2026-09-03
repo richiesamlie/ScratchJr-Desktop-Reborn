@@ -375,5 +375,21 @@
     "USAGE_SCHOOL": "Schule",
     "USAGE_HOME": "zu Hause",
     "USAGE_OTHER": "Andere",
-    "USAGE_NONE": "Nicht mehr fragen"
+    "USAGE_NONE": "Nicht mehr fragen",
+    "BLOCK_DESC_FLIP_X": "WENDEN",
+    "LIBRARY_CAT_ALL": "Alle",
+    "LIBRARY_CAT_ANIMALS": "Tiere",
+    "LIBRARY_CAT_PEOPLE": "Personen",
+    "LIBRARY_CAT_FANTASY": "Fantasie",
+    "LIBRARY_CAT_PLANTS": "Pflanzen",
+    "LIBRARY_CAT_NATURE": "Natur",
+    "LIBRARY_CAT_THINGS": "Dinge",
+    "LIBRARY_CAT_VEHICLES": "Fahrzeuge",
+    "LIBRARY_CAT_BUILDINGS": "Gebäude",
+    "LIBRARY_CAT_CITY": "Stadt & Draußen",
+    "LIBRARY_CAT_INDOORS": "Drinnen",
+    "LIBRARY_CAT_SPACE_WATER": "Weltall & Unterwasser",
+    "LIBRARY_SEARCH_PLACEHOLDER": "Suchen...",
+    "LIBRARY_NO_RESULTS": "Keine Elemente gefunden",
+    "OPEN_PROJECT_TITLE": "Öffnen"
 }

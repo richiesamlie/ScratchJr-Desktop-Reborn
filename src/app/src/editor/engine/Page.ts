@@ -11,7 +11,7 @@ import Matrix from '../../geom/Matrix';
 import Vector from '../../geom/Vector';
 import {newHTML, newDiv, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
-    DEGTOR, getIdFor, setProps} from '../../utils/lib';
+    DEGTOR, getIdFor, setProps, utf8ToBase64} from '../../utils/lib';
 
 export default class Page {
     div: HTMLElement;
@@ -159,7 +159,7 @@ export default class Page {
             if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
                 me.setBackgroundImage(url, fcn); // does not have embedded images
             } else {
-                var base64 = IO.getImageDataURL(me.md5!, btoa(str));
+                var base64 = IO.getImageDataURL(me.md5!, utf8ToBase64(str));
                 IO.getImagesInSVG(str, function () {
                     me.setBackgroundImage(base64, fcn);
                 });

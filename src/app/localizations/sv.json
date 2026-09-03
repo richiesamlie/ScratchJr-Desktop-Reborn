@@ -375,5 +375,21 @@
     "USAGE_SCHOOL": "I skolan",
     "USAGE_HOME": "Hemma",
     "USAGE_OTHER": "Annat",
-    "USAGE_NONE": "Fråga inte igen"
+    "USAGE_NONE": "Fråga inte igen",
+    "BLOCK_DESC_FLIP_X": "VÄND",
+    "LIBRARY_CAT_ALL": "Alla",
+    "LIBRARY_CAT_ANIMALS": "Djur",
+    "LIBRARY_CAT_PEOPLE": "Människor",
+    "LIBRARY_CAT_FANTASY": "Fantasi",
+    "LIBRARY_CAT_PLANTS": "Växter",
+    "LIBRARY_CAT_NATURE": "Natur",
+    "LIBRARY_CAT_THINGS": "Saker",
+    "LIBRARY_CAT_VEHICLES": "Fordon",
+    "LIBRARY_CAT_BUILDINGS": "Byggnader",
+    "LIBRARY_CAT_CITY": "Stad & Utomhus",
+    "LIBRARY_CAT_INDOORS": "Inomhus",
+    "LIBRARY_CAT_SPACE_WATER": "Rymd & Under vatten",
+    "LIBRARY_SEARCH_PLACEHOLDER": "Sök...",
+    "LIBRARY_NO_RESULTS": "Inga objekt hittades",
+    "OPEN_PROJECT_TITLE": "Öppna"
 }

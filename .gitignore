@@ -29,3 +29,5 @@ android/captures/
 # Web PWA build distribution
 dist-web/
 
+# Scratch directory
+scratch/

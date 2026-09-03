@@ -24,7 +24,7 @@ import {newHTML, newDiv, newP, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
     DEGTOR, getIdFor, setProps, isTouch, isDesktop, isAndroid,
     fitInRect, scaleMultiplier, setCanvasSize,
-    globaly, globalx, rgbToHex} from '../../utils/lib';
+    globaly, globalx, rgbToHex, utf8ToBase64} from '../../utils/lib';
 import type Stage from './Stage';
 import type Page from './Page';
 import type Thread from './Thread';
@@ -146,7 +146,7 @@ export default class Sprite {
             if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
                 whenDone(url); // does not have embedded images
             } else {
-                var base64 = IO.getImageDataURL(spr.md5, btoa(str));
+                var base64 = IO.getImageDataURL(spr.md5, utf8ToBase64(str));
                 IO.getImagesInSVG(str, function () {
                     whenDone(base64);
                 });
@@ -303,11 +303,16 @@ export default class Sprite {
     // sprite Primitives
     //////////////////////////////////////////////////////////////////////////////
 
+    flipX () {
+        this.flip = !this.flip;
+        this.render();
+    }
+
     goHome () {
         this.setPos(this.homex, this.homey);
         this.scale = this.homescale;
         this.shown = this.homeshown;
-        //	this.flip = this.homeflip;  // kept here just in case we want it
+        this.flip = this.homeflip;
         this.div.style.opacity = this.shown ? '1' : '0';
         this.setHeading(0);
         this.render();
@@ -728,7 +733,7 @@ Math.floor(h));
         var a = str.split('h-2');
         var b = a[1].split('h-1');
         str = a[0] + 'h' + (-side1 + 7 + curve) + b[0] + 'h' + (-side2 + 7 + curve) + b[1];
-        img.src = 'data:image/svg+xml;base64,' + btoa(str);
+        img.src = 'data:image/svg+xml;base64,' + utf8ToBase64(str);
     }
 
     /////////////////////////////////////
@@ -1036,7 +1041,7 @@ Math.floor(h));
         var img = document.createElement('img');
         var str = (new XMLSerializer()).serializeToString(svg);
         str = str.replace(/ href="data:image/g, ' xlink:href="data:image');
-        img.src = 'data:image/svg+xml;base64,' + btoa(str);
+        img.src = 'data:image/svg+xml;base64,' + utf8ToBase64(str);
         return img;
     }
 

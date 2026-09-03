@@ -375,5 +375,21 @@
     "USAGE_SCHOOL": "School",
     "USAGE_HOME": "Home",
     "USAGE_OTHER": "Other",
-    "USAGE_NONE": "Don't ask again"
+    "USAGE_NONE": "Don't ask again",
+    "BLOCK_DESC_FLIP_X": "พลิกกลับ",
+    "LIBRARY_CAT_ALL": "ทั้งหมด",
+    "LIBRARY_CAT_ANIMALS": "สัตว์",
+    "LIBRARY_CAT_PEOPLE": "ผู้คน",
+    "LIBRARY_CAT_FANTASY": "แฟนตาซี",
+    "LIBRARY_CAT_PLANTS": "พืช",
+    "LIBRARY_CAT_NATURE": "ธรรมชาติ",
+    "LIBRARY_CAT_THINGS": "สิ่งของ",
+    "LIBRARY_CAT_VEHICLES": "ยานพาหนะ",
+    "LIBRARY_CAT_BUILDINGS": "สิ่งก่อสร้าง",
+    "LIBRARY_CAT_CITY": "เมืองและกลางแจ้ง",
+    "LIBRARY_CAT_INDOORS": "ในร่ม",
+    "LIBRARY_CAT_SPACE_WATER": "อวกาศและใต้ทะเล",
+    "LIBRARY_SEARCH_PLACEHOLDER": "ค้นหา...",
+    "LIBRARY_NO_RESULTS": "ไม่พบรายการ",
+    "OPEN_PROJECT_TITLE": "เปิด"
 }
