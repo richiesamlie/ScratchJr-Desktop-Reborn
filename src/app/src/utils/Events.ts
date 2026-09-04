@@ -2,7 +2,7 @@
 the caller should define the window event and call startDrag with the appropiate values
 */
 
-import {gn, scaleMultiplier, isTouch, currentUiScale} from './lib';
+import {gn, scaleMultiplier, isTouch, currentUiScale, frame} from './lib';
 
 // Drag elements are DOM nodes (block/thumb divs, canvases) carrying
 // drag-session expando state. While a drag is active they are treated as
@@ -279,35 +279,38 @@ export default class Events {
     page is scrolled horizontally.
     */
 
-    static getTargetPoint (e: MouseEvent | TouchEvent | PointerEvent) {
-        const scale = (typeof currentUiScale !== 'undefined' && currentUiScale > 0) ? currentUiScale : 1.0;
+    static getEventPoint (e: MouseEvent | TouchEvent | PointerEvent) {
         const te = e as TouchEvent;
         if (te && te.touches && (te.touches.length > 0)) {
-            const rawX = te.touches[0].pageX !== undefined ? te.touches[0].pageX : te.touches[0].clientX;
-            const rawY = te.touches[0].pageY !== undefined ? te.touches[0].pageY : te.touches[0].clientY;
-            return {
-                x: rawX / scale,
-                y: rawY / scale
-            };
+            const rawX = te.touches[0].clientX !== undefined ? te.touches[0].clientX : te.touches[0].pageX;
+            const rawY = te.touches[0].clientY !== undefined ? te.touches[0].clientY : te.touches[0].pageY;
+            return { x: rawX, y: rawY };
         }
         if (te && te.changedTouches && (te.changedTouches.length > 0)) {
-            const rawX = te.changedTouches[0].pageX !== undefined ? te.changedTouches[0].pageX : te.changedTouches[0].clientX;
-            const rawY = te.changedTouches[0].pageY !== undefined ? te.changedTouches[0].pageY : te.changedTouches[0].clientY;
-            return {
-                x: rawX / scale,
-                y: rawY / scale
-            };
+            const rawX = te.changedTouches[0].clientX !== undefined ? te.changedTouches[0].clientX : te.changedTouches[0].pageX;
+            const rawY = te.changedTouches[0].clientY !== undefined ? te.changedTouches[0].clientY : te.changedTouches[0].pageY;
+            return { x: rawX, y: rawY };
         }
         const me = e as MouseEvent;
         if (me) {
-            const rawX = me.pageX !== undefined ? me.pageX : me.clientX;
-            const rawY = me.pageY !== undefined ? me.pageY : me.clientY;
-            return {
-                x: rawX / scale,
-                y: rawY / scale
-            };
+            const rawX = me.clientX !== undefined ? me.clientX : me.pageX;
+            const rawY = me.clientY !== undefined ? me.clientY : me.pageY;
+            return { x: rawX, y: rawY };
         }
         return { x: 0, y: 0 };
+    }
+
+    static getTargetPoint (e: MouseEvent | TouchEvent | PointerEvent) {
+        const scale = (typeof currentUiScale !== 'undefined' && currentUiScale > 0) ? currentUiScale : 1.0;
+        const frameEl = frame || (typeof document !== 'undefined' ? (document.getElementById('frame') || document.querySelector('.frame')) : null);
+        const frameRect = frameEl && typeof frameEl.getBoundingClientRect === 'function'
+            ? frameEl.getBoundingClientRect()
+            : { left: 0, top: 0 };
+        const pt = Events.getEventPoint(e);
+        return {
+            x: (pt.x - frameRect.left) / scale,
+            y: (pt.y - frameRect.top) / scale
+        };
     }
 
     static updatePinchCenter (e: MouseEvent | TouchEvent) {

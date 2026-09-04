@@ -46,6 +46,9 @@ export default class Stage {
         this.div.onmousedown = function (evt) {
             me.mouseDown(evt);
         };
+        this.div.ontouchstart = function (evt) {
+            me.mouseDown(evt as unknown as MouseEvent);
+        };
         
         
         setModelRef(this.div, 'stage', this);
@@ -432,16 +435,23 @@ export default class Stage {
         return undefined;
     }
 
-    getStagePt (evt: MouseEvent): {x: number; y: number} {
-        var pt = Events.getTargetPoint(evt);
+    getStagePt (evt: MouseEvent | TouchEvent): {x: number; y: number} {
         var mc = this.div;
+        if (mc && typeof mc.getBoundingClientRect === 'function') {
+            var rect = mc.getBoundingClientRect();
+            var pt = Events.getEventPoint(evt);
+            var x = (rect.width > 0) ? (pt.x - rect.left) * (this.width / rect.width) : 0;
+            var y = (rect.height > 0) ? (pt.y - rect.top) * (this.height / rect.height) : 0;
+            return { x: x, y: y };
+        }
+        var ptOld = Events.getTargetPoint(evt);
         var dx = globalx(mc);
         var dy = globaly(mc);
-        pt.x -= dx;
-        pt.y -= dy;
-        pt.x /= this.stageScale;
-        pt.y /= this.stageScale;
-        return pt;
+        ptOld.x -= dx;
+        ptOld.y -= dy;
+        ptOld.x /= this.stageScale;
+        ptOld.y /= this.stageScale;
+        return ptOld;
     }
 
     setEvents () {
@@ -451,6 +461,12 @@ export default class Stage {
         };
         window.onmouseup = function (evt) {
             me.mouseUp(evt);
+        };
+        window.ontouchmove = function (evt) {
+            me.mouseMove(evt as unknown as MouseEvent);
+        };
+        window.ontouchend = function (evt) {
+            me.mouseUp(evt as unknown as MouseEvent);
         };
     }
 

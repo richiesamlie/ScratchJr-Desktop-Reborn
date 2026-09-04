@@ -477,8 +477,17 @@ export default class Palette {
         if (pt && box2.hitRect(pt)) {
             return 'palette';
         }
+        var scriptsEl = gn('scripts')!;
+        var scriptsBox = new Rectangle(globalx(scriptsEl), globaly(scriptsEl), scriptsEl.offsetWidth, scriptsEl.offsetHeight);
+        if (pt && scriptsBox.hitRect(pt)) {
+            return 'scripts';
+        }
         if (Palette.overlapsWith(gn('blockspalette')!, box)) { /*bugfix - returning to blocks palette should delete block*/
-            return 'palette';
+            var blockCenterY = (el.top! / scale) + (el.offsetHeight / scale) / 2;
+            if (blockCenterY < globaly(scriptsEl)) {
+                return 'palette';
+            }
+            return 'scripts';
         }
         if (Palette.overlapsWith(gn('scripts')!, box)) {
             return 'scripts';

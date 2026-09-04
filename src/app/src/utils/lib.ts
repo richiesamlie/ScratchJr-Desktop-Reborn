@@ -347,23 +347,24 @@ export function dprCenterTransform (w: number, h: number) {
 }
 
 export function localx (el: HTMLElement, gx: number) {
-    var lx = gx;
-    while (el && el.offsetTop != undefined) {
-        lx -= el.offsetLeft + el.clientLeft
-            + (new WebKitCSSMatrix(window.getComputedStyle(el as Element).webkitTransform)).m41;
-        el = el.parentNode as HTMLElement;
+    if (!el) {
+        return gx;
     }
-    return lx;
+    return gx - globalx(el);
 }
 
 export function globalx (el: HTMLElement) {
+    if (!el) {
+        return 0;
+    }
+    if (typeof el.getBoundingClientRect === 'function') {
+        const frameEl = frame || (typeof document !== 'undefined' ? (document.getElementById('frame') || document.querySelector('.frame')) : null);
+        const frameLeft = frameEl && typeof frameEl.getBoundingClientRect === 'function' ? frameEl.getBoundingClientRect().left : 0;
+        const scale = (typeof currentUiScale !== 'undefined' && currentUiScale > 0) ? currentUiScale : 1.0;
+        return (el.getBoundingClientRect().left - frameLeft) / scale;
+    }
     var lx = 0;
     while (el && el.offsetLeft != undefined) {
-        var webkitTransform = new WebKitCSSMatrix(window.getComputedStyle(el as Element).webkitTransform);
-        var transformScale = webkitTransform.m11;
-        lx += (el.clientWidth - (transformScale * el.clientWidth)) / 2;
-        var transformX = webkitTransform.m41;
-        lx += transformX;
         lx += el.offsetLeft + el.clientLeft;
         el = el.parentNode as HTMLElement;
     }
@@ -371,22 +372,24 @@ export function globalx (el: HTMLElement) {
 }
 
 export function localy (el: HTMLElement, gy: number) {
-    var ly = gy;
-    while (el && el.offsetTop != undefined) {
-        ly -= el.offsetTop + el.clientTop + (new WebKitCSSMatrix(window.getComputedStyle(el as Element).webkitTransform)).m42;
-        el = el.parentNode as HTMLElement;
+    if (!el) {
+        return gy;
     }
-    return ly;
+    return gy - globaly(el);
 }
 
 export function globaly (el: HTMLElement) {
+    if (!el) {
+        return 0;
+    }
+    if (typeof el.getBoundingClientRect === 'function') {
+        const frameEl = frame || (typeof document !== 'undefined' ? (document.getElementById('frame') || document.querySelector('.frame')) : null);
+        const frameTop = frameEl && typeof frameEl.getBoundingClientRect === 'function' ? frameEl.getBoundingClientRect().top : 0;
+        const scale = (typeof currentUiScale !== 'undefined' && currentUiScale > 0) ? currentUiScale : 1.0;
+        return (el.getBoundingClientRect().top - frameTop) / scale;
+    }
     var ly = 0;
     while (el && el.offsetTop != undefined) {
-        var webkitTransform = new WebKitCSSMatrix(window.getComputedStyle(el as Element).webkitTransform);
-        var transformScale = webkitTransform.m22;
-        ly += (el.clientHeight - (transformScale * el.clientHeight)) / 2;
-        var transformY = webkitTransform.m42;
-        ly += transformY;
         ly += el.offsetTop + el.clientTop;
         el = el.parentNode as HTMLElement;
     }

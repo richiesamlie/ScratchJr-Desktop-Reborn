@@ -1,17 +1,17 @@
 {
-  "version": "2.1.0",
-  "name": "ScratchJr Reborn v2.1.0",
-  "pub_date": "2026-09-03T07:00:00Z",
-  "release_url": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/tag/v2.1.0",
-  "notes": "Release v2.1.0: Adds horizontal flip motion block (flipX), live asset library categorization and search, lobby 1-click .sjr open card, UTF-8 safe Base64 serialization, Web Locks multi-tab storage guard, and full 12-language localization.",
+  "version": "2.1.1",
+  "name": "ScratchJr Reborn v2.1.1",
+  "pub_date": "2026-09-04T07:00:00Z",
+  "release_url": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/tag/v2.1.1",
+  "notes": "Release v2.1.1: Fixes canvas character dragging under responsive scaling and prevents code block disappearance in the upper workspace area (Issue #4).",
   "downloads": {
     "web-pwa": "https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/",
-    "win32-x64-msi": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-win32-x64.msi",
-    "win32-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-win32-x64.zip",
-    "darwin-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-darwin-x64.zip",
-    "darwin-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-darwin-arm64.zip",
-    "linux-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-linux-x64.zip",
-    "linux-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-linux-arm64.zip",
-    "android-apk": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.0/ScratchJr-android.apk"
+    "win32-x64-msi": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-win32-x64.msi",
+    "win32-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-win32-x64.zip",
+    "darwin-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-darwin-x64.zip",
+    "darwin-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-darwin-arm64.zip",
+    "linux-x64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-linux-x64.zip",
+    "linux-arm64": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-linux-arm64.zip",
+    "android-apk": "https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.1.1/ScratchJr-android.apk"
   }
 }

@@ -3,6 +3,20 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.1.1] - 2026-09-04
+
+**Patch Release: Fix Canvas Character Mouse Dragging and Prevent Block Disappearance in Upper Workspace.**
+
+### Bug Fixes
+- **Stage Pointer Coordinate Projection & Mouse Dragging**:
+  - Replaced legacy matrix offset calculations in `Stage.getStagePt` with direct viewport projection via `this.div.getBoundingClientRect()`.
+  - Fixes Issue #4 where characters on the stage could not be clicked, dragged, or repositioned with the mouse due to coordinate misalignment under responsive CSS scaling (`currentUiScale`).
+  - Added native touch event listeners (`ontouchstart`, `ontouchmove`, `ontouchend`) to `Stage` and `Grid` overlays for unified touch and mouse parity across Desktop, Web, and Android.
+- **Palette & Workspace Drop Detection**:
+  - Reimplemented `globalx` and `globaly` in `lib.ts` using `getBoundingClientRect()` relative to `#frame` and `currentUiScale`, eliminating spurious center-origin scaling offsets.
+  - Updated `Palette.getLandingPlace` to prioritize scripts area placement when the drop pointer or block center is within the scripts workspace (`gn('scripts')`), preventing blocks dropped into the upper white workspace from mistakenly deleting.
+  - Added `Events.getEventPoint(e)` and standardized frame-relative mouse/touch coordinates in `Events.getTargetPoint(e)`.
+
 ## [v2.1.0] - 2026-09-03
 
 **Minor Release: Horizontal Flip Block, Smart Asset Library Categorization & Search, 1-Click SJR Open Card, Web/PWA Storage Resilience, and UTF-8 Safe Serialization.**

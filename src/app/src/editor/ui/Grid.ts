@@ -73,8 +73,11 @@ export default class Grid {
             dy += size;
         }
         cnv.onmousedown = function (evt) {
-                ScratchJr.stage.mouseDown(evt);
-            };
+            ScratchJr.stage.mouseDown(evt);
+        };
+        cnv.ontouchstart = function (evt) {
+            ScratchJr.stage.mouseDown(evt as unknown as MouseEvent);
+        };
     }
 
     static createNumbering (w: number, h: number) {

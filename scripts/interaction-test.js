@@ -142,8 +142,8 @@ async function main() {
             })()`);
             if (!targetRect) throw new Error('scriptscontainer not found');
 
-            // Sweep candidate drop points across the scripts workspace.
-            const fractions = [[0.3, 0.3], [0.5, 0.3], [0.7, 0.3], [0.3, 0.6], [0.5, 0.6], [0.7, 0.6]];
+            // Sweep candidate drop points across the scripts workspace (including upper margin just below palette).
+            const fractions = [[0.4, 0.08], [0.3, 0.3], [0.5, 0.3], [0.7, 0.3], [0.3, 0.6], [0.5, 0.6], [0.7, 0.6]];
             let docked = false;
             for (const frac of fractions) {
                 const src = await s3.eval(`(function(){
