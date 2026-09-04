@@ -2,7 +2,7 @@
 
 > A modernized, universal multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
-[![Version](https://img.shields.io/badge/version-v2.1.0-blue.svg)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
+[![Version](https://img.shields.io/github/v/release/richiesamlie/ScratchJr-Desktop-Reborn?color=blue&label=version)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
 [![Tests](https://img.shields.io/badge/tests-181%20passed-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-orange.svg)]()
