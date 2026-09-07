@@ -39,9 +39,6 @@ contextBridge.exposeInMainWorld('scratchjr', {
 
     // ---- Media I/O ----
     io_getmedia: (file: string) => ipcRenderer.invoke('io_getmedia', file),
-    io_getmediadata: (key: string, offset: number, length: number) => ipcRenderer.invoke('io_getmediadata', key, offset, length),
-    io_getmediadone: (key: string) => ipcRenderer.invoke('io_getmediadone', key),
-    io_getmedialen: (file: string, key: string) => ipcRenderer.invoke('io_getmedialen', file, key),
     io_setmedia: (str: string, ext: string) => ipcRenderer.invoke('io_setmedia', str, ext),
     io_setmedianame: (str: string, name: string, ext: string) => ipcRenderer.invoke('io_setmedianame', str, name, ext),
     io_getAudioData: (name: string) => ipcRenderer.invoke('io_getAudioData', name),

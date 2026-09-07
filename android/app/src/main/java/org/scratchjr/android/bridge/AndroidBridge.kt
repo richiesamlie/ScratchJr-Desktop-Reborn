@@ -124,25 +124,6 @@ class AndroidBridge(
     }
 
     @JavascriptInterface
-    fun io_getmedialen(file: String, key: String): Int {
-        val data = db.readProjectFile(file) ?: return 0
-        MediaCache.put(key, data)
-        return data.length
-    }
-
-    @JavascriptInterface
-    fun io_getmediadata(key: String, offset: Int, length: Int): String {
-        val data = MediaCache.get(key) ?: return ""
-        val end = (offset + length).coerceAtMost(data.length)
-        return if (offset < data.length) data.substring(offset, end) else ""
-    }
-
-    @JavascriptInterface
-    fun io_getmediadone(key: String) {
-        MediaCache.remove(key)
-    }
-
-    @JavascriptInterface
     fun io_setmedia(base64Str: String, ext: String): String {
         val md5 = CryptoUtils.md5(base64Str)
         val filename = "$md5.$ext"

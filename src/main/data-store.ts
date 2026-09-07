@@ -116,54 +116,6 @@ export class ScratchJRDataStore {
         fs.mkdirSync(filePath, { recursive: true });
     }
 
-    /**
-     * LRU media cache with a byte budget. Map iteration is insertion-ordered,
-     * so re-setting an entry on access moves it to the back; eviction takes
-     * from the front. Budget guards against many-large-asset peaks that an
-     * entry count alone cannot see.
-     */
-    private mediaCache = new Map<string, string>();
-    mediaCacheMaxEntries = 50;
-    mediaCacheMaxBytes = 64 * 1024 * 1024;
-    private mediaCacheBytes = 0;
-
-    private evictMediaCache (): void {
-        while (this.mediaCache.size > 0 &&
-               (this.mediaCache.size > this.mediaCacheMaxEntries ||
-                this.mediaCacheBytes > this.mediaCacheMaxBytes)) {
-            const oldest = this.mediaCache.keys().next().value as string | undefined;
-            if (oldest === undefined) break;
-            this.mediaCacheBytes -= this.mediaCache.get(oldest)!.length;
-            this.mediaCache.delete(oldest);
-        }
-    }
-
-    cacheMedia (key: string, base64EncodedStr: string): void {
-        // Re-inserting moves the key to the back of the Map => LRU order.
-        this.removeFromMediaCache(key);
-        this.mediaCache.set(key, base64EncodedStr);
-        this.mediaCacheBytes += base64EncodedStr.length;
-        this.evictMediaCache();
-    }
-
-    getCachedMedia (key: string): string | undefined {
-        const value = this.mediaCache.get(key);
-        if (value !== undefined) {
-            // Touch: refresh recency without changing the bytes accounting.
-            this.mediaCache.delete(key);
-            this.mediaCache.set(key, value);
-        }
-        return value;
-    }
-
-    removeFromMediaCache (key: string): void {
-        const value = this.mediaCache.get(key);
-        if (value !== undefined) {
-            this.mediaCacheBytes -= value.length;
-            this.mediaCache.delete(key);
-        }
-    }
-
     safeGetFilenameInAppDirectory(file: string, warnIfNotPresent?: boolean): string | null {
         if (!file || file === '') throw new Error('File cannot be null or empty');
 

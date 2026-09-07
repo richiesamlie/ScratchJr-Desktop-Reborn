@@ -77,35 +77,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     ipcMain.handle('io_getfile', readProjectMedia);
     ipcMain.handle('io_getmedia', readProjectMedia);
 
-    ipcMain.handle('io_getmediadata', (_event: IpcMainInvokeEvent, key: string, offset: number, length: number) => {
-        const mediaString = getDataStore().getCachedMedia(key);
-        if (mediaString) {
-            try {
-                return mediaString.substring(offset, offset + length);
-            } catch (e) {
-                debugLog('error parsing media');
-                return null;
-            }
-        }
-        return null;
-    });
-
-    ipcMain.handle('io_getmediadone', (_event: IpcMainInvokeEvent, key: string) => {
-        getDataStore().removeFromMediaCache(key);
-        return true;
-    });
-
-    ipcMain.handle('io_getmedialen', async (_event: IpcMainInvokeEvent, file: string, key: string) => {
-        const dataStore = getDataStore();
-        const db = dataStore.databaseManager;
-        if (!db) return 0;
-        const encodedStr = await db.readProjectFile(file);
-        if (encodedStr) {
-            dataStore.cacheMedia(key, encodedStr);
-        }
-        return (encodedStr) ? encodedStr.length : 0;
-    });
-
     ipcMain.handle('io_setmedia', (_event: IpcMainInvokeEvent, base64ContentStr: string, ext: string) => {
         try {
             const dataStore = getDataStore();

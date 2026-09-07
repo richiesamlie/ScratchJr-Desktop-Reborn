@@ -112,7 +112,7 @@ tries to escalate.
 | Arbitrary file write | **No** | Media writes basename-confined to `Documents/ScratchJR/media` (`database.ts:358-363`); export writes only after a native save dialog the user controls (`ipc-handlers.ts:247-284`) |
 | Arbitrary delete | **No** | `io_remove` deletes one basename-confined media file; `io_cleanassets` extension-scoped, only unreferenced files |
 | OS execution / URL scheme abuse | **No** | No `shell` exposure in the bridge; `openExternalUrl` is main-side only, called only from the update dialog with GitHub URLs (`updater.ts:220-224`, `main.ts:63-67`) |
-| DoS main process | **Bounded** | `io_getmedialen` reads a whole file into the 64MB-capped cache; renderer can churn cache but not grow it (`data-store.ts:111-133`) |
+| DoS main process | **Bounded** | Direct `io_getmedia` reads are single-file, basename-confined reads bounded by asset file size on disk; no unbounded cache or memory buildup |
 | Wipe student projects | **Yes, within DB** | delete intents on `projects` — by design (renderer owns project lifecycle); mitigated by `.bak` rotation, which a compromised renderer could also defeat via a second save. Accepted: equal to the threat of the app itself. |
 
 **Boundary quality:** the answer to "can a compromised renderer access

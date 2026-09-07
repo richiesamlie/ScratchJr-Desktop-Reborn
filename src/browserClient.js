@@ -656,10 +656,6 @@
         return audioCtx;
     }
 
-    // In-memory cache for chunked media transfer across PlatformBridge
-    /** @type {Record<string, string>} */
-    var mediaTransferCache = {};
-
     // ---- Browser Host Client Interface ----
     /** @type {any} */
     var browserHost = {
@@ -867,30 +863,6 @@
                         });
                 });
             });
-        },
-
-        io_getmedialen: function (/** @type {string} */ file, /** @type {string} */ key) {
-            return browserHost.io_getmedia(file).then(function (/** @type {string} */ data) {
-                if (data && key) {
-                    mediaTransferCache[key] = data;
-                }
-                return data ? data.length : 0;
-            });
-        },
-
-        io_getmediadata: function (/** @type {string} */ key, /** @type {number} */ offset, /** @type {number} */ length) {
-            var str = mediaTransferCache[key];
-            if (str) {
-                return Promise.resolve(str.substr(offset, length));
-            }
-            return Promise.resolve('');
-        },
-
-        io_getmediadone: function (/** @type {string} */ key) {
-            if (key) {
-                delete mediaTransferCache[key];
-            }
-            return Promise.resolve();
         },
 
         io_getAudioData: function (/** @type {string} */ name) {

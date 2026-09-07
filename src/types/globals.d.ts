@@ -72,9 +72,6 @@ interface IpcBridge {
 
     // ---- Media I/O ----
     io_getmedia(file: string): Promise<string>;
-    io_getmediadata(key: string, offset: number, length: number): Promise<unknown>;
-    io_getmediadone(key: string): Promise<unknown>;
-    io_getmedialen(file: string, key: string): Promise<number>;
     io_setmedia(str: string, ext: string): Promise<unknown>;
     io_setmedianame(str: string, name: string, ext: string): Promise<unknown>;
     io_getAudioData(name: string): Promise<string | null>;

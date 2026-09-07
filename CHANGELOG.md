@@ -3,6 +3,15 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [Unreleased]
+
+### Performance & Architecture
+- **Eliminated Legacy Chunked Media Protocol**:
+  - Replaced the 2014-era `io_getmedialen` → `io_getmediadata` → `io_getmediadone` 3-phase chunking loop in `PlatformBridge.getmedia` with a direct single-call `io_getmedia` across Desktop (Electron), Android (Kotlin shell), and Web / PWA.
+  - Eliminated IPC roundtrip amplification (reduced from 20+ sequential roundtrips per asset to 1), $O(N^2)$ string concatenation churn, and 3x memory buffering during asset loading.
+  - Removed deprecated temporary holding cache infrastructure (`MediaCache.kt` on Android, `dataStore.cacheMedia` in Electron, and `mediaTransferCache` in Web).
+  - Preserved cross-platform asset loading parity and host abstraction boundaries.
+
 ## [v2.2.0] - 2026-09-07
 
 **Minor Release: Custom Audio Import, Recording Modal Unfreezing, and Cross-Platform Audio Playback (Issue #5).**

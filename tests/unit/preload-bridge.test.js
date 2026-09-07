@@ -27,9 +27,6 @@ describe('preload bridge contract', () => {
         'io_getmd5',
         // Media I/O
         'io_getmedia',
-        'io_getmediadata',
-        'io_getmediadone',
-        'io_getmedialen',
         'io_setmedia',
         'io_setmedianame',
         'io_getAudioData',

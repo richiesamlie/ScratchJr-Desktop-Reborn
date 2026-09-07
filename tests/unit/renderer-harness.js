@@ -55,7 +55,7 @@ if (typeof window.tablet === 'undefined') {
     const asyncNoop = () => Promise.resolve('');
     const voidNoop = () => {};
     const bridgeMethods = {
-        io_getmedialen: () => Promise.resolve(0),
+        io_getmedia: asyncNoop,
         io_setmedia: asyncNoop, io_setmedianame: asyncNoop, io_getmd5: asyncNoop,
         io_remove: asyncNoop, io_cleanassets: asyncNoop, io_registersound: asyncNoop,
         io_getfile: asyncNoop, io_gettextresource: asyncNoop, io_setfile: asyncNoop,

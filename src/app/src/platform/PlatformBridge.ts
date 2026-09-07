@@ -14,7 +14,6 @@ import AppUsage from '../utils/AppUsage';
 let path: string | undefined;
 let camera: string | undefined;
 let database = 'projects';
-let mediacounter = 0;
 let hostInterface: ScratchJrBridge | null = null;
 
 export default class PlatformBridge {
@@ -122,42 +121,12 @@ export default class PlatformBridge {
     }
 
     static async getmedia(file: string, fcn: (data: string) => void) {
-        mediacounter++;
-        var nextStep = async function (file: string, key: number, whenDone: (data: string) => void) {
-            var result = await hostInterface!.io_getmedialen(file, String(key));
-            PlatformBridge.processdata(String(key), 0, result, '', whenDone);
-        };
-        nextStep(file, mediacounter, fcn);
-    }
-
-    static async getmediadata(key: string, offset: number, len: number, fcn?: (result: string) => void) {
-        var result = await hostInterface!.io_getmediadata(key, offset, len);
-        if (fcn) {
-            fcn(result as string);
-        }
-    }
-
-    static async processdata(key: string, off: number, len: number, oldstr: string, fcn: (str: string) => void) {
-        if (len == 0) {
-            PlatformBridge.getmediadone(key);
-            fcn(oldstr);
-            return;
-        }
-        var newlen = (len < 100000) ? len : 100000;
-        PlatformBridge.getmediadata(key, off, newlen, function (str) {
-            PlatformBridge.processdata(key, off + newlen, len - newlen, oldstr + str, fcn);
-        });
+        var result = await hostInterface!.io_getmedia(file);
+        fcn(result);
     }
 
     static async getsettings(fcn: (settings: string) => void) {
         var result = await hostInterface!.io_getsettings();
-        if (fcn) {
-            fcn(result);
-        }
-    }
-
-    static async getmediadone(file: string, fcn?: (result: unknown) => void) {
-        var result = await hostInterface!.io_getmediadone(file);
         if (fcn) {
             fcn(result);
         }

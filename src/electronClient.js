@@ -103,29 +103,6 @@ class ElectronDesktopInterface {
 
     }
 
-    /** @param {string} key @param {number} offset @param {number} length */
-    async io_getmediadata(key, offset, length){
-
-        if (DEBUG_FILEIO) debugLog('io_getmediadata', key, offset, length);
-        return await bridge.io_getmediadata(key, offset, length);
-
-    }
-
-    /** @param {string} key */
-    async io_getmediadone(key){
-
-        if (DEBUG_FILEIO) debugLog('io_getmediadone', key);
-        return await bridge.io_getmediadone(key);
-
-    }
-    /** @param {string} file @param {string} key */
-    async io_getmedialen(file, key){
-
-        if (DEBUG_FILEIO) debugLog('io_getmedialen', file, key);
-        return await bridge.io_getmedialen(file, key);
-
-    }
-
     /** @param {string} str @param {string} ext */
     async io_setmedia(str,  ext){
         if (DEBUG_FILEIO)  debugLog('io_setmedia', str, ext);
