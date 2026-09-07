@@ -3,7 +3,7 @@
 > A modernized, universal multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
 [![Version](https://img.shields.io/github/v/release/richiesamlie/ScratchJr-Desktop-Reborn?color=blue&label=version)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-181%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-185%20passed-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-orange.svg)]()
 
@@ -29,6 +29,14 @@
 - **High-Performance Android Shell**: Modern Kotlin shell using `WebViewAssetLoader`, native SQLite WAL, camera/mic permissions, and system intent handling.
 - **Sandboxed Desktop**: Built on Electron with strict `contextIsolation`, typed database intents, and no raw SQL evaluation over IPC.
 
+### ⚡ Modernized Engine & Hardware Integration
+- **Direct Single-Roundtrip Media Pipeline**: Replaced legacy 2014 chunked media transport with a single-call async `io_getmedia` protocol across Desktop, Android, and Web / PWA, reducing asset load roundtrips from 20+ to 1 and eliminating temporary cache layers.
+- **Unified Pointer Events & Multi-Touch Input**: Standardized on native Pointer Events (`pointerdown`, `pointermove`, `pointerup`) with dynamic primary pointer detection. Provides seamless, concurrent touch, mouse, and stylus drawing and block drag-and-drop without modality locking.
+- **Interactive Camera Tool**: Native camera capture tool with live video feed, hardware resolution constraint fallback, keyboard shortcuts (`Escape` to cancel, `Space`/`Enter` to snap), and fail-safe modal dismissal.
+- **Custom Audio Import & Sound Recording**: Dedicated audio import button in the recording modal supporting external `.wav`, `.mp3`, `.ogg`, `.webm`, and `.m4a` files with dynamic Sound palette block registration.
+- **Optimized Database IPC Pipeline**: Passes typed `DbIntent` structured objects directly across Electron IPC and Web workers without redundant JSON stringification or parsing churn.
+- **UTF-8 Safe SVG & Image Optimization**: Safe decoding via `base64ToUtf8` preventing international text corruption and eliminating redundant Base64 decode/re-encode cycles during sprite loading.
+
 ### 🎨 Creative Coding & Expanded Canvas
 - **`flipX` Motion Block**: Added horizontal mirroring block to the Blue Motion palette with native reset on "Go Home".
 - **Smart Asset Library**: Live multi-token search box with 12 curated categories for costumes and backgrounds.
@@ -46,7 +54,7 @@
 - **Touchscreen & Smartboard Ready**: Defensive coordinate resolution across mouse, stylus, and touch inputs prevents block dropouts during classroom activities.
 - **CLI Flags**: Launch with `--lang=XX` language overrides for multi-lingual school computer labs.
 - **Configurable MSI Installer**: Supports silent mass deployment (`msiexec /i ScratchJr.msi /qn`), Intune/GPO policies, and per-machine install scopes.
-- **181 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, and CDP browser smoke harnesses.
+- **185 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
 
 ---
 
@@ -58,7 +66,7 @@
 # Install dependencies
 npm install
 
-# Run unit tests and static analysis (181 tests, 0 errors)
+# Run unit tests and static analysis (185 tests, 0 errors)
 npm test
 npm run typecheck && npx eslint src
 
