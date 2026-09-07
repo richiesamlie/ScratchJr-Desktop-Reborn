@@ -38,6 +38,7 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Aligned camera feed overlay position and scale with `frameRect` and responsive UI scale.
   - Added resolution constraint fallback to `{ video: true }` in `getUserMedia` if specific shape dimensions are rejected by the hardware camera.
   - Added defensive capture error handling in host clients (`electronClient.js`, `browserClient.js`, `webhost.js`) to guarantee the modal and feed cleanly close if a snapshot is missing or fails.
+  - **Web/PWA Camera Palette Availability**: Normalized `scratchjr_cameracheck` in `browserClient.js` and modernized type handling in `Paint.ts` and `PlatformBridge.ts`, resolving a type-coercion trap that previously hid the camera tool in the in-browser paint editor.
 
 ## [v2.2.0] - 2026-09-07
 
