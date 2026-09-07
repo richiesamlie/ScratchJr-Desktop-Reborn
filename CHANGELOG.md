@@ -29,6 +29,13 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Replaced legacy iOS/tablet hit target heuristics and simplification thresholds in `Path.ts` with standard CSS pointer media queries (`pointer: coarse`).
   - Added global `touch-action: none` rules to `base.css` and `editor.css` to prevent unintended browser panning, pull-to-refresh, or zooming during drawing and block drag-and-drop.
   - Deprecated legacy `isTouch` export in `lib.ts`.
+- **Fixed Camera Feed Interactivity, Snap Lock, and Modal Dismissal**:
+  - **Eliminated Click Interception**: Fixed an issue where the camera feed overlay (`#cameraPickerDiv`) was styled with `z-index: 90000` and a 1000x1000px box covering the entire screen, trapping mouse and touch events above the `#cameraclose` exit button and `#capture` shutter button.
+  - Added `pointer-events: none` on `cameraPickerDiv`, video feed, and overlay mask, while raising control bar z-indexes to `100005`.
+  - Added multi-pointer support (`onpointerdown`), backdrop click-to-dismiss, and keyboard shortcuts (`Escape` to cancel, `Space`/`Enter` to snap).
+  - Aligned camera feed overlay position and scale with `frameRect` and responsive UI scale.
+  - Added resolution constraint fallback to `{ video: true }` in `getUserMedia` if specific shape dimensions are rejected by the hardware camera.
+  - Added defensive capture error handling in host clients (`electronClient.js`, `browserClient.js`, `webhost.js`) to guarantee the modal and feed cleanly close if a snapshot is missing or fails.
 
 ## [v2.2.0] - 2026-09-07
 

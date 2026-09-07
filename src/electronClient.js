@@ -374,20 +374,28 @@ class ElectronDesktopInterface {
 
     /** @param {() => void} whenDone */
     scratchjr_captureimage(whenDone) {
-        if (DEBUG_CAMERA) debugLog('scratchjr_captureimage NYI', whenDone);
-
-
+        if (DEBUG_CAMERA) debugLog('scratchjr_captureimage', whenDone);
+        var cam = /** @type {any} */ (window).Camera;
         if (this.cameraPickerDialog) {
-           let imgData =    this.cameraPickerDialog.snapshot();
-           if (imgData) {
+            let imgData = this.cameraPickerDialog.snapshot();
+            if (imgData) {
                 let base64resultNoDataPrefix = imgData.split(',')[1];
-
-                /** @type {any} */ (window).Camera.processimage(base64resultNoDataPrefix); // eslint-disable-line no-undef
-           }
-
-
+                if (cam && cam.processimage) {
+                    cam.processimage(base64resultNoDataPrefix);
+                }
+            } else {
+                if (cam && cam.processimage) {
+                    cam.processimage('error getting a still');
+                }
+            }
+        } else {
+            if (cam && cam.processimage) {
+                cam.processimage('error getting a still');
+            }
         }
-
+        if (whenDone) {
+            whenDone();
+        }
     }
 
     /** @param {...unknown} args */

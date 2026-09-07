@@ -262,30 +262,42 @@ export default class PlatformBridge {
     }
 
     static startfeed (data: unknown, fcn?: (result: unknown) => void) {
+        if (!hostInterface) {
+            return;
+        }
         var str = JSON.stringify(data);
-        var result = hostInterface!.scratchjr_startfeed(str);
+        var result = hostInterface.scratchjr_startfeed(str);
         if (fcn) {
             fcn(result);
         }
     }
 
     static stopfeed (fcn?: (result: unknown) => void) {
-        var result = hostInterface!.scratchjr_stopfeed();
+        if (!hostInterface) {
+            return;
+        }
+        var result = hostInterface.scratchjr_stopfeed();
         if (fcn) {
             fcn(result);
         }
     }
 
     static choosecamera (mode: string, fcn: unknown) {
-        var result = hostInterface!.scratchjr_choosecamera(mode);
+        if (!hostInterface) {
+            return;
+        }
+        var result = hostInterface.scratchjr_choosecamera(mode);
         if (fcn) {
             (fcn as (result: unknown) => void)(result);
         }
     }
 
     static captureimage (fcn: unknown) {
+        if (!hostInterface) {
+            return;
+        }
         // Legacy: callers pass a callback name string; the bridge expects a function
-        hostInterface!.scratchjr_captureimage(fcn as () => void);
+        hostInterface.scratchjr_captureimage(fcn as () => void);
     }
 
     static trace (str: unknown) {

@@ -66,7 +66,6 @@ export default class Camera {
             break;
         case 'camerasnap':
             Camera.snapShot();
-            Paint.cameraToolsOff();
             break;
         case 'cammera':
             Camera.close();
@@ -151,15 +150,18 @@ export default class Camera {
 
     static processimage (str: string) {
         if (!target) {
+            Camera.close();
+            Paint.cameraToolsOff();
+            Paint.selectButton('select');
             return;
         }
-        if (str != 'error getting a still') {
+        if (str && str != 'error getting a still') {
             SVGImage.addCameraFill(target, str);
         }
         Camera.close();
         Paint.cameraToolsOff();
         Paint.selectButton('select');
-        if (str != 'error getting a still') {
+        if (str && str != 'error getting a still') {
             PaintUndo.record();
             Ghost.drawOffscreen();
         }

@@ -151,14 +151,22 @@
         },
 
         scratchjr_captureimage: function (/** @type {() => void} */ whenDone) {
+            var cam = /** @type {{ processimage: (b64: string) => void } | null} */ (window.Camera);
             if (androidHost.cameraPickerDialog) {
                 var imgData = androidHost.cameraPickerDialog.snapshot();
                 if (imgData) {
                     var base64NoPrefix = imgData.split(',')[1];
-                    var cam = /** @type {{ processimage: (b64: string) => void } | null} */ (window.Camera);
                     if (cam && cam.processimage) {
                         cam.processimage(base64NoPrefix);
                     }
+                } else {
+                    if (cam && cam.processimage) {
+                        cam.processimage('error getting a still');
+                    }
+                }
+            } else {
+                if (cam && cam.processimage) {
+                    cam.processimage('error getting a still');
                 }
             }
             if (whenDone) { whenDone(); }

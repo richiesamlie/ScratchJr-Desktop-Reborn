@@ -340,10 +340,20 @@ class VideoCapture {
     /** @param {MediaStreamConstraints} [constraints] */
     startRecord(constraints) {
         constraints = constraints || { video: true, audio: false };
-        if (navigator.mediaDevices.getUserMedia) {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            var self = this;
             navigator.mediaDevices.getUserMedia(constraints).then(
-                                this.beginStartRecord.bind(this),
-                                this.onError.bind(this));
+                this.beginStartRecord.bind(this)
+            ).catch(function(err) {
+                avlog('getUserMedia with specific constraints failed, attempting fallback { video: true }:', err);
+                if (constraints && constraints.video && typeof constraints.video === 'object') {
+                    navigator.mediaDevices.getUserMedia({ video: true, audio: false }).then(
+                        self.beginStartRecord.bind(self)
+                    ).catch(self.onError.bind(self));
+                } else {
+                    self.onError(err);
+                }
+            });
         }
         return this.getId() + '.webm';
     }
@@ -455,53 +465,63 @@ class CameraPickerDialog {
 
     show() {
         if (!this.cameraPickerDiv) {
+            const frameEl = document.getElementById('frame') || document.querySelector('.frame');
+            const frameRect = frameEl && typeof frameEl.getBoundingClientRect === 'function'
+                ? frameEl.getBoundingClientRect()
+                : { left: 0, top: 0 };
+            const scale = (typeof window !== 'undefined' && /** @type {any} */ (window).ScratchJr && typeof /** @type {any} */ (window).ScratchJr.getUiScale === 'function')
+                ? /** @type {any} */ (window).ScratchJr.getUiScale()
+                : (typeof window !== 'undefined' && /** @type {any} */ (window).getUiScale ? /** @type {any} */ (window).getUiScale() : 1.0);
+
             this.cameraPickerDiv = document.createElement('div');
-            this.cameraPickerDiv.setAttribute('style', 'z-index:90000; position:absolute; top:0px; left:0px; width: 1000px; height: 1000px;');
-
-
-
             this.cameraPickerDiv.id = 'cameraPickerDiv';
+            this.cameraPickerDiv.style.position = 'absolute';
+            this.cameraPickerDiv.style.top = (frameRect.top || 0) + 'px';
+            this.cameraPickerDiv.style.left = (frameRect.left || 0) + 'px';
+            if (scale && scale !== 1.0) {
+                this.cameraPickerDiv.style.transform = 'scale(' + scale + ')';
+                this.cameraPickerDiv.style.transformOrigin = '0 0';
+            }
+            this.cameraPickerDiv.style.zIndex = '90000';
+            this.cameraPickerDiv.style.pointerEvents = 'none';
 
-            // the video has autoplay so that the feed will start when shown
-            // it also has scale so that the camera will act as a mirror - otherwise
-            // it can be awkward to get yourself into the frame.
             this.cameraPickerDiv.innerHTML = '';
             var video = document.createElement('video');
             video.id = 'CameraPickerDialog-cameraFeed';
+            video.style.pointerEvents = 'none';
+            video.style.objectFit = 'cover';
             if (this.isMirrored) {
                 video.style.transform = 'scaleX(-1)';
             }
             video.autoplay = true;
+            video.playsInline = true;
             this.cameraPickerDiv.appendChild(video);
             var img = document.createElement('img');
             img.id = 'CameraPickerDialog-maskImg';
+            img.style.pointerEvents = 'none';
             img.src = this.shapeData.image;
             this.cameraPickerDiv.appendChild(img);
 
-            /** @type {HTMLElement} */ (document.getElementById('backdrop')).appendChild(this.cameraPickerDiv);
+            var bd = document.getElementById('backdrop');
+            if (bd) {
+                bd.appendChild(this.cameraPickerDiv);
+            }
 
             this.videoElement = document.getElementById('CameraPickerDialog-cameraFeed');
             this.maskImg = document.getElementById('CameraPickerDialog-maskImg');
 
-            // Similar to ScratchJR.m openfeed
-            // camera rect is just the small opening: x,y,width,height
             this.layoutDiv(/** @type {HTMLElement} */ (this.videoElement), this.shapeData.x, this.shapeData.y, this.shapeData.width, this.shapeData.height);
-
-            // maskImg is a workspace sized image to display over the camera so you can see the rest
-            // of the drawing.  e.g. if you're only filling in the cat's head, this image
-            // is everything (graph paper, cat body) but the cat's head.
-
-            // maskedImg rect is: mx,my,mw,mh
             this.layoutDiv(/** @type {HTMLElement} */ (this.maskImg), this.shapeData.mx, this.shapeData.my, this.shapeData.mw, this.shapeData.mh);
-
 
             this.videoCaptureElement = new VideoCapture(/** @type {HTMLVideoElement} */ (this.videoElement));
             /** @type {any} */ (this.videoCaptureElement).isRecordingPermitted = true;
-            this.videoCaptureElement.startRecord({video: { width: this.shapeData.width, height: this.shapeData.height }});
-
-
+            this.videoCaptureElement.startRecord({
+                video: {
+                    width: { ideal: Math.max(640, this.shapeData.width || 0) },
+                    height: { ideal: Math.max(480, this.shapeData.height || 0) }
+                }
+            });
         }
-
     }
 
     /** @param {HTMLElement} el @param {number} x @param {number} y @param {number} w @param {number} h */
@@ -522,30 +542,37 @@ class CameraPickerDialog {
     }
 
     snapshot() {
-
         if (!this.videoCaptureElement) {
             avlog('snapshot: no active video feed');
             return null;
         }
 
-        // get the bounding rect of the shape within the video screen...
-        let cameraRect = {x: 0,
-                    y: 0,
-                    width: this.shapeData.width,
-                    height: this.shapeData.height };
-        return  this.videoCaptureElement.snapshot(cameraRect, this.isMirrored);
-
+        let cameraRect = {
+            x: 0,
+            y: 0,
+            width: this.shapeData.width || (this.videoElement ? this.videoElement.clientWidth : 320),
+            height: this.shapeData.height || (this.videoElement ? this.videoElement.clientHeight : 240)
+        };
+        return this.videoCaptureElement.snapshot(cameraRect, this.isMirrored);
     }
+
     hide() {
         if (this.videoCaptureElement) {
-            this.videoCaptureElement.stopRecord();
+            try {
+                this.videoCaptureElement.stopRecord();
+            } catch (e) {
+                avlog('stopRecord error', e);
+            }
             this.videoCaptureElement = null;
-
-            /** @type {HTMLDivElement} */ (this.cameraPickerDiv).remove();
-
+        }
+        if (this.cameraPickerDiv) {
+            try {
+                /** @type {HTMLDivElement} */ (this.cameraPickerDiv).remove();
+            } catch (e) {
+                avlog('remove cameraPickerDiv error', e);
+            }
             this.cameraPickerDiv = null;
             this.videoElement = null;
         }
-
     }
 } // CameraPickerDialog

@@ -101,6 +101,8 @@ spriteform.off {visibility: hidden; };
     text-shadow: none;
     background: none;
     border: ${css_vh(0.00)} solid black;
+    z-index: 100005;
+    pointer-events: auto;
 }
 
 .actions .photobuttons {
@@ -122,6 +124,8 @@ spriteform.off {visibility: hidden; };
     margin: ${css_vh(0.65)};
     background: url('../assets/paint/cameraFlip.svg');
     background-size: 100%;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .flipcamera:active {
@@ -138,18 +142,22 @@ spriteform.off {visibility: hidden; };
     margin: ${css_vh(0.65)};
     background: url('../assets/paint/cameraExit.svg');
     background-size: 100%;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .cameraclose:active {
     background: url('../assets/paint/cameraExitOn.svg');
-    background-size: 100%; }
+    background-size: 100%;
+}
 
 .snapshot-container {
     position: absolute;
     bottom: ${css_vh(1.30)};
     height: ${css_vh(10.29)};
     width: 100%;
-    pointer-events: auto;
+    z-index: 100005;
+    pointer-events: none;
 }
 
 .snapshot {
@@ -160,6 +168,8 @@ spriteform.off {visibility: hidden; };
     padding: 0;
     background: url('../assets/paint/cameraSnap.svg');
     background-size: 100%;
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .snapshot:active {

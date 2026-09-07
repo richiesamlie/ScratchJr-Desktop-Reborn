@@ -995,14 +995,22 @@
         },
 
         scratchjr_captureimage: function (/** @type {() => void} */ whenDone) {
+            var cam = /** @type {any} */ (window).Camera;
             if (browserHost.cameraPickerDialog) {
                 var imgData = browserHost.cameraPickerDialog.snapshot();
                 if (imgData) {
                     var base64NoPrefix = imgData.split(',')[1];
-                    var cam = /** @type {any} */ (window).Camera;
                     if (cam && cam.processimage) {
                         cam.processimage(base64NoPrefix);
                     }
+                } else {
+                    if (cam && cam.processimage) {
+                        cam.processimage('error getting a still');
+                    }
+                }
+            } else {
+                if (cam && cam.processimage) {
+                    cam.processimage('error getting a still');
                 }
             }
             if (whenDone) { whenDone(); }

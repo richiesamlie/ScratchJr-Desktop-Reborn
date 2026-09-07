@@ -418,11 +418,19 @@ export default class Paint {
     }
 
     static selectButton (str: string) {
-        Paint.selectButtonFromDiv(gn('painttools')!, str);
-        Paint.selectButtonFromDiv(gn('selectortools')!, str);
-        Paint.selectButtonFromDiv(gn('edittools')!, str);
-        Paint.selectButtonFromDiv(gn('filltools')!, str);
-        if (gn('stamps')!) {
+        if (gn('painttools')) {
+            Paint.selectButtonFromDiv(gn('painttools')!, str);
+        }
+        if (gn('selectortools')) {
+            Paint.selectButtonFromDiv(gn('selectortools')!, str);
+        }
+        if (gn('edittools')) {
+            Paint.selectButtonFromDiv(gn('edittools')!, str);
+        }
+        if (gn('filltools')) {
+            Paint.selectButtonFromDiv(gn('filltools')!, str);
+        }
+        if (gn('stamps')) {
             Paint.selectButtonFromDiv(gn('stamps')!, str);
         }
         mode = str;
@@ -430,6 +438,9 @@ export default class Paint {
     }
 
     static selectButtonFromDiv (p: HTMLElement, str: string) {
+        if (!p) {
+            return;
+        }
         for (var i = 0; i < p.childElementCount; i++) {
             var elem = p.childNodes[i] as Element;
             var icon = elem.childNodes[0] as Element;
@@ -716,7 +727,10 @@ export default class Paint {
     }
 
     static selectPenSize (str: number) {
-        var p = gn('sizeSelector')!;
+        var p = gn('sizeSelector');
+        if (!p) {
+            return;
+        }
         for (var i = 0; i < p.childElementCount; i++) {
             var elem = p.childNodes[i];
             if ((elem as HTMLElement).key == str) {
@@ -750,40 +764,88 @@ export default class Paint {
     }
 
     static cameraToolsOn () {
-        gn('backdrop')!.setAttribute('class', 'modal-backdrop fade dark');
-        setProps(gn('backdrop')!.style, {
+        var bd = gn('backdrop')!;
+        bd.setAttribute('class', 'modal-backdrop fade dark');
+        setProps(bd.style, {
             display: 'block'
         });
-        var topbar = newHTML('div', 'phototopbar', gn('backdrop')!);
+        var topbar = newHTML('div', 'phototopbar', bd);
         topbar.setAttribute('id', 'photocontrols');
-        //  var actions = newHTML("div",'actions', topbar);
-        //  var buttons = newHTML('div', 'photobuttons', actions);
         var fc = newHTML('div', 'flipcamera', topbar);
         fc.setAttribute('id', 'cameraflip');
         fc.setAttribute('key', 'cameraflip');
         fc.onmousedown = Paint.setMode;
-        var captureContainer = newHTML('div', 'snapshot-container', gn('backdrop')!);
+        fc.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary) {
+                Paint.setMode(evt);
+            }
+        };
+
+        var captureContainer = newHTML('div', 'snapshot-container', bd);
         captureContainer.setAttribute('id', 'capture-container');
         var capture = newHTML('div', 'snapshot', captureContainer);
         capture.setAttribute('id', 'capture');
         capture.setAttribute('key', 'camerasnap');
         capture.onmousedown = Paint.setMode;
+        capture.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary) {
+                Paint.setMode(evt);
+            }
+        };
+
         var cc = newHTML('div', 'cameraclose', topbar);
         cc.setAttribute('id', 'cameraclose');
         cc.onmousedown = Paint.closeCameraMode;
+        cc.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary) {
+                Paint.closeCameraMode();
+            }
+        };
+
+        // Dismiss when clicking directly on the empty backdrop
+        bd.onmousedown = function (e: MouseEvent) {
+            if (e.target === bd) {
+                Paint.closeCameraMode();
+            }
+        };
+
+        // Keyboard shortcuts: Escape to exit, Space/Enter to snap
+        window.removeEventListener('keydown', Paint.handleCameraKeyDown);
+        window.addEventListener('keydown', Paint.handleCameraKeyDown);
+    }
+
+    static handleCameraKeyDown (e: KeyboardEvent) {
+        if (!Camera.active) {
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            Paint.closeCameraMode();
+        } else if (e.key === ' ' || e.code === 'Space' || e.key === 'Enter') {
+            e.preventDefault();
+            Camera.snapShot();
+        }
     }
 
     static closeCameraMode () {
+        window.removeEventListener('keydown', Paint.handleCameraKeyDown);
+        if (gn('backdrop')) {
+            gn('backdrop')!.onmousedown = null;
+        }
         ScratchAudio.sndFX('exittap.wav');
         Camera.close();
         Paint.selectButton('select');
     }
 
     static cameraToolsOff () {
-        gn('backdrop')!.setAttribute('class', 'modal-backdrop fade');
-        setProps(gn('backdrop')!.style, {
-            display: 'none'
-        });
+        window.removeEventListener('keydown', Paint.handleCameraKeyDown);
+        if (gn('backdrop')) {
+            gn('backdrop')!.onmousedown = null;
+            gn('backdrop')!.setAttribute('class', 'modal-backdrop fade');
+            setProps(gn('backdrop')!.style, {
+                display: 'none'
+            });
+        }
         if (gn('photocontrols')!) {
             gn('photocontrols')!.parentNode!.removeChild(gn('photocontrols')!);
         }
