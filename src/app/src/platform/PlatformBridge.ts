@@ -120,9 +120,12 @@ export default class PlatformBridge {
         await hostInterface!.io_cleanassets(ft); fcn();
     }
 
-    static async getmedia(file: string, fcn: (data: string) => void) {
+    static async getmedia(file: string, fcn?: (data: string) => void): Promise<string> {
         var result = await hostInterface!.io_getmedia(file);
-        fcn(result);
+        if (fcn) {
+            fcn(result);
+        }
+        return result;
     }
 
     static async getsettings(fcn: (settings: string) => void) {
