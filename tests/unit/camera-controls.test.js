@@ -101,4 +101,38 @@ describe('Camera Tool Interactivity & Controls', () => {
         expect(closeSpy).toHaveBeenCalled();
         closeSpy.mockRestore();
     });
+
+    it('Paint.rightPalette renders camera tool when camera is "1", true, or "true"', async () => {
+        const { default: PlatformBridge } = await import('../../src/app/src/platform/PlatformBridge');
+        Camera.available = true;
+
+        const testValues = ['1', true, 'true'];
+        for (const val of testValues) {
+            vi.spyOn(PlatformBridge, 'camera', 'get').mockReturnValue(val);
+
+            const container = document.createElement('div');
+            Paint.rightPalette(container);
+            const fillTools = container.querySelector('#filltools');
+            expect(fillTools).not.toBeNull();
+            const cameraTool = fillTools?.querySelector('.camera');
+            expect(cameraTool).not.toBeNull();
+        }
+    });
+
+    it('Paint.rightPalette omits camera tool when camera is "0", false, or unavailable', async () => {
+        const { default: PlatformBridge } = await import('../../src/app/src/platform/PlatformBridge');
+        Camera.available = true;
+
+        const testValues = ['0', false, 'false'];
+        for (const val of testValues) {
+            vi.spyOn(PlatformBridge, 'camera', 'get').mockReturnValue(val);
+
+            const container = document.createElement('div');
+            Paint.rightPalette(container);
+            const fillTools = container.querySelector('#filltools');
+            expect(fillTools).not.toBeNull();
+            const cameraTool = fillTools?.querySelector('.camera');
+            expect(cameraTool).toBeNull();
+        }
+    });
 });

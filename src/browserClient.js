@@ -991,7 +991,7 @@
         scratchjr_choosecamera: function () {},
 
         scratchjr_cameracheck: function () {
-            return 'true';
+            return '1';
         },
 
         scratchjr_captureimage: function (/** @type {() => void} */ whenDone) {

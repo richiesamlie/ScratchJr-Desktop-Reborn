@@ -749,7 +749,8 @@ export default class Paint {
         var rightpal = newHTML('div', 'side', div);
         Paint.addSidePalette(rightpal, 'selectortools', ['select', 'rotate']);
         Paint.addSidePalette(rightpal, 'edittools', ['stamper', 'scissors']);
-        Paint.addSidePalette(rightpal, 'filltools', (PlatformBridge.camera == '1' && Camera.available) ? ['camera', 'paintbucket'] : ['paintbucket']);
+        const hasCamera = (PlatformBridge.camera == '1' || PlatformBridge.camera === true || String(PlatformBridge.camera).toLowerCase() === 'true') && Camera.available;
+        Paint.addSidePalette(rightpal, 'filltools', hasCamera ? ['camera', 'paintbucket'] : ['paintbucket']);
     }
 
     static addSidePalette (p: HTMLElement, id: string, list: string[]) {
