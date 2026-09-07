@@ -89,7 +89,7 @@
         },
 
         recordsound_startplay: function () {
-            getAudioCapture().startPlay();
+            return getAudioCapture().startPlay();
         },
 
         recordsound_stopplay: function () {

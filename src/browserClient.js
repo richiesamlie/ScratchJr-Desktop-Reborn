@@ -901,6 +901,26 @@
 
         // ---- Sound Playback ----
         io_registersound: function (/** @type {string} */ dir, /** @type {string} */ name) {
+            if (dir === 'Documents') {
+                return browserHost.io_getmedia(name).then(function (/** @type {string | null} */ b64) {
+                    if (!b64) return;
+                    var ext = name.split('.').pop() || 'wav';
+                    var mime = ext === 'mp3' ? 'audio/mp3' : (ext === 'webm' ? 'audio/webm' : (ext === 'ogg' ? 'audio/ogg' : 'audio/wav'));
+                    var dataUrl = b64.startsWith('data:') ? b64 : ('data:' + mime + ';base64,' + b64);
+                    return fetch(dataUrl)
+                        .then(function (res) { return res.arrayBuffer(); })
+                        .then(function (buf) {
+                            var ctx = getAudioContext();
+                            if (ctx) {
+                                return ctx.decodeAudioData(buf).then(function (decoded) {
+                                    soundBuffers[name] = decoded;
+                                });
+                            }
+                        });
+                }).catch(function (/** @type {unknown} */ e) {
+                    console.warn('[browserClient] registerSound (Documents) error:', name, e);
+                });
+            }
             var url = (dir ? dir + '/' : '') + name;
             return fetch(url)
                 .then(function (res) { return res.arrayBuffer(); })
@@ -948,7 +968,7 @@
         },
 
         recordsound_startplay: function () {
-            getAudioCapture().startPlay();
+            return getAudioCapture().startPlay();
         },
 
         recordsound_stopplay: function () {

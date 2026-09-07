@@ -36,14 +36,26 @@ export default class Record {
 
     // Create the recording window, including buttons and volume indicators
     static init () {
-        var modal = newHTML('div', 'record fade', frame);
+        var parent = (frame.parentNode || document.body) as HTMLElement;
+        var modal = newHTML('div', 'record fade', parent);
         modal.setAttribute('id', 'recorddialog');
         var topbar = newHTML('div', 'toolbar', modal);
         var actions = newHTML('div', 'actions', topbar);
         newHTML('div', 'microphone', actions);
         var buttons = newHTML('div', 'recordbuttons', actions);
+        var importbut = newHTML('div', 'recordimport', buttons);
+        importbut.setAttribute('title', 'Import audio file');
+        importbut.onmousedown = Record.importAudio;
+        importbut.ontouchend = function (e: TouchEvent) {
+            e.preventDefault();
+            Record.importAudio();
+        };
         var okbut = newHTML('div', 'recorddone', buttons);
         okbut.onmousedown = Record.saveSoundAndClose;
+        okbut.ontouchend = function (e: TouchEvent) {
+            e.preventDefault();
+            Record.saveSoundAndClose();
+        };
         var sc = newHTML('div', 'soundbox', modal);
         sc.setAttribute('id', 'soundbox');
         var sv = newHTML('div', 'soundvolume', sc);
@@ -62,11 +74,31 @@ export default class Record {
 
     // Dialog box hide/show
     static appear () {
-        gn('backdrop')!.setAttribute('class', 'modal-backdrop fade in');
-        setProps(gn('backdrop')!.style, {
-            display: 'block'
-        });
-        gn('recorddialog')!.setAttribute('class', 'record fade in');
+        if (dialogOpen) {
+            return;
+        }
+        var bd = gn('backdrop');
+        if (bd) {
+            bd.setAttribute('class', 'modal-backdrop fade in');
+            setProps(bd.style, {
+                display: 'block'
+            });
+            bd.onmousedown = Record.saveSoundAndClose;
+            bd.ontouchend = function (e: TouchEvent) {
+                e.preventDefault();
+                Record.saveSoundAndClose();
+            };
+        }
+        var dlg = gn('recorddialog');
+        if (dlg) {
+            dlg.setAttribute('class', 'record fade in');
+            dlg.onmousedown = function (e: MouseEvent) {
+                e.stopPropagation();
+            };
+            dlg.ontouchend = function (e: TouchEvent) {
+                e.stopPropagation();
+            };
+        }
         ScratchJr.stopStrips();
         dialogOpen = true;
         // Typo in original (pushed undefined); intent is the save handler
@@ -74,12 +106,25 @@ export default class Record {
     }
 
     static disappear () {
+        var bd = gn('backdrop');
+        if (bd) {
+            bd.onmousedown = null;
+            bd.ontouchend = null;
+        }
+        var dlg = gn('recorddialog');
+        if (dlg) {
+            dlg.setAttribute('class', 'record fade out');
+        }
         setTimeout(function () {
-            gn('backdrop')!.setAttribute('class', 'modal-backdrop fade');
-            setProps(gn('backdrop')!.style, {
-                display: 'none'
-            });
-            gn('recorddialog')!.setAttribute('class', 'record fade');
+            if (bd) {
+                bd.setAttribute('class', 'modal-backdrop fade');
+                setProps(bd.style, {
+                    display: 'none'
+                });
+            }
+            if (dlg) {
+                dlg.setAttribute('class', 'record fade');
+            }
         }, 333);
         dialogOpen = false;
         ScratchJr.onBackButtonCallback.pop();
@@ -93,10 +138,88 @@ export default class Record {
         button.setAttribute('id', prefix + key);
         if (fcn) {
             button.onmousedown = function (evt: MouseEvent) {
-                    fcn(evt);
-                };
+                fcn(evt);
+            };
+            button.ontouchend = function (evt: TouchEvent) {
+                evt.preventDefault();
+                fcn(evt as unknown as MouseEvent);
+            };
         }
         return button;
+    }
+
+    // Import external audio file (wav, mp3, ogg, webm, m4a)
+    static importAudio () {
+        var spr = ScratchJr.getSprite() as Sprite;
+        if (!spr || spr.sounds.length >= 6) {
+            return;
+        }
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'audio/*,audio/wav,audio/mp3,audio/mpeg,audio/ogg,audio/webm,audio/x-m4a,audio/aac';
+        input.style.display = 'none';
+        input.onchange = function () {
+            if (!input.files || input.files.length === 0) return;
+            var file = input.files[0];
+            var ext = file.name.split('.').pop()?.toLowerCase() || 'wav';
+            if (ext === 'mp3' || ext === 'mpeg') ext = 'mp3';
+            else if (ext === 'ogg' || ext === 'oga') ext = 'ogg';
+            else if (ext === 'm4a' || ext === 'aac') ext = 'm4a';
+            else if (ext === 'webm') ext = 'webm';
+            else ext = 'wav';
+
+            var reader = new FileReader();
+            reader.onload = function () {
+                var dataUri = String(reader.result);
+                var soundId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                var soundName = soundId + '.' + ext;
+                var b64 = dataUri.includes(',') ? dataUri.split(',')[1] : dataUri;
+
+                if (isPlaying) {
+                    Record.stopPlayingSound();
+                }
+                if (isRecording) {
+                    Record.stopRecording();
+                }
+
+                // If on desktop with tablet client, cache dataUri for instant playback
+                try {
+                    const tablet = (window as unknown as { tablet?: { loadSoundFromDataURI?: (name: string, uri: string) => void } }).tablet;
+                    if (tablet && tablet.loadSoundFromDataURI) {
+                        tablet.loadSoundFromDataURI(soundName, dataUri);
+                    }
+                } catch (_) { /* ignore */ }
+
+                PlatformBridge.setmedianame(b64, soundId, ext, function () {
+                    ScratchAudio.loadFromLocal('Documents', soundName, function (loadedName) {
+                        if (loadedName !== 'error') {
+                            var page = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
+                            spr.sounds.push(soundName);
+                            Undo.record({
+                                action: 'recordsound',
+                                who: spr.id,
+                                where: page ? page.id : '',
+                                sound: soundName
+                            });
+                            ScratchJr.storyStart('Record.importAudio');
+                        }
+                        Record.tearDownRecorder();
+                        Palette.selectCategory(3);
+                    });
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+        document.body.appendChild(input);
+        input.click();
+        setTimeout(function () {
+            if (input.parentNode) {
+                input.parentNode.removeChild(input);
+            }
+        }, 1000);
     }
 
     // Toggle button appearance on/off

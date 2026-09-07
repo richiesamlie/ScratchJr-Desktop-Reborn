@@ -340,10 +340,7 @@ class ElectronDesktopInterface {
 
     recordsound_startplay (){
         if (DEBUG_AUDIO) debugLog('recordsound_recordstart');
-        this.getAudioCaptureElement().startPlay();
-
-
-
+        return this.getAudioCaptureElement().startPlay();
     }
     recordsound_stopplay(){
         if (DEBUG_AUDIO) debugLog('recordsound_stopplay');

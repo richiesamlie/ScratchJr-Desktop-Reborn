@@ -125,7 +125,8 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
             const filename = `${key}.${ext}`;
             const db = getDataStore().databaseManager;
             if (!db) return null;
-            db.saveToProjectFiles(filename, encodedData);
+            const cleanData = encodedData.includes(',') ? encodedData.split(',')[1] : encodedData;
+            db.saveToProjectFiles(filename, cleanData);
             return filename;
         } catch (e) {
             debugLog('io_setmedianame error:', e);
@@ -140,6 +141,18 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         } catch (e) {
             debugLog('io_getsettings', e);
             return null;
+        }
+    });
+
+    ipcMain.handle('database_close', (_event: IpcMainInvokeEvent, dbName: string) => {
+        try {
+            debugLog('Closing database', dbName);
+            const dataStore = getDataStore();
+            dataStore.databaseManager = null;
+            return true;
+        } catch (e) {
+            debugLog('io_getsettings', e);
+            return false;
         }
     });
 
@@ -182,18 +195,32 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         if (!filePath) {
             const db = dataStore.databaseManager;
             const projectDBFile = db ? await db.readProjectFile(audioName) : null;
-            return projectDBFile;
+            if (!projectDBFile) return null;
+            if (projectDBFile.startsWith('data:audio/')) return projectDBFile;
+            const ext = path.extname(audioName).toLowerCase();
+            let mime = 'audio/wav';
+            if (ext === '.mp3') mime = 'audio/mp3';
+            else if (ext === '.webm') mime = 'audio/webm';
+            else if (ext === '.ogg') mime = 'audio/ogg';
+            else if (ext === '.m4a' || ext === '.aac') mime = 'audio/mp4';
+            return `data:${mime};base64,${projectDBFile}`;
         }
         const data = fs.readFileSync(filePath);
         if (!data) {
             return null;
         }
         const dataStr = Buffer.from(data).toString('base64');
-        const extension = path.extname(filePath);
+        const extension = path.extname(filePath).toLowerCase();
         if (extension === '.mp3') {
             return 'data:audio/mp3;base64,' + dataStr;
         } else if (extension === '.wav') {
             return 'data:audio/wav;base64,' + dataStr;
+        } else if (extension === '.webm') {
+            return 'data:audio/webm;base64,' + dataStr;
+        } else if (extension === '.ogg') {
+            return 'data:audio/ogg;base64,' + dataStr;
+        } else if (extension === '.m4a' || extension === '.aac') {
+            return 'data:audio/mp4;base64,' + dataStr;
         }
         return null;
     });

@@ -94,6 +94,13 @@ export default class Palette {
             if (!hitRect(ths, pt)) {
                 continue;
             }
+            if (ths.id === 'recordslot' || ths.className === 'recordslot') {
+                Palette.recordSound(e);
+                return;
+            }
+            if (!hasModelRef(ths)) {
+                continue;
+            }
             if (ScratchJr.shaking && (ScratchJr.shaking == ths)) {
                 Palette.removeSound(ths);
             } else {
@@ -429,6 +436,10 @@ export default class Palette {
         var div = newDiv(pal, dx, 0, w, h, {
             top: (6 * scaleMultiplier) + 'px'
         });
+        div.setAttribute('id', 'recordslot');
+        div.className = 'recordslot';
+        div.style.cursor = 'pointer';
+        div.setAttribute('title', 'Record or import sound');
         var cnv = newCanvas(div, 0, 0, div.offsetWidth * window.devicePixelRatio, div.offsetHeight * window.devicePixelRatio, {
                 webkitTransform: 'translate('
                 + (-div.offsetWidth * window.devicePixelRatio / 2) + 'px, '
@@ -438,21 +449,30 @@ export default class Palette {
                 + (div.offsetHeight * window.devicePixelRatio / 2) + 'px)'
             }
         );
-        if (BlockSpecs.mic.complete) {
+        if (BlockSpecs.mic && BlockSpecs.mic.complete) {
             drawScaled(BlockSpecs.mic, cnv);
-        } else {
+        } else if (BlockSpecs.mic) {
             BlockSpecs.mic.onload = function () {
                 drawScaled(BlockSpecs.mic, cnv);
             };
         }
-        if (isTouch) {
-            div.onmousedown = Palette.recordSound;
-        }
+        div.onmousedown = function (evt: MouseEvent) {
+            Palette.recordSound(evt);
+        };
+        div.ontouchend = function (evt: TouchEvent) {
+            Palette.recordSound(evt);
+        };
     }
 
-    static recordSound (e: MouseEvent) {
-        e.preventDefault();
-        e.stopPropagation();
+    static recordSound (e?: MouseEvent | TouchEvent) {
+        if (e) {
+            if (typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
+            if (typeof e.stopPropagation === 'function') {
+                e.stopPropagation();
+            }
+        }
         ScratchJr.clearSelection();
         Record.appear();
     }

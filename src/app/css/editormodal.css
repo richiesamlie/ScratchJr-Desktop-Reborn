@@ -98,7 +98,7 @@
 .record {
     position: fixed;
     top: 32%;
-    left: 40%;
+    left: calc(50% - ${120 * scaleMultiplier}px);
     z-index: 11000;
     width: ${241 * scaleMultiplier}px;
     height: ${219 * scaleMultiplier}px;
@@ -116,6 +116,7 @@
     transition: opacity .3s linear, top .3s ease-out;
     top: -100%;
     opacity: 0;
+    pointer-events: none;
 }
 
 .recorddone {
@@ -127,16 +128,31 @@
     zoom: 75%;
     background: url('../assets/paint/ok.svg') no-repeat left top;
     background-size: 101%;
+    cursor: pointer;
+}
+
+.recordimport {
+    display: inline-block;
+    position: relative;
+    margin: 0px 4px 0px 0px;
+    width: ${65 * scaleMultiplier}px;
+    height: ${65 * scaleMultiplier}px;
+    zoom: 75%;
+    background: url('../assets/ui/importaudio.svg') no-repeat left top;
+    background-size: 101%;
+    cursor: pointer;
 }
 
 .record.fade.in {
-    top: 32%;
+    top: calc(50% - ${110 * scaleMultiplier}px);
     opacity: 1;
+    pointer-events: auto;
 }
 
 .record.fade.out {
     top: -100%;
     opacity: 0;
+    pointer-events: none;
 }
 
 
@@ -162,10 +178,12 @@
 
 .actions .recordbuttons {
     float: right;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
     margin: ${5 * scaleMultiplier}px;
     padding: 0px;
-    width: ${44 * scaleMultiplier}px;
+    width: ${100 * scaleMultiplier}px;
     height: ${44 * scaleMultiplier}px;
 }
 

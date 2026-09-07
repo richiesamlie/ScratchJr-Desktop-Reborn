@@ -33,6 +33,8 @@ class AudioCapture {
         /** @type {Blob | null} */ this.savedBlob = null;
         /** @type {any} */ this.audioProcessor = null;
         /** @type {MediaStreamAudioSourceNode | null} */ this.mediaStreamSource = null;
+        /** @type {number} */ this.recordStartTime = 0;
+        /** @type {number} */ this.recordDuration = 0;
     }
 
     /** @param {boolean} [isNewRecording] */
@@ -51,6 +53,12 @@ class AudioCapture {
     /** @param {MediaStreamConstraints} [constraints] */
     startRecord(constraints) {
         this.savedBlob = null;
+        this.recordStartTime = Date.now();
+        this.recordDuration = 0;
+
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().catch(function() {});
+        }
 
         constraints = constraints || { audio: true };
         if (navigator.mediaDevices.getUserMedia) {
@@ -122,6 +130,11 @@ class AudioCapture {
     }
     stopRecord() {
 
+        if (this.recordStartTime) {
+            this.recordDuration = Math.max(0.5, (Date.now() - this.recordStartTime) / 1000);
+            this.recordStartTime = 0;
+        }
+
         this.stopAudioMeter();
 
         if (this.currentStream) {
@@ -164,7 +177,7 @@ class AudioCapture {
             fileReader.readAsDataURL(blob);
         }
 
-
+        return this.recordDuration || 1;
     }
     /** @param {HTMLAudioElement} audioElement */
     tryPlayAudio(audioElement) {
@@ -206,6 +219,12 @@ class AudioCapture {
 
         if (!this.currentStream) {
             return; // no stream to monitor.
+        }
+        if (!this.audioCtx || this.audioCtx.state === 'closed') {
+            this.audioCtx = new (window.AudioContext || webkitAudioContext)(); // eslint-disable-line no-undef
+        }
+        if (this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().catch(function() {});
         }
         let audioContext = this.audioCtx;
         if (!this.mediaStreamSource) {

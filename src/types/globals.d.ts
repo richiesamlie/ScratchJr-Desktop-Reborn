@@ -114,7 +114,7 @@ interface ScratchJrBridge extends IpcBridge {
     recordsound_recordstart(): string;
     recordsound_recordstop(): void;
     recordsound_volume(): number;
-    recordsound_startplay(): void;
+    recordsound_startplay(): number | void;
     recordsound_stopplay(): void;
     recordsound_recordclose(keep: string | boolean): void;
 

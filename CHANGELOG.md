@@ -3,6 +3,28 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.2.0] - 2026-09-07
+
+**Minor Release: Custom Audio Import, Recording Modal Unfreezing, and Cross-Platform Audio Playback (Issue #5).**
+
+### New Features
+- **Custom Audio File Import (`importaudio.svg`)**:
+  - Added native-styled Audio Import button (`.recordimport`) to the recording modal.
+  - Allows users to import external audio files (`.wav`, `.mp3`, `.ogg`, `.webm`, `.m4a`) directly into sprites.
+  - Automatically reads, encodes, persists into project storage (`PROJECTFILES`), caches in runtime audio store, and registers new sound blocks dynamically into the green Sound palette.
+  - Full cross-platform support across Desktop (Electron), Web / PWA (in-browser SQLite WASM + IndexedDB), and Android (Kotlin shell / WebView).
+
+### Bug Fixes
+- **Audio Recording Dialog Stacking Context & Touch Interactivity (Issue #5)**:
+  - Mounted `#recorddialog` to document root (`document.body`) instead of inside `#frame`.
+  - Fixes Issue #5 where CSS transforms on `#frame` created a separate stacking context, trapping `#recorddialog` behind the full-screen `#backdrop` (`z-index: 10000`) and causing the app to freeze with unclickable buttons.
+  - Added native touch event handlers (`ontouchend`) across recording dialog buttons (`recorddone`, `recordimport`, and toggle buttons) for mobile/tablet touch responsiveness on Android and touch screens.
+  - Added click/tap-to-dismiss behavior on `#backdrop` and dialog event propagation protection so users can tap outside the modal to safely close the recording dialog.
+  - Added modern Chromium AudioContext autoplay resumption check in `webav.js` to ensure the audio meter and recording streams activate immediately without freezing.
+- **Palette Microphone Slot Mouse & Touch Trigger**:
+  - Removed legacy `if (isTouch)` check on `div.onmousedown` in `Palette.drawRecordSound` so mouse clicks on PC non-touch displays immediately open the recorder modal.
+  - Styled microphone slot with `cursor: pointer` and added fallback in `paletteMouseDown` to prevent dragging the slot as a programming block.
+
 ## [v2.1.1] - 2026-09-04
 
 **Patch Release: Fix Canvas Character Mouse Dragging and Prevent Block Disappearance in Upper Workspace.**
