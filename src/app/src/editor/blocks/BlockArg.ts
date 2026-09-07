@@ -4,7 +4,7 @@ import BlockSpecs from './BlockSpecs';
 import Menu from './Menu';
 
 import {setCanvasSize, setProps, writeText, scaleMultiplier,
-    newHTML, newDiv, newCanvas, getStringSize, isTouch,
+    newHTML, newDiv, newCanvas, getStringSize,
     newP, globalx, globaly, dprCenterTransform} from '../../utils/lib';
 import Localization from '../../utils/Localization';
 import type Block from './Block';
@@ -304,7 +304,7 @@ export default class BlockArg {
     }
 
     pressDropDown (e: MouseEvent & { touches?: TouchList }, fcn: (e: MouseEvent, mu: HTMLElement, b: HTMLElement, c: string) => void) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         if (enginePorts().isOnHold()) {

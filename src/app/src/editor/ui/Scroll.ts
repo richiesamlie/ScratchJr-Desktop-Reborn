@@ -4,7 +4,7 @@
 
 import Events from '../../utils/Events';
 import type Block from '../blocks/Block';
-import {newDiv, newHTML, CSSTransition3D, isTouch, setCanvasSize} from '../../utils/lib';
+import {newDiv, newHTML, CSSTransition3D, setCanvasSize} from '../../utils/lib';
 
 export default class Scroll {
     hasHorizontal: boolean;
@@ -326,7 +326,7 @@ export default class Scroll {
     ////////////////////////////////////////////////////////////
 
     scrolldown (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();
@@ -354,7 +354,7 @@ export default class Scroll {
     }
 
     scrollup (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();
@@ -382,7 +382,7 @@ export default class Scroll {
     }
 
     scrollright (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();
@@ -410,7 +410,7 @@ export default class Scroll {
     }
 
     scrollleft (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();

@@ -9,7 +9,7 @@ import Events from '../../utils/Events';
 import Scroll from './Scroll';
 import Menu from '../blocks/Menu';
 import ScratchAudio from '../../utils/ScratchAudio';
-import {gn, localx, localy, newHTML, isTouch,
+import {gn, localx, localy, newHTML,
     globalx, globaly, setCanvasSize, getDocumentHeight, frame} from '../../utils/lib';
 import type Scripts from './Scripts';
 import type Sprite from '../engine/Sprite';
@@ -268,7 +268,7 @@ export default class ScriptsPane {
         if (Menu.openMenu) {
             return;
         }
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();

@@ -11,7 +11,7 @@ import Events from '../../utils/Events';
 import ScratchAudio from '../../utils/ScratchAudio';
 import { getModelRefAs, setModelRef } from '../modelRegistry';
 import {gn, newHTML, setCanvasSize, setProps,
-    localx, localy, scaleMultiplier, hit3DRect, isTouch} from '../../utils/lib';
+    localx, localy, scaleMultiplier, hit3DRect} from '../../utils/lib';
 import type Sprite from '../engine/Sprite';
 import type {EncodedStrip} from './Project';
 
@@ -53,7 +53,7 @@ export default class Scripts {
     ////////////////////////////////////////////////
 
     scriptsMouseDown (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         if (ScratchJr.onHold) {

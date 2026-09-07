@@ -11,6 +11,7 @@ html {
     direction: ltr;
     font: 81.25% Roboto, arial, sans-serif;
     user-select: none;
+    touch-action: none;
     height: 100%;
 }
 

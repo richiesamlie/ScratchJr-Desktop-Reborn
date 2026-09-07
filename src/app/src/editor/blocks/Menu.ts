@@ -1,7 +1,7 @@
 import BlockSpecs from './BlockSpecs';
 import { getModelRefAs } from '../modelRegistry';
 import type Block from './Block';
-import {scaleMultiplier, setProps, setCanvasSize, newHTML, isTouch,
+import {scaleMultiplier, setProps, setCanvasSize, newHTML,
     newDiv, getDocumentHeight, drawThumbnail, frame, globalx, globaly,
     dprCenterTransform} from '../../utils/lib';
 
@@ -76,29 +76,24 @@ export default class Menu {
         } else {
             drawThumbnail(img, micon);
         }
-        if (isTouch) {
-            cs.onmousedown = function (evt: MouseEvent) {
-                handleTouchStart(evt);
-            };
-        } else {
-            cs.onmouseover = function (evt: MouseEvent) {
+        cs.onmouseover = function (evt: MouseEvent) {
+            if (Menu.highlightdot) {
                 Menu.highlightdot(evt);
-            };
-            cs.onmouseout = function (evt: MouseEvent) {
+            }
+        };
+        cs.onmouseout = function (evt: MouseEvent) {
+            if (Menu.unhighlightdot) {
                 Menu.unhighlightdot(evt);
-            };
-            cs.onmousedown = function (evt: MouseEvent) {
-                fcn(evt, mu, block, c);
-            };
-        }
-        function handleTouchStart (e: MouseEvent & { touches?: TouchList }) {
-            if (isTouch && e.touches && (e.touches.length > 1)) {
+            }
+        };
+        cs.onmousedown = function (evt: MouseEvent & { touches?: TouchList }) {
+            if (('isPrimary' in evt && !(evt as PointerEvent).isPrimary) || (evt.touches && evt.touches.length > 1)) {
                 return;
             }
-            e.preventDefault();
-            e.stopPropagation();
-            fcn(e, mu, block, c);
-        }
+            evt.preventDefault();
+            evt.stopPropagation();
+            fcn(evt, mu, block, c);
+        };
     }
 
     static closeMyOpenMenu () {

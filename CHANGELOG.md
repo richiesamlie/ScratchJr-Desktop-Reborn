@@ -22,6 +22,13 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Eliminated redundant decode-then-re-encode cycles (`atob` $\rightarrow$ `utf8ToBase64`) during sprite and background loading in `Sprite.ts`, `Page.ts`, and `IO.ts`.
   - Replaced unsafe `atob` binary decoding with `base64ToUtf8` across asset pipelines, ensuring UTF-8 integrity for non-ASCII SVG text.
   - Short-circuited raster image detection in `IO.getImagesInSVG` prior to running full XML DOM parsing and regex formatting, accelerating sprite load times.
+- **Unified Pointer Events & Multi-Touch Input Normalization**:
+  - Eliminated coarse global `isTouch` boolean branching across UI components (`Home.ts`, `UI.ts`, `Thumbs.ts`, `Undo.ts`, `Scripts.ts`, `ScriptsPane.ts`, `Palette.ts`, `Scroll.ts`, `BlockArg.ts`, `Menu.ts`, `Sprite.ts`, `PaintAction.ts`, `Path.ts`, `Events.ts`).
+  - Removed duplicate shadow `Events` class in `Home.ts` in favor of the centralized `Events` module.
+  - Upgraded multi-touch guards to dynamically inspect pointer status (`('isPrimary' in e && !e.isPrimary) || (e.touches && e.touches.length > 1)`), providing seamless concurrent mouse, touch, and pen interaction without modality lock.
+  - Replaced legacy iOS/tablet hit target heuristics and simplification thresholds in `Path.ts` with standard CSS pointer media queries (`pointer: coarse`).
+  - Added global `touch-action: none` rules to `base.css` and `editor.css` to prevent unintended browser panning, pull-to-refresh, or zooming during drawing and block drag-and-drop.
+  - Deprecated legacy `isTouch` export in `lib.ts`.
 
 ## [v2.2.0] - 2026-09-07
 

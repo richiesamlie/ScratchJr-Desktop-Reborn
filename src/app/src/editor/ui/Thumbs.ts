@@ -15,7 +15,7 @@ import Events from '../../utils/Events';
 import { getModelRefAs, hasModelRef, setModelRef } from '../modelRegistry';
 import ScratchAudio from '../../utils/ScratchAudio';
 import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor,
-    isTouch, newImage, localy, setProps} from '../../utils/lib';
+    newImage, localy, setProps} from '../../utils/lib';
 
 let caret: HTMLElement | null = null;
 
@@ -80,7 +80,7 @@ export default class Thumbs {
     }
 
     static pageMouseDown (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         if (ScratchJr.onHold) {
@@ -372,7 +372,7 @@ export default class Thumbs {
     }
 
     static clickOnEmptyPage (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         ScratchAudio.sndFX('tap.wav');

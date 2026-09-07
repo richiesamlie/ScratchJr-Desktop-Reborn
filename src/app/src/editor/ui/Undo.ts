@@ -13,7 +13,7 @@ import type Sprite from '../engine/Sprite';
 import type Page from '../engine/Page';
 import UI from './UI';
 import ScratchAudio from '../../utils/ScratchAudio';
-import {newHTML, isTouch, gn} from '../../utils/lib';
+import {newHTML, gn} from '../../utils/lib';
 
 let buffer: ProjectData[] = [];
 let index = 0;
@@ -75,7 +75,7 @@ export default class Undo {
     ////////////////////////////////
 
     static prevStep (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();
@@ -96,7 +96,7 @@ export default class Undo {
     }
 
     static nextStep (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         e.preventDefault();

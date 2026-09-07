@@ -23,7 +23,7 @@ import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import { getModelRefAs } from '../modelRegistry';
-import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, isTouch, newDiv,
+import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, newDiv,
     newTextInput, getDocumentWidth, getDocumentHeight, setProps, globalx, applyResponsiveFrameScale} from '../../utils/lib';
 
 // Named-form access: document.forms.projectname.myproject
@@ -635,7 +635,7 @@ export default class UI {
     //////////////////////////////////
 
     static spriteThumbsActions (e: MouseEvent & { touches?: TouchList }) {
-        if (isTouch && e.touches && (e.touches.length > 1)) {
+        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
             return;
         }
         if (ScratchJr.onHold) {

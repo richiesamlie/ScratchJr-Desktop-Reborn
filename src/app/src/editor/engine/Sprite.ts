@@ -22,7 +22,7 @@ import ScratchAudio from '../../utils/ScratchAudio';
 import type Scripts from '../ui/Scripts';
 import {newHTML, newDiv, newP, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
-    DEGTOR, getIdFor, setProps, isTouch, isDesktop, isAndroid,
+    DEGTOR, getIdFor, setProps, isDesktop, isAndroid,
     fitInRect, scaleMultiplier, setCanvasSize,
     globaly, globalx, rgbToHex, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
 import type Stage from './Stage';
@@ -986,13 +986,7 @@ Math.floor(h));
                 me.unfocusText();
             });
         } else {
-            if (isTouch) {
-                ti.focus();
-            } else {
-                setTimeout(function () {
-                    ti.focus();
-                }, 100);
-            }
+            ti.focus();
         }
     }
 

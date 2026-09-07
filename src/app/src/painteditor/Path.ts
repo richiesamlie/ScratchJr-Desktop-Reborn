@@ -6,8 +6,14 @@
 // data needs to be moved, etc. -TM
 
 import ScratchJr from '../editor/ScratchJr';
-import {isTouch} from '../utils/lib';
 import SVG2Canvas from '../utils/SVG2Canvas';
+
+function isCoarseInput (): boolean {
+    return typeof window !== 'undefined' && Boolean(
+        (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+        || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)
+    );
+}
 import SVGImage from './SVGImage';
 import SVGTools from './SVGTools';
 import Layer from './Layer';
@@ -142,7 +148,7 @@ export default class Path {
         var j = 0;
         var plist: Point[] = [];
         plist.push(points[0]);
-        var dist = isTouch ? 40 : 30;
+        var dist = isCoarseInput() ? 40 : 30;
         var before, here, after;
         while (i < n - 1) {
             before = points[j];
@@ -734,7 +740,7 @@ export default class Path {
     static getDot (g: Element, cmd: string, pt: Point): HTMLElement {
         cmd = cmd.toUpperCase();
         var iscurve = SVG2Canvas.curveoptions.indexOf(cmd) > -1;
-        var radius = Math.floor((isTouch ? idotsize : dotsize) / Paint.currentZoom) + 1;
+        var radius = Math.floor((isCoarseInput() ? idotsize : dotsize) / Paint.currentZoom) + 1;
         var skip = (cmd == 'Z');
         var cp = SVGTools.addChild(g, 'circle', {
             'id': getIdFor('grab'),
@@ -953,7 +959,7 @@ export default class Path {
         }
         var pt = PaintAction.getScreenPt(evt);
         var closestdot = Path.getClosestDotTo(pt,
-            Math.floor((isTouch ? idotsize + 4 : dotsize) / Paint.currentZoom) * 2);
+            Math.floor((isCoarseInput() ? idotsize + 4 : dotsize) / Paint.currentZoom) * 2);
         if (closestdot) {
             PaintAction.target = closestdot as Element | null;
         }

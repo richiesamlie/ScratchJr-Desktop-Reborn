@@ -3,6 +3,7 @@ div.frame {
     height: 100%;
     position: relative;
     user-select: none;
+    touch-action: none;
 }
 
 /*project info*/

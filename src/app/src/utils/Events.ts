@@ -2,7 +2,7 @@
 the caller should define the window event and call startDrag with the appropiate values
 */
 
-import {gn, scaleMultiplier, isTouch, currentUiScale, frame} from './lib';
+import {gn, scaleMultiplier, currentUiScale, frame} from './lib';
 
 // Drag elements are DOM nodes (block/thumb divs, canvases) carrying
 // drag-session expando state. While a drag is active they are treated as
@@ -137,7 +137,10 @@ export default class Events {
             Events.holdit(c, athold);
         }
         updatefcn = atdrag;
-        delta = isTouch ? 10 * scaleMultiplier : 7;
+        const isTouchOrCoarse = (('pointerType' in e && (e as PointerEvent).pointerType === 'touch')
+            || ('touches' in e && Boolean((e as { touches?: TouchList }).touches))
+            || (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches));
+        delta = isTouchOrCoarse ? 10 * scaleMultiplier : 7;
         window.onmousemove = function (evt) {
             Events.mouseMove(evt);
         };
@@ -230,9 +233,7 @@ export default class Events {
     }
 
     static clearEvents () {
-        window.onmousemove = !isTouch ? function (e) {
-            e.preventDefault();
-        } : null;
+        window.onmousemove = null;
         window.onmouseup = null;
         window.ontouchmove = null;
         window.ontouchend = null;

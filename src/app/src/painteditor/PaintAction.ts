@@ -14,7 +14,7 @@ import Camera from './Camera';
 import Events from '../utils/Events';
 import Rectangle from '../geom/Rectangle';
 import type {Point} from '../geom/Vector';
-import {gn, isTouch, getIdFor} from '../utils/lib';
+import {gn, getIdFor} from '../utils/lib';
 /*
 Type of objects:
 - fixed: Only exists on Assets Backgrounds and can it only be fill (color or camera) or removed
@@ -845,9 +845,7 @@ Path.maxDistance()); // check the start
     }
 
     static cameraMouseUp (evt: PaintEvt) {
-        if (isTouch) {
-            PaintAction.fingerUp(evt);
-        }
+        PaintAction.fingerUp(evt);
         if (currentShape == undefined) {
             return;
         }

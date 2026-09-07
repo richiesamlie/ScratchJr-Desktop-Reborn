@@ -9,7 +9,8 @@ import Localization from '../utils/Localization';
 import ScratchAudio from '../utils/ScratchAudio';
 import Alert from '../editor/ui/Alert';
 import Vector from '../geom/Vector';
-import {gn, newHTML, isTouch} from '../utils/lib';
+import {gn, newHTML} from '../utils/lib';
+import Events from '../utils/Events';
 
 let frame: HTMLElement;
 let scrollvalue: number;
@@ -544,28 +545,6 @@ export default class Home {
         function drawMe (url: string) {
             img.src = url;
         }
-    }
-}
-
-class Events {
-    static getTargetPoint (e: MouseEvent & { touches?: TouchList; changedTouches?: TouchList }) {
-        if (isTouch) {
-            if (e.touches && (e.touches.length > 0)) {
-                return {
-                    x: e.touches[0].pageX,
-                    y: e.touches[0].pageY
-                };
-            } else if (e.changedTouches) {
-                return {
-                    x: e.changedTouches[0].pageX,
-                    y: e.changedTouches[0].pageY
-                };
-            }
-        }
-        return {
-            x: e.clientX,
-            y: e.clientY
-        };
     }
 }
 
