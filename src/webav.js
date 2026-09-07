@@ -465,15 +465,11 @@ class CameraPickerDialog {
             // the video has autoplay so that the feed will start when shown
             // it also has scale so that the camera will act as a mirror - otherwise
             // it can be awkward to get yourself into the frame.
-            let videoStyle = '';
-            if (this.isMirrored) {
-                videoStyle = `style='-moz-transform: scale(-1, 1); -webkit-transform: scale(-1, 1); -o-transform: scale(-1, 1); transform: scale(-1, 1); filter: FlipH;'`;
-            }
             this.cameraPickerDiv.innerHTML = '';
             var video = document.createElement('video');
             video.id = 'CameraPickerDialog-cameraFeed';
-            if (videoStyle) {
-                video.setAttribute('style', videoStyle.replace(/style='([^']+)'/, '$1'));
+            if (this.isMirrored) {
+                video.style.transform = 'scaleX(-1)';
             }
             video.autoplay = true;
             this.cameraPickerDiv.appendChild(video);

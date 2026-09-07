@@ -15,6 +15,9 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Removed obsolete 2014-era `PlatformBridge.path` filesystem seam across `PlatformBridge.ts`, `IO.ts`, `Sprite.ts`, `Page.ts`, `home.ts`, `editor.ts`, and test fixtures, unifying media resolution through the secure host bridge.
   - Replaced deprecated synchronous `XMLHttpRequest` fallback in `lib.ts` (`preprocessAndLoad`) with modern async `fetch()`.
   - Cleaned up vestigial sound registration relics in `ScratchAudio.ts`: replaced brittle `.wav`-only check in `loadProjectSound` with universal `Documents` fallback (fixing non-wav custom imported audio loading on Web), and removed obsolete comma-split duration parsing in `addSound`.
+- **Camera Tool Geometry Cleanup & Database IPC Optimization**:
+  - Cleaned up obsolete 2014 iOS hole-punch coordinate relics (`scale`, `devicePixelRatio`) in `Camera.ts` and modernized CSS video mirror transform in `webav.js`.
+  - Optimized database IPC pipeline across `PlatformBridge.ts`, `preload.ts`, `ipc-handlers.ts`, and `browserClient.js` to pass typed intent objects directly without redundant JSON stringification/parsing roundtrips on Electron and Web, with safe defensive serialization at the Android adapter boundary (`webhost.js`).
 
 ## [v2.2.0] - 2026-09-07
 

@@ -34,7 +34,6 @@ export default class Camera {
         }
         target = feedTarget;
         Camera.active = true;
-        var devicePixelRatio = window.devicePixelRatio;
         var viewbox = SVGTools.getBox(target).rounded();
         var box = new Rectangle(0, 0, Paint.workspaceWidth, Paint.workspaceHeight);
         viewbox = viewbox.expandBy(20);
@@ -49,8 +48,6 @@ export default class Camera {
             + gn('maincanvas')!.cy! - gn('maincanvas')!.cy! * Paint.currentZoom;
         data.width = viewbox.width;
         data.height = viewbox.height;
-        data.scale = Paint.currentZoom;
-        data.devicePixelRatio = devicePixelRatio;
         data.mx = globalx(gn('workspacebkg')!) + gn('maincanvas')!.dx!;
         data.my = globaly(gn('workspacebkg')!) + gn('maincanvas')!.dy!;
         data.mw = Paint.workspaceWidth;

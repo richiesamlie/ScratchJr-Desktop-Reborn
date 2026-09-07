@@ -73,7 +73,7 @@ export default class PlatformBridge {
     // Database functions
     static async stmt(json: DbWriteIntent, fcn?: (result: unknown) => void) {
         try {
-            var result = await hostInterface!.database_stmt(JSON.stringify(json));
+            var result = await hostInterface!.database_stmt(json);
             if (typeof result === 'number' && result < 0) {
                 // Distinct failure codes from the main process (DB_ERRORS):
                 // -1 database closed, -2 intent rejected, -3 SQL error.
@@ -91,7 +91,7 @@ export default class PlatformBridge {
     }
 
     static async query(json: DbSelectIntent, fcn: (result: string) => void) {
-        var result = await hostInterface!.database_query(JSON.stringify(json));
+        var result = await hostInterface!.database_query(json);
         if (typeof (fcn) !== 'undefined') {
             fcn(result as string);
         }

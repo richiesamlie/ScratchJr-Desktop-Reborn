@@ -7,6 +7,7 @@
  */
 
 import { contextBridge, ipcRenderer, webFrame } from 'electron';
+import type { DbIntent } from './lib/db-intents';
 
 // Disable zoom (must happen in preload since it requires webFrame)
 webFrame.setVisualZoomLevelLimits(1, 1);
@@ -21,8 +22,8 @@ webFrame.setVisualZoomLevelLimits(1, 1);
 contextBridge.exposeInMainWorld('scratchjr', {
 
     // ---- Database ----
-    database_stmt: (json: string) => ipcRenderer.invoke('database_stmt', json),
-    database_query: (json: string) => ipcRenderer.invoke('database_query', json),
+    database_stmt: (intent: DbIntent | string) => ipcRenderer.invoke('database_stmt', intent),
+    database_query: (intent: DbIntent | string) => ipcRenderer.invoke('database_query', intent),
 
     // ---- Settings & Resources ----
     io_getsettings: () => ipcRenderer.invoke('io_getsettings', null),

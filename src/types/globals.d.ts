@@ -5,6 +5,8 @@
  */
 
 interface AndroidInterfaceStatic {
+    database_stmt(jsonStr: string): string;
+    database_query(jsonStr: string): string;
     audio_play(url: string, volume: number): number | null;
     audio_stop(handle: number): void;
     audio_isplaying(handle: number): boolean;
@@ -54,8 +56,8 @@ type TabletBridge = ScratchJrBridge;
  */
 interface IpcBridge {
     // ---- Database ----
-    database_stmt(json: string): Promise<unknown>;
-    database_query(json: string): Promise<unknown>;
+    database_stmt(intent: DbWriteIntent | string): Promise<unknown>;
+    database_query(intent: DbSelectIntent | string): Promise<unknown>;
 
     // ---- Settings & Resources ----
     io_getsettings(): Promise<string>;

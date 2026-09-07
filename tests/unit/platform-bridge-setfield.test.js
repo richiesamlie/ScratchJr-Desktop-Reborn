@@ -15,7 +15,7 @@ describe('PlatformBridge.setfield builds a parameterized update intent', () => {
         delete globalThis.lastPayload;
         globalThis.window.tablet = {
             database_stmt: async (json) => {
-                globalThis.lastPayload = JSON.parse(json);
+                globalThis.lastPayload = typeof json === 'string' ? JSON.parse(json) : json;
                 return '1';
             },
         };

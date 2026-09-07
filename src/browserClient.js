@@ -662,9 +662,10 @@
         cameraPickerDialog: null,
 
         // ---- Database ----
-        database_stmt: function (/** @type {string} */ jsonStr) {
+        database_stmt: function (/** @type {any} */ raw) {
             try {
-                var intent = JSON.parse(jsonStr);
+                var intent = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (!intent || typeof intent !== 'object') return Promise.resolve(-2);
                 return executeIntent(intent).catch(function (/** @type {any} */ e) {
                     console.error('[browserClient] database_stmt error:', e);
                     return -3;
@@ -675,9 +676,10 @@
             }
         },
 
-        database_query: function (/** @type {string} */ jsonStr) {
+        database_query: function (/** @type {any} */ raw) {
             try {
-                var intent = JSON.parse(jsonStr);
+                var intent = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                if (!intent || typeof intent !== 'object') return Promise.resolve('[]');
                 return executeIntent(intent).catch(function (/** @type {any} */ e) {
                     console.error('[browserClient] database_query error:', e);
                     return '[]';

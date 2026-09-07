@@ -72,12 +72,12 @@ class ElectronDesktopInterface {
         this.cameraPickerDialog = null;
     }
 
-    /** @param {string} json */
+    /** @param {any} json */
     async database_stmt(json) {
         return await bridge.database_stmt(json);
 
     }
-    /** @param {string} json */
+    /** @param {any} json */
     async database_query(json) {
         if (DEBUG_DATABASE) debugLog('beginning database_query', json);
         let res = await bridge.database_query(json);

@@ -196,11 +196,12 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         return null;
     });
 
-    ipcMain.handle('database_stmt', (_event: IpcMainInvokeEvent, json: string) => {
+    ipcMain.handle('database_stmt', (_event: IpcMainInvokeEvent, raw: unknown) => {
         try {
             // Renderer sends a structured intent; SQL is composed here from
             // allowlisted tables/columns only. No renderer SQL text exists.
-            const intent = parseDbIntent(JSON.parse(json));
+            const rawObj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            const intent = parseDbIntent(rawObj);
             if (intent.kind !== 'write') throw new Error('database_stmt only accepts write ops');
             const dataStore = getDataStore();
             const db = dataStore?.databaseManager;
@@ -223,9 +224,10 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         }
     });
 
-    ipcMain.handle('database_query', (_event: IpcMainInvokeEvent, json: string) => {
+    ipcMain.handle('database_query', (_event: IpcMainInvokeEvent, raw: unknown) => {
         try {
-            const intent = parseDbIntent(JSON.parse(json));
+            const rawObj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            const intent = parseDbIntent(rawObj);
             if (intent.kind !== 'select') throw new Error('database_query only accepts select ops');
             const dataStore = getDataStore();
             const db = dataStore?.databaseManager;

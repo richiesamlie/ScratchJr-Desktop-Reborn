@@ -40,8 +40,14 @@
     var androidHost = {
 
         // ---- Storage / DB / settings: forward to Kotlin ----
-        database_stmt: fwd('database_stmt'),
-        database_query: fwd('database_query'),
+        database_stmt: function (/** @type {any} */ intent) {
+            var str = typeof intent === 'string' ? intent : JSON.stringify(intent);
+            return AndroidInterface.database_stmt(str);
+        },
+        database_query: function (/** @type {any} */ intent) {
+            var str = typeof intent === 'string' ? intent : JSON.stringify(intent);
+            return AndroidInterface.database_query(str);
+        },
         io_getsettings: fwd('io_getsettings'),
         io_gettextresource: fwd('io_gettextresource'),
         io_getIsDebug: fwd('io_getIsDebug'),
