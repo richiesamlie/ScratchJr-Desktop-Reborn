@@ -24,36 +24,23 @@
 ## ✨ Key Capabilities
 
 ### 🌐 Universal Multi-Target Architecture
-- **In-Browser SQLite (Web/PWA)**: Full client-side execution via `sql.js` (WebAssembly SQLite) paired with IndexedDB persistence. Zero server requirements, zero cross-origin header restrictions.
-- **Multi-Tab Concurrency Guard**: Web Locks API (`navigator.locks`) prevents write races across browser tabs, keeping secondary windows in safe read-only mode.
-- **High-Performance Android Shell**: Modern Kotlin shell using `WebViewAssetLoader`, native SQLite WAL, camera/mic permissions, and system intent handling.
-- **Sandboxed Desktop**: Built on Electron with strict `contextIsolation`, typed database intents, and no raw SQL evaluation over IPC.
-
-### ⚡ Modernized Engine & Hardware Integration
-- **Direct Single-Roundtrip Media Pipeline**: Replaced legacy 2014 chunked media transport with a single-call async `io_getmedia` protocol across Desktop, Android, and Web / PWA, reducing asset load roundtrips from 20+ to 1 and eliminating temporary cache layers.
-- **Unified Pointer Events & Multi-Touch Input**: Standardized on native Pointer Events (`pointerdown`, `pointermove`, `pointerup`) with dynamic primary pointer detection. Provides seamless, concurrent touch, mouse, and stylus drawing and block drag-and-drop without modality locking.
-- **Interactive Camera Tool**: Native camera capture tool with live video feed, hardware resolution constraint fallback, keyboard shortcuts (`Escape` to cancel, `Space`/`Enter` to snap), and fail-safe modal dismissal.
-- **Custom Audio Import & Sound Recording**: Dedicated audio import button in the recording modal supporting external `.wav`, `.mp3`, `.ogg`, `.webm`, and `.m4a` files with dynamic Sound palette block registration.
-- **Optimized Database IPC Pipeline**: Passes typed `DbIntent` structured objects directly across Electron IPC and Web workers without redundant JSON stringification or parsing churn.
-- **UTF-8 Safe SVG & Image Optimization**: Safe decoding via `base64ToUtf8` preventing international text corruption and eliminating redundant Base64 decode/re-encode cycles during sprite loading.
+- **In-Browser Web & PWA**: Zero-install client-side execution via WebAssembly SQLite (`sql.js`) and IndexedDB with multi-tab concurrency guards.
+- **Native Android Shell**: High-performance Kotlin shell with native SQLite WAL, camera/mic permissions, and system file intents.
+- **Sandboxed Desktop**: Secure Electron runtime with strict context isolation, typed database intents, and silent MSI fleet deployment.
 
 ### 🎨 Creative Coding & Expanded Canvas
-- **`flipX` Motion Block**: Added horizontal mirroring block to the Blue Motion palette with native reset on "Go Home".
-- **Smart Asset Library**: Live multi-token search box with 12 curated categories for costumes and backgrounds.
-- **8 Pages per Project**: Expanded from the original 4-page ceiling with scrollable page strips and pinned navigation.
-- **Paint Editor Tools**: Dedicated straight line and star shape tools with Shift-key geometric snapping.
-- **Custom Media Import**: Import PNG, JPG, JPEG, and SVG images with automatic aspect ratio fitting and Unicode UTF-8 safe serialization.
-- **12 Supported Languages**: Full native translations across English, Spanish, French, German, Italian, Japanese, Simplified Chinese, Dutch, Portuguese, Swedish, Catalan, and Thai.
+- **Enhanced Toolkit**: Horizontal flip (`flipX`) motion block, 8 pages per project (up from 4), star/line paint tools, and 12 native languages.
+- **Media & Audio Import**: Import custom costumes, backgrounds (PNG/JPG/SVG), and audio tracks (`.wav`, `.mp3`, `.ogg`, `.webm`, `.m4a`) directly into blocks.
+- **Smart Asset Library**: Curated character and background categories with real-time multi-token search.
+
+### ⚡ Modern Engine & Hardware Parity
+- **Unified Pointer & Multi-Touch**: Responsive drawing and block dragging across touchscreens, stylus, and mouse with zero modality lock.
+- **Interactive Camera**: Live camera feed capture with hardware fallback and keyboard shortcuts (`Space`/`Enter` to snap, `Escape` to cancel).
+- **Streamlined Pipeline**: Direct single-roundtrip media transport and structured IPC cloning for fast asset loading and low memory usage.
 
 ### 💾 Safe Storage & 1-Click Sharing
-- **Lobby 1-Click `.sjr` Open Card**: Dedicated import card next to "+" with native system file pickers across all platforms.
-- **Instant Project Export**: One-click card export to native Save File dialog (Desktop), system Share Sheet (Android), or browser download (Web).
-- **Automatic Crash Protection**: Atomic database writes, rolling `.bak` snapshots on Desktop, and automated corrupt database quarantine in IndexedDB.
-
-### 🏫 Classroom & Fleet Deployment
-- **Touchscreen & Smartboard Ready**: Defensive coordinate resolution across mouse, stylus, and touch inputs prevents block dropouts during classroom activities.
-- **CLI Flags**: Launch with `--lang=XX` language overrides for multi-lingual school computer labs.
-- **Configurable MSI Installer**: Supports silent mass deployment (`msiexec /i ScratchJr.msi /qn`), Intune/GPO policies, and per-machine install scopes.
+- **1-Click `.sjr` Open & Export**: Dedicated lobby import card and instant export to native Save dialogs, Android share sheet, or browser download.
+- **Crash Protection**: Atomic database writes, rolling `.bak` snapshots on Desktop, and automated corruption quarantine.
 - **185 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
 
 ---
