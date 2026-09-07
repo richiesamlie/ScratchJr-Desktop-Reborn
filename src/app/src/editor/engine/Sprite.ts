@@ -24,7 +24,7 @@ import {newHTML, newDiv, newP, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
     DEGTOR, getIdFor, setProps, isTouch, isDesktop, isAndroid,
     fitInRect, scaleMultiplier, setCanvasSize,
-    globaly, globalx, rgbToHex, utf8ToBase64} from '../../utils/lib';
+    globaly, globalx, rgbToHex, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
 import type Stage from './Stage';
 import type Page from './Page';
 import type Thread from './Thread';
@@ -137,15 +137,29 @@ export default class Sprite {
             PlatformBridge.getmedia(md5, nextStep);
         }
         function nextStep (base64: string) {
-            doNext(atob(base64));
+            var str = base64ToUtf8(base64);
+            str = str.replace(/>\s*</g, '><');
+            spr.setSVG(str);
+            var dataUrl = IO.getImageDataURL(spr.md5, base64);
+            if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
+                whenDone(dataUrl);
+            } else {
+                IO.getImagesInSVG(str, function () {
+                    whenDone(dataUrl);
+                });
+            }
         }
         function doNext (str: string) {
             str = str.replace(/>\s*</g, '><');
             spr.setSVG(str);
-            var base64 = IO.getImageDataURL(spr.md5, utf8ToBase64(str));
-            IO.getImagesInSVG(str, function () {
-                whenDone(base64);
-            });
+            var dataUrl = IO.getImageDataURL(spr.md5, utf8ToBase64(str));
+            if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
+                whenDone(dataUrl);
+            } else {
+                IO.getImagesInSVG(str, function () {
+                    whenDone(dataUrl);
+                });
+            }
         }
     }
 

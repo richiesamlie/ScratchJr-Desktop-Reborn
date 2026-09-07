@@ -18,6 +18,10 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
 - **Camera Tool Geometry Cleanup & Database IPC Optimization**:
   - Cleaned up obsolete 2014 iOS hole-punch coordinate relics (`scale`, `devicePixelRatio`) in `Camera.ts` and modernized CSS video mirror transform in `webav.js`.
   - Optimized database IPC pipeline across `PlatformBridge.ts`, `preload.ts`, `ipc-handlers.ts`, and `browserClient.js` to pass typed intent objects directly without redundant JSON stringification/parsing roundtrips on Electron and Web, with safe defensive serialization at the Android adapter boundary (`webhost.js`).
+- **SVG Image Pipeline Optimization**:
+  - Eliminated redundant decode-then-re-encode cycles (`atob` $\rightarrow$ `utf8ToBase64`) during sprite and background loading in `Sprite.ts`, `Page.ts`, and `IO.ts`.
+  - Replaced unsafe `atob` binary decoding with `base64ToUtf8` across asset pipelines, ensuring UTF-8 integrity for non-ASCII SVG text.
+  - Short-circuited raster image detection in `IO.getImagesInSVG` prior to running full XML DOM parsing and regex formatting, accelerating sprite load times.
 
 ## [v2.2.0] - 2026-09-07
 

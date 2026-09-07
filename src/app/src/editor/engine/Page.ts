@@ -11,7 +11,7 @@ import Matrix from '../../geom/Matrix';
 import Vector from '../../geom/Vector';
 import {newHTML, newDiv, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
-    DEGTOR, getIdFor, setProps, utf8ToBase64} from '../../utils/lib';
+    DEGTOR, getIdFor, setProps, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
 
 export default class Page {
     div: HTMLElement;
@@ -151,15 +151,29 @@ export default class Page {
             PlatformBridge.getmedia(md5, nextStep);
         }
         function nextStep (base64: string) {
-            doNext(atob(base64));
+            var str = base64ToUtf8(base64);
+            str = str.replace(/>\s*</g, '><');
+            me.setSVG(str);
+            var dataUrl = IO.getImageDataURL(me.md5!, base64);
+            if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
+                me.setBackgroundImage(dataUrl, fcn);
+            } else {
+                IO.getImagesInSVG(str, function () {
+                    me.setBackgroundImage(dataUrl, fcn);
+                });
+            }
         }
         function doNext (str: string) {
             str = str.replace(/>\s*</g, '><');
             me.setSVG(str);
-            var base64 = IO.getImageDataURL(me.md5!, utf8ToBase64(str));
-            IO.getImagesInSVG(str, function () {
-                me.setBackgroundImage(base64, fcn);
-            });
+            var dataUrl = IO.getImageDataURL(me.md5!, utf8ToBase64(str));
+            if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
+                me.setBackgroundImage(dataUrl, fcn);
+            } else {
+                IO.getImagesInSVG(str, function () {
+                    me.setBackgroundImage(dataUrl, fcn);
+                });
+            }
         }
     }
 

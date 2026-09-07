@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 
 import PlatformBridge from './PlatformBridge.js';
 import MediaLib from './MediaLib.js';
-import {setCanvasSize, drawThumbnail, gn, utf8ToBase64} from '../utils/lib';
+import {setCanvasSize, drawThumbnail, gn, utf8ToBase64, base64ToUtf8} from '../utils/lib';
 import SVG2Canvas from '../utils/SVG2Canvas';
 
 const database = 'projects';
@@ -84,7 +84,7 @@ export default class IO {
 
         function gotit (str: string) {
             var base64 = IO.getImageDataURL(md5, utf8ToBase64(str));
-            if (str.indexOf('xlink:href') < 0) {
+            if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
                 fcn(md5); // does not have embedded images
             } else {
                 IO.getImagesInSVG(str, function () {
@@ -98,21 +98,25 @@ export default class IO {
                 fcn(IO.getImageDataURL(md5, dataurl));
                 return;
             }
-            var str = atob(dataurl);
             var base64 = IO.getImageDataURL(md5, dataurl);
-            IO.getImagesInSVG(str, function () {
+            var str = base64ToUtf8(dataurl);
+            if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
                 fcn(base64);
-            });
+            } else {
+                IO.getImagesInSVG(str, function () {
+                    fcn(base64);
+                });
+            }
         }
     }
 
     static getImagesInSVG (str: string, whenDone: () => void) {
-        str = str.replace(/>\s*</g, '><');
         if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
             whenDone();
-        } else {
-            loadInnerImages(str, whenDone);
+            return;
         }
+        str = str.replace(/>\s*</g, '><');
+        loadInnerImages(str, whenDone);
 
         function loadInnerImages (str: string, whenDone: () => void) {
             try {
@@ -193,6 +197,9 @@ export default class IO {
         return res;
     }
     static getImageDataURL (md5: string, data: string) {
+        if (data.startsWith('data:')) {
+            return data;
+        }
         var header = '';
         switch (IO.getExtension(md5)) {
         case 'svg': header = 'data:image/svg+xml;base64,';
