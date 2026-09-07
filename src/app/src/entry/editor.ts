@@ -131,7 +131,6 @@ export function editorMain () { // eslint-disable-line import/prefer-default-exp
     PlatformBridge.getsettings(doNext);
     function doNext (str: string) {
         var list = str.split(',');
-        PlatformBridge.path = list[1] == '0' ? list[0] + '/' : undefined;
         if (list.length > 2) {
             Record.available = (list[2] == 'YES');
         }

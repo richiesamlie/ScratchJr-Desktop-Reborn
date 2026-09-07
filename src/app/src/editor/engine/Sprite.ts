@@ -130,7 +130,6 @@ export default class Sprite {
         var md5 = this.md5;
         var spr = this;
         var keys = MediaLib.keys as Record<string, unknown>;
-        var url = (keys[md5]) ? MediaLib.path + md5 : (md5.indexOf('/') < 0) ? PlatformBridge.path + md5 : md5;
         md5 = (keys[md5]) ? MediaLib.path + md5 : md5;
         if (md5.indexOf('/') > -1) {
             IO.requestFromServer(md5, doNext);
@@ -143,14 +142,10 @@ export default class Sprite {
         function doNext (str: string) {
             str = str.replace(/>\s*</g, '><');
             spr.setSVG(str);
-            if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
-                whenDone(url); // does not have embedded images
-            } else {
-                var base64 = IO.getImageDataURL(spr.md5, utf8ToBase64(str));
-                IO.getImagesInSVG(str, function () {
-                    whenDone(base64);
-                });
-            }
+            var base64 = IO.getImageDataURL(spr.md5, utf8ToBase64(str));
+            IO.getImagesInSVG(str, function () {
+                whenDone(base64);
+            });
         }
     }
 

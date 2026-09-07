@@ -11,6 +11,10 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Eliminated IPC roundtrip amplification (reduced from 20+ sequential roundtrips per asset to 1), $O(N^2)$ string concatenation churn, and 3x memory buffering during asset loading.
   - Removed deprecated temporary holding cache infrastructure (`MediaCache.kt` on Android, `dataStore.cacheMedia` in Electron, and `mediaTransferCache` in Web).
   - Preserved cross-platform asset loading parity and host abstraction boundaries.
+- **Modernized Legacy Tablet & Browser Relics**:
+  - Removed obsolete 2014-era `PlatformBridge.path` filesystem seam across `PlatformBridge.ts`, `IO.ts`, `Sprite.ts`, `Page.ts`, `home.ts`, `editor.ts`, and test fixtures, unifying media resolution through the secure host bridge.
+  - Replaced deprecated synchronous `XMLHttpRequest` fallback in `lib.ts` (`preprocessAndLoad`) with modern async `fetch()`.
+  - Cleaned up vestigial sound registration relics in `ScratchAudio.ts`: replaced brittle `.wav`-only check in `loadProjectSound` with universal `Documents` fallback (fixing non-wav custom imported audio loading on Web), and removed obsolete comma-split duration parsing in `addSound`.
 
 ## [v2.2.0] - 2026-09-07
 

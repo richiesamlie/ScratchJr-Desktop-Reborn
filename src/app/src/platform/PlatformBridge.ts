@@ -11,20 +11,12 @@ import AppUsage from '../utils/AppUsage';
 // This bridge connects renderer code with host/Electron native operations.
 // Originally named "iOS" in legacy ScratchJr, it is now unified as PlatformBridge.
 
-let path: string | undefined;
 let camera: string | undefined;
 let database = 'projects';
 let hostInterface: ScratchJrBridge | null = null;
 
 export default class PlatformBridge {
     // Getters/setters for properties used in other classes
-    static get path (): string {
-        return path!;
-    }
-
-    static set path (newPath: string | undefined) {
-        path = newPath;
-    }
 
     static get camera (): string {
         return camera!;

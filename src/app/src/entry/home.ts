@@ -15,9 +15,7 @@ export function homeMain () {  // eslint-disable-line import/prefer-default-expo
     }
     homeStrings();
     PlatformBridge.getsettings(doNext);
-    function doNext (str: string) {
-        var list = str.split(',');
-        PlatformBridge.path = list[1] == '0' ? list[0] + '/' : undefined;
+    function doNext () {
         Lobby.appinit(window.Settings!.scratchJrVersion);
     }
 }

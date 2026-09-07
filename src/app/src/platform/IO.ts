@@ -80,11 +80,7 @@ export default class IO {
             IO.requestFromServer(md5, gotit); // get url contents
             return;
         }
-        if ((IO.getExtension(md5) == 'png') && PlatformBridge.path) {
-            fcn(PlatformBridge.path + md5);
-        } else {
-            PlatformBridge.getmedia(md5, nextStep);
-        }
+        PlatformBridge.getmedia(md5, nextStep);
 
         function gotit (str: string) {
             var base64 = IO.getImageDataURL(md5, utf8ToBase64(str));
@@ -103,14 +99,10 @@ export default class IO {
                 return;
             }
             var str = atob(dataurl);
-            if ((str.indexOf('xlink:href') < 0) && PlatformBridge.path) {
-                fcn(PlatformBridge.path + md5);
-            } else {
-                var base64 = IO.getImageDataURL(md5, dataurl);
-                IO.getImagesInSVG(str, function () {
-                    fcn(base64);
-                });
-            }
+            var base64 = IO.getImageDataURL(md5, dataurl);
+            IO.getImagesInSVG(str, function () {
+                fcn(base64);
+            });
         }
     }
 

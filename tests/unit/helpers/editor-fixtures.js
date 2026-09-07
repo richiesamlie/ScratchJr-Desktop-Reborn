@@ -59,7 +59,6 @@ export function resetRendererDom () {
 // bridge; the format tests don't need images.
 export function stubMedia () {
     PlatformBridge.getmedia = async () => {};
-    PlatformBridge.path = '';
 }
 
 /** [blocktype, arg, nested-strip-shape] tuples; positions are dropped */

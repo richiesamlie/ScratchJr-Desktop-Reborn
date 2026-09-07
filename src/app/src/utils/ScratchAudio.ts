@@ -50,8 +50,7 @@ export default class ScratchAudio {
         var name = snd;
         var whenDone = function (str: unknown) {
             if (str != 'error') {
-                var result = snd.split(',');
-                dict[snd] = new Sound(result[0], result[1]);
+                dict[snd] = new Sound(snd);
             } else {
                 name = 'error';
             }
@@ -73,7 +72,7 @@ export default class ScratchAudio {
         }
         var dir = '';
         if (md5.indexOf('/') > -1) dir = 'HTML5/';
-        else if (md5.indexOf('wav') > -1) dir = 'Documents';
+        else dir = 'Documents';
         ScratchAudio.loadFromLocal(dir, md5, fcn);
     }
 

@@ -128,12 +128,9 @@ export async function preprocessAndLoad (url: string) {
     var responseText: string | null = null;
     if (window.tablet) {
     	responseText = await (window.tablet as ScratchJrBridge).io_gettextresource(url);
-    } else {  // hopefully unused
-
-    	var xmlhttp = new XMLHttpRequest();
-    	xmlhttp.open('GET', url, false);
-    	xmlhttp.send();
-    	responseText = xmlhttp.responseText;
+    } else {
+        const response = await fetch(url);
+        responseText = await response.text();
     }
     return preprocess(responseText ?? '');
 }
