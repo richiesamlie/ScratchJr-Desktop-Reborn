@@ -3,7 +3,9 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [Unreleased]
+## [v2.3.0] - 2026-09-07
+
+**Minor Release: Direct Media Pipeline, Database IPC Structured Cloning, Unified Pointer Events, SVG Asset Optimizations, and Camera Interactivity Fix.**
 
 ### Performance & Architecture
 - **Eliminated Legacy Chunked Media Protocol**:
