@@ -71,9 +71,31 @@ export default class PaintUndo {
     static runUndo () {
         Path.quitEditMode();
         Paint.root.removeChild(gn('layer1')!);
-        Paint.root.appendChild(SVGTools.toObject(buffer[index]));
+        var data = buffer[index];
+        var layerStr = data;
+        var maskHtml = '';
+        if (data && data.startsWith('{"layer":')) {
+            try {
+                var parsed = JSON.parse(data);
+                layerStr = parsed.layer;
+                maskHtml = parsed.mask || '';
+            } catch (_) {
+                layerStr = data;
+            }
+        }
+        Paint.root.appendChild(SVGTools.toObject(layerStr));
         Paint.root.appendChild(gn('draglayer')!);
         Paint.root.appendChild(gn('paintgrid')!);
+        var maskElem = gn('paintEraserMask');
+        if (maskElem) {
+            if (maskHtml) {
+                maskElem.innerHTML = maskHtml;
+                gn('layer1')!.setAttribute('mask', 'url(#paintEraserMask)');
+            } else {
+                maskElem.innerHTML = '<rect x="-1000" y="-1000" width="3000" height="3000" fill="white"/>';
+                gn('layer1')!.removeAttribute('mask');
+            }
+        }
         Paint.setZoomTo(Paint.currentZoom);
     }
 
@@ -93,7 +115,16 @@ export default class PaintUndo {
     }
 
     static getCanvas () {
-        return SVGTools.svg2string(gn('layer1')! as Element);
+        var layerXml = SVGTools.svg2string(gn('layer1')! as Element);
+        var maskElem = gn('paintEraserMask');
+        var hasMaskStrokes = maskElem && maskElem.querySelectorAll('path, circle').length > 0;
+        if (!hasMaskStrokes) {
+            return layerXml;
+        }
+        return JSON.stringify({
+            layer: layerXml,
+            mask: maskElem ? maskElem.innerHTML : ''
+        });
     }
 
     //////////////////////////////////

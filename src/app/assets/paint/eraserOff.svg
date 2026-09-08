@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="60px"
+	 height="58px" viewBox="0 0 60 58" xml:space="preserve">
+<g id="DrawingToolsButtonsDefault">
+	<g>
+		<linearGradient id="btnBg" gradientUnits="userSpaceOnUse" x1="29.999" y1="3.8018" x2="29.999" y2="55.5155">
+			<stop offset="0.3573" style="stop-color:#FFFFFF"/>
+			<stop offset="0.5178" style="stop-color:#FBFBFB"/>
+			<stop offset="0.6599" style="stop-color:#F1F1F1"/>
+			<stop offset="0.7949" style="stop-color:#DFDFDF"/>
+			<stop offset="0.9249" style="stop-color:#C5C5C5"/>
+			<stop offset="1" style="stop-color:#B3B3B3"/>
+		</linearGradient>
+		<path fill="url(#btnBg)" d="M56.879,8.609c0-2.965-2.507-5.367-5.6-5.367H8.719c-3.093,0-5.6,2.402-5.6,5.367v40.785
+			c0,2.965,2.507,5.367,5.6,5.367h42.561c3.093,0,5.6-2.402,5.6-5.367V8.609z"/>
+		<linearGradient id="btnBorder" gradientUnits="userSpaceOnUse" x1="29.999" y1="55.8818" x2="29.999" y2="2.8633">
+			<stop offset="0" style="stop-color:#FFFFFF"/>
+			<stop offset="0.2309" style="stop-color:#FBFBFB"/>
+			<stop offset="0.4598" style="stop-color:#EFEFEF"/>
+			<stop offset="0.6879" style="stop-color:#DBDBDB"/>
+			<stop offset="0.9144" style="stop-color:#C0C0C0"/>
+			<stop offset="1" style="stop-color:#B3B3B3"/>
+		</linearGradient>
+		<path fill="url(#btnBorder)" d="M57.999,49.396c0,3.582-3.009,6.485-6.72,6.485H8.719c-3.711,0-6.72-2.903-6.72-6.485V8.607
+			c0-3.582,3.009-6.485,6.72-6.485h42.561c3.711,0,6.72,2.903,6.72,6.485V49.396z M55.759,8.609c0-2.347-2.006-4.247-4.479-4.247
+			H8.719c-2.474,0-4.479,1.9-4.479,4.247v40.785c0,2.347,2.006,4.247,4.479,4.247h42.561c2.474,0,4.479-1.9,4.479-4.247V8.609z"/>
+		<!-- Eraser icon in #606060 with sleeve highlight -->
+		<g transform="translate(30, 29) rotate(-32) translate(-30, -29)">
+			<path fill="#606060" d="M17,21 C17,19.9 17.9,19 19,19 L39,19 C40.1,19 41,19.9 41,21 L41,35 C41,36.1 40.1,37 39,37 L19,37 C17.9,37 17,36.1 17,35 Z"/>
+			<path fill="#FFFFFF" d="M29,19 L40,19 C40.55,19 41,19.45 41,20 L41,36 C41,36.55 40.55,37 40,37 L29,37 Z" opacity="0.30"/>
+			<line x1="29" y1="19" x2="29" y2="37" stroke="#FFFFFF" stroke-width="1.8" opacity="0.7"/>
+		</g>
+	</g>
+</g>
+</svg>

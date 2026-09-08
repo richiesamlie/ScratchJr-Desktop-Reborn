@@ -414,6 +414,158 @@ export default class Sprite {
         return data[(node.x * 4) + node.y * w * 4 + 3];
     }
 
+    touchingColor (colorVal: string): boolean {
+        if (!this.shown || !colorVal) {
+            return false;
+        }
+        var targetRgb = Sprite.colorToRgb(colorVal);
+        if (!targetRgb) {
+            return false;
+        }
+
+        var box = this.getBoxWithEffects();
+        var x = Math.max(0, Math.floor(box.x));
+        var y = Math.max(0, Math.floor(box.y));
+        var w = Math.min(480 - x, Math.ceil(box.width));
+        var h = Math.min(360 - y, Math.ceil(box.height));
+        if (w <= 0 || h <= 0) {
+            return false;
+        }
+
+        var canvas = enginePorts().getWorkingCanvas();
+        var canvas2 = enginePorts().getWorkingCanvas2();
+        setCanvasSize(canvas, 480, 360);
+        setCanvasSize(canvas2, 480, 360);
+        var ctx = canvas.getContext('2d')!;
+        var ctx2 = canvas2.getContext('2d')!;
+        ctx.clearRect(0, 0, 480, 360);
+        ctx2.clearRect(0, 0, 480, 360);
+
+        var pageNode = this.div ? this.div.parentNode as HTMLElement : null;
+        var page = (pageNode ? getModelRefAs<Page>(pageNode, 'page') : null)
+            || (enginePorts().getStage() ? enginePorts().getStage().currentPage : null);
+        ctx.fillStyle = (window as unknown as { ScratchJr?: { stagecolor?: string } }).ScratchJr?.stagecolor || '#FFFFFF';
+        ctx.fillRect(0, 0, 480, 360);
+
+        var bkgImg: HTMLImageElement | HTMLCanvasElement | null = null;
+        if (page && page.bkg) {
+            if (page.bkg.childElementCount > 0 && page.bkg.childNodes[0]) {
+                bkgImg = page.bkg.childNodes[0] as HTMLImageElement;
+            } else if ((page.bkg as unknown as { originalImg?: HTMLImageElement }).originalImg) {
+                bkgImg = (page.bkg as unknown as { originalImg: HTMLImageElement }).originalImg;
+            } else if ((page.bkg as unknown as { img?: HTMLImageElement }).img) {
+                bkgImg = (page.bkg as unknown as { img: HTMLImageElement }).img;
+            }
+        }
+        if (bkgImg) {
+            try {
+                var imgw = (bkgImg as HTMLImageElement).naturalWidth || (bkgImg as HTMLImageElement).width || 480;
+                var imgh = (bkgImg as HTMLImageElement).naturalHeight || (bkgImg as HTMLImageElement).height || 360;
+                ctx.drawImage(bkgImg, 0, 0, imgw, imgh, 0, 0, 480, 360);
+            } catch (_) {
+                // Ignore draw error
+            }
+        }
+
+        if (page && page.div) {
+            for (var i = 0; i < page.div.childElementCount; i++) {
+                var other = getModelRefAs<Sprite>(page.div.childNodes[i] as HTMLElement, 'sprite');
+                if (!other || other.id === this.id || !other.shown) {
+                    continue;
+                }
+                if (other.type === 'text') {
+                    continue;
+                }
+                var box2 = other.getBoxWithEffects();
+                if (!box.intersects(box2)) {
+                    continue;
+                }
+                other.stamp(ctx);
+            }
+        }
+
+        this.stamp(ctx2);
+
+        var bgPixels = ctx.getImageData(x, y, w, h).data;
+        var myPixels = ctx2.getImageData(x, y, w, h).data;
+
+        var total = w * h;
+        for (var j = 0; j < total; j++) {
+            var idx = j * 4;
+            if (myPixels[idx + 3] === 0) {
+                continue;
+            }
+            var r = bgPixels[idx];
+            var g = bgPixels[idx + 1];
+            var b = bgPixels[idx + 2];
+            var a = bgPixels[idx + 3];
+            if (a === 0) {
+                continue;
+            }
+            if (Sprite.colorMatches(r, g, b, targetRgb)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static colorToRgb (val: string): { r: number; g: number; b: number; name?: string } | null {
+        if (!val) {
+            return null;
+        }
+        var lower = val.toLowerCase().trim();
+        var namedColors: Record<string, { r: number; g: number; b: number; name: string }> = {
+            'red': { r: 255, g: 0, b: 35, name: 'red' },
+            'orange': { r: 255, g: 131, b: 0, name: 'orange' },
+            'yellow': { r: 255, g: 215, b: 0, name: 'yellow' },
+            'green': { r: 41, g: 193, b: 48, name: 'green' },
+            'blue': { r: 29, g: 64, b: 237, name: 'blue' },
+            'purple': { r: 161, g: 89, b: 211, name: 'purple' }
+        };
+        if (namedColors[lower]) {
+            return namedColors[lower];
+        }
+        return Sprite.hexToRgb(val);
+    }
+
+    static hexToRgb (hex: string): { r: number; g: number; b: number } | null {
+        var match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return match ? {
+            r: parseInt(match[1], 16),
+            g: parseInt(match[2], 16),
+            b: parseInt(match[3], 16)
+        } : null;
+    }
+
+    static colorMatches (r: number, g: number, b: number, target: { r: number; g: number; b: number; name?: string }): boolean {
+        if (target.name) {
+            var max = Math.max(r, g, b), min = Math.min(r, g, b);
+            var d = max - min;
+            var s = max === 0 ? 0 : d / max;
+            var v = max / 255;
+            if (s < 0.20 || v < 0.20) {
+                return false;
+            }
+            var h = 0;
+            switch (max) {
+                case r: h = ((g - b) / d + (g < b ? 6 : 0)) * 60; break;
+                case g: h = ((b - r) / d + 2) * 60; break;
+                case b: h = ((r - g) / d + 4) * 60; break;
+            }
+            switch (target.name) {
+                case 'red': return (h >= 340 || h <= 20);
+                case 'orange': return (h > 20 && h <= 45);
+                case 'yellow': return (h > 45 && h <= 75);
+                case 'green': return (h > 75 && h <= 165);
+                case 'blue': return (h > 165 && h <= 255);
+                case 'purple': return (h > 255 && h < 340);
+                default: break;
+            }
+        }
+        var diff = Math.abs(r - target.r) + Math.abs(g - target.g) + Math.abs(b - target.b);
+        return diff < 80;
+    }
+
     setHeading (angle: number) {
         this.angle = angle % 360;
         this.render();
@@ -751,8 +903,16 @@ Math.floor(h));
     ////////////////////////////////////
 
     stamp (ctx: CanvasRenderingContext2D, deltax?: number, deltay?: number) {
-        var w = this.outline.width * this.scale;
-        var h = this.outline.height * this.scale;
+        var src: HTMLCanvasElement | HTMLImageElement = (this.outline && this.outline.width > 0 && this.outline.height > 0)
+            ? this.outline
+            : this.originalImg;
+        if (!src) {
+            return;
+        }
+        var srcw = (src as HTMLImageElement).naturalWidth || src.width;
+        var srch = (src as HTMLImageElement).naturalHeight || src.height;
+        var w = srcw * this.scale;
+        var h = srch * this.scale;
         var dx = deltax ? deltax : 0;
         var dy = deltay ? deltay : 0;
         ctx.save();
@@ -761,7 +921,7 @@ Math.floor(h));
         if (this.flip) {
             ctx.scale(-1, 1);
         }
-        ctx.drawImage(this.outline, -w / 2, -h / 2, w, h);
+        ctx.drawImage(src, -w / 2, -h / 2, w, h);
         ctx.restore();
     }
 

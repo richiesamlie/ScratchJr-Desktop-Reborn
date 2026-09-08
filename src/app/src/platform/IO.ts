@@ -49,17 +49,63 @@ export default class IO {
         str = str.replace(/>\s*</g, '><');
         var xmlDoc = new DOMParser().parseFromString(str, 'text/xml');
         var extxml = document.importNode(xmlDoc.documentElement, true);
-        if (extxml.childNodes[0].nodeName == '#comment') {
+        if (extxml.childNodes.length > 0 && extxml.childNodes[0].nodeName == '#comment') {
             extxml.removeChild(extxml.childNodes[0]);
         }
         var widthNum = Math.min(Math.max(Number(w) || 0, 1), 4096);
         var heightNum = Math.min(Math.max(Number(h) || 0, 1), 4096);
+
+        // Fall back to true viewBox if w/h are unprovided, collapsed (<= 40), or invalid
+        var vb = extxml.getAttribute('viewBox');
+        if (vb) {
+            var parts = vb.split(/[\s,]+/).filter(Boolean).map(Number);
+            if (parts.length >= 4 && parts[2] > 0 && parts[3] > 0) {
+                if (widthNum <= 40 || heightNum <= 40 || !w || !h) {
+                    widthNum = Math.min(Math.max(Math.round(parts[2]), 1), 4096);
+                    heightNum = Math.min(Math.max(Math.round(parts[3]), 1), 4096);
+                }
+            }
+        } else if (widthNum <= 40 || heightNum <= 40 || !w || !h) {
+            var attrW = Number(extxml.getAttribute('width'));
+            var attrH = Number(extxml.getAttribute('height'));
+            if (attrW > 0 && attrH > 0) {
+                widthNum = Math.min(Math.max(Math.round(attrW), 1), 4096);
+                heightNum = Math.min(Math.max(Math.round(attrH), 1), 4096);
+            }
+        }
+
         var srccnv = document.createElement('canvas');
         setCanvasSize(srccnv, widthNum, heightNum);
         var ctx = srccnv.getContext('2d')!;
-        for (var i = 0; i < extxml.childElementCount; i++) {
-            SVG2Canvas.drawLayer(extxml.childNodes[i] as Element, ctx);
+
+        // Draw child elements (avoiding defs/mask elements which are not layers)
+        var children = extxml.children;
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child.nodeName === 'defs' || child.nodeName === 'mask') {
+                continue;
+            }
+            SVG2Canvas.drawLayer(child, ctx);
         }
+
+        // Apply eraser mask if present, matching SVG2Canvas.drawInCanvas
+        var mask = extxml.querySelector('#paintEraserMask');
+        if (mask) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            var paths = mask.querySelectorAll('path, circle');
+            for (var j = 0; j < paths.length; j++) {
+                var p = paths[j] as Element;
+                ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = Number(p.getAttribute('stroke-width')) || 16;
+                SVG2Canvas.processXMLnode(p, ctx);
+            }
+            ctx.restore();
+        }
+
         if (!destw || !desth) {
             return srccnv.toDataURL('image/png');
         }

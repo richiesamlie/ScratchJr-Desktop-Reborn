@@ -8,7 +8,7 @@ import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import {gn, newHTML, scaleMultiplier,
-    getDocumentWidth, getDocumentHeight, setProps, newCanvas, frame, utf8ToBase64} from '../../utils/lib';
+    getDocumentWidth, getDocumentHeight, setProps, newCanvas, frame, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
 import LibraryEx from './LibraryEx';
 
 let selectedOne: string | null = null;
@@ -461,7 +461,7 @@ export default class Library {
         var json: DbSelectIntent = {
             op: 'select', table: key,
             items: ((type == 'costumes')
-                ? ['md5', 'altmd5', 'name', 'scale', 'width', 'height'] : ['altmd5', 'md5', 'width', 'height']),
+                ? ['id', 'md5', 'altmd5', 'name', 'scale', 'width', 'height'] : ['id', 'altmd5', 'md5', 'width', 'height']),
             where: [{ col: 'version', op: '=', value: ScratchJr.version }],
             order: { col: 'ctime', dir: 'desc' },
         };
@@ -582,18 +582,84 @@ export default class Library {
     static addAssetThumbChoose (parent: HTMLElement, aa: Record<string, unknown>, w: number, h: number, fcn: (e: MouseEvent, tb: LibraryThumb) => void) {
         var data = Library.parseAssetData(aa);
         var tb = Library.createThumbElement(parent, data);
-        var tw = tb.w!; var th = tb.h!;
+        var tw = tb.w || 120; var th = tb.h || 90;
         var scale = Math.min(w / tw, h / th);
         var img = newHTML('img', undefined, tb) as HTMLImageElement;
         img.style.left = (9 * scaleMultiplier) + 'px';
         img.style.top = (7 * scaleMultiplier) + 'px';
         img.style.position = 'relative';
-        img.style.height = (Number(data.height) * scale) + 'px';
-        if (data.altmd5) {
-            IO.getAsset(data.altmd5 as string, function (dataurl: string) {
-                img.src = dataurl;
+        img.style.height = (Number(data.height || th) * scale) + 'px';
+
+        function loadSvgFallback () {
+            if (!data.md5) {
+                return;
+            }
+            IO.getAsset(data.md5 as string, function (svgUrl: string) {
+                if (!svgUrl) {
+                    return;
+                }
+                img.src = svgUrl;
+
+                var base64 = svgUrl.indexOf(',') > -1 ? svgUrl.split(',')[1] : svgUrl;
+                try {
+                    var svgText = base64ToUtf8(base64);
+                    var vbMatch = svgText.match(/viewBox=\s*"([^"]+)"/);
+                    var realW = 120;
+                    var realH = 90;
+                    if (vbMatch) {
+                        var parts = vbMatch[1].split(/[\s,]+/).filter(Boolean).map(Number);
+                        if (parts.length >= 4 && parts[2] > 0 && parts[3] > 0) {
+                            realW = Math.round(parts[2]);
+                            realH = Math.round(parts[3]);
+                        }
+                    }
+                    tb.w = realW;
+                    tb.h = realH;
+                    var s = Math.min(w / realW, h / realH);
+                    var iw = Math.round(realW * s);
+                    var ih = Math.round(realH * s);
+                    img.style.width = iw + 'px';
+                    img.style.height = ih + 'px';
+                    img.style.left = Math.floor(((w - iw) / 2) + (9 * scaleMultiplier)) + 'px';
+                    img.style.top = Math.floor(((h - ih) / 2) + (7 * scaleMultiplier)) + 'px';
+
+                    // Self-heal corrupted database record
+                    var newThumbUrl = IO.getThumbnail(svgText, realW, realH, 120, 90);
+                    var pngBase64 = newThumbUrl.split(',')[1];
+                    PlatformBridge.setmedia(pngBase64, 'png', function (pngmd5) {
+                        var key = (type === 'costumes') ? 'usershapes' : 'userbkgs';
+                        if (data.id) {
+                            PlatformBridge.stmt({
+                                op: 'update',
+                                table: key,
+                                row: { altmd5: pngmd5, width: String(realW), height: String(realH) },
+                                id: data.id as DbValue,
+                            });
+                        }
+                    });
+                } catch (_) {}
             });
         }
+
+        var isCorrupt = !data.altmd5
+            || data.altmd5 === '065b6678e70b43dcf3291b0a28a3a7cd.png'
+            || (Number(data.width) <= 21 && Number(data.height) <= 21);
+
+        if (isCorrupt) {
+            loadSvgFallback();
+        } else {
+            img.onerror = function () {
+                loadSvgFallback();
+            };
+            IO.getAsset(data.altmd5 as string, function (dataurl: string) {
+                if (!dataurl) {
+                    loadSvgFallback();
+                } else {
+                    img.src = dataurl;
+                }
+            });
+        }
+
         tb.onmousedown = function (evt) {
             fcn(evt, tb);
         };

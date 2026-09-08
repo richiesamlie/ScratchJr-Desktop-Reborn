@@ -163,7 +163,7 @@ export default class Stage {
                 continue;
             }
             const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
-            var topblocks = scriptsOwner.getBlocksType(['onflag', 'ontouch']);
+            var topblocks = scriptsOwner.getBlocksType(['onflag', 'ontouch', 'ontouchcolor']);
             for (var j = 0; j < topblocks.length; j++) {
                 var b = topblocks[j];
                 enginePorts().getRuntime().addRunScript(spr, b);
@@ -583,8 +583,16 @@ export default class Stage {
             this.moveElementBy(spr);
             if (spr.type == 'sprite') {
                 var rt = enginePorts().getRuntime();
-rt.threadsRunning = rt.threadsRunning.concat(spr.threads);
-                enginePorts().startCurrentPageStrips(['ontouch']);
+                rt.threadsRunning = rt.threadsRunning.concat(spr.threads);
+                var isRunning = false;
+                try {
+                    isRunning = enginePorts().isUserStart();
+                } catch (_) {
+                    isRunning = false;
+                }
+                if (isRunning) {
+                    enginePorts().startCurrentPageStrips(['ontouch', 'ontouchcolor']);
+                }
             }
         }
         Events.clearEvents();
@@ -605,7 +613,15 @@ rt.threadsRunning = rt.threadsRunning.concat(spr.threads);
         e.preventDefault();
         enginePorts().clearSelection();
         enginePorts().startScriptsFor(spr, ['onclick']);
-        enginePorts().startCurrentPageStrips(['ontouch']);
+        var isRunning = false;
+        try {
+            isRunning = enginePorts().isUserStart();
+        } catch (_) {
+            isRunning = false;
+        }
+        if (isRunning) {
+            enginePorts().startCurrentPageStrips(['ontouch', 'ontouchcolor']);
+        }
     }
 
 

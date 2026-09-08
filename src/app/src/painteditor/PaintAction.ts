@@ -74,6 +74,7 @@ let startAngle = 0;
 let dragging = false;
 let timeoutEvent: ReturnType<typeof setTimeout> | null = null;
 let mindist = 10;
+let eraserCurrentPath: Element | null = null;
 
 
 //Main Events
@@ -146,6 +147,7 @@ export default class PaintAction {
 
     static clearEvents () {
         currentShape = null;
+        PaintAction.removeEraserCursor();
         window.onmousemove = null;
         window.onmouseup = null;
     }
@@ -844,6 +846,74 @@ Path.maxDistance()); // check the start
         PaintUndo.record();
     }
 
+    static eraserMouseDown (evt: PaintEvt) {
+        dragging = true;
+        currentShape = null;
+        var pt = PaintAction.getScreenPt(evt);
+        var mask = SVGTools.ensureEraserMask();
+        var r = Math.max(8, Paint.strokewidth * 2);
+        var path = document.createElementNS(Paint.xmlns, 'path');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', 'black');
+        path.setAttribute('stroke-width', String(r * 2));
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('d', 'M ' + pt.x + ',' + pt.y + ' L ' + pt.x + ',' + pt.y);
+        mask.appendChild(path);
+        eraserCurrentPath = path;
+        PaintAction.updateEraserCursor(pt.x, pt.y, r);
+    }
+
+    static eraserMouseMove (evt: PaintEvt) {
+        var pt = PaintAction.getScreenPt(evt);
+        var r = Math.max(8, Paint.strokewidth * 2);
+        PaintAction.updateEraserCursor(pt.x, pt.y, r);
+        if (!dragging || !eraserCurrentPath) {
+            return;
+        }
+        var d = eraserCurrentPath.getAttribute('d') || '';
+        d += ' L ' + pt.x + ',' + pt.y;
+        eraserCurrentPath.setAttribute('d', d);
+    }
+
+    static eraserMouseUp (_evt?: PaintEvt) {
+        PaintAction.removeEraserCursor();
+        if (dragging && eraserCurrentPath) {
+            ScratchAudio.sndFX('snap.wav');
+            PaintUndo.record();
+        }
+        dragging = false;
+        eraserCurrentPath = null;
+    }
+
+    static updateEraserCursor (x: number, y: number, r: number) {
+        var dl = gn('draglayer');
+        if (!dl) {
+            return;
+        }
+        var cursor = gn('eraserCursor') as SVGCircleElement | null;
+        if (!cursor) {
+            cursor = document.createElementNS(Paint.xmlns, 'circle') as SVGCircleElement;
+            cursor.setAttribute('id', 'eraserCursor');
+            cursor.setAttribute('fill', 'rgba(255, 255, 255, 0.4)');
+            cursor.setAttribute('stroke', '#333333');
+            cursor.setAttribute('stroke-width', '1.5');
+            cursor.setAttribute('stroke-dasharray', '3,2');
+            cursor.setAttribute('pointer-events', 'none');
+            dl.appendChild(cursor);
+        }
+        cursor.setAttribute('cx', String(x));
+        cursor.setAttribute('cy', String(y));
+        cursor.setAttribute('r', String(r));
+    }
+
+    static removeEraserCursor () {
+        var cursor = gn('eraserCursor');
+        if (cursor && cursor.parentNode) {
+            cursor.parentNode.removeChild(cursor);
+        }
+    }
+
     static cameraMouseUp (evt: PaintEvt) {
         PaintAction.fingerUp(evt);
         if (currentShape == undefined) {
@@ -1238,22 +1308,23 @@ Path.maxDistance()); // check the start
     }
 
     static getScreenPt (evt: PaintEvt) {
-        var pt = Events.getTargetPoint(evt as MouseEvent | TouchEvent);
+        var pt = Events.getEventPoint(evt as MouseEvent | TouchEvent);
         return PaintAction.zoomPt(pt);
     }
 
     static zoomPt (pt: Point) {
         var mc = gn('maincanvas')!;
-        if (!mc) {
+        if (!mc || !Paint.root || typeof Paint.root.createSVGPoint !== 'function' || !Paint.root.getScreenCTM) {
+            return pt;
+        }
+        var ctm = Paint.root.getScreenCTM();
+        if (!ctm) {
             return pt;
         }
         var pt2 = Paint.root.createSVGPoint();
         pt2.x = pt.x;
         pt2.y = pt.y;
-        var globalPoint = pt2.matrixTransform(Paint.root.getScreenCTM()!.inverse());
-        globalPoint.x = globalPoint.x / Paint.currentZoom;
-        globalPoint.y = globalPoint.y / Paint.currentZoom;
-        return globalPoint;
+        return pt2.matrixTransform(ctm.inverse());
     }
 }
 /////////////////////////////////////////////////////////
@@ -1274,6 +1345,7 @@ let cmdForMouseDown: Record<string, ModeHandler> = {
     'paintbucket': PaintAction.fingerDown,
     'stamper': PaintAction.cloneMouseDown,
     'scissors': PaintAction.cloneMouseDown,
+    'eraser': PaintAction.eraserMouseDown,
     'camera': PaintAction.fingerDown
 };
 
@@ -1290,6 +1362,7 @@ let cmdForMouseMove: Record<string, ModeHandler> = {
     'paintbucket': PaintAction.paintBucketMouseMove,
     'stamper': PaintAction.cloneMouseMove,
     'scissors': PaintAction.cloneMouseMove,
+    'eraser': PaintAction.eraserMouseMove,
     'camera': PaintAction.fingerMove
 };
 
@@ -1306,6 +1379,7 @@ let cmdForMouseUp: Record<string, ModeHandler> = {
     'paintbucket': PaintAction.paintBucketMouseUp,
     'stamper': PaintAction.ignoreEvt,
     'scissors': PaintAction.scissorsMouseUp,
+    'eraser': PaintAction.eraserMouseUp,
     'camera': PaintAction.cameraMouseUp
 };
 
@@ -1322,5 +1396,6 @@ let cmdForClick: Record<string, ModeHandler> = {
     'paintbucket': PaintAction.paintBucketClick,
     'stamper': PaintAction.cloneMouseUp,
     'scissors': PaintAction.ignoreEvt,
+    'eraser': PaintAction.ignoreEvt,
     'camera': PaintAction.ignoreEvt
 };

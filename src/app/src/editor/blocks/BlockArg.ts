@@ -7,6 +7,7 @@ import {setCanvasSize, setProps, writeText, scaleMultiplier,
     newHTML, newDiv, newCanvas, getStringSize,
     newP, globalx, globaly, dprCenterTransform} from '../../utils/lib';
 import Localization from '../../utils/Localization';
+import ScratchAudio from '../../utils/ScratchAudio';
 import type Block from './Block';
 import type Sprite from '../engine/Sprite';
 import type Scripts from '../ui/Scripts';
@@ -260,10 +261,14 @@ export default class BlockArg {
     }
 
     drawChoice (cnv: HTMLCanvasElement) {
+        var scale = this.daddy.scale;
+        if (typeof this.argValue === 'string' && this.argValue.startsWith('#')) {
+            BlockArg.drawCustomColorIcon(cnv, this.argValue, scale);
+            return cnv;
+        }
         var ctx = cnv.getContext('2d')!;
         ctx.clearRect(0, 0, cnv.width, cnv.height);
         var icon = BlockSpecs.getImageFrom('assets/blockicons/' + this.icon, 'svg');
-        var scale = this.daddy.scale;
         if (!icon.complete) {
             icon.onload = function () {
                 ctx.drawImage(icon, 0, 0, icon.width, icon.height, 0, 0, icon.width * scale * window.devicePixelRatio, icon.height * scale * window.devicePixelRatio);
@@ -323,6 +328,14 @@ export default class BlockArg {
         e.preventDefault();
         const block = getModelRefAs<Block>(b, 'block')!;
         var value = block.arg.argValue;
+        if (c === 'TouchColor_Pipette') {
+            if (Menu.openMenu) {
+                Menu.openMenu!.parentNode!.removeChild(Menu.openMenu!);
+            }
+            Menu.openMenu = null;
+            BlockArg.pickStageColor(block, value);
+            return;
+        }
         block.arg.argValue = c.substring(c.indexOf('_') + 1, c.length);
         var ctx = block.blockicon.getContext('2d')!;
         const bel = b as HTMLElement & { icon?: HTMLImageElement };
@@ -354,6 +367,406 @@ export default class BlockArg {
             enginePorts().storyStart('BlockArg.prototype.closePictureMenu');
         }
         Menu.openMenu = null;
+    }
+
+    static drawCustomColorIcon (cnv: HTMLCanvasElement, hexColor: string, scaleFactor: number) {
+        var ctx = cnv.getContext('2d')!;
+        var scale = scaleFactor * window.devicePixelRatio;
+        ctx.clearRect(0, 0, cnv.width, cnv.height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(42.5 * scale, 30 * scale, 18 * scale, 0, Math.PI * 2);
+        ctx.fillStyle = hexColor;
+        ctx.fill();
+        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = '#333333';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.ellipse(26 * scale, 40 * scale, 8 * scale, 6 * scale, -20 * Math.PI / 180, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+        ctx.lineWidth = 2 * scale;
+        ctx.strokeStyle = '#333333';
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(22 * scale, 43 * scale);
+        ctx.lineTo(16 * scale, 48 * scale);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    static pickStageColor (block: Block, oldValue: unknown) {
+        if (typeof document === 'undefined') {
+            return;
+        }
+
+        // Clean up any existing loupe or overlay
+        const existingOverlay = document.getElementById('scratchjr-eyedropper-overlay');
+        if (existingOverlay && existingOverlay.parentNode) {
+            existingOverlay.parentNode.removeChild(existingOverlay);
+        }
+        const existingLoupe = document.getElementById('scratchjr-eyedropper-loupe');
+        if (existingLoupe && existingLoupe.parentNode) {
+            existingLoupe.parentNode.removeChild(existingLoupe);
+        }
+
+        // Render high-res stage snapshot for sampling
+        let stageCanvas: HTMLCanvasElement | null = null;
+        let stageCtx: CanvasRenderingContext2D | null = null;
+        try {
+            const stage = enginePorts().getStage();
+            if (stage && stage.currentPage && typeof stage.currentPage.renderStageToCanvas === 'function') {
+                stageCanvas = stage.currentPage.renderStageToCanvas(2);
+                stageCtx = stageCanvas.getContext('2d', { willReadFrequently: true });
+            }
+        } catch (_) {
+            // Engine ports not initialized in test/harness environment
+        }
+
+        // Overlay element: captures pointer events & hides system cursor
+        const overlay = document.createElement('div');
+        overlay.id = 'scratchjr-eyedropper-overlay';
+        setProps(overlay.style, {
+            position: 'fixed',
+            top: '0px',
+            left: '0px',
+            width: '100vw',
+            height: '100vh',
+            zIndex: 999999,
+            cursor: 'none',
+            userSelect: 'none',
+            webkitUserSelect: 'none'
+        });
+        document.body.appendChild(overlay);
+
+        // Loupe container element (follows cursor)
+        const loupe = document.createElement('div');
+        loupe.id = 'scratchjr-eyedropper-loupe';
+        setProps(loupe.style, {
+            position: 'fixed',
+            pointerEvents: 'none',
+            zIndex: 1000000,
+            width: '104px',
+            height: '104px',
+            borderRadius: '50%',
+            transform: 'translate(-50%, -50%)',
+            left: '-9999px',
+            top: '-9999px',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.45), 0 0 0 4px #FFFFFF, 0 0 0 6px rgba(0,0,0,0.2)',
+            overflow: 'visible'
+        });
+
+        // Loupe canvas (208x208 canvas displayed at 104x104)
+        const loupeCanvas = document.createElement('canvas');
+        loupeCanvas.width = 208;
+        loupeCanvas.height = 208;
+        setProps(loupeCanvas.style, {
+            width: '104px',
+            height: '104px',
+            borderRadius: '50%',
+            display: 'block'
+        });
+        loupe.appendChild(loupeCanvas);
+
+        // Color Hex badge
+        const badge = document.createElement('div');
+        setProps(badge.style, {
+            position: 'absolute',
+            left: '50%',
+            bottom: '-30px',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(15, 20, 25, 0.9)',
+            color: '#FFFFFF',
+            fontFamily: 'monospace, sans-serif',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            letterSpacing: '0.5px',
+            padding: '3px 8px',
+            borderRadius: '12px',
+            border: '2px solid #FFFFFF',
+            boxShadow: '0 3px 8px rgba(0,0,0,0.4)',
+            whiteSpace: 'nowrap',
+            pointerEvents: 'none'
+        });
+        badge.textContent = '#FFFFFF';
+        loupe.appendChild(badge);
+
+        document.body.appendChild(loupe);
+
+        let currentHex = typeof block.arg.argValue === 'string' && block.arg.argValue.startsWith('#')
+            ? block.arg.argValue
+            : '#FF0000';
+
+        const updateLoupe = (clientX: number, clientY: number) => {
+            const lctx = loupeCanvas.getContext('2d')!;
+            lctx.imageSmoothingEnabled = false;
+
+            const stageDiv = document.getElementById('stage');
+            const stageRect = stageDiv ? stageDiv.getBoundingClientRect() : null;
+            const isOverStage = stageRect
+                && clientX >= stageRect.left && clientX <= stageRect.right
+                && clientY >= stageRect.top && clientY <= stageRect.bottom;
+
+            const W = 208;
+            const H = 208;
+            const CX = 104;
+            const CY = 104;
+            const R = 98;
+
+            lctx.save();
+            lctx.clearRect(0, 0, W, H);
+
+            // Circular clip path for magnifier lens
+            lctx.beginPath();
+            lctx.arc(CX, CY, R, 0, Math.PI * 2);
+            lctx.clip();
+
+            lctx.fillStyle = '#FFFFFF';
+            lctx.fillRect(0, 0, W, H);
+
+            const GRID_CELLS = 11;
+            const cellSize = W / GRID_CELLS;
+
+            if (isOverStage && stageCanvas && stageCtx) {
+                const normX = (clientX - stageRect.left) / stageRect.width;
+                const normY = (clientY - stageRect.top) / stageRect.height;
+                const stagePixelX = Math.floor(normX * stageCanvas.width);
+                const stagePixelY = Math.floor(normY * stageCanvas.height);
+
+                const srcX = stagePixelX - 5;
+                const srcY = stagePixelY - 5;
+                lctx.drawImage(stageCanvas, srcX, srcY, GRID_CELLS, GRID_CELLS, 0, 0, W, H);
+
+                try {
+                    const sampleX = Math.max(0, Math.min(stageCanvas.width - 1, stagePixelX));
+                    const sampleY = Math.max(0, Math.min(stageCanvas.height - 1, stagePixelY));
+                    const pixel = stageCtx.getImageData(sampleX, sampleY, 1, 1).data;
+                    currentHex = BlockArg.rgbToHex(pixel[0], pixel[1], pixel[2]);
+                } catch (_) {
+                    // Stage read fallback
+                }
+            } else {
+                currentHex = BlockArg.sampleElementColor(clientX, clientY);
+                lctx.fillStyle = currentHex;
+                lctx.fillRect(0, 0, W, H);
+            }
+
+            // Draw pixel grid lines
+            lctx.strokeStyle = 'rgba(0, 0, 0, 0.12)';
+            lctx.lineWidth = 1;
+            for (let i = 0; i <= GRID_CELLS; i++) {
+                const pos = Math.round(i * cellSize);
+                lctx.beginPath();
+                lctx.moveTo(pos, 0);
+                lctx.lineTo(pos, H);
+                lctx.stroke();
+
+                lctx.beginPath();
+                lctx.moveTo(0, pos);
+                lctx.lineTo(W, pos);
+                lctx.stroke();
+            }
+
+            // Center target cell (index 5 in 0..10)
+            const targetIdx = 5;
+            const tX = Math.round(targetIdx * cellSize);
+            const tY = Math.round(targetIdx * cellSize);
+            const tS = Math.round(cellSize);
+
+            // Target box around the sampled pixel
+            lctx.strokeStyle = '#FFFFFF';
+            lctx.lineWidth = 3;
+            lctx.strokeRect(tX - 1, tY - 1, tS + 2, tS + 2);
+            lctx.strokeStyle = '#000000';
+            lctx.lineWidth = 1.5;
+            lctx.strokeRect(tX - 1, tY - 1, tS + 2, tS + 2);
+
+            // Crosshair tick marks
+            lctx.strokeStyle = 'rgba(0, 0, 0, 0.7)';
+            lctx.lineWidth = 1.5;
+            lctx.beginPath();
+            lctx.moveTo(tX + tS / 2, tY - 1);
+            lctx.lineTo(tX + tS / 2, Math.max(0, tY - 12));
+            lctx.moveTo(tX + tS / 2, tY + tS + 1);
+            lctx.lineTo(tX + tS / 2, Math.min(H, tY + tS + 13));
+            lctx.moveTo(tX - 1, tY + tS / 2);
+            lctx.lineTo(Math.max(0, tX - 12), tY + tS / 2);
+            lctx.moveTo(tX + tS + 1, tY + tS / 2);
+            lctx.lineTo(Math.min(W, tX + tS + 13), tY + tS / 2);
+            lctx.stroke();
+
+            lctx.restore();
+
+            // Outer ring colored with sampled color
+            lctx.beginPath();
+            lctx.arc(CX, CY, 97, 0, Math.PI * 2);
+            lctx.strokeStyle = currentHex;
+            lctx.lineWidth = 14;
+            lctx.stroke();
+
+            // White inner accent ring
+            lctx.beginPath();
+            lctx.arc(CX, CY, 90, 0, Math.PI * 2);
+            lctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            lctx.lineWidth = 2;
+            lctx.stroke();
+
+            // Dark inner border
+            lctx.beginPath();
+            lctx.arc(CX, CY, 103, 0, Math.PI * 2);
+            lctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            lctx.lineWidth = 2;
+            lctx.stroke();
+
+            // Update loupe position
+            loupe.style.left = clientX + 'px';
+            loupe.style.top = clientY + 'px';
+
+            if (clientY > window.innerHeight - 50) {
+                badge.style.bottom = '112px';
+            } else {
+                badge.style.bottom = '-30px';
+            }
+            badge.textContent = currentHex;
+            badge.style.borderColor = currentHex;
+        };
+
+        const cleanup = () => {
+            window.removeEventListener('keydown', onKeyDown);
+            overlay.removeEventListener('pointermove', onPointerMove);
+            overlay.removeEventListener('pointerdown', onPointerDown);
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+            if (loupe.parentNode) {
+                loupe.parentNode.removeChild(loupe);
+            }
+        };
+
+        const onKeyDown = (evt: KeyboardEvent) => {
+            if (evt.key === 'Escape') {
+                evt.preventDefault();
+                evt.stopPropagation();
+                cleanup();
+            }
+        };
+
+        const onPointerMove = (evt: MouseEvent | PointerEvent) => {
+            updateLoupe(evt.clientX, evt.clientY);
+        };
+
+        const onPointerDown = (evt: MouseEvent | PointerEvent) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+            const picked = currentHex;
+            cleanup();
+            BlockArg.applyCustomColor(block, picked, oldValue);
+            ScratchAudio.sndFX('snap.wav');
+        };
+
+        overlay.addEventListener('pointermove', onPointerMove);
+        overlay.addEventListener('pointerdown', onPointerDown);
+        overlay.addEventListener('contextmenu', (evt) => {
+            evt.preventDefault();
+            cleanup();
+        });
+        window.addEventListener('keydown', onKeyDown);
+    }
+
+    static componentToHex (c: number): string {
+        const hex = Math.max(0, Math.min(255, Math.round(c))).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }
+
+    static rgbToHex (r: number, g: number, b: number): string {
+        return ('#' + BlockArg.componentToHex(r) + BlockArg.componentToHex(g) + BlockArg.componentToHex(b)).toUpperCase();
+    }
+
+    static parseCssColor (colorStr: string): string | null {
+        if (!colorStr || colorStr === 'transparent' || colorStr === 'rgba(0, 0, 0, 0)') {
+            return null;
+        }
+        if (colorStr.startsWith('#')) {
+            return colorStr.toUpperCase();
+        }
+        const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (match) {
+            return BlockArg.rgbToHex(Number(match[1]), Number(match[2]), Number(match[3]));
+        }
+        return null;
+    }
+
+    static sampleElementColor (clientX: number, clientY: number): string {
+        if (typeof document.elementsFromPoint !== 'function') {
+            return '#FFFFFF';
+        }
+        const elements = document.elementsFromPoint(clientX, clientY);
+        for (let i = 0; i < elements.length; i++) {
+            const el = elements[i];
+            if (!el || el.id === 'scratchjr-eyedropper-overlay' || (el as HTMLElement).closest && (el as HTMLElement).closest('#scratchjr-eyedropper-loupe')) {
+                continue;
+            }
+            if (el instanceof HTMLCanvasElement) {
+                try {
+                    const ctx = el.getContext('2d');
+                    if (ctx) {
+                        const rect = el.getBoundingClientRect();
+                        const px = Math.floor((clientX - rect.left) * (el.width / rect.width));
+                        const py = Math.floor((clientY - rect.top) * (el.height / rect.height));
+                        if (px >= 0 && px < el.width && py >= 0 && py < el.height) {
+                            const p = ctx.getImageData(px, py, 1, 1).data;
+                            if (p[3] > 10) {
+                                return BlockArg.rgbToHex(p[0], p[1], p[2]);
+                            }
+                        }
+                    }
+                } catch (_) {
+                    // Ignore tainted canvas
+                }
+            }
+            const style = window.getComputedStyle(el);
+            const bg = BlockArg.parseCssColor(style.backgroundColor);
+            if (bg) {
+                return bg;
+            }
+            const fill = BlockArg.parseCssColor(style.fill);
+            if (fill) {
+                return fill;
+            }
+            const col = BlockArg.parseCssColor(style.color);
+            if (col) {
+                return col;
+            }
+        }
+        return '#FFFFFF';
+    }
+
+    static applyCustomColor (block: Block, hexColor: string, oldValue: unknown) {
+        block.arg.argValue = hexColor;
+        BlockArg.drawCustomColorIcon(block.blockicon, hexColor, block.scale);
+
+        if (block.arg.argValue !== oldValue) {
+            try {
+                var b = block.div;
+                var spr = b && b.parentNode ? getModelRefAs<Scripts>(b.parentNode as HTMLElement, 'scripts')?.spr : null;
+                if (spr && spr.div && spr.div.parentNode) {
+                    var page = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page');
+                    if (page) {
+                        var action = {
+                            action: 'scripts',
+                            where: page.id,
+                            who: spr.id
+                        };
+                        enginePorts().undoRecord(action);
+                        enginePorts().storyStart('BlockArg.prototype.closePictureMenu');
+                    }
+                }
+            } catch (_) {
+                // Ignore if not running within live script page or in tests
+            }
+        }
     }
 
     menuCloseSpeeds (e: MouseEvent, mu: HTMLElement, b: HTMLElement, c: string) {

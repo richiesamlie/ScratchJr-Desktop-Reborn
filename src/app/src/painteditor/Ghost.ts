@@ -180,6 +180,9 @@ export default class Ghost {
     }
 
     static svgHit (pt: Point) {
+        if (!Paint.root || !Paint.root.createSVGRect) {
+            return [];
+        }
         var rpos = Paint.root.createSVGRect();
         rpos.x = pt.x;
         rpos.y = pt.y;
@@ -398,6 +401,9 @@ export default class Ghost {
     //////////////////////////////////////////////////
 
     static drawOffscreen () {
+        if (!Paint.root || !Paint.root.getAttribute) {
+            return;
+        }
         setCanvasSize(
             maskCanvas,
             Math.round(Number(Paint.root.getAttribute('width')) * Paint.currentZoom),

@@ -18,6 +18,7 @@ export interface EnginePorts {
     isOnHold (): boolean;
     setOnHold (v: boolean): void;
     isSampleOrStarter (): boolean;
+    isUserStart (): boolean;
     isInFullscreen (): boolean;
     isEditable (): boolean;
     getStageColor (): string;

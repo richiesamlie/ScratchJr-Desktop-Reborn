@@ -27,6 +27,8 @@ let getshapes = ['LetterGet_Orange', 'LetterGet_Red', 'LetterGet_Yellow', 'Lette
     'LetterGet_Blue', 'LetterGet_Purple'];
 let sendshapes = ['LetterSend_Orange', 'LetterSend_Red', 'LetterSend_Yellow', 'LetterSend_Green',
     'LetterSend_Blue', 'LetterSend_Purple'];
+let touchcolors = ['TouchColor_Red', 'TouchColor_Orange', 'TouchColor_Yellow', 'TouchColor_Green',
+    'TouchColor_Blue', 'TouchColor_Pipette'];
 
 let speeds = ['speed0', 'speed1', 'speed2'];
 
@@ -205,7 +207,7 @@ export default class BlockSpecs {
 
 
     static setupPalettesDef () {
-        return [['onflag', 'onclick', 'ontouch', 'onmessage', 'message'],
+        return [['onflag', 'onclick', 'ontouch', 'ontouchcolor', 'onmessage', 'message'],
             ['forward', 'back', 'up', 'down', 'right', 'left', 'flipX', 'hop', 'home'],
             ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show'],
             [],
@@ -240,6 +242,8 @@ export default class BlockSpecs {
                 BlockSpecs.yellowStart, null, null, BlockSpecs.yellowStartH, null, null, BlockSpecs.startS],
             'ontouch': ['ontouch', BlockSpecs.getImageFrom('assets/blockicons/Bump', 'svg'),
                 BlockSpecs.yellowStart, null, null, BlockSpecs.yellowStartH, null, null, BlockSpecs.startS],
+            'ontouchcolor': ['ontouchcolor', touchcolors, BlockSpecs.yellowStart, 'm', 'Red',
+                BlockSpecs.yellowStartH, null, null, BlockSpecs.startS],
             'message': ['message', sendshapes, BlockSpecs.yellowCmd, 'm', 'Orange',
                 BlockSpecs.yellowCmdH, null, null, BlockSpecs.cmdS],
 
@@ -322,6 +326,7 @@ export default class BlockSpecs {
             'ontouch': Localization.localize('BLOCK_DESC_ON_BUMP', {
                 CHARACTER_NAME: s.name ? s.name : ''
             }),
+            'ontouchcolor': 'When touching color',
             'onmessage': Localization.localize('BLOCK_DESC_ON_MESSAGE', {
                 COLOR: Localization.localize('BLOCK_DESC_MESSAGE_COLOR_ORANGE')
             }),

@@ -27,6 +27,7 @@ import Project from '../../src/app/src/editor/ui/Project.ts';
         isOnHold: () => false,
         setOnHold () {},
         isSampleOrStarter: () => false,
+        isUserStart: () => (typeof ScratchJr !== 'undefined' && ScratchJr.userStart !== undefined) ? ScratchJr.userStart : true,
         isInFullscreen: () => false,
         isEditable: () => true,
         getStageColor: () => '#FFFFFF',

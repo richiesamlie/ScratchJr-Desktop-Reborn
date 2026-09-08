@@ -22,6 +22,7 @@ setEnginePorts({
     isOnHold: () => ScratchJr.onHold,
     setOnHold: (v) => { ScratchJr.onHold = v; },
     isSampleOrStarter: () => ScratchJr.isSampleOrStarter(),
+    isUserStart: () => ScratchJr.userStart,
     isInFullscreen: () => ScratchJr.inFullscreen,
     isEditable: () => ScratchJr.isEditable(),
     getStageColor: () => ScratchJr.stagecolor,

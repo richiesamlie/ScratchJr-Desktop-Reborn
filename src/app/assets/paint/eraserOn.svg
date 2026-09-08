@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="Layer_2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="60px" height="58px" viewBox="0 0 60 58" xml:space="preserve">
+<g>
+	<g>
+		<path fill="#FFAA00" d="M57.48,8.609c0-2.966-2.508-5.367-5.601-5.367H9.32c-3.093,0-5.6,2.401-5.6,5.367v40.788
+			c0,2.963,2.507,5.364,5.6,5.364h42.561c3.094,0,5.6-2.401,5.6-5.364V8.609L57.48,8.609z"/>
+	</g>
+	<path fill-opacity="0.17" d="M51.277,4.36H8.716c-2.47,0-4.479,1.906-4.479,4.248v40.787c0,2.34,2.01,4.246,4.479,4.246h42.562
+		c2.47,0,4.479-1.906,4.479-4.246V8.608C55.756,6.266,53.746,4.36,51.277,4.36z M52.756,49.395c0,0.676-0.677,1.246-1.479,1.246
+		H8.716c-0.802,0-1.479-0.57-1.479-1.246V8.608c0-0.676,0.677-1.248,1.479-1.248h42.562c0.802,0,1.479,0.572,1.479,1.248V49.395z"/>
+	<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="29.9995" y1="3.1196" x2="29.9995" y2="56.1381" gradientTransform="matrix(1 0 0 -1 0 59)">
+		<stop offset="0" style="stop-color:#FFFFFF"/>
+		<stop offset="0.2309" style="stop-color:#FBFBFB"/>
+		<stop offset="0.4598" style="stop-color:#EFEFEF"/>
+		<stop offset="0.6879" style="stop-color:#DBDBDB"/>
+		<stop offset="0.9144" style="stop-color:#C0C0C0"/>
+		<stop offset="1" style="stop-color:#B3B3B3"/>
+	</linearGradient>
+	<path fill="url(#SVGID_1_)" d="M57.999,49.396c0,3.582-3.009,6.484-6.72,6.484H8.719c-3.711,0-6.72-2.902-6.72-6.484V8.607
+		c0-3.582,3.009-6.485,6.72-6.485h42.56C54.991,2.122,58,5.025,58,8.607L57.999,49.396L57.999,49.396z M55.759,8.609
+		c0-2.347-2.006-4.247-4.479-4.247H8.719c-2.474,0-4.479,1.9-4.479,4.247v40.786c0,2.347,2.006,4.246,4.479,4.246h42.56
+		c2.474,0,4.479-1.9,4.479-4.246V8.609z"/>
+	<!-- Eraser icon in #FFFFFF on active -->
+	<g transform="translate(30, 29) rotate(-32) translate(-30, -29)">
+		<path fill="#FFFFFF" d="M17,21 C17,19.9 17.9,19 19,19 L39,19 C40.1,19 41,19.9 41,21 L41,35 C41,36.1 40.1,37 39,37 L19,37 C17.9,37 17,36.1 17,35 Z"/>
+		<path fill="#FFAA00" d="M29,19 L40,19 C40.55,19 41,19.45 41,20 L41,36 C41,36.55 40.55,37 40,37 L29,37 Z" opacity="0.35"/>
+		<line x1="29" y1="19" x2="29" y2="37" stroke="#FFAA00" stroke-width="1.8" opacity="0.8"/>
+	</g>
+</g>
+</svg>

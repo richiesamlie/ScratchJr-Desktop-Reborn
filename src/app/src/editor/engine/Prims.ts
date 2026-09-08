@@ -29,6 +29,7 @@ export default class Prims {
             onmessage: Prims.Ignore,
             onclick: Prims.Ignore,
             ontouch: Prims.OnTouch,
+            ontouchcolor: Prims.OnTouchColor,
             onchat: Prims.Ignore,
             repeat: Prims.Repeat,
             forward: Prims.Forward,
@@ -440,8 +441,37 @@ export default class Prims {
         Prims.fadeSprite(strip, false);
     }
     static OnTouch (strip: Thread) {
+        var isRunning = false;
+        try {
+            isRunning = enginePorts().isUserStart();
+        } catch (_) {
+            isRunning = true;
+        }
+        if (!isRunning) {
+            strip.waitTimer = tinterval * 4;
+            return;
+        }
         var s = strip.spr;
         if (s.touchingAny()) {
+            strip.stack.push(strip.firstBlock);
+            strip.thisblock = strip.thisblock.next!;
+        }
+        strip.waitTimer = tinterval;
+    }
+    static OnTouchColor (strip: Thread) {
+        var isRunning = false;
+        try {
+            isRunning = enginePorts().isUserStart();
+        } catch (_) {
+            isRunning = true;
+        }
+        if (!isRunning) {
+            strip.waitTimer = tinterval * 4;
+            return;
+        }
+        var s = strip.spr;
+        var colorVal = strip.thisblock.getArgValue();
+        if (s.touchingColor(colorVal as string)) {
             strip.stack.push(strip.firstBlock);
             strip.thisblock = strip.thisblock.next!;
         }

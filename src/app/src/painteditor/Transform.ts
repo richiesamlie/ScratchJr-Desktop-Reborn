@@ -46,10 +46,24 @@ export default class Transform {
     }
 
     static newPoint (x: number | string | null, y: number | string | null) {
-        var pt = Paint.root.createSVGPoint();
-        pt.x = x as unknown as number;
-        pt.y = y as unknown as number;
-        return pt;
+        if (Paint.root && Paint.root.createSVGPoint) {
+            var pt = Paint.root.createSVGPoint();
+            pt.x = x as unknown as number;
+            pt.y = y as unknown as number;
+            return pt;
+        }
+        var px = Number(x) || 0;
+        var py = Number(y) || 0;
+        return {
+            x: px,
+            y: py,
+            matrixTransform: function (m: SVGMatrix) {
+                return {
+                    x: (m.a ?? 1) * px + (m.c ?? 0) * py + (m.e ?? 0),
+                    y: (m.b ?? 0) * px + (m.d ?? 1) * py + (m.f ?? 0)
+                } as SVGPoint;
+            }
+        } as unknown as SVGPoint;
     }
 
     ////////////////////////////
@@ -69,6 +83,11 @@ export default class Transform {
                     Transform.translateTo(elem.childNodes[i] as Element, xform,
                         Transform.getScaleMatrix(elem.childNodes[i] as Element));
                 }
+            }
+            break;
+        case 'mask':
+            for (var m = 0; m < elem.childElementCount; m++) {
+                Transform.translateTo(elem.childNodes[m] as Element, xform);
             }
             break;
         case 'ellipse':
@@ -192,9 +211,22 @@ export default class Transform {
     }
 
     static getTranslateTransform () {
-        var res = Paint.root.createSVGTransform();
-        res.setTranslate(0, 0);
-        return res;
+        if (Paint.root && Paint.root.createSVGTransform) {
+            var res = Paint.root.createSVGTransform();
+            res.setTranslate(0, 0);
+            return res;
+        }
+        var mat = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+        return {
+            type: 2,
+            angle: 0,
+            matrix: mat,
+            setTranslate: function (x: number, y: number) {
+                mat.e = x;
+                mat.f = y;
+            },
+            setRotate: function () {}
+        } as unknown as SVGTransform;
     }
 
     static applyRotation (elem: Element, angle: number) {
@@ -227,7 +259,13 @@ export default class Transform {
 
     static getRotation (elem: Element) {
         //console.log ("Transform.getRotation", elem);
-        var tl = Transform.getList(elem)!;
+        if (!elem) {
+            return { angle: 0, setRotate: () => {} } as any;
+        }
+        var tl = Transform.getList(elem);
+        if (!tl) {
+            return { angle: 0, setRotate: () => {} } as any;
+        }
         var num = tl.numberOfItems;
         for (var i = 0; i < num; ++i) {
             var xform = tl.getItem(i);
@@ -235,25 +273,37 @@ export default class Transform {
                 return xform;
             }
         }
+        if (!Paint.root || !Paint.root.createSVGTransform) {
+            return { angle: 0, setRotate: () => {} } as any;
+        }
         var rot = Paint.root.createSVGTransform();
         var center = SVGTools.getBoxCenter(elem);
         rot.setRotate(0, center.x, center.y);
 
         if (tl.numberOfItems == 0) {
-            Transform.getList(elem)!.appendItem(rot);
+            tl.appendItem(rot);
         } else {
-            Transform.getList(elem)!.insertItemBefore(rot, 0);
+            tl.insertItemBefore(rot, 0);
         }
         return rot;
     }
 
     static getCombinedMatrices (elem: Element) {
         var tl = Transform.getList(elem);
+        var createMatrix = (): SVGMatrix => {
+            if (Paint.root && Paint.root.createSVGMatrix) {
+                return Paint.root.createSVGMatrix();
+            }
+            if (typeof DOMMatrix !== 'undefined') {
+                return new DOMMatrix() as unknown as SVGMatrix;
+            }
+            return { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0, multiply: (x: any) => x } as unknown as SVGMatrix;
+        };
         if (tl == null) {
-            return Paint.root.createSVGMatrix();
+            return createMatrix();
         }
         var n = tl.numberOfItems;
-        var m = Paint.root.createSVGMatrix();
+        var m = createMatrix();
         for (var i = 0; i < n; i++) {
             var mtom = tl.getItem(i);
             if (mtom.type == 4) {

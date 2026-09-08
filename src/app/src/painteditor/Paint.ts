@@ -53,11 +53,16 @@ let nativeJr;
 let isBkg = false;
 let currentMd5: string | null = null;
 let currentZoom = 1;
+let zoomSteps = [0.5, 0.75, 1.0, 1.5, 2.0, 3.0];
+let brushStyle: 'normal' | 'flat' | 'dotted' = 'normal';
 let root: SVGSVGElement;
 let saving = false;
 let paintFrame: HTMLElement | null = null;
 let saveMD5: string | null = null;
 let svgdata: string | null = null;
+let savedSpriteName = '';
+let savedSpriteW = '120';
+let savedSpriteH = '90';
 let splash: string | null = null;
 let splashshade: string | null = null;
 let maxZoom = 5;
@@ -112,12 +117,15 @@ export default class Paint {
     }
 
     static set currentZoom (newCurrentZoom) {
-       // currentZoom = newCurrentZoom;
-       currentZoom = 1;
+       currentZoom = newCurrentZoom;
     }
 
     static get root () {
         return root;
+    }
+
+    static set root (newRoot: SVGSVGElement) {
+        root = newRoot;
     }
 
     static get saving () {
@@ -150,6 +158,14 @@ export default class Paint {
 
     static set deltaPoint (newDeltaPoint) {
         deltaPoint = newDeltaPoint;
+    }
+
+    static get currentBrushStyle (): 'normal' | 'flat' | 'dotted' {
+        return brushStyle;
+    }
+
+    static set currentBrushStyle (style: 'normal' | 'flat' | 'dotted') {
+        brushStyle = style;
     }
 
     ///////////////////////////////////////////
@@ -409,7 +425,7 @@ export default class Paint {
         if (Camera.active) {
             Camera.doAction((t as Element).getAttribute('key')!);
         } else {
-            var tools = ['select', 'rotate', 'stamper', 'scissors', 'camera', 'paintbucket'];
+            var tools = ['select', 'rotate', 'stamper', 'scissors', 'eraser', 'camera', 'paintbucket'];
             if (tools.indexOf((t as Element).getAttribute('key')!) > -1) {
                 ScratchAudio.sndFX('tap.wav');
             }
@@ -418,6 +434,9 @@ export default class Paint {
     }
 
     static selectButton (str: string) {
+        if (mode == 'eraser' && str != 'eraser') {
+            PaintAction.removeEraserCursor();
+        }
         if (gn('painttools')) {
             Paint.selectButtonFromDiv(gn('painttools')!, str);
         }
@@ -470,8 +489,7 @@ export default class Paint {
     ///////////////////////////////////////////
 
     static setZoomTo (value: number) {
-        //currentZoom = value;
-        currentZoom = 1;
+        currentZoom = value;
         
         Paint.bounceBack();
         Paint.setCanvasTransform(value);
@@ -479,15 +497,19 @@ export default class Paint {
     }
 
     static updateZoomScale (value: number) {
-        currentZoom = 1;
+        currentZoom = value;
         
-        // currentZoom = value;
         Paint.setCanvasTransform(value);
     }
 
     static setCanvasTransform (value: number) {
-        gn('maincanvas')!.style.webkitTransform = 'translate(' + gn('maincanvas')!.dx + 'px,'
-            + gn('maincanvas')!.dy + 'px) scale(' + value + ',' + value + ')';
+        var mc = gn('maincanvas');
+        if (!mc) {
+            return;
+        }
+        var xform = 'translate(' + mc.dx + 'px,' + mc.dy + 'px) scale(' + value + ',' + value + ')';
+        mc.style.transform = xform;
+        mc.style.webkitTransform = xform;
     }
 
     static adjustPos (delta: Point) {
@@ -541,6 +563,36 @@ export default class Paint {
         Paint.setZoomTo(Math.min(dw, dh));
     }
 
+    static zoomIn () {
+        var next = 1.0;
+        for (var i = 0; i < zoomSteps.length; i++) {
+            if (zoomSteps[i] > currentZoom + 0.01) {
+                next = zoomSteps[i];
+                break;
+            }
+            next = zoomSteps[zoomSteps.length - 1];
+        }
+        next = Math.min(next, maxZoom);
+        Paint.setZoomTo(next);
+    }
+
+    static zoomOut () {
+        var prev = 1.0;
+        for (var i = zoomSteps.length - 1; i >= 0; i--) {
+            if (zoomSteps[i] < currentZoom - 0.01) {
+                prev = zoomSteps[i];
+                break;
+            }
+            prev = zoomSteps[0];
+        }
+        prev = Math.max(prev, minZoom);
+        Paint.setZoomTo(prev);
+    }
+
+    static zoomReset () {
+        Paint.setZoomTo(1.0);
+    }
+
     static dragBackground (evt: Event) {
         if (Paint.canvasFits()) {
             return;
@@ -581,6 +633,7 @@ export default class Paint {
         var pt = newHTML('div', 'paintop', paintFrame!);
         Paint.checkMark(pt);
         PaintUndo.setup(pt); // plug here the undo
+        Paint.createZoomControls(pt);
         Paint.nameOfcostume(pt);
     }
 
@@ -588,6 +641,28 @@ export default class Paint {
         var clicky = newHTML('div', 'paintdone', pt);
         clicky.id = 'donecheck';
         clicky.onmousedown = Paint.backToProject;
+    }
+
+    static createZoomControls (parent: HTMLElement) {
+        var container = newHTML('div', 'zoomcontrols', parent);
+        var btnOut = newHTML('div', 'zoombtn zoomout', container);
+        btnOut.onmousedown = function (e: Event) {
+            e.preventDefault();
+            e.stopPropagation();
+            Paint.zoomOut();
+        };
+        var btnReset = newHTML('div', 'zoombtn zoomreset', container);
+        btnReset.onmousedown = function (e: Event) {
+            e.preventDefault();
+            e.stopPropagation();
+            Paint.zoomReset();
+        };
+        var btnIn = newHTML('div', 'zoombtn zoomin', container);
+        btnIn.onmousedown = function (e: Event) {
+            e.preventDefault();
+            e.stopPropagation();
+            Paint.zoomIn();
+        };
     }
 
     static nameOfcostume (p: HTMLElement) {
@@ -671,6 +746,7 @@ export default class Paint {
         pal.setAttribute('id', 'paintpalette');
         Paint.setupEditPalette(pal);
         Paint.createSizeSelector(pal);
+        Paint.createBrushSelector(pal);
     }
 
     static setupEditPalette (pal: HTMLElement) {
@@ -741,6 +817,49 @@ export default class Paint {
         }
     }
 
+    ////////////////////////////////////////
+    // Brush Styles
+    ////////////////////////////////////////
+
+    static createBrushSelector (pal: HTMLElement) {
+        var section = newHTML('div', 'section space', pal);
+        section.setAttribute('id', 'brushSelector');
+        var styles: Array<'normal' | 'flat' | 'dotted'> = ['normal', 'flat', 'dotted'];
+        for (var i = 0; i < styles.length; i++) {
+            var bs = newHTML('div', 'brushoption', section);
+            bs.key = styles[i];
+            bs.onmousedown = function (e: Event) {  // eslint-disable-line no-loop-func
+                e.preventDefault();
+                e.stopPropagation();
+                var style = (this as HTMLElement).key as 'normal' | 'flat' | 'dotted';
+                brushStyle = style;
+                Paint.selectBrushStyle(style);
+            };
+            var icon = newHTML('div', 'brushtool brush' + styles[i] + ' off', bs);
+            icon.setAttribute('key', styles[i]);
+        }
+        brushStyle = 'normal';
+        Paint.selectBrushStyle('normal');
+    }
+
+    static selectBrushStyle (style: string) {
+        var p = gn('brushSelector');
+        if (!p) {
+            return;
+        }
+        for (var i = 0; i < p.childElementCount; i++) {
+            var elem = p.childNodes[i] as HTMLElement;
+            var icon = elem.childNodes[0] as HTMLElement;
+            if (elem.key == style) {
+                elem.setAttribute('class', 'brushoption on');
+                icon.setAttribute('class', 'brushtool brush' + elem.key + ' on');
+            } else {
+                elem.setAttribute('class', 'brushoption off');
+                icon.setAttribute('class', 'brushtool brush' + elem.key + ' off');
+            }
+        }
+    }
+
     /////////////////////////////////
     //Right Palette
     /////////////////////////////////
@@ -748,7 +867,7 @@ export default class Paint {
     static rightPalette (div: HTMLElement) {
         var rightpal = newHTML('div', 'side', div);
         Paint.addSidePalette(rightpal, 'selectortools', ['select', 'rotate']);
-        Paint.addSidePalette(rightpal, 'edittools', ['stamper', 'scissors']);
+        Paint.addSidePalette(rightpal, 'edittools', ['stamper', 'scissors', 'eraser']);
         const hasCamera = (PlatformBridge.camera == '1' || PlatformBridge.camera === true || String(PlatformBridge.camera).toLowerCase() === 'true') && Camera.available;
         Paint.addSidePalette(rightpal, 'filltools', hasCamera ? ['camera', 'paintbucket'] : ['paintbucket']);
     }
@@ -909,11 +1028,46 @@ export default class Paint {
             Paint.addImageUrl(sf, splashshade);
             colour.onmousedown = Paint.selectSwatch;
         }
-        Paint.setSwatchColor(gn('swatches')!.childNodes[swatchlist.indexOf('#1C1C1C')] as HTMLElement);
+        // Color picker bucket (rainbow gradient)
+        var pickerBucket = newHTML('div', 'swatchbucket', spal);
+        var pickerFrame = newHTML('div', 'swatchframe', pickerBucket);
+        var pickerVisual = newHTML('div', 'swatchcolor colorpicker-visual', pickerFrame);
+        pickerVisual.style.background = 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)';
+        newHTML('div', 'splasharea off', pickerBucket); // placeholder splash
+        var colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.className = 'hidden-color-input';
+        colorInput.value = '#FF0000';
+        pickerBucket.appendChild(colorInput);
+        pickerBucket.onmousedown = function (e: Event) {
+            e.preventDefault();
+            e.stopPropagation();
+            colorInput.click();
+        };
+        colorInput.addEventListener('input', function () {
+            fillcolor = colorInput.value;
+            // Deselect all splash indicators
+            for (var j = 0; j < gn('swatches')!.childElementCount; j++) {
+                var node = gn('swatches')!.childNodes[j] as HTMLElement;
+                var splashEl = node.querySelector('.splasharea');
+                if (splashEl) {
+                    splashEl.setAttribute('class', 'splasharea off');
+                }
+            }
+            Path.quitEditMode();
+            Paint.updateStrokes();
+        });
+        var swatchesEl = gn('swatches');
+        if (swatchesEl && swatchesEl.childNodes && swatchesEl.childNodes[swatchlist.indexOf('#1C1C1C')]) {
+            Paint.setSwatchColor(swatchesEl.childNodes[swatchlist.indexOf('#1C1C1C')] as HTMLElement);
+        }
     }
 
     static setSplashColor (p: HTMLElement, str: string | null, color: string) {
-        var dataurl = 'data:image/svg+xml;base64,' + utf8ToBase64(str!.replace(/#662D91/g, color));
+        if (!str) {
+            return;
+        }
+        var dataurl = 'data:image/svg+xml;base64,' + utf8ToBase64(str.replace(/#662D91/g, color));
         Paint.addImageUrl(p, dataurl);
     }
 
@@ -948,7 +1102,7 @@ export default class Paint {
     }
 
     static setSwatchColor (t: HTMLElement | null) {
-        var tools = ['select', 'wand', 'stamper', 'scissors', 'rotate'];
+        var tools = ['select', 'wand', 'stamper', 'scissors', 'rotate', 'eraser'];
         if (t && (tools.indexOf(mode) > -1)) {
             Paint.selectButton('paintbucket');
         }
@@ -1014,6 +1168,7 @@ export default class Paint {
         SVGTools.createGroup(root, 'draglayer');
         SVGTools.createGroup(root, 'paintgrid');
         gn('paintgrid')!.setAttribute('opacity', '0.5');
+        SVGTools.ensureEraserMask();
     }
 
     static clearWorkspace () {
@@ -1025,6 +1180,13 @@ export default class Paint {
         fcn(gn('layer1')!);
         fcn(gn('paintgrid')!);
         fcn(gn('draglayer')!);
+        var mask = gn('paintEraserMask');
+        if (mask) {
+            mask.innerHTML = '<rect x="-1000" y="-1000" width="3000" height="3000" fill="white"/>';
+        }
+        if (gn('layer1')) {
+            gn('layer1')!.removeAttribute('mask');
+        }
         Path.quitEditMode();
     }
 
@@ -1153,6 +1315,12 @@ export default class Paint {
             }
             flat[i].setAttribute('file', 'yes');
         }
+        var existingMask = (extxml as Element).querySelector('#paintEraserMask');
+        if (existingMask && existingMask.querySelector('path, circle')) {
+            var mask = SVGTools.ensureEraserMask();
+            mask.innerHTML = existingMask.innerHTML;
+            gn('layer1')!.setAttribute('mask', 'url(#paintEraserMask)');
+        }
         Paint.doAbsolute(gn('layer1')! as Element);
         if (!nativeJr) {
             Paint.reassingIds(gn('layer1')! as Element);
@@ -1230,6 +1398,10 @@ export default class Paint {
     static adjustShapePosition (dx: number, dy: number) {
         window.xform!.setTranslate(dx, dy);
         Transform.translateTo(gn('layer1')! as Element, window.xform!);
+        var mask = gn('paintEraserMask');
+        if (mask && mask.querySelector('path, circle')) {
+            Transform.translateTo(mask, window.xform!);
+        }
     }
 
     ///////////////////////////////////
@@ -1321,7 +1493,20 @@ export default class Paint {
                 Alert.open(paintFrame!, gn('donecheck')!, 'Saving...', '#28A5DA');
                 Alert.balloon!.style.zIndex = String(12000);
             }
+            savedSpriteName = ((unescape(cname)).replace(/[0-9]/g, '')).replace(/\s*/g, '') || cname || 'Character';
             svgdata = SVGTools.saveShape(gn('layer1')! as Element, workspaceWidth, workspaceHeight);
+
+            // Extract exact SVG dimensions from the saved SVG's viewBox or width/height
+            savedSpriteW = '120';
+            savedSpriteH = '90';
+            var vbMatch = svgdata.match(/viewBox=\s*"([^"]+)"/);
+            if (vbMatch) {
+                var parts = vbMatch[1].split(/[\s,]+/).filter(Boolean).map(Number);
+                if (parts.length >= 4 && parts[2] > 0 && parts[3] > 0) {
+                    savedSpriteW = String(Math.round(parts[2]));
+                    savedSpriteH = String(Math.round(parts[3]));
+                }
+            }
             IO.setMedia(svgdata, 'svg', function (str: string) {
                 Paint.addOrModifySprite(str, fcn);
             });
@@ -1380,12 +1565,29 @@ export default class Paint {
 
     static addToLib (fcn?: (result: unknown) => void) {
         var scale = '0.5'; // always saves with 1/2 the size
-        var cname = namedForms.spriteform.name.value;
-        cname = ((unescape(cname)).replace(/[0-9]/g, '')).replace(/\s*/g, '');
-        var box = SVGTools.getBox(gn('layer1')! as Element).rounded();
-        box = box.expandBy(20);
-        var w = box.width.toString();
-        var h = box.height.toString();
+        var cname = savedSpriteName;
+        if (!cname && namedForms.spriteform) {
+            var rawName = namedForms.spriteform.name.value;
+            cname = ((unescape(rawName)).replace(/[0-9]/g, '')).replace(/\s*/g, '') || rawName;
+        }
+        if (!cname) {
+            cname = currentName || 'Character';
+        }
+
+        var w = savedSpriteW;
+        var h = savedSpriteH;
+        if (!w || !h || Number(w) <= 21 || Number(h) <= 21) {
+            if (svgdata) {
+                var vbMatch = svgdata.match(/viewBox=\s*"([^"]+)"/);
+                if (vbMatch) {
+                    var parts = vbMatch[1].split(/[\s,]+/).filter(Boolean).map(Number);
+                    if (parts.length >= 4 && parts[2] > 0 && parts[3] > 0) {
+                        w = String(Math.round(parts[2]));
+                        h = String(Math.round(parts[3]));
+                    }
+                }
+            }
+        }
         var dataurl = IO.getThumbnail(svgdata!, w, h, 120, 90);
         var pngBase64 = dataurl.split(',')[1];
         PlatformBridge.setmedia(pngBase64, 'png', setCostumeRecord);
@@ -1401,8 +1603,8 @@ export default class Paint {
     }
 
     static changePageSprite () {
+        var cname = savedSpriteName || (namedForms.spriteform ? namedForms.spriteform.name.value : currentName || 'Character');
         Paint.close();
-        var cname = namedForms.spriteform.name.value;
         var type = Paint.getLoadType(spriteId, cname);
         switch (type) {
         case 'modify':
@@ -1491,6 +1693,12 @@ export default class Paint {
         var flat = Paint.skipUnwantedElements(extxml as Element, []);
         for (var i = 0; i < flat.length; i++) {
             gn('layer1')!.appendChild(flat[i]);
+        }
+        var existingMask = (extxml as Element).querySelector('#paintEraserMask');
+        if (existingMask && existingMask.querySelector('path, circle')) {
+            var mask = SVGTools.ensureEraserMask();
+            mask.innerHTML = existingMask.innerHTML;
+            gn('layer1')!.setAttribute('mask', 'url(#paintEraserMask)');
         }
         Paint.doAbsolute(gn('layer1')! as Element);
         Paint.adjustShapePosition(dx, dy);

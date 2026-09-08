@@ -320,11 +320,17 @@ export default class Page {
         var ctx = c.getContext('2d')!;
         ctx.fillStyle = ScratchJr.stagecolor || '#FFFFFF';
         ctx.fillRect(0, 0, c.width, c.height);
-        if (this.bkg.childElementCount > 0 && this.bkg.originalImg) {
-            var img = this.bkg.originalImg;
-            var imgw = img.naturalWidth ? img.naturalWidth : img.width;
-            var imgh = img.naturalHeight ? img.naturalHeight : img.height;
-            ctx.drawImage(img, 0, 0, imgw, imgh, 0, 0, c.width, c.height);
+        var bkgImg = (this.bkg && this.bkg.childElementCount > 0 && this.bkg.childNodes[0])
+            ? (this.bkg.childNodes[0] as HTMLImageElement)
+            : (this.bkg as unknown as { originalImg?: HTMLImageElement }).originalImg;
+        if (bkgImg) {
+            try {
+                var imgw = (bkgImg as HTMLImageElement).naturalWidth || bkgImg.width || (480 * scale);
+                var imgh = (bkgImg as HTMLImageElement).naturalHeight || bkgImg.height || (360 * scale);
+                ctx.drawImage(bkgImg, 0, 0, imgw, imgh, 0, 0, c.width, c.height);
+            } catch (_) {
+                // Ignore draw error
+            }
         }
         var scaleF = c.width / 480;
         for (var i = 0; i < this.div.childElementCount; i++) {

@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import SVGTools from '../../src/app/src/painteditor/SVGTools';
 import Paint from '../../src/app/src/painteditor/Paint';
+import PaintAction from '../../src/app/src/painteditor/PaintAction';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -70,5 +71,55 @@ describe('Paint Editor Shapes & Palette Enhancements', () => {
         expect(cssContent).toContain('lineOff.svg');
         expect(cssContent).toContain('starOn.svg');
         expect(cssContent).toContain('starOff.svg');
+    });
+
+    it('extracts raw viewport event coordinates via PaintAction.getScreenPt', () => {
+        const mc = document.createElement('div');
+        mc.id = 'maincanvas';
+        document.body.appendChild(mc);
+
+        const mockEvt = {
+            clientX: 250,
+            clientY: 180,
+            preventDefault: () => {},
+            stopPropagation: () => {}
+        };
+
+        const pt = PaintAction.getScreenPt(mockEvt);
+        expect(pt.x).toBe(250);
+        expect(pt.y).toBe(180);
+    });
+
+    it('transforms coordinates via SVG matrix in PaintAction.zoomPt when SVG root is available', () => {
+        const mc = document.createElement('div');
+        mc.id = 'maincanvas';
+        document.body.appendChild(mc);
+
+        // Mock SVG root with getScreenCTM and createSVGPoint
+        const svgMock = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgMock.createSVGPoint = () => ({
+            x: 0,
+            y: 0,
+            matrixTransform (matrix) {
+                // Apply matrix inverse simulation: scale factor 2
+                return { x: this.x * matrix.a + matrix.e, y: this.y * matrix.d + matrix.f };
+            }
+        });
+        svgMock.getScreenCTM = () => ({
+            a: 0.5, b: 0, c: 0, d: 0.5, e: 0, f: 0,
+            inverse () {
+                return { a: 2, b: 0, c: 0, d: 2, e: -20, f: -10 };
+            }
+        });
+
+        // Set Paint root getter mock or attach to Paint
+        const origRoot = Paint.root;
+        Object.defineProperty(Paint, 'root', { value: svgMock, configurable: true });
+
+        const transformed = PaintAction.zoomPt({ x: 100, y: 150 });
+        expect(transformed.x).toBe(180); // 100 * 2 - 20
+        expect(transformed.y).toBe(290); // 150 * 2 - 10
+
+        Object.defineProperty(Paint, 'root', { value: origRoot, configurable: true });
     });
 });

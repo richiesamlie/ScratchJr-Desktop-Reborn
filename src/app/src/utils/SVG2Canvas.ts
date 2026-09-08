@@ -68,6 +68,22 @@ export default class SVG2Canvas {
         setCanvasSize(spr.outline, spr.originalImg.width, spr.originalImg.height);
         var ctx = spr.outline.getContext('2d')!;
         SVG2Canvas.drawImage(spr.svg, ctx);
+        var mask = spr.svg.querySelector('#paintEraserMask');
+        if (mask) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            var paths = mask.querySelectorAll('path');
+            for (var j = 0; j < paths.length; j++) {
+                var p = paths[j];
+                ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = Number(p.getAttribute('stroke-width')) || 16;
+                SVG2Canvas.processXMLnode(p, ctx);
+            }
+            ctx.restore();
+        }
     }
 
     static drawLayers (svg: Element, ctx: DrawContext, fcn: ((elem: Element, ctx: DrawContext) => void) | boolean) {
@@ -79,11 +95,18 @@ export default class SVG2Canvas {
 
     static drawImage (svg: Element, ctx: DrawContext) {
         for (var i = 0; i < svg.childElementCount; i++) {
-            SVG2Canvas.drawLayer(svg.childNodes[i] as Element, ctx);
+            var elem = svg.childNodes[i] as Element;
+            if (elem.nodeName == 'defs' || elem.nodeName == 'mask') {
+                continue;
+            }
+            SVG2Canvas.drawLayer(elem, ctx);
         }
     }
 
     static drawLayer (elem: Element, ctx: DrawContext, _fcn?: (elem: Element, ctx: DrawContext) => void) {
+        if (elem.nodeName == 'image' || elem.nodeName == 'clipPath' || elem.nodeName == 'defs' || elem.nodeName == 'mask') {
+            return;
+        }
         // svg no fill means black
         ctx.fillStyle = !elem.getAttribute('fill')
             ? 'black'
@@ -131,10 +154,7 @@ export default class SVG2Canvas {
     }
 
     static drawElementMask (elem: Element, ctx: DrawContext) {
-        if (elem.nodeName == 'image') {
-            return;
-        }
-        if (elem.nodeName == 'clipPath') {
+        if (elem.nodeName == 'image' || elem.nodeName == 'clipPath' || elem.nodeName == 'defs' || elem.nodeName == 'mask') {
             return;
         }
         if (elem.id.indexOf('pathborder_image') > -1) {
@@ -159,10 +179,7 @@ export default class SVG2Canvas {
     }
 
     static drawElementOutline (elem: Element, ctx: DrawContext) {
-        if (elem.nodeName == 'image') {
-            return;
-        }
-        if (elem.nodeName == 'clipPath') {
+        if (elem.nodeName == 'image' || elem.nodeName == 'clipPath' || elem.nodeName == 'defs' || elem.nodeName == 'mask') {
             return;
         }
         if (elem.id.indexOf('pathborder_image') > -1) {
@@ -181,13 +198,36 @@ export default class SVG2Canvas {
 
     static drawBorder (svg: Element, ctx: DrawContext) {
         for (var i = 0; i < svg.childElementCount; i++) {
-            SVG2Canvas.drawElementOutline(svg.childNodes[i] as Element, ctx);
+            var child = svg.childNodes[i] as Element;
+            if (child.nodeName == 'defs' || child.nodeName == 'mask') {
+                continue;
+            }
+            SVG2Canvas.drawElementOutline(child, ctx);
+        }
+        var mask = svg.querySelector('#paintEraserMask');
+        if (mask) {
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            var paths = mask.querySelectorAll('path');
+            for (var j = 0; j < paths.length; j++) {
+                var p = paths[j];
+                ctx.fillStyle = 'rgba(0, 0, 0, 1)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.lineWidth = (Number(p.getAttribute('stroke-width')) || 16) + 14;
+                SVG2Canvas.processXMLnode(p, ctx);
+            }
+            ctx.restore();
         }
     }
 
     static drawWaterMark (svg: Element, ctx: DrawContext) {
         for (var i = 0; i < svg.childElementCount; i++) {
             var elem = svg.childNodes[i] as Element;
+            if (elem.nodeName == 'defs' || elem.nodeName == 'mask') {
+                continue;
+            }
             if (elem.tagName == 'g') {
                 SVG2Canvas.drawWaterMark(elem, ctx);
             } else {
@@ -197,10 +237,7 @@ export default class SVG2Canvas {
     }
 
     static drawObjectWaterMark (elem: Element, ctx: DrawContext) {
-        if (elem.nodeName == 'image') {
-            return;
-        }
-        if (elem.nodeName == 'clipPath') {
+        if (elem.nodeName == 'image' || elem.nodeName == 'clipPath' || elem.nodeName == 'defs' || elem.nodeName == 'mask') {
             return;
         }
         if (elem.id.indexOf('pathborder_image') > -1) {

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85px" height="66px" viewBox="0 0 85 66">
+  <!-- Dropper Bulb -->
+  <path d="M52 14 C56 18 56 22 52 26 L48 30 L40 22 L44 18 C48 14 50 12 52 14 Z" fill="#E65100" stroke="#BF360C" stroke-width="2"/>
+  <rect x="42" y="24" width="4" height="10" rx="1" transform="rotate(-45 44 29)" fill="#FFE0B2" stroke="#BF360C" stroke-width="1.5"/>
+  <!-- Dropper Glass Body -->
+  <path d="M43 27 L27 43 C26 44 24 45 23 47 L21 51 L25 49 C27 48 28 46 29 45 L45 29 Z" fill="#E0F7FA" stroke="#00838F" stroke-width="2"/>
+  <!-- Droplet at the tip -->
+  <circle cx="17" cy="54" r="3" fill="#FF0023"/>
+  <!-- Target crosshair / loupe ring -->
+  <circle cx="42.5" cy="33" r="24" fill="none" stroke="#FFAA00" stroke-width="2.5" stroke-dasharray="6 4"/>
+</svg>

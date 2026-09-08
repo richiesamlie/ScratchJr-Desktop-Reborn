@@ -240,14 +240,27 @@ export default class SVGTools {
     }
 
     static getPolyAttr (): Record<string, string | number> {
-        return {
+        var attr: Record<string, string | number> = {
             'fill': 'none',
             'stroke': Paint.fillcolor,
             'stroke-width': Paint.strokewidth,
-            'stroke-linecap': 'round',
             'opacity': 1,
             'style': 'pointer-events:visiblePainted;'
         };
+        switch (Paint.currentBrushStyle) {
+            case 'flat':
+                attr['stroke-linecap'] = 'square';
+                attr['stroke-linejoin'] = 'miter';
+                break;
+            case 'dotted':
+                attr['stroke-linecap'] = 'round';
+                attr['stroke-dasharray'] = '0 ' + (Paint.strokewidth * 2);
+                break;
+            default: // 'normal'
+                attr['stroke-linecap'] = 'round';
+                break;
+        }
+        return attr;
     }
 
     static getPenAttr (shape?: Element): Record<string, string | number> {
@@ -330,12 +343,23 @@ export default class SVGTools {
             + '" viewBox= "0 0 ' + w + ' ' + h + '" width="' + w + 'px" height="' + h + 'px">';
         var comment = document.createComment('Created with Scratch Jr');
         svgdata += serializer.serializeToString(comment);
+        var maskElem = gn('paintEraserMask');
+        if (maskElem && maskElem.querySelector('path, circle')) {
+            var defs = document.createElementNS(Paint.xmlns, 'defs');
+            defs.appendChild(maskElem.cloneNode(true));
+            svgdata += serializer.serializeToString(defs);
+        } else {
+            str = str.replace(/ mask="[^"]*"/g, '');
+        }
         svgdata += str;
         svgdata += '</svg>';
         return svgdata.replace(/></g, '>\n<');
     }
 
     static cleanup (elem: Element) {
+        if (!elem) {
+            return;
+        }
         if (elem.childElementCount == 0) {
             if (elem.id != 'layer1') {
                 elem.parentNode!.removeChild(elem);
@@ -363,6 +387,18 @@ export default class SVGTools {
             + '" viewBox= "0 0 ' + w + ' ' + h + '" width="' + w + 'px" height="' + h + 'px">';
         var comment = document.createComment('Created with Scratch Jr');
         svgdata += serializer.serializeToString(comment);
+        var maskElem = gn('paintEraserMask');
+        if (maskElem && maskElem.querySelector('path, circle')) {
+            var maskClone = maskElem.cloneNode(true) as Element;
+            if (window.xform) {
+                Transform.translateTo(maskClone, window.xform);
+            }
+            var defs = document.createElementNS(Paint.xmlns, 'defs');
+            defs.appendChild(maskClone);
+            svgdata += serializer.serializeToString(defs);
+        } else {
+            str = str.replace(/ mask="[^"]*"/g, '');
+        }
         svgdata += str;
         svgdata += '</svg>';
         return svgdata.replace(/></g, '>\n<');
@@ -377,8 +413,11 @@ export default class SVGTools {
             };
         }
         box = box.expandBy(20);
-        window.xform!.setTranslate(-box.x, -box.y);
-        Transform.translateTo(elem, window.xform!);
+        if (!window.xform) {
+            window.xform = Transform.getTranslateTransform();
+        }
+        window.xform.setTranslate(-box.x, -box.y);
+        Transform.translateTo(elem, window.xform);
         return box;
     }
 
@@ -988,5 +1027,45 @@ export default class SVGTools {
             return false;
         }
         return SVG2Canvas.isCompoundPath(elem);
+    }
+
+    static ensureEraserMask (): Element {
+        var mask: Element | null = gn('paintEraserMask');
+        if (!mask) {
+            var defs: Element | null = gn('paintdefs');
+            if (!defs) {
+                const newDefs = document.createElementNS(Paint.xmlns, 'defs');
+                newDefs.setAttribute('id', 'paintdefs');
+                if (Paint.root && Paint.root.firstChild) {
+                    Paint.root.insertBefore(newDefs, Paint.root.firstChild);
+                } else if (Paint.root) {
+                    Paint.root.appendChild(newDefs);
+                }
+                defs = newDefs;
+            }
+            const newMask = document.createElementNS(Paint.xmlns, 'mask');
+            newMask.setAttribute('id', 'paintEraserMask');
+            newMask.setAttribute('maskUnits', 'userSpaceOnUse');
+            newMask.setAttribute('x', '-1000');
+            newMask.setAttribute('y', '-1000');
+            newMask.setAttribute('width', '3000');
+            newMask.setAttribute('height', '3000');
+            var bgRect = document.createElementNS(Paint.xmlns, 'rect');
+            bgRect.setAttribute('x', '-1000');
+            bgRect.setAttribute('y', '-1000');
+            bgRect.setAttribute('width', '3000');
+            bgRect.setAttribute('height', '3000');
+            bgRect.setAttribute('fill', 'white');
+            newMask.appendChild(bgRect);
+            if (defs) {
+                defs.appendChild(newMask);
+            }
+            mask = newMask;
+        }
+        var layer = gn('layer1');
+        if (layer && layer.getAttribute('mask') != 'url(#paintEraserMask)') {
+            layer.setAttribute('mask', 'url(#paintEraserMask)');
+        }
+        return mask;
     }
 }

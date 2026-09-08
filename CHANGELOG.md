@@ -3,6 +3,43 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.4.0] - 2026-09-08
+
+**Minor Release: Advanced Paint Editor (Zoom Controls, Freehand Masking Eraser, Full Color Picker, Brush Styles), Sensing 'If Touching Color' Block, 10 Pages Support, and Sprite Library Thumbnail Self-Healing.**
+
+### Bug Fixes
+- **Sprite Library Empty Thumbnail & Save Lifecycle Fix**:
+  - Resolved race condition in `Paint.ts` where `Paint.changePageSprite()` cleared `#layer1` prior to asynchronous database insertion, causing bounding boxes to collapse to `21x21` and saving blank 533-byte dummy PNGs.
+  - Captured exact sprite dimensions, name, and SVG `viewBox` geometry before closing the Paint Editor workspace.
+  - Improved `IO.getThumbnail()` in `IO.ts` to iterate over `extxml.children`, parse true dimensions from `viewBox` fallbacks, and composite `#paintEraserMask` with `destination-out`.
+  - Added SVG data fallback, dimension correction, and automatic self-healing in `Library.ts` (`addAssetThumbChoose`), regenerating high-fidelity thumbnail PNGs and repairing corrupted `USERSHAPES` rows on the fly.
+- **Paint Editor Coordinate & Dragging Fix (Issue #7)**:
+  - Fixed double-scaling bug where `PaintAction.getScreenPt` divided client coordinates by `currentUiScale` before calling `Paint.root.getScreenCTM().inverse()`, causing mouse events to diverge from cursor positions on displays with `innerHeight < 740px`.
+  - Replaced `Events.getTargetPoint` with raw viewport point `Events.getEventPoint`, enabling exact SVG matrix projection.
+  - Restored shape selection and dragging via `Ghost.findTarget` hit testing.
+
+### New Features
+- **Paint Editor Zoom Controls (Issue #7)**:
+  - Added Zoom In (`+`), Zoom Out (`−`), and Reset (`1:1`) buttons in the Paint Editor top bar.
+  - Re-enabled dynamic `currentZoom` infrastructure with discrete step levels (`0.5x`, `0.75x`, `1.0x`, `1.5x`, `2.0x`, `3.0x`).
+- **Color Picker (Issue #7)**:
+  - Added HTML5 `<input type="color">` swatch bucket with rainbow gradient to the paint editor swatch bar for picking arbitrary colors.
+- **Freehand Masking Eraser Tool (Issue #7)**:
+  - Upgraded Eraser tool to behave like a true physical eraser (transparency masking) rather than whole-object deletion.
+  - Dragging the eraser dynamically renders black stroke paths into an SVG `<defs><mask id="paintEraserMask">` bound to `#layer1`.
+  - Added live dashed circular preview cursor indicating eraser radius and position.
+  - Connected eraser stroke width to the left pen size selector.
+  - Preserved mask serialization in `SVGTools.saveShape` / `saveBackground` and restoration in `Paint.createBkgFromXML` / `createCharFromXML`.
+  - Added mask translation support in `Transform.translateTo` so erase paths correctly shift with viewBox bounds on save.
+  - Updated `SVG2Canvas.drawBorder` and `drawInCanvas` to skip `<defs>`/`<mask>` nodes and apply `destination-out` compositing for `#paintEraserMask`, preventing the sprite selection sticker border from filling erased regions with solid white.
+  - Synchronized Undo/Redo history via `PaintUndo` snapshotting layer and mask definitions in tandem.
+- **Multiple Brush Styles (Issue #7)**:
+  - Added brush style selector on the left palette supporting 3 styles: Normal (round stroke), Flat (calligraphic square/miter stroke), and Dotted (`stroke-dasharray`).
+- **"If Touching Color" Block (`ontouchcolor`) (Issue #7)**:
+  - Added new Start/sensing block with color menu dropdown (Red, Orange, Yellow, Green, Blue, Purple) and stage canvas pixel-level collision detection.
+- **10 Pages Support (Issue #7)**:
+  - Raised project maximum page limit from 8 to 10 in `settings.json`.
+
 ## [v2.3.0] - 2026-09-07
 
 **Minor Release: Direct Media Pipeline, Database IPC Structured Cloning, Unified Pointer Events, SVG Asset Optimizations, and Camera Interactivity Fix.**

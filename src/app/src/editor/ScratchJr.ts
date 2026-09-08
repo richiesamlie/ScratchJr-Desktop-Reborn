@@ -160,6 +160,10 @@ export default class ScratchJr {
         time = newTime;
     }
 
+    static get userStart () {
+        return userStart;
+    }
+
     static set userStart (newUserStart: boolean) {
         userStart = newUserStart;
     }
@@ -436,7 +440,7 @@ export default class ScratchJr {
 
     static startGreenFlagThreads () {
         ScratchJr.resetSprites();
-        ScratchJr.startCurrentPageStrips(['onflag', 'ontouch']);
+        ScratchJr.startCurrentPageStrips(['onflag', 'ontouch', 'ontouchcolor']);
     }
 
     static startCurrentPageStrips (list: string[]) {
