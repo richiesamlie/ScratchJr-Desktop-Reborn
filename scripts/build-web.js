@@ -123,6 +123,7 @@ function main() {
     const docsDir = path.join(rootDir, 'docs');
     const docsFiles = [
         'index.html',
+        'scratchjr-reborn-banner.jpg',
         'screenshot-lobby.webp',
         'screenshot-editor.webp',
         'screenshot-start.webp',

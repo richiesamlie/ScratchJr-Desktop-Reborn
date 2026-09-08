@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/scratchjr-reborn-banner.jpg" alt="ScratchJr Desktop Reborn Banner" width="100%">
+</p>
+
 # ScratchJr Reborn — Web/PWA, Desktop & Android
 
 > A modernized, universal multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
