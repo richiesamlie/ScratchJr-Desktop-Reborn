@@ -3,7 +3,7 @@
 > A modernized, universal multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
 [![Version](https://img.shields.io/github/v/release/richiesamlie/ScratchJr-Desktop-Reborn?color=blue&label=version)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-185%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-209%20passed-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-orange.svg)]()
 
@@ -29,9 +29,10 @@
 - **Sandboxed Desktop**: Secure Electron runtime with strict context isolation, typed database intents, and silent MSI fleet deployment.
 
 ### 🎨 Creative Coding & Expanded Canvas
-- **Enhanced Toolkit**: Horizontal flip (`flipX`) motion block, 8 pages per project (up from 4), star/line paint tools, and 12 native languages.
-- **Media & Audio Import**: Import custom costumes, backgrounds (PNG/JPG/SVG), and audio tracks (`.wav`, `.mp3`, `.ogg`, `.webm`, `.m4a`) directly into blocks.
-- **Smart Asset Library**: Curated character and background categories with real-time multi-token search.
+- **Advanced Paint Editor**: Discrete zoom controls (`+`, `−`, `1:1`), a true freehand masking eraser tool with circular preview cursor, multiple brush styles (Normal, Flat, Dotted), custom spectrum color picker, and star/line shape tools.
+- **Sensing & Stage Detection**: New "If Touching Color" (`ontouchcolor`) Start block with color selector dropdown and interactive magnifying loupe eyedropper for pixel-level color sampling.
+- **10 Pages per Project**: Expanded multi-scene storytelling with up to 10 pages per project (up from 4).
+- **Enhanced Toolkit**: Horizontal flip (`flipX`) motion block, media & audio track import (`.wav`, `.mp3`, `.ogg`, `.webm`, `.m4a`), smart asset library search, and 12 native languages.
 
 ### ⚡ Modern Engine & Hardware Parity
 - **Unified Pointer & Multi-Touch**: Responsive drawing and block dragging across touchscreens, stylus, and mouse with zero modality lock.
@@ -40,8 +41,9 @@
 
 ### 💾 Safe Storage & 1-Click Sharing
 - **1-Click `.sjr` Open & Export**: Dedicated lobby import card and instant export to native Save dialogs, Android share sheet, or browser download.
+- **Self-Healing Asset Library**: Automatic SQLite repair and regeneration for custom sprite thumbnails.
 - **Crash Protection**: Atomic database writes, rolling `.bak` snapshots on Desktop, and automated corruption quarantine.
-- **185 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
+- **209 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
 
 ---
 
@@ -53,7 +55,7 @@
 # Install dependencies
 npm install
 
-# Run unit tests and static analysis (185 tests, 0 errors)
+# Run unit tests and static analysis (209 tests, 0 errors)
 npm test
 npm run typecheck && npx eslint src
 
