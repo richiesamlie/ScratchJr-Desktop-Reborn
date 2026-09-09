@@ -215,6 +215,8 @@ export default class UI {
         var author = newHTML('div', 'infolabel', staticinfo);
         author.setAttribute('id', 'deviceName');
 
+        UI.addThemeSelector(infobox);
+
         if (window.Settings!.shareEnabled) {
             // Sharing
             var shareButtons = newHTML('div', 'infoboxShareButtons', infobox);
@@ -541,7 +543,16 @@ export default class UI {
         // new sprite
         if (ScratchJr.isEditable()) {
             var ns = newHTML('div', 'addsprite', sprites);
+            ns.setAttribute('role', 'button');
+            ns.setAttribute('tabindex', '0');
+            ns.setAttribute('aria-label', 'Add Character');
             ns.onmousedown = UI.addSprite;
+            ns.onkeydown = function (evt: KeyboardEvent) {
+                if (evt.key === 'Enter' || evt.key === ' ') {
+                    evt.preventDefault();
+                    UI.addSprite(evt as unknown as MouseEvent);
+                }
+            };
         }
     }
 
@@ -794,10 +805,102 @@ export default class UI {
         gn('grid')!.className = Grid.hidden ? 'gridToggle off' : 'gridToggle on';
     }
 
+    static addThemeSelector (parent: HTMLElement) {
+        var themeContainer = newHTML('div', 'infoboxThemeContainer', parent);
+        themeContainer.setAttribute('role', 'radiogroup');
+        themeContainer.setAttribute('aria-label', 'Theme');
+        var themes: Array<{id: string, label: string}> = [
+            { id: 'light', label: '☀️ Light' },
+            { id: 'dark', label: '🌙 Dark' },
+            { id: 'classic', label: '🎨 Classic' }
+        ];
+        var defaultTheme = (window.Settings && (window.Settings as any).defaultTheme) || 'light';
+        var currentTheme = defaultTheme;
+        try {
+            if (typeof localStorage !== 'undefined') {
+                var storedTheme = localStorage.getItem('scratchjr-theme');
+                if (storedTheme) {
+                    currentTheme = storedTheme;
+                }
+            }
+        } catch (e) {
+            // Ignore storage access issues in sandboxed or private contexts
+        }
+        var buttons: HTMLElement[] = [];
+
+        var applyTheme = function (themeId: string) {
+            ScratchAudio.sndFX('tap.wav');
+            currentTheme = themeId;
+            try {
+                localStorage.setItem('scratchjr-theme', themeId);
+            } catch (e) {
+                // ignore
+            }
+            if (typeof document !== 'undefined') {
+                if (document.documentElement) {
+                    document.documentElement.dataset.theme = themeId;
+                }
+                if (document.body) {
+                    document.body.dataset.theme = themeId;
+                }
+                const fr = document.getElementById('frame');
+                if (fr) {
+                    fr.dataset.theme = themeId;
+                }
+            }
+            buttons.forEach(function (b, idx) {
+                var isSelected = themes[idx].id === themeId;
+                b.className = 'themeOptionBtn' + (isSelected ? ' active' : '');
+                b.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+            });
+        };
+
+        themes.forEach(function (t) {
+            var btn = newHTML('button', 'themeOptionBtn' + (currentTheme === t.id ? ' active' : ''), themeContainer);
+            btn.textContent = t.label;
+            btn.setAttribute('type', 'button');
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', currentTheme === t.id ? 'true' : 'false');
+
+            btn.onclick = function (e: MouseEvent) {
+                e.preventDefault();
+                e.stopPropagation();
+                applyTheme(t.id);
+            };
+            btn.onkeydown = function (e: KeyboardEvent) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    applyTheme(t.id);
+                }
+            };
+            buttons.push(btn);
+        });
+    }
+
     static creatTopBarClicky (p: HTMLElement, str: string, mstyle: string, fcn: (e: MouseEvent) => void) {
         var toggle = newHTML('div', mstyle, p);
         toggle.onmousedown = fcn;
         toggle.setAttribute('id', str);
+        toggle.setAttribute('role', 'button');
+        toggle.setAttribute('tabindex', '0');
+        toggle.onkeydown = function (evt: KeyboardEvent) {
+            if (evt.key === 'Enter' || evt.key === ' ') {
+                evt.preventDefault();
+                fcn(evt as unknown as MouseEvent);
+            }
+        };
+        var labels: Record<string, string> = {
+            addtext: 'Add Text',
+            setbkg: 'Change Background',
+            grid: 'Toggle Grid',
+            go: 'Run Scripts / Stop',
+            resetall: 'Reset Characters',
+            full: 'Toggle Fullscreen'
+        };
+        if (labels[str]) {
+            toggle.setAttribute('aria-label', labels[str]);
+        }
     }
 
     static fullscreenControls () {
@@ -901,15 +1004,30 @@ export default class UI {
     //   Tools
     /////////////////////////////////////
 
-    static addSprite (e: MouseEvent) {
+    static addSprite (e: MouseEvent & { touches?: TouchList }) {
+        if (e && 'isPrimary' in e && !(e as PointerEvent).isPrimary) {
+            return;
+        }
+        if (e && e.touches && e.touches.length > 1) {
+            return;
+        }
         if (ScratchJr.onHold) {
             return;
         }
-        e.preventDefault();
-        e.stopPropagation();
-        var pt = Events.getTargetPoint(e);
-        if (pt.x > (globalx(e.target as HTMLElement) + 167)) {
-            return;
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        // In legacy classic mode, addsprite.png had blank transparent pixels on the right side of the strip,
+        // so pointer clicks beyond 167px were discarded. Keyboard activations and modern themes are fully clickable.
+        const isClassic = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'classic';
+        const isPointer = e && ((e as unknown) instanceof MouseEvent || (typeof TouchEvent !== 'undefined' && (e as unknown) instanceof TouchEvent));
+        if (isClassic && isPointer && typeof (e as MouseEvent).clientX === 'number') {
+            var pt = Events.getTargetPoint(e);
+            var targetEl = (e.currentTarget || e.target) as HTMLElement;
+            if (pt && targetEl && pt.x > (globalx(targetEl) + (167 * scaleMultiplier))) {
+                return;
+            }
         }
         ScratchAudio.sndFX('tap.wav');
         ScratchJr.stopStrips();

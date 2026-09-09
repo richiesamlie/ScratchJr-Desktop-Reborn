@@ -223,3 +223,136 @@
 .spritethumb .brush:active { background:  url('../assets/paint/paintbrushPressed.svg'); background-size: 100%; }
 .spritethumb.off .brush{ display: none;}
 .spritethumb.noneditable .brush{ display: none;}
+
+/* ===== Tactile Playful Sprite Panel Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) .spritethumb,
+body:not([data-theme="classic"]) .spritethumb {
+    border-radius: 20px;
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .spritethumb .sname,
+body:not([data-theme="classic"]) .spritethumb .sname {
+    color: var(--sjr-text-secondary);
+    font-weight: 800;
+}
+
+:root:not([data-theme="classic"]) .spritethumb.on .sname,
+body:not([data-theme="classic"]) .spritethumb.on .sname {
+    color: var(--sjr-accent-warm-dark);
+    font-weight: 900;
+}
+
+:root:not([data-theme="classic"]) .spritethumb.off,
+body:not([data-theme="classic"]) .spritethumb.off {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3px solid var(--sjr-border-light);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+}
+
+:root:not([data-theme="classic"]) .spritethumb.off:hover,
+body:not([data-theme="classic"]) .spritethumb.off:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--sjr-card-depth), 0 8px 18px rgba(35, 75, 125, 0.12);
+}
+
+:root:not([data-theme="classic"]) .spritethumb.off:active,
+body:not([data-theme="classic"]) .spritethumb.off:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-card-depth);
+}
+
+:root:not([data-theme="classic"]) .spritethumb.off.target,
+body:not([data-theme="classic"]) .spritethumb.off.target {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3px solid var(--sjr-accent-primary);
+    box-shadow: 0 4px 0 var(--sjr-accent-primary-dark), var(--sjr-shadow-glow);
+}
+
+:root:not([data-theme="classic"]) .spritethumb.on,
+body:not([data-theme="classic"]) .spritethumb.on {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3.5px solid var(--sjr-accent-warm);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark), 0 0 0 4px rgba(255, 166, 43, 0.28);
+    transform: translateY(-2px);
+}
+
+:root:not([data-theme="classic"]) .spritethumb.on.target,
+body:not([data-theme="classic"]) .spritethumb.on.target {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3.5px solid var(--sjr-accent-warm);
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark), var(--sjr-shadow-glow);
+}
+
+:root:not([data-theme="classic"]) .spritethumb .deletespritethumb,
+body:not([data-theme="classic"]) .spritethumb .deletespritethumb {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    margin: 0 !important;
+    width: 28px;
+    height: 28px;
+    background: url('../assets/ui/closeit.svg') no-repeat center center;
+    background-size: contain;
+    z-index: 6;
+    cursor: pointer;
+    transition: transform var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) .spritethumb .deletespritethumb:hover,
+body:not([data-theme="classic"]) .spritethumb .deletespritethumb:hover {
+    transform: scale(1.15);
+}
+
+:root:not([data-theme="classic"]) .spritethumb .deletespritethumb:active,
+body:not([data-theme="classic"]) .spritethumb .deletespritethumb:active {
+    transform: scale(0.92);
+}
+
+:root:not([data-theme="classic"]) #library .addsprite,
+body:not([data-theme="classic"]) #library .addsprite {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3px dashed var(--sjr-accent-primary);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) #library .addsprite::before,
+body:not([data-theme="classic"]) #library .addsprite::before {
+    content: "+";
+    font-size: ${css_vh(5.5)};
+    font-weight: 900;
+    color: var(--sjr-accent-primary);
+    line-height: 1;
+    pointer-events: none;
+}
+
+:root:not([data-theme="classic"]) #library .addsprite:hover,
+body:not([data-theme="classic"]) #library .addsprite:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+}
+
+:root:not([data-theme="classic"]) #library .addsprite:active,
+body:not([data-theme="classic"]) #library .addsprite:active {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-card-depth);
+}
+

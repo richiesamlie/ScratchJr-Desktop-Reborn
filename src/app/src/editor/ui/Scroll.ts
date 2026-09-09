@@ -62,22 +62,25 @@ export default class Scroll {
         newHTML('div', 'halign down', this.adown);
 
         var me = this;
-        this.aup.onmousedown = function (e) {
-                me.scrolldown(e);
+        var setupArrow = function (el: HTMLElement, label: string, action: (e: MouseEvent) => void) {
+            el.setAttribute('role', 'button');
+            el.setAttribute('tabindex', '0');
+            el.setAttribute('aria-label', label);
+            el.onmousedown = function (e) {
+                action(e);
             };
-
-        this.adown.onmousedown = function (e) {
-                me.scrollup(e);
+            el.onkeydown = function (e: KeyboardEvent) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    action(e as unknown as MouseEvent);
+                }
             };
+        };
 
-        this.aleft.onmousedown = function (e) {
-                me.scrollright(e);
-            };
-
-        this.aright.onmousedown = function (e) {
-                me.scrollleft(e);
-            };
-
+        setupArrow(this.aup, 'Scroll scripts up', function (e) { me.scrolldown(e); });
+        setupArrow(this.adown, 'Scroll scripts down', function (e) { me.scrollup(e); });
+        setupArrow(this.aleft, 'Scroll scripts left', function (e) { me.scrollright(e); });
+        setupArrow(this.aright, 'Scroll scripts right', function (e) { me.scrollleft(e); });
     }
 
     /////////////////////////////////////////////////////////////

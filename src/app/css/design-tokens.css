@@ -1,0 +1,103 @@
+/* ===== LIGHT THEME (Playful Tactile Flat) ===== */
+:root, [data-theme="light"], html[data-theme="light"], body[data-theme="light"] {
+  /* --- Surfaces --- */
+  --sjr-bg-primary: #E0F0FE;         /* Bright cheerful sunny sky */
+  --sjr-bg-secondary: #FFFFFF;       /* Clean white card surface */
+  --sjr-bg-stage: #F5F2F7;           /* Preserved stage color */
+  --sjr-bg-scripts: #FAFDFF;         /* Warm clean scripts paper */
+  --sjr-bg-palette: #FFFFFF;
+  --sjr-bg-overlay: rgba(20, 35, 60, 0.45);
+
+  /* --- Block Category Colors (preserved exactly) --- */
+  --sjr-cat-start: #FFE75A;
+  --sjr-cat-motion: #4B8CC2;
+  --sjr-cat-looks: #CD7CD1;
+  --sjr-cat-sound: #48CC7E;
+  --sjr-cat-flow: #FFBE57;
+  --sjr-cat-stop: #D62222;
+
+  /* --- UI Accent Colors --- */
+  --sjr-accent-primary: #3898EC;
+  --sjr-accent-primary-dark: #2072C7;
+  --sjr-accent-warm: #FFA62B;
+  --sjr-accent-warm-dark: #E0850E;
+  --sjr-accent-success: #48CC7E;
+  --sjr-accent-danger: #E74C3C;
+
+  /* --- Text Colors --- */
+  --sjr-text-primary: #2C3E50;
+  --sjr-text-secondary: #5A728A;
+  --sjr-text-inverse: #FFFFFF;
+  --sjr-text-muted: #8EA1B5;
+
+  /* --- Borders & Depth --- */
+  --sjr-border-light: #D5E7F7;
+  --sjr-border-medium: #B8D8F4;
+  --sjr-border-active: #3898EC;
+
+  /* --- Tactile 3D Shadows & Depth Colors --- */
+  --sjr-card-shadow: 0 4px 14px rgba(35, 75, 125, 0.08), 0 2px 4px rgba(35, 75, 125, 0.04);
+  --sjr-card-depth: #CADFF2;
+  --sjr-card-depth-active: #E0850E;
+  --sjr-shadow-glow: 0 0 0 4px rgba(56, 152, 236, 0.35);
+
+  /* --- Border Radii --- */
+  --sjr-radius-sm: 12px;
+  --sjr-radius-md: 18px;
+  --sjr-radius-lg: 22px;
+  --sjr-radius-xl: 26px;
+  --sjr-radius-pill: 999px;
+
+  /* --- Transitions --- */
+  --sjr-transition-fast: 120ms ease;
+  --sjr-transition-normal: 200ms ease;
+}
+
+/* ===== DARK THEME (Playful Cosmic Space) ===== */
+[data-theme="dark"], html[data-theme="dark"], body[data-theme="dark"] {
+  --sjr-bg-primary: #181C2E;         /* Deep cosmic blue */
+  --sjr-bg-secondary: #242A42;       /* Cosmic card surface */
+  --sjr-bg-stage: #F5F2F7;           /* Stage canvas stays light */
+  --sjr-bg-scripts: #1B2033;
+  --sjr-bg-palette: #242A42;
+  --sjr-bg-overlay: rgba(5, 10, 25, 0.7);
+
+  --sjr-cat-start: #FFE75A;
+  --sjr-cat-motion: #4B8CC2;
+  --sjr-cat-looks: #CD7CD1;
+  --sjr-cat-sound: #48CC7E;
+  --sjr-cat-flow: #FFBE57;
+  --sjr-cat-stop: #D62222;
+
+  --sjr-accent-primary: #529BF5;
+  --sjr-accent-primary-dark: #3578D0;
+  --sjr-accent-warm: #FFA62B;
+  --sjr-accent-warm-dark: #B56D0B;
+  --sjr-accent-success: #48CC7E;
+  --sjr-accent-danger: #E74C3C;
+
+  --sjr-text-primary: #EEF2F8;
+  --sjr-text-secondary: #A4B5CC;
+  --sjr-text-inverse: #181C2E;
+  --sjr-text-muted: #73859E;
+
+  --sjr-border-light: #333B5C;
+  --sjr-border-medium: #444E78;
+  --sjr-border-active: #529BF5;
+
+  --sjr-card-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --sjr-card-depth: #141726;
+  --sjr-card-depth-active: #9E610E;
+  --sjr-shadow-glow: 0 0 0 4px rgba(82, 155, 245, 0.4);
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sjr-transition-fast: 0ms !important;
+    --sjr-transition-normal: 0ms !important;
+  }
+  .shakeme, .shakeflip, .shakeyou, .shakethumb {
+    animation: none !important;
+  }
+}

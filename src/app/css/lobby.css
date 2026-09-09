@@ -553,3 +553,186 @@ div.localizationselect.selected:after {
     font-size: ${18 * scaleMultiplier}px;
     font-weight: bold;
 }
+
+/* ===== Tactile Playful Lobby Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) div.frame,
+body:not([data-theme="classic"]) div.frame {
+    background-color: var(--sjr-bg-primary);
+    background-image: none;
+}
+
+:root:not([data-theme="classic"]) #topbar,
+body:not([data-theme="classic"]) #topbar {
+    background-color: var(--sjr-bg-secondary);
+    background-image: none;
+    border-top: none;
+    border-bottom: 2.5px solid var(--sjr-border-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav > div,
+:root:not([data-theme="classic"]) #topbar ul.reference > div,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav > div,
+body:not([data-theme="classic"]) #topbar ul.reference > div {
+    display: none;
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav > li,
+:root:not([data-theme="classic"]) #topbar ul.reference > li,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav > li,
+body:not([data-theme="classic"]) #topbar ul.reference > li {
+    border: none;
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav li.home,
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav li.help,
+:root:not([data-theme="classic"]) #topbar ul.reference li.gear,
+:root:not([data-theme="classic"]) #topbar ul.reference li.book,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav li.home,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav li.help,
+body:not([data-theme="classic"]) #topbar ul.reference li.gear,
+body:not([data-theme="classic"]) #topbar ul.reference li.book {
+    border-radius: var(--sjr-radius-md);
+    margin: ${css_vh(0.8)} ${css_vh(0.6)};
+    height: ${css_vh(8.8)};
+    line-height: ${css_vh(8.8)};
+    box-sizing: border-box;
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), background-color var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .home.on,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .home.on {
+    background: var(--sjr-accent-warm);
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark);
+    transform: translateY(-2px);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .home.off:hover,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .home.off:hover {
+    background: var(--sjr-border-light);
+    transform: translateY(-1px);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .help.on,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .help.on {
+    background: var(--sjr-accent-primary);
+    box-shadow: 0 4px 0 var(--sjr-accent-primary-dark);
+    transform: translateY(-2px);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .help.off:hover,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .help.off:hover {
+    background: var(--sjr-border-light);
+    transform: translateY(-1px);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.reference .gear.on,
+:root:not([data-theme="classic"]) #topbar ul.reference .book.on,
+body:not([data-theme="classic"]) #topbar ul.reference .gear.on,
+body:not([data-theme="classic"]) #topbar ul.reference .book.on {
+    background: var(--sjr-bg-primary);
+    box-shadow: 0 4px 0 var(--sjr-card-depth);
+    transform: translateY(-2px);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.reference .gear.off:hover,
+:root:not([data-theme="classic"]) #topbar ul.reference .book.off:hover,
+body:not([data-theme="classic"]) #topbar ul.reference .gear.off:hover,
+body:not([data-theme="classic"]) #topbar ul.reference .book.off:hover {
+    background: var(--sjr-border-light);
+    transform: translateY(-1px);
+}
+
+:root:not([data-theme="classic"]) .topsection.home > div.tabtitle,
+body:not([data-theme="classic"]) .topsection.home > div.tabtitle {
+    background: var(--sjr-accent-warm);
+    color: var(--sjr-text-inverse);
+    text-shadow: 0 2px 0 var(--sjr-accent-warm-dark);
+    border-bottom: 3.5px solid var(--sjr-accent-warm-dark);
+    border-radius: 0 0 var(--sjr-radius-md) var(--sjr-radius-md);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+:root:not([data-theme="classic"]) .topsection.help > div.tabtitle,
+:root:not([data-theme="classic"]) .topsection.help > div.blueband,
+body:not([data-theme="classic"]) .topsection.help > div.tabtitle,
+body:not([data-theme="classic"]) .topsection.help > div.blueband {
+    background: var(--sjr-accent-primary);
+    color: var(--sjr-text-inverse);
+    text-shadow: 0 2px 0 var(--sjr-accent-primary-dark);
+    border-bottom: 3.5px solid var(--sjr-accent-primary-dark);
+    border-radius: 0 0 var(--sjr-radius-md) var(--sjr-radius-md);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+:root:not([data-theme="classic"]) div.localizationselect,
+body:not([data-theme="classic"]) div.localizationselect {
+    background-color: var(--sjr-bg-secondary);
+    background-image: none;
+    color: var(--sjr-text-primary);
+    border: 2.5px solid var(--sjr-border-light);
+    border-radius: var(--sjr-radius-lg);
+    box-shadow: 0 4px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) div.localizationselect:hover,
+body:not([data-theme="classic"]) div.localizationselect:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+}
+
+:root:not([data-theme="classic"]) div.localizationselect:active,
+body:not([data-theme="classic"]) div.localizationselect:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-card-depth);
+}
+
+:root:not([data-theme="classic"]) div.localizationselect.selected,
+body:not([data-theme="classic"]) div.localizationselect.selected {
+    background-color: var(--sjr-accent-warm);
+    border-color: var(--sjr-accent-warm);
+    color: var(--sjr-text-inverse);
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark);
+}
+
+:root:not([data-theme="classic"]) #footer,
+body:not([data-theme="classic"]) #footer {
+    background-color: var(--sjr-bg-secondary);
+    background-image: none;
+    border-top: 2.5px solid var(--sjr-border-light);
+    border-bottom: none;
+    box-shadow: 0 -4px 16px rgba(35, 75, 125, 0.06);
+}
+
+:root:not([data-theme="classic"]) #footer ul.footer-nav > li,
+body:not([data-theme="classic"]) #footer ul.footer-nav > li {
+    border-right: 1px solid var(--sjr-border-light);
+    transition: background-color var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) #footer ul.footer-nav .tab.on,
+:root:not([data-theme="classic"]) #footer ul.footer-nav .tab2.on,
+body:not([data-theme="classic"]) #footer ul.footer-nav .tab.on,
+body:not([data-theme="classic"]) #footer ul.footer-nav .tab2.on {
+    background: var(--sjr-bg-primary);
+    border-top: 3.5px solid var(--sjr-accent-primary);
+    top: 0;
+}
+
+:root:not([data-theme="classic"]) #footer ul.footer-nav .tab.off:hover,
+:root:not([data-theme="classic"]) #footer ul.footer-nav .tab2.off:hover,
+body:not([data-theme="classic"]) #footer ul.footer-nav .tab.off:hover,
+body:not([data-theme="classic"]) #footer ul.footer-nav .tab2.off:hover {
+    background: var(--sjr-bg-primary);
+}
+
+:root:not([data-theme="classic"]) #footer ul.footer-nav .tab > span,
+:root:not([data-theme="classic"]) #footer ul.footer-nav .tab2 > span,
+body:not([data-theme="classic"]) #footer ul.footer-nav .tab > span,
+body:not([data-theme="classic"]) #footer ul.footer-nav .tab2 > span {
+    color: var(--sjr-text-primary);
+    font-weight: 600;
+}
+

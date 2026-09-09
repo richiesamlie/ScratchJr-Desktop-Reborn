@@ -159,3 +159,21 @@ html {
     line-height: ${css_vh(3.62)};
      color: #6F6F6E;
 }
+
+:root:not([data-theme="classic"]) #inappBlocksGuide {
+    background: transparent;
+}
+
+:root:not([data-theme="classic"]) #inappBlocksGuide .block-category-header {
+    border-radius: var(--sjr-radius-md, 12px);
+}
+
+:root:not([data-theme="classic"]) #inappBlocksGuide .block-title {
+    color: var(--sjr-text-primary, #4C4D4F);
+}
+
+:root:not([data-theme="classic"]) #inappBlocksGuide .block-description,
+:root:not([data-theme="classic"]) #inappBlocksGuide .block-description-repeat {
+    color: var(--sjr-text-secondary, #737478);
+}
+

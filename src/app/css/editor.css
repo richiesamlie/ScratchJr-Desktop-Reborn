@@ -1120,3 +1120,321 @@ p.textsprite {
     width: auto;
     text-size-adjust: auto;
 }
+
+/* Theme selector in Project Info Dialog */
+.infoboxThemeContainer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 2%;
+    margin-bottom: 2%;
+}
+
+.themeOptionBtn {
+    border: 2.5px solid rgba(255, 255, 255, 0.85);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-family: Roboto, sans-serif;
+    font-size: 13pt;
+    font-weight: 800;
+    padding: 7px 20px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    user-select: none;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.themeOptionBtn:hover {
+    background: rgba(255, 255, 255, 0.45);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(0, 0, 0, 0.2);
+}
+
+.themeOptionBtn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.themeOptionBtn.active {
+    background: #ffffff;
+    color: #2C3E50;
+    border-color: #ffffff;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.22), 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== Tactile Playful UI Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) *.topsection,
+body:not([data-theme="classic"]) *.topsection {
+    background: linear-gradient(180deg, #CEECFE 0%, #E2F2FE 45%, #F0F8FF 100%);
+    background-image: linear-gradient(180deg, #CEECFE 0%, #E2F2FE 45%, #F0F8FF 100%);
+}
+
+:root:not([data-theme="classic"]) *.info,
+body:not([data-theme="classic"]) *.info {
+    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.12s ease;
+}
+
+:root:not([data-theme="classic"]) *.info:hover,
+body:not([data-theme="classic"]) *.info:hover {
+    transform: translateY(-2px) scale(1.08);
+    filter: drop-shadow(0 4px 6px rgba(45, 90, 140, 0.2));
+}
+
+:root:not([data-theme="classic"]) *.info:active,
+body:not([data-theme="classic"]) *.info:active {
+    transform: translateY(2px) scale(0.94);
+    filter: none;
+}
+
+:root:not([data-theme="classic"]) .pagethumb,
+body:not([data-theme="classic"]) .pagethumb {
+    position: relative;
+    border-radius: 20px;
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .pagethumb.on,
+body:not([data-theme="classic"]) .pagethumb.on {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3.5px solid var(--sjr-accent-warm);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark), 0 0 0 4px rgba(255, 166, 43, 0.28);
+    transform: translateY(-2px);
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .pagethumb.off,
+body:not([data-theme="classic"]) .pagethumb.off {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3px solid var(--sjr-border-light);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .pagethumb.off:hover,
+body:not([data-theme="classic"]) .pagethumb.off:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--sjr-card-depth), 0 8px 18px rgba(35, 75, 125, 0.12);
+}
+
+:root:not([data-theme="classic"]) .pagethumb.off:active,
+body:not([data-theme="classic"]) .pagethumb.off:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-card-depth);
+}
+
+:root:not([data-theme="classic"]) .pagethumb .pc-container,
+body:not([data-theme="classic"]) .pagethumb .pc-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    margin: 0 !important;
+    overflow: hidden;
+    border-radius: 16px;
+}
+
+:root:not([data-theme="classic"]) .pagethumb canvas.pc,
+body:not([data-theme="classic"]) .pagethumb canvas.pc {
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+:root:not([data-theme="classic"]) .pagethumb .pagenum,
+body:not([data-theme="classic"]) .pagethumb .pagenum {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    margin: 0 !important;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--sjr-accent-primary);
+    background-image: none !important;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 0 var(--sjr-accent-primary-dark);
+    text-shadow: none !important;
+    padding: 0 !important;
+    z-index: 4;
+}
+
+:root:not([data-theme="classic"]) .pagethumb.on .pagenum,
+body:not([data-theme="classic"]) .pagethumb.on .pagenum {
+    background: var(--sjr-accent-warm);
+    box-shadow: 0 2px 0 var(--sjr-accent-warm-dark);
+}
+
+:root:not([data-theme="classic"]) .pagethumb .deletethumb,
+body:not([data-theme="classic"]) .pagethumb .deletethumb {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    margin: 0 !important;
+    width: 28px;
+    height: 28px;
+    background: url('../assets/ui/closeit.svg') no-repeat center center;
+    background-size: contain;
+    z-index: 6;
+    cursor: pointer;
+    transition: transform var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) .pagethumb .deletethumb:hover,
+body:not([data-theme="classic"]) .pagethumb .deletethumb:hover {
+    transform: scale(1.15);
+}
+
+:root:not([data-theme="classic"]) .pagethumb .deletethumb:active,
+body:not([data-theme="classic"]) .pagethumb .deletethumb:active {
+    transform: scale(0.92);
+}
+
+:root:not([data-theme="classic"]) .pagethumb.caret,
+body:not([data-theme="classic"]) .pagethumb.caret {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3px dashed var(--sjr-accent-primary);
+    border-radius: 20px;
+    opacity: 0.5;
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .pagethumb.drop,
+body:not([data-theme="classic"]) .pagethumb.drop {
+    background: var(--sjr-bg-secondary);
+    background-image: none;
+    border: 3.5px solid var(--sjr-accent-warm);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark), var(--sjr-shadow-glow);
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) #emptypage,
+body:not([data-theme="classic"]) #emptypage {
+    background: var(--sjr-bg-secondary) !important;
+    background-color: var(--sjr-bg-secondary) !important;
+    border: 3px dashed var(--sjr-accent-primary);
+    border-radius: 20px;
+    box-shadow: 0 4px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all var(--sjr-transition-fast);
+    z-index: 10;
+}
+
+:root:not([data-theme="classic"]) #emptypage .empty,
+body:not([data-theme="classic"]) #emptypage .empty {
+    display: none !important;
+}
+
+:root:not([data-theme="classic"]) #emptypage::before,
+body:not([data-theme="classic"]) #emptypage::before {
+    content: "+";
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--sjr-accent-primary);
+    line-height: 1;
+    display: block;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    transition: transform var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) #emptypage:hover,
+body:not([data-theme="classic"]) #emptypage:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+}
+
+:root:not([data-theme="classic"]) #emptypage:hover::before,
+body:not([data-theme="classic"]) #emptypage:hover::before {
+    transform: scale(1.15);
+}
+
+:root:not([data-theme="classic"]) #emptypage:active,
+body:not([data-theme="classic"]) #emptypage:active {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-card-depth);
+}
+
+:root:not([data-theme="classic"]) #emptypage:active::before,
+body:not([data-theme="classic"]) #emptypage:active::before {
+    transform: scale(0.92);
+}
+
+:root:not([data-theme="classic"]) #blockspalette .papercut,
+body:not([data-theme="classic"]) #blockspalette .papercut {
+    display: none;
+}
+
+:root:not([data-theme="classic"]) #blockspalette,
+body:not([data-theme="classic"]) #blockspalette {
+    background: var(--sjr-bg-secondary);
+    border-top: 3px solid var(--sjr-border-light);
+    border-bottom: 3px solid var(--sjr-border-light);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+:root:not([data-theme="classic"]) .scripts,
+body:not([data-theme="classic"]) .scripts {
+    background: var(--sjr-bg-scripts);
+    background-image: radial-gradient(circle, var(--sjr-border-medium) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+
+:root:not([data-theme="classic"]) .watermark,
+body:not([data-theme="classic"]) .watermark {
+    opacity: 0.16;
+}
+
+:root:not([data-theme="classic"]) .scripts .leftarrow span,
+:root:not([data-theme="classic"]) .scripts .rightarrow span,
+body:not([data-theme="classic"]) .scripts .leftarrow span,
+body:not([data-theme="classic"]) .scripts .rightarrow span {
+    border-radius: var(--sjr-radius-pill);
+    background-color: var(--sjr-bg-secondary);
+    border: 2px solid var(--sjr-border-light);
+    box-shadow: 0 3px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    transition: transform var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) .scripts .leftarrow:hover span,
+:root:not([data-theme="classic"]) .scripts .rightarrow:hover span,
+body:not([data-theme="classic"]) .scripts .leftarrow:hover span,
+body:not([data-theme="classic"]) .scripts .rightarrow:hover span {
+    transform: scale(1.08);
+}
+
+:root:not([data-theme="classic"]) .scripts .leftarrow:active span,
+:root:not([data-theme="classic"]) .scripts .rightarrow:active span,
+body:not([data-theme="classic"]) .scripts .leftarrow:active span,
+body:not([data-theme="classic"]) .scripts .rightarrow:active span {
+    transform: scale(0.92);
+}
+
+:root:not([data-theme="classic"]) .parentalgate,
+body:not([data-theme="classic"]) .parentalgate {
+    background-color: var(--sjr-accent-warm);
+    background-image: none;
+    border-radius: var(--sjr-radius-xl);
+}
+

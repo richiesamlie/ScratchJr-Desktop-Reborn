@@ -61,11 +61,27 @@ export async function loadPage(page) {
 	// directory (and root becomes '../')
 	let root = './';
 
+	// Apply theme attribute to root
+	try {
+		const savedTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('scratchjr-theme')) || 'light';
+		if (typeof document !== 'undefined') {
+			if (document.documentElement) {
+				document.documentElement.dataset.theme = savedTheme;
+			}
+			if (document.body) {
+				document.body.dataset.theme = savedTheme;
+			}
+		}
+	} catch (e) {
+		// Ignore storage access errors in sandboxed environments
+	}
+
 	// Load CSS per page
 	switch (page) {
 	default:
 	case 'index':
 		// Index page (splash screen)
+		await preprocessAndLoadCss('css', 'css/design-tokens.css');
 		await preprocessAndLoadCss('css', 'css/font.css');
 		await preprocessAndLoadCss('css', 'css/base.css');
 		await preprocessAndLoadCss('css', 'css/start.css');
@@ -75,6 +91,7 @@ export async function loadPage(page) {
 		break;
 	case 'home':
 		// Lobby pages
+		await preprocessAndLoadCss('css', 'css/design-tokens.css');
 		await preprocessAndLoadCss('css', 'css/font.css');
 		await preprocessAndLoadCss('css', 'css/base.css');
 		await preprocessAndLoadCss('css', 'css/lobby.css');
@@ -82,6 +99,7 @@ export async function loadPage(page) {
 		break;
 	case 'editor':
 		// Editor pages
+		await preprocessAndLoadCss('css', 'css/design-tokens.css');
 		await preprocessAndLoadCss('css', 'css/font.css');
 		await preprocessAndLoadCss('css', 'css/base.css');
 		await preprocessAndLoadCss('css', 'css/editor.css');
@@ -93,6 +111,7 @@ export async function loadPage(page) {
 		break;
 	case 'gettingStarted':
 		// Getting started video page
+		await preprocessAndLoadCss('css', 'css/design-tokens.css');
 		await preprocessAndLoadCss('css', 'css/font.css');
 		await preprocessAndLoadCss('css', 'css/base.css');
 		await preprocessAndLoadCss('css', 'css/gs.css');

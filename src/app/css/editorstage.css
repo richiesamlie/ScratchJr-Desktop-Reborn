@@ -432,3 +432,59 @@ p.stylelabel {
     margin-bottom: 0px;
     cursor: default;
 }
+
+/* ===== Tactile Playful Stage Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) *.stage.normal,
+body:not([data-theme="classic"]) *.stage.normal {
+    border: 4px solid #FFFFFF;
+    border-radius: 24px;
+    box-shadow: 0 6px 0 var(--sjr-card-depth), 0 10px 28px rgba(35, 75, 125, 0.12);
+}
+
+:root:not([data-theme="classic"]) .fullscreen#full,
+:root:not([data-theme="classic"]) .gridToggle,
+:root:not([data-theme="classic"]) .addText,
+:root:not([data-theme="classic"]) .changeBkg,
+:root:not([data-theme="classic"]) .resetall,
+:root:not([data-theme="classic"]) .go,
+body:not([data-theme="classic"]) .fullscreen#full,
+body:not([data-theme="classic"]) .gridToggle,
+body:not([data-theme="classic"]) .addText,
+body:not([data-theme="classic"]) .changeBkg,
+body:not([data-theme="classic"]) .resetall,
+body:not([data-theme="classic"]) .go {
+    transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.12s ease;
+}
+
+:root:not([data-theme="classic"]) .fullscreen#full:hover,
+:root:not([data-theme="classic"]) .gridToggle:hover,
+:root:not([data-theme="classic"]) .addText:hover,
+:root:not([data-theme="classic"]) .changeBkg:hover,
+:root:not([data-theme="classic"]) .resetall:hover,
+:root:not([data-theme="classic"]) .go:hover,
+body:not([data-theme="classic"]) .fullscreen#full:hover,
+body:not([data-theme="classic"]) .gridToggle:hover,
+body:not([data-theme="classic"]) .addText:hover,
+body:not([data-theme="classic"]) .changeBkg:hover,
+body:not([data-theme="classic"]) .resetall:hover,
+body:not([data-theme="classic"]) .go:hover {
+    transform: translateY(-2px) scale(1.08);
+    filter: drop-shadow(0 4px 6px rgba(45, 90, 140, 0.2));
+}
+
+:root:not([data-theme="classic"]) .fullscreen#full:active,
+:root:not([data-theme="classic"]) .gridToggle:active,
+:root:not([data-theme="classic"]) .addText:active,
+:root:not([data-theme="classic"]) .changeBkg:active,
+:root:not([data-theme="classic"]) .resetall:active,
+:root:not([data-theme="classic"]) .go:active,
+body:not([data-theme="classic"]) .fullscreen#full:active,
+body:not([data-theme="classic"]) .gridToggle:active,
+body:not([data-theme="classic"]) .addText:active,
+body:not([data-theme="classic"]) .changeBkg:active,
+body:not([data-theme="classic"]) .resetall:active,
+body:not([data-theme="classic"]) .go:active {
+    transform: translateY(2px) scale(0.94);
+    filter: none;
+}
+

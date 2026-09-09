@@ -284,6 +284,7 @@ export default class Home {
         if (!targetEl) {
             return;
         }
+        targetEl.classList.add('is-managing');
         var closex = targetEl.querySelector('.closex') as HTMLElement | null;
         var exportbtn = targetEl.querySelector('.exportbtn') as HTMLElement | null;
         var dup = targetEl.querySelector('.duplicatebtn') as HTMLElement | null;
@@ -302,6 +303,7 @@ export default class Home {
         if (!targetEl) {
             return;
         }
+        targetEl.classList.remove('is-managing');
         var closex = targetEl.querySelector('.closex') as HTMLElement | null;
         var exportbtn = targetEl.querySelector('.exportbtn') as HTMLElement | null;
         var dup = targetEl.querySelector('.duplicatebtn') as HTMLElement | null;

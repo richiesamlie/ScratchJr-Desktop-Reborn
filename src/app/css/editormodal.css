@@ -294,3 +294,56 @@
 
 .soundlevel.on{ background: #8CC63F;}
 .soundlevel.off{background: #B3B3B3;}
+
+/* ===== Tactile Playful Modal Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) .record,
+body:not([data-theme="classic"]) .record {
+    border-radius: var(--sjr-radius-lg);
+    box-shadow: var(--sjr-card-shadow), 0 4px 0 var(--sjr-border-medium);
+    border: 2px solid var(--sjr-border-light);
+    background: var(--sjr-bg-secondary);
+}
+
+:root:not([data-theme="classic"]) .record .toolbar,
+body:not([data-theme="classic"]) .record .toolbar {
+    background: var(--sjr-accent-primary);
+    background-image: none;
+    border-radius: var(--sjr-radius-lg) var(--sjr-radius-lg) 0 0;
+    border: none;
+    box-shadow: 0 2px 0 var(--sjr-accent-primary-dark);
+}
+
+:root:not([data-theme="classic"]) .picokeyboard,
+body:not([data-theme="classic"]) .picokeyboard {
+    background: var(--sjr-bg-secondary);
+    border-radius: var(--sjr-radius-lg);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18), 0 3px 0 var(--sjr-border-medium);
+    border: 2px solid var(--sjr-border-light);
+}
+
+:root:not([data-theme="classic"]) .onekey,
+body:not([data-theme="classic"]) .onekey {
+    border-radius: var(--sjr-radius-md);
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.15);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+:root:not([data-theme="classic"]) .onekey:active,
+body:not([data-theme="classic"]) .onekey:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+}
+
+:root:not([data-theme="classic"]) .loadscreenfill,
+body:not([data-theme="classic"]) .loadscreenfill {
+    border-radius: var(--sjr-radius-pill);
+    overflow: hidden;
+}
+
+:root:not([data-theme="classic"]) .progressbar2,
+body:not([data-theme="classic"]) .progressbar2 {
+    background: var(--sjr-accent-warm);
+    border-radius: var(--sjr-radius-pill);
+    transition: width 300ms ease-out;
+}
+

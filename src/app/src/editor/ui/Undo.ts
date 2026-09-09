@@ -39,10 +39,19 @@ export default class Undo {
         var div = newHTML('div', key + 'button', p);
         div.setAttribute('type', 'toggleclicky');
         div.setAttribute('id', prefix + key);
+        div.setAttribute('role', 'button');
+        div.setAttribute('tabindex', '0');
+        div.setAttribute('aria-label', key.charAt(0).toUpperCase() + key.slice(1));
         if (fcn) {
             div.onmousedown = function (evt: MouseEvent) {
-                    fcn(evt);
-                };
+                fcn(evt);
+            };
+            div.onkeydown = function (evt: KeyboardEvent) {
+                if (evt.key === 'Enter' || evt.key === ' ') {
+                    evt.preventDefault();
+                    fcn(evt as unknown as MouseEvent);
+                }
+            };
         }
         return div;
     }
