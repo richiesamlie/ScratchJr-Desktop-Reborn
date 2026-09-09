@@ -7,16 +7,21 @@ html {
 
 #inappInterfaceGuide {
     margin-top: 102px;
-    padding: ${css_vh(2)} ${css_vw(6.05)} ${css_vh(2)};
+    padding: ${css_vh(2)} ${css_vw(3)} ${css_vh(2)};
 }
 
 #inappInterfaceGuide .scaledView {
-	transform: translate(-200px,-50px) scale(.7);
-	z-index: 1000;
+    transform: scale(0.68);
+    transform-origin: top left;
+    position: absolute;
+    top: ${css_vh(1)};
+    left: ${css_vw(3)};
+    z-index: 10;
 }
 
 #inappInterfaceGuide #content {
-    width: ${css_vh(164)};
+    width: 100%;
+    max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -453,36 +458,37 @@ html {
 }
 
 #inappInterfaceGuide  #interface-key {
-	/*width: ${css_vh(36.35)};
-	height: ${css_vh(72.53)};
-	float: left;
-	margin-left: ${css_vh(9.05)};
-	*/
-	
-	position: absolute;
-    top: 374px;
-    width: 800px;
-	
-	background-image: url("../images/keybackground.png");
-	background-size: 100%;
-	background-repeat: no-repeat;
+    position: absolute;
+    top: ${css_vh(4)};
+    right: ${css_vw(3)};
+    width: ${css_vw(32)};
+    min-width: 280px;
+    max-width: 440px;
+    background: var(--sjr-bg-secondary, #FFFFFF);
+    background-image: none;
+    border-radius: var(--sjr-radius-lg, 16px);
+    border: 2.5px solid var(--sjr-border-light, #D5E7F7);
+    box-shadow: 0 4px 0 var(--sjr-card-depth, #CADFF2), 0 8px 24px rgba(35, 75, 125, 0.08);
+    padding: 20px 24px;
+    box-sizing: border-box;
+    z-index: 20;
 }
 
 #inappInterfaceGuide  #interface-key-header {
-	font-size: ${css_vh(3)};
-	padding-top: ${css_vh(1.64)};
-	padding-left: ${css_vh(1.64)};
-	color: #2898CD;
+    font-size: ${css_vh(3.2)};
+    font-weight: 900;
+    padding: 0;
+    margin-bottom: ${css_vh(1.2)};
+    color: var(--sjr-accent-primary, #3898EC);
 }
 
 #inappInterfaceGuide  #interface-key-description {
-    color: #808080;
-    line-height: ${css_vh(3.62)};
-    padding-top: ${css_vh(0.82)};
-    padding-right: ${css_vh(2.47)};
-    font-size: ${css_vh(2.3)};
-    margin-right: ${css_vh(0.82)};
-    margin-left: ${css_vh(3.29)};
+    color: var(--sjr-text-primary, #4C4D4F);
+    line-height: 1.5;
+    padding: 0;
+    margin: 0;
+    font-size: ${css_vh(2.4)};
+    font-weight: 500;
 }
 
 #inappInterfaceGuide  #video-wrapper {
@@ -493,7 +499,9 @@ html {
 
 #inappInterfaceGuide  #project-view-wrapper,
 #inappInterfaceGuide  #ipad-project-view-wrapper {
-	position: relative;
+    position: relative;
+    width: 100%;
+    min-height: ${css_vh(75)};
 }
 
 #inappInterfaceGuide  .learn-tab {

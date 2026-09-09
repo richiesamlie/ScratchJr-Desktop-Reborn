@@ -6,6 +6,7 @@
     "defaultSprite": "Blue.svg",
     "spriteOutlineColor": "white",
     "stageColor": "#F5F2F7",
+    "defaultTheme": "light",
     "textSpriteFont": "Helvetica",
     "blockArgFont": "Verdana",
     "paletteBalloonFont": "Roboto",

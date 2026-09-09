@@ -65,6 +65,8 @@ export default class Palette {
     static createCategorySelectors (parent: HTMLElement) {
         var sel = newHTML('div', 'categoryselector', parent);
         sel.setAttribute('id', 'selectors');
+        sel.setAttribute('role', 'tablist');
+        sel.setAttribute('aria-label', 'Block Categories');
         var bkg = newHTML('div', 'catbkg', sel);
         newHTML('div', 'catimage', bkg);
         var leftPx = 15 * scaleMultiplier;
@@ -304,6 +306,13 @@ export default class Palette {
             position: 'absolute'
         });
         div.index = n;
+        div.setAttribute('role', 'tab');
+        div.setAttribute('tabindex', n === 0 ? '0' : '-1');
+        div.setAttribute('aria-selected', n === 0 ? 'true' : 'false');
+        var catNames = ['Start', 'Motion', 'Looks', 'Sound', 'Flow', 'End'];
+        if (catNames[n]) {
+            div.setAttribute('aria-label', catNames[n]);
+        }
         var officon = (spec[1] as HTMLImageElement).cloneNode(true) as HTMLImageElement;
         officon.width = pxWidth;
         officon.height = pxHeight;
@@ -325,6 +334,22 @@ export default class Palette {
         });
         div.onmousedown = function (evt) {
             Palette.clickOnCategory(evt);
+        };
+        div.onkeydown = function (evt: KeyboardEvent) {
+            if (evt.key === 'ArrowRight' || evt.key === 'ArrowLeft') {
+                evt.preventDefault();
+                var delta = evt.key === 'ArrowRight' ? 1 : -1;
+                var count = BlockSpecs.categories.length;
+                var nextIdx = (n + delta + count) % count;
+                var nextDiv = parent.childNodes[nextIdx + 1] as HTMLElement;
+                if (nextDiv) {
+                    nextDiv.focus();
+                    Palette.selectCategory(nextIdx);
+                }
+            } else if (evt.key === 'Enter' || evt.key === ' ') {
+                evt.preventDefault();
+                Palette.selectCategory(n);
+            }
         };
     }
 
@@ -349,8 +374,11 @@ export default class Palette {
             var sel = div.childNodes[i] as HTMLElement;
             const selFirst = sel.childNodes[0] as HTMLElement;
             const selSecond = sel.childNodes[1] as HTMLElement;
-            selFirst.style.visibility = (sel.index != n) ? 'visible' : 'hidden';
-            selSecond.style.visibility = (sel.index == n) ? 'visible' : 'hidden';
+            var isCurrent = (sel.index == n);
+            selFirst.style.visibility = isCurrent ? 'hidden' : 'visible';
+            selSecond.style.visibility = isCurrent ? 'visible' : 'hidden';
+            sel.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+            sel.setAttribute('tabindex', isCurrent ? '0' : '-1');
         }
         var pal = gn('palette')!;
         gn('blockspalette')!.style.background = (currentSel as HTMLElement).bkg!;

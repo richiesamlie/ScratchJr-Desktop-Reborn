@@ -3,6 +3,21 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [Unreleased]
+
+### UI & Styling Overhaul
+- **Soft Tactile 3D Modernization**:
+  - Introduced cohesive design tokens (`design-tokens.css`) supporting modern tactile styling with complete backward compatibility for `data-theme="classic"`.
+  - Modernized Editor UI: top bar, palette tabs, block tray, stage borders, and side panels.
+  - Modernized Home & Lobby UI: header navigation, tab title pills, new project card, and tactile settings language cards.
+  - Restored classic physical stacked-page cards (`project1.png` through `project4.png`) and original "Open" import card icon.
+  - Fixed deletion badge placement on page thumbnails (`top: 6px; left: 6px`) to mirror page numbers and avoid accidental dismissals.
+  - Centered Add-Page `+` icon and made Add-Sprite box fully clickable across the entire card width.
+- **In-App Guides Realignment**:
+  - Resolved diagram coordinate offset in Interface and Paint Editor guides by removing legacy hardcoded transforms (`translate(-200px, -50px)`).
+  - Replaced overlapping description key cards with responsive 2-column layout and elevated tactile cards.
+  - Modernized footer navigation tabs, blocks guide, and about page.
+
 ## [v2.4.0] - 2026-09-08
 
 **Minor Release: Advanced Paint Editor (Zoom Controls, Freehand Masking Eraser, Full Color Picker, Brush Styles), Sensing 'If Touching Color' Block, 10 Pages Support, and Sprite Library Thumbnail Self-Healing.**

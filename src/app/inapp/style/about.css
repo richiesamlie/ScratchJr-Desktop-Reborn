@@ -41,3 +41,20 @@ html {
   margin-bottom: ${css_vh(1.3)};
   line-height: 1.4;
 }
+
+:root:not([data-theme="classic"]) #inappAbout {
+  color: var(--sjr-text-primary, #4C4D4F);
+}
+
+:root:not([data-theme="classic"]) #inappAbout h1 {
+  color: var(--sjr-accent-warm, #F5A322);
+}
+
+:root:not([data-theme="classic"]) #inappAbout .title {
+  color: var(--sjr-accent-primary, #3898EC);
+}
+
+:root:not([data-theme="classic"]) #inappAbout .description {
+  color: var(--sjr-text-secondary, #737478);
+}
+

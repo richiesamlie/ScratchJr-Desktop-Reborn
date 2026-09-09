@@ -24,6 +24,8 @@ export default class Thumbs {
 
     static updatePages () {
         var pthumbs = gn('pagecc')!;
+        pthumbs.setAttribute('role', 'listbox');
+        pthumbs.setAttribute('aria-label', 'Pages');
         while (pthumbs.childElementCount > 0) {
             pthumbs.removeChild(pthumbs.childNodes[0]);
         }
@@ -34,6 +36,9 @@ export default class Thumbs {
             var page = ScratchJr.stage.pages[i];
             page.num = i + 1;
             th = page.pageThumbnail(pthumbs);
+            th.setAttribute('role', 'option');
+            th.setAttribute('tabindex', '0');
+            th.setAttribute('aria-label', 'Page ' + (i + 1));
             th.prev = prev!;
             if (prev) {
                 prev.next = th;
@@ -365,9 +370,21 @@ export default class Thumbs {
         }
         img.setAttribute('class', 'unselectable');
         tb.setAttribute('id', 'emptypage');
+        tb.setAttribute('role', 'button');
+        tb.setAttribute('tabindex', '0');
+        tb.setAttribute('aria-label', 'Add Page');
         tb.onmousedown = function (evt: MouseEvent) {
-                Thumbs.clickOnEmptyPage(evt);
-            };
+            Thumbs.clickOnEmptyPage(evt);
+        };
+        tb.onclick = function (evt: MouseEvent) {
+            Thumbs.clickOnEmptyPage(evt);
+        };
+        tb.onkeydown = function (evt: KeyboardEvent) {
+            if (evt.key === 'Enter' || evt.key === ' ') {
+                evt.preventDefault();
+                Thumbs.clickOnEmptyPage(evt as unknown as MouseEvent);
+            }
+        };
         return tb;
     }
 
@@ -377,6 +394,7 @@ export default class Thumbs {
         }
         ScratchAudio.sndFX('tap.wav');
         e.preventDefault();
+        e.stopPropagation();
         ScratchJr.stage.currentPage.div.style.visibility = 'hidden';
         ScratchJr.stage.currentPage.setPageSprites('hidden');
         var sc = gn(ScratchJr.stage.currentPage.currentSpriteName + '_scripts')!;
@@ -389,10 +407,12 @@ export default class Thumbs {
 
     static highlighPage (page: HTMLElement) {
         page.setAttribute('class', 'pagethumb on');
+        page.setAttribute('aria-selected', 'true');
     }
 
     static unhighlighPage (page: HTMLElement) {
         page.setAttribute('class', 'pagethumb off');
+        page.setAttribute('aria-selected', 'false');
     }
 
     static overpage (page: HTMLElement) {
@@ -405,6 +425,8 @@ export default class Thumbs {
 
     static updateSprites () {
         var costumes = gn('spritecc')!;
+        costumes.setAttribute('role', 'listbox');
+        costumes.setAttribute('aria-label', 'Characters');
         costumes.parentElement!.scrollTop = 0;
         while (costumes.childElementCount > 0) {
             costumes.removeChild(costumes.childNodes[0]);
@@ -420,6 +442,9 @@ export default class Thumbs {
                 continue;
             }
             var th = spr.spriteThumbnail(costumes);
+            th.setAttribute('role', 'option');
+            th.setAttribute('tabindex', '0');
+            th.setAttribute('aria-label', spr.name || 'Character');
             if (spr.id == ScratchJr.stage.currentPage.currentSpriteName) {
                 Thumbs.highlighSprite(th);
             } else {
@@ -635,12 +660,14 @@ export default class Thumbs {
 
     static highlighSprite (spr: HTMLElement) {
         spr.setAttribute('class', ScratchJr.isEditable() ? 'spritethumb on' : 'spritethumb noneditable');
+        spr.setAttribute('aria-selected', 'true');
         ScriptsPane.setActiveScript(getModelRefAs<string>(spr, 'spritethumb')!);
         Palette.reset();
     }
 
     static unhighlighSprite (spr: HTMLElement) {
         spr.setAttribute('class', 'spritethumb off');
+        spr.setAttribute('aria-selected', 'false');
         var currentsc = gn(getModelRefAs<string>(spr, 'spritethumb')! + '_scripts')!;
         getModelRefAs<Scripts>(currentsc, 'scripts')!.deactivate();
         for (var i = 0; i < currentsc.childElementCount; i++) {
