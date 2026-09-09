@@ -3,11 +3,14 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [Unreleased]
+## [v2.5.0] - 2026-09-09
 
-### UI & Styling Overhaul
+**Minor Release: Soft Tactile 3D Modernization across Editor, Lobby, and In-App Guides, Theme Selector (Light, Dark, Classic), Accessibility Enhancements, and Layout Realignments.**
+
+### New Features & Styling Overhaul
 - **Soft Tactile 3D Modernization**:
   - Introduced cohesive design tokens (`design-tokens.css`) supporting modern tactile styling with complete backward compatibility for `data-theme="classic"`.
+  - Added theme selector (☀️ Light, 🌙 Dark, 🎨 Classic) in the project info dialog with WAI-ARIA `radiogroup` accessibility, persisting selection to `localStorage` with fallback to `Settings.defaultTheme`.
   - Modernized Editor UI: top bar, palette tabs, block tray, stage borders, and side panels.
   - Modernized Home & Lobby UI: header navigation, tab title pills, new project card, and tactile settings language cards.
   - Restored classic physical stacked-page cards (`project1.png` through `project4.png`) and original "Open" import card icon.
@@ -17,6 +20,10 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Resolved diagram coordinate offset in Interface and Paint Editor guides by removing legacy hardcoded transforms (`translate(-200px, -50px)`).
   - Replaced overlapping description key cards with responsive 2-column layout and elevated tactile cards.
   - Modernized footer navigation tabs, blocks guide, and about page.
+- **Accessibility & Interaction Polish**:
+  - Implemented WAI-ARIA roving `tabindex` across page and character thumbnail lists for screen reader navigation.
+  - Safeguarded character addition from keyboard events (`Enter`/`Space`) so pointer coordinate checks are safely bypassed.
+  - Eliminated duplicate event handler activations (`onmousedown` + `onclick`) across theme, character, and page buttons.
 
 ## [v2.4.0] - 2026-09-08
 

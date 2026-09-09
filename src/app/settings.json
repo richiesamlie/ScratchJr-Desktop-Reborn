@@ -1,6 +1,6 @@
 {
     "edition": "free",
-    "scratchJrVersion": "desktop-v2.4.0",
+    "scratchJrVersion": "desktop-v2.5.0",
     "useStoryStarters": false,
     "shareEnabled": true,
     "defaultSprite": "Blue.svg",
