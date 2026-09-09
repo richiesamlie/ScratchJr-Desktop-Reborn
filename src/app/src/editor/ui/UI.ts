@@ -547,7 +547,6 @@ export default class UI {
             ns.setAttribute('tabindex', '0');
             ns.setAttribute('aria-label', 'Add Character');
             ns.onmousedown = UI.addSprite;
-            ns.onclick = UI.addSprite;
             ns.onkeydown = function (evt: KeyboardEvent) {
                 if (evt.key === 'Enter' || evt.key === ' ') {
                     evt.preventDefault();
@@ -808,12 +807,25 @@ export default class UI {
 
     static addThemeSelector (parent: HTMLElement) {
         var themeContainer = newHTML('div', 'infoboxThemeContainer', parent);
+        themeContainer.setAttribute('role', 'radiogroup');
+        themeContainer.setAttribute('aria-label', 'Theme');
         var themes: Array<{id: string, label: string}> = [
             { id: 'light', label: '☀️ Light' },
             { id: 'dark', label: '🌙 Dark' },
             { id: 'classic', label: '🎨 Classic' }
         ];
-        var currentTheme = (typeof localStorage !== 'undefined' && localStorage.getItem('scratchjr-theme')) || 'light';
+        var defaultTheme = (window.Settings && (window.Settings as any).defaultTheme) || 'light';
+        var currentTheme = defaultTheme;
+        try {
+            if (typeof localStorage !== 'undefined') {
+                var storedTheme = localStorage.getItem('scratchjr-theme');
+                if (storedTheme) {
+                    currentTheme = storedTheme;
+                }
+            }
+        } catch (e) {
+            // Ignore storage access issues in sandboxed or private contexts
+        }
         var buttons: HTMLElement[] = [];
 
         var applyTheme = function (themeId: string) {
@@ -850,11 +862,6 @@ export default class UI {
             btn.setAttribute('role', 'radio');
             btn.setAttribute('aria-checked', currentTheme === t.id ? 'true' : 'false');
 
-            btn.onmousedown = function (e: MouseEvent) {
-                e.preventDefault();
-                e.stopPropagation();
-                applyTheme(t.id);
-            };
             btn.onclick = function (e: MouseEvent) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -998,21 +1005,27 @@ export default class UI {
     /////////////////////////////////////
 
     static addSprite (e: MouseEvent & { touches?: TouchList }) {
-        if (('isPrimary' in e && !(e as PointerEvent).isPrimary) || (e.touches && e.touches.length > 1)) {
+        if (e && 'isPrimary' in e && !(e as PointerEvent).isPrimary) {
+            return;
+        }
+        if (e && e.touches && e.touches.length > 1) {
             return;
         }
         if (ScratchJr.onHold) {
             return;
         }
-        e.preventDefault();
-        e.stopPropagation();
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         // In legacy classic mode, addsprite.png had blank transparent pixels on the right side of the strip,
-        // so clicks beyond 167px were discarded. In modern themes, the entire card is clickable.
+        // so pointer clicks beyond 167px were discarded. Keyboard activations and modern themes are fully clickable.
         const isClassic = typeof document !== 'undefined' && document.documentElement.dataset.theme === 'classic';
-        if (isClassic) {
+        const isPointer = e && ((e as unknown) instanceof MouseEvent || (typeof TouchEvent !== 'undefined' && (e as unknown) instanceof TouchEvent));
+        if (isClassic && isPointer && typeof (e as MouseEvent).clientX === 'number') {
             var pt = Events.getTargetPoint(e);
             var targetEl = (e.currentTarget || e.target) as HTMLElement;
-            if (pt.x > (globalx(targetEl) + (167 * scaleMultiplier))) {
+            if (pt && targetEl && pt.x > (globalx(targetEl) + (167 * scaleMultiplier))) {
                 return;
             }
         }

@@ -376,9 +376,6 @@ export default class Thumbs {
         tb.onmousedown = function (evt: MouseEvent) {
             Thumbs.clickOnEmptyPage(evt);
         };
-        tb.onclick = function (evt: MouseEvent) {
-            Thumbs.clickOnEmptyPage(evt);
-        };
         tb.onkeydown = function (evt: KeyboardEvent) {
             if (evt.key === 'Enter' || evt.key === ' ') {
                 evt.preventDefault();
@@ -408,11 +405,13 @@ export default class Thumbs {
     static highlighPage (page: HTMLElement) {
         page.setAttribute('class', 'pagethumb on');
         page.setAttribute('aria-selected', 'true');
+        page.setAttribute('tabindex', '0');
     }
 
     static unhighlighPage (page: HTMLElement) {
         page.setAttribute('class', 'pagethumb off');
         page.setAttribute('aria-selected', 'false');
+        page.setAttribute('tabindex', '-1');
     }
 
     static overpage (page: HTMLElement) {
@@ -443,7 +442,6 @@ export default class Thumbs {
             }
             var th = spr.spriteThumbnail(costumes);
             th.setAttribute('role', 'option');
-            th.setAttribute('tabindex', '0');
             th.setAttribute('aria-label', spr.name || 'Character');
             if (spr.id == ScratchJr.stage.currentPage.currentSpriteName) {
                 Thumbs.highlighSprite(th);
@@ -661,6 +659,7 @@ export default class Thumbs {
     static highlighSprite (spr: HTMLElement) {
         spr.setAttribute('class', ScratchJr.isEditable() ? 'spritethumb on' : 'spritethumb noneditable');
         spr.setAttribute('aria-selected', 'true');
+        spr.setAttribute('tabindex', '0');
         ScriptsPane.setActiveScript(getModelRefAs<string>(spr, 'spritethumb')!);
         Palette.reset();
     }
@@ -668,6 +667,7 @@ export default class Thumbs {
     static unhighlighSprite (spr: HTMLElement) {
         spr.setAttribute('class', 'spritethumb off');
         spr.setAttribute('aria-selected', 'false');
+        spr.setAttribute('tabindex', '-1');
         var currentsc = gn(getModelRefAs<string>(spr, 'spritethumb')! + '_scripts')!;
         getModelRefAs<Scripts>(currentsc, 'scripts')!.deactivate();
         for (var i = 0; i < currentsc.childElementCount; i++) {
