@@ -8,6 +8,7 @@ import Page from './Page';
 import type Sprite from './Sprite';
 import type Scripts from '../ui/Scripts';
 import type Block from '../blocks/Block';
+import type {EncodedStrip} from '../ui/Project';
 
 // Named-form access: document.forms.activetextbox etc.
 const namedForms = document.forms as unknown as {
@@ -163,7 +164,7 @@ export default class Stage {
                 continue;
             }
             const scriptsOwner = getModelRefAs<Scripts>(sc, 'scripts')!;
-            var topblocks = scriptsOwner.getBlocksType(['onflag', 'ontouch', 'ontouchcolor']);
+            var topblocks = scriptsOwner.getBlocksType(['onflag', 'ontouch', 'ontouchcolor', 'ontouchsprite']);
             for (var j = 0; j < topblocks.length; j++) {
                 var b = topblocks[j];
                 enginePorts().getRuntime().addRunScript(spr, b);
@@ -190,6 +191,13 @@ export default class Stage {
             a.pop();
         }
         var page = getModelRefAs<Page>(gn(getModelRefAs<string>(thumb as HTMLElement, 'pagethumb')!)!, 'page')!;
+        if (page !== this.currentPage) {
+            for (const strip of data.scripts as EncodedStrip[]) {
+                for (const block of strip) {
+                    if (block[0] === 'ontouchsprite') block[1] = '';
+                }
+            }
+        }
         var name = getIdFor(a.join(' '));
         data.id = name;
         var stg = this;
@@ -591,7 +599,7 @@ export default class Stage {
                     isRunning = false;
                 }
                 if (isRunning) {
-                    enginePorts().startCurrentPageStrips(['ontouch', 'ontouchcolor']);
+                    enginePorts().startCurrentPageStrips(['ontouch', 'ontouchcolor', 'ontouchsprite']);
                 }
             }
         }
@@ -620,7 +628,7 @@ export default class Stage {
             isRunning = false;
         }
         if (isRunning) {
-            enginePorts().startCurrentPageStrips(['ontouch', 'ontouchcolor']);
+            enginePorts().startCurrentPageStrips(['ontouch', 'ontouchcolor', 'ontouchsprite']);
         }
     }
 
@@ -643,6 +651,18 @@ export default class Stage {
 
     removeCharacter (spr: Sprite) {
         enginePorts().getRuntime().stopThreadSprite(spr);
+        // Deleted IDs can be reused by getIdFor. Clear references before that
+        // happens, so a new character can never inherit an old trigger target.
+        for (const child of Array.from(spr.page.div.children)) {
+            const owner = getModelRefAs<Sprite>(child as HTMLElement, 'sprite');
+            if (!owner?.code || owner === spr) continue;
+            for (const block of owner.code.getBlocks()) {
+                if (block.blocktype === 'ontouchsprite' && block.getArgValue() === spr.id) {
+                    block.arg.argValue = '';
+                    block.update(owner);
+                }
+            }
+        }
         this.removeFromPage(spr);
         enginePorts().undoRecord({
             action: 'deletesprite',

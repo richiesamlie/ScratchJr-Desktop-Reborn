@@ -72,7 +72,7 @@ export default class ScriptsPane {
             return;
         }
         ScratchJr.runtime.addRunScript(ScratchJr.getSprite() as Sprite, b);
-        ScratchJr.startCurrentPageStrips(['ontouch', 'ontouchcolor']);
+        ScratchJr.startCurrentPageStrips(['ontouch', 'ontouchcolor', 'ontouchsprite']);
         ScratchJr.userStart = true;
     }
 

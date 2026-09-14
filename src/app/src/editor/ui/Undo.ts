@@ -161,6 +161,17 @@ export default class Undo {
             }
             break;
         case 'deletesprite':
+            if ((data[page] as PageData)[spr]) {
+                Undo.copySprite(data, page, spr);
+            } else {
+                Undo.removeSprite(data, page, spr);
+            }
+            // Deleting a character also clears references in other scripts.
+            // Restore those scripts from the same snapshot on undo/redo.
+            for (const id of (data[page] as PageData).sprites) {
+                if (id !== spr && gn(id + '_scripts')) Undo.redoScripts(data, page, id);
+            }
+            break;
         case 'copy':
             if ((data[page] as PageData)[spr]) {
                 Undo.copySprite(data, page, spr);

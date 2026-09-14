@@ -36,12 +36,17 @@ export default class BlockArg {
     list!: string;
     numperrow!: number;
     type: string;
+    owner?: Sprite;
 
     constructor (block: Block) {
         this.daddy = block;
         this.type = 'blockarg';
         this.argType = block.spec[3] as string;
         switch (this.argType) {
+        case 'sprite':
+            this.argValue = block.spec[4];
+            this.div = this.addSpriteArgument();
+            break;
         case 'n':
             this.argValue = block.spec[4];
             this.div = this.addNumArg();
@@ -100,12 +105,120 @@ export default class BlockArg {
     }
 
     update (spr?: Sprite) {
+        if (this.argType === 'sprite') {
+            this.owner = spr;
+            this.refreshSpriteArgument();
+        }
         if (this.argType == 'r') {
             this.div.childNodes[0].textContent = String(this.argValue);
         }
         if (this.arg && (this.argType == 'p')) {
             this.arg.updateIcon!();
         }
+    }
+
+    spriteChoices () {
+        const owner = this.owner;
+        if (!owner?.div.parentElement) return [];
+        return Array.from(owner.div.parentElement.children)
+            .map(el => getModelRefAs<Sprite>(el as HTMLElement, 'sprite'))
+            .filter((spr): spr is Sprite => !!spr && spr.type === 'sprite' && spr.id !== owner.id);
+    }
+
+    refreshSpriteArgument () {
+        const target = this.spriteChoices().find(spr => spr.id === this.argValue);
+        const button = this.div as HTMLButtonElement;
+        button.replaceChildren();
+        if (target) {
+            const img = document.createElement('img');
+            img.src = target.img?.src || '';
+            img.alt = target.name;
+            img.style.cssText = 'width:28px;height:24px;object-fit:contain;pointer-events:none';
+            button.appendChild(img);
+        } else {
+            button.textContent = '?';
+        }
+        button.setAttribute('aria-label', target?.name || Localization.localizeWithFallback('BLOCKS_CHOOSE_CHARACTER', 'Choose a character'));
+        button.title = button.getAttribute('aria-label')!;
+    }
+
+    addSpriteArgument () {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = '?';
+        button.style.cssText = `position:absolute;left:20px;top:53px;width:48px;height:30px;pointer-events:all;zoom:${this.daddy.scale};padding:0;border-radius:8px;background:#fff3aa;color:#333;border:1px solid #85521d`;
+        button.disabled = this.daddy.inpalette;
+        button.onpointerdown = e => e.stopPropagation();
+        button.onmousedown = e => e.stopPropagation();
+        button.onclick = e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (enginePorts().isOnHold()) return;
+            Menu.closeMyOpenMenu();
+            this.owner = getModelRefAs<Scripts>(this.daddy.div.parentElement!, 'scripts')?.spr || this.owner;
+            this.refreshSpriteArgument();
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:100000;background:#0006;display:flex;align-items:center;justify-content:center';
+            const panel = document.createElement('div');
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-label', Localization.localizeWithFallback('BLOCKS_CHOOSE_CHARACTER', 'Choose a character'));
+            panel.style.cssText = 'background:white;color:#333;border-radius:12px;padding:16px;max-width:80vw;max-height:70vh;overflow:auto;display:flex;flex-wrap:wrap;gap:8px';
+            overlay.appendChild(panel);
+            const close = () => { Menu.closeMyOpenMenu(); button.focus(); };
+            overlay.onpointerdown = evt => evt.stopPropagation();
+            overlay.onmousedown = evt => evt.stopPropagation();
+            overlay.onclick = evt => { if (evt.target === overlay) close(); };
+            overlay.onkeydown = evt => {
+                evt.stopPropagation();
+                if (evt.key === 'Escape') close();
+                if (evt.key === 'Tab') {
+                    const buttons = Array.from(panel.querySelectorAll('button'));
+                    const first = buttons[0];
+                    const last = buttons[buttons.length - 1];
+                    if (evt.shiftKey && document.activeElement === first) {
+                        evt.preventDefault(); last.focus();
+                    } else if (!evt.shiftKey && document.activeElement === last) {
+                        evt.preventDefault(); first.focus();
+                    }
+                }
+            };
+            const cancel = document.createElement('button');
+            cancel.textContent = '×';
+            cancel.setAttribute('aria-label', Localization.localizeWithFallback('BLOCKS_CLOSE_PICKER', 'Close'));
+            cancel.onclick = close;
+            panel.appendChild(cancel);
+            for (const spr of this.spriteChoices()) {
+                const choice = document.createElement('button');
+                choice.style.cssText = 'min-width:64px;min-height:64px;max-width:120px;overflow-wrap:anywhere';
+                const img = document.createElement('img');
+                img.src = spr.img?.src || '';
+                img.alt = '';
+                img.style.cssText = 'display:block;width:48px;height:48px;object-fit:contain;margin:auto';
+                choice.append(img, document.createTextNode(spr.name));
+                choice.onclick = () => {
+                    if (!this.spriteChoices().some(item => item.id === spr.id)) return;
+                    if (this.argValue !== spr.id) {
+                        this.argValue = spr.id;
+                        this.refreshSpriteArgument();
+                        enginePorts().undoRecord({action: 'scripts', where: this.owner!.page.id, who: this.owner!.id});
+                        enginePorts().storyStart('BlockArg.chooseCharacter');
+                    }
+                    close();
+                };
+                panel.appendChild(choice);
+            }
+            if (!this.spriteChoices().length) {
+                const empty = document.createElement('p');
+                empty.textContent = Localization.localizeWithFallback('BLOCKS_NO_CHARACTER', 'Add another character on this page first.');
+                panel.appendChild(empty);
+            }
+            document.body.appendChild(overlay);
+            Menu.openMenu = overlay;
+            cancel.focus();
+        };
+        this.daddy.div.appendChild(button);
+        return button;
     }
 
     getScreenPt () {

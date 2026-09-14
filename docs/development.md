@@ -1,5 +1,9 @@
 # Development Guide
 
+## Unreleased ScratchJr blocks (issue #9)
+
+`waitrandom` takes a maximum of 0–50 tenths of a second. `ontouchsprite` stores a same-page character ID selected through a picture picker. Deleting the target clears references; undo/redo restores the matching script snapshots. These share the renderer across all hosts and require no IPC additions. Older versions may skip unknown blocks, so new-block projects are not promised backward playback compatibility.
+
 Practical knowledge for working on ScratchJr Reborn. Covers the build pipeline,
 the editor layout/limits map, the project file format, testing, and releasing.
 

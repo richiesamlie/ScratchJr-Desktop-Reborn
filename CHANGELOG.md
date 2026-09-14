@@ -3,6 +3,15 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## Unreleased — Issue #9 (partial)
+
+- Added Random Wait (`waitrandom`): one maximum of 0–50 tenths of a second; samples an integer from zero through that maximum on each execution.
+- Added Start on Touching Character (`ontouchsprite`): picture picker for another character on the same page; uses existing bump collision and repeat semantics.
+- Character references use IDs, survive renames and same-page copies, and are cleared on deletion with undo/redo support. Cross-page copies need a new target selection.
+- Updated the in-app guide for these blocks, horizontal flip, and touching color. New strings use localization keys with English fallbacks.
+- Shared renderer implementation for Desktop, Web/PWA, and Android; no new native bridge methods.
+- Older ScratchJr/Reborn builds do not know the new block opcodes and may skip them. Do not promise backward playback compatibility; preserve original projects when sharing with older versions.
+
 ## [v2.5.0] - 2026-09-09
 
 **Minor Release: Soft Tactile 3D Modernization across Editor, Lobby, and In-App Guides, Theme Selector (Light, Dark, Classic), Accessibility Enhancements, and Layout Realignments.**

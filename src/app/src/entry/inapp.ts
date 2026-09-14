@@ -129,6 +129,20 @@ export function inappPaintEditorGuide () {
 }
 
 export function inappBlocksGuide () {
+    const reborn = {
+        BLOCKS_REBORN: 'ScratchJr Reborn blocks',
+        BLOCKS_FLIP_REBORN: 'Flip horizontally',
+        BLOCKS_FLIP_REBORN_DESCRIPTION: 'Mirrors the character left to right. Use it to make a character face the other way.',
+        BLOCKS_TOUCH_COLOR: 'Start on touching color',
+        BLOCKS_TOUCH_COLOR_DESCRIPTION: 'Starts the script when the character touches the selected stage color during play. Choose a color or use the eyedropper. For example, react when reaching a red area.',
+        BLOCKS_RANDOM_WAIT: 'Random wait',
+        BLOCKS_RANDOM_WAIT_DESCRIPTION: 'Waits a random time from zero to the number shown, in tenths of a second, then continues. 10 means up to one second; 50 means up to five seconds. A new delay is chosen each time the block runs.',
+        BLOCKS_TOUCH_CHARACTER: 'Start on touching character',
+        BLOCKS_TOUCH_CHARACTER_DESCRIPTION: 'Choose another character on this page using the picture button. During play, starts when they touch, like Start on Bump but only for that character. It can repeat while they remain touching. A missing target does nothing; choose again after deleting the target or copying the script to another page.'
+    };
+    for (const [key, fallback] of Object.entries(reborn)) {
+        gn(key)!.textContent = Localization.localizeWithFallback(key, fallback);
+    }
     // Localized category names
     gn('yellow-block-category-header')!.textContent = Localization.localize('BLOCKS_TRIGGERING_BLOCKS');
     gn('blue-block-category-header')!.textContent = Localization.localize('BLOCKS_MOTION_BLOCKS');

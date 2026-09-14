@@ -176,6 +176,28 @@ async function main() {
         console.log(`smoke-web: [editor] loaded ${editorTarget.url}`);
         console.log('smoke-web: [editor] ScratchJr ready, exceptions:', s3.exceptions.length);
 
+        // Exercise issue #9 using real images, the character picker, and the
+        // existing save/export/import flow below.
+        const issue9 = await s3.eval(`(async function(){
+            const owner = window.ScratchJr.getSprite();
+            const target = await new Promise(resolve => new owner.constructor({
+                ...owner.getSpriteData(), page: owner.page, id: 'issue9-target', name: 'Issue 9 target'
+            }, resolve));
+            const blocks = owner.code.recreateStrip([
+                ['ontouchsprite', '', 0, 0], ['waitrandom', 25, 0, 0]
+            ]);
+            blocks[0].arg.div.click();
+            const dialog = document.querySelector('[role="dialog"]');
+            const choice = dialog && Array.from(dialog.querySelectorAll('button')).find(b => b.textContent === target.name);
+            if (!choice) throw new Error('character picker target missing');
+            choice.click();
+            return {target: blocks[0].getArgValue(), wait: blocks[1].getArgValue(), collision: owner.touchingAny(target.id)};
+        })()`);
+        if (issue9.target !== 'issue9-target' || issue9.wait !== 25 || !issue9.collision) {
+            throw new Error('issue #9 picker/collision failed: ' + JSON.stringify(issue9));
+        }
+        console.log('smoke-web: [issue9] picker and real-image collision passed');
+
         // 4. Verify in-browser SQLite database operation
         const dbVerification = await s3.eval(`
             new Promise(function(resolve) {
@@ -245,7 +267,7 @@ async function main() {
 
         const screenshotRes = await s4.send('Page.captureScreenshot', { format: 'png' });
         if (screenshotRes && screenshotRes.data) {
-            const outPath = 'C:\\Users\\dewa5\\.gemini\\antigravity\\brain\\2552c6aa-02db-47cd-922c-458c0bfaadad\\lobby_with_export.png';
+            const outPath = path.join(tempProfile, 'lobby_with_export.png');
             fs.writeFileSync(outPath, Buffer.from(screenshotRes.data, 'base64'));
             console.log('smoke-web: [screenshot] saved lobby card controls:', outPath);
         }
@@ -318,6 +340,19 @@ async function main() {
             throw new Error('smoke-web: no new card appeared at top of lobby');
         }
         console.log('smoke-web: [lobby-after-import] imported card at top:', JSON.stringify(importedCard));
+        const importedBlocks = await s4.eval(`window.scratchjr.database_query(JSON.stringify({
+            op: 'select', table: 'projects', items: ['json'],
+            where: [{col: 'id', op: '=', value: ${JSON.stringify(importedCard.id)}}]
+        })).then(function(result) {
+            const project = JSON.parse(JSON.parse(result)[0].json);
+            const page = project[project.pages[0]];
+            return page.sprites.flatMap(id => (page[id].scripts || []).flat());
+        })`);
+        if (!importedBlocks.some(b => b[0] === 'ontouchsprite' && b[1] === 'issue9-target')
+            || !importedBlocks.some(b => b[0] === 'waitrandom' && Number(b[1]) === 25)) {
+            throw new Error('issue #9 blocks lost during save/export/import');
+        }
+        console.log('smoke-web: [issue9] block arguments survived save/export/import');
 
         // 10. The imported card must render its thumbnail image (src set to a
         // data URL). Diagnose where it breaks if not.

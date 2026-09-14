@@ -207,11 +207,11 @@ export default class BlockSpecs {
 
 
     static setupPalettesDef () {
-        return [['onflag', 'onclick', 'ontouch', 'ontouchcolor', 'onmessage', 'message'],
+        return [['onflag', 'onclick', 'ontouch', 'ontouchsprite', 'ontouchcolor', 'onmessage', 'message'],
             ['forward', 'back', 'up', 'down', 'right', 'left', 'flipX', 'hop', 'home'],
             ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show'],
             [],
-            ['wait', 'stopmine', 'setspeed', 'repeat'],
+            ['wait', 'waitrandom', 'stopmine', 'setspeed', 'repeat'],
             ['endstack', 'forever']];
     }
 
@@ -234,6 +234,10 @@ export default class BlockSpecs {
 
     static setupBlocksSpecs () {
         return {
+            'ontouchsprite': ['ontouchsprite', BlockSpecs.getImageFrom('assets/blockicons/Bump', 'svg'),
+                BlockSpecs.yellowStart, 'sprite', '', BlockSpecs.yellowStartH, null, null, BlockSpecs.startS],
+            'waitrandom': ['waitrandom', BlockSpecs.getImageFrom('assets/blockicons/WaitRandom', 'svg'),
+                BlockSpecs.orangeCmd, 'n', 10, BlockSpecs.orangeCmdH, 0, 50, BlockSpecs.cmdS],
             'onflag': ['onflag', BlockSpecs.getImageFrom('assets/blockicons/greenFlag', 'svg'),
                 BlockSpecs.yellowStart, null, null, BlockSpecs.yellowStartH, null, null, BlockSpecs.startS],
             'onmessage': ['onmessage', getshapes, BlockSpecs.yellowStart, 'm', 'Orange',
@@ -326,7 +330,9 @@ export default class BlockSpecs {
             'ontouch': Localization.localize('BLOCK_DESC_ON_BUMP', {
                 CHARACTER_NAME: s.name ? s.name : ''
             }),
-            'ontouchcolor': 'When touching color',
+            'ontouchcolor': Localization.localizeWithFallback('BLOCKS_TOUCH_COLOR', 'Start on touching color'),
+            'ontouchsprite': Localization.localizeWithFallback('BLOCKS_TOUCH_CHARACTER', 'Start on touching character'),
+            'waitrandom': Localization.localizeWithFallback('BLOCKS_RANDOM_WAIT', 'Random wait'),
             'onmessage': Localization.localize('BLOCK_DESC_ON_MESSAGE', {
                 COLOR: Localization.localize('BLOCK_DESC_MESSAGE_COLOR_ORANGE')
             }),

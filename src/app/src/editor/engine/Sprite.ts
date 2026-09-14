@@ -328,7 +328,7 @@ export default class Sprite {
         this.render();
     }
 
-    touchingAny () {
+    touchingAny (targetId?: string) {
         if (!this.shown) {
             return false;
         }
@@ -339,6 +339,9 @@ export default class Sprite {
         for (var i = 0; i < page!.childElementCount; i++) {
             var other = getModelRefAs<Sprite>(page!.childNodes[i] as HTMLElement, 'sprite')!;
             if (!other) {
+                continue;
+            }
+            if (targetId !== undefined && other.id !== targetId) {
                 continue;
             }
             if (other.type == 'text') {

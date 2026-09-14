@@ -230,6 +230,7 @@ export default class Block {
     }
 
     updateBlock () {
+        if (this.arg?.argType === 'sprite') this.arg.refreshSpriteArgument();
         if (this.arg && this.arg.argType == 'p') {
             this.arg.updateIcon();
         }
@@ -325,8 +326,9 @@ export default class Block {
 
     duplicateBlock (dx: number, dy: number, spr: Sprite) {
         var op = this.blocktype;
-        var specs = BlockSpecs.defs[op] as unknown[];
+        var specs = (BlockSpecs.defs[op] as unknown[]).slice();
         specs[4] = this.getArgValue();
+        if (op === 'ontouchsprite' && this.arg.owner && this.arg.owner.page !== spr.page) specs[4] = '';
         var bbx = new Block(specs, false, scaleMultiplier);
         setProps(bbx.div.style, {
             position: 'absolute',

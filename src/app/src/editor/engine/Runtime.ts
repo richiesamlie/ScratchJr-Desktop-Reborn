@@ -57,11 +57,11 @@ export default class Runtime {
             if (!t) {
                 continue;
             }
-            if (t.isRunning && (t.firstBlock.blocktype != 'ontouch') && (t.firstBlock.blocktype != 'ontouchcolor')) {
+            if (t.isRunning && (t.firstBlock.blocktype != 'ontouch') && (t.firstBlock.blocktype != 'ontouchcolor') && (t.firstBlock.blocktype != 'ontouchsprite')) {
                 inactive = false;
             }
-            if (((t.firstBlock.blocktype == 'ontouch') || (t.firstBlock.blocktype == 'ontouchcolor')) && (t.thisblock != null)
-                && (t.thisblock.blocktype != 'ontouch') && (t.thisblock.blocktype != 'ontouchcolor')) {
+            if (((t.firstBlock.blocktype == 'ontouch') || (t.firstBlock.blocktype == 'ontouchcolor') || (t.firstBlock.blocktype == 'ontouchsprite')) && (t.thisblock != null)
+                && (t.thisblock.blocktype != 'ontouch') && (t.thisblock.blocktype != 'ontouchcolor') && (t.thisblock.blocktype != 'ontouchsprite')) {
                 inactive = false;
             }
         }
@@ -176,7 +176,7 @@ export default class Runtime {
         for (var i = 0; i < this.threadsRunning.length; i++) {
             if (this.threadsRunning[i].firstBlock == b) {
                 wasRunning = true;
-                if ((b.blocktype != 'ontouch') && (b.blocktype != 'ontouchcolor')) { // on touch demons are special - they are not interruptable
+                if ((b.blocktype != 'ontouch') && (b.blocktype != 'ontouchcolor') && (b.blocktype != 'ontouchsprite')) { // on touch demons are special - they are not interruptable
                     if (this.threadsRunning[i].oldblock != null) {
                         this.threadsRunning[i].oldblock!.unhighlight();
                     }
