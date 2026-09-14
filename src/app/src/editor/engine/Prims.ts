@@ -29,6 +29,7 @@ export default class Prims {
             onmessage: Prims.Ignore,
             onclick: Prims.Ignore,
             ontouch: Prims.OnTouch,
+            ontouchsprite: Prims.OnTouch,
             ontouchcolor: Prims.OnTouchColor,
             onchat: Prims.Ignore,
             repeat: Prims.Repeat,
@@ -46,6 +47,7 @@ export default class Prims {
             bigger: Prims.Bigger,
             smaller: Prims.Smaller,
             wait: Prims.Wait,
+            waitrandom: Prims.WaitRandom,
             caretcmd: Prims.Ignore,
             caretstart: Prims.Ignore,
             caretend: Prims.Ignore,
@@ -190,6 +192,14 @@ export default class Prims {
     static Wait (strip: Thread) {
         var n = Number(strip.thisblock.getArgValue());
         strip.waitTimer = Math.round(n * 3.125); // thenth of a second
+        Prims.setTime(strip);
+        strip.thisblock = strip.thisblock.next!;
+    }
+    static WaitRandom (strip: Thread) {
+        const value = Number(strip.thisblock.getArgValue());
+        const maximum = Number.isFinite(value) ? Math.max(0, Math.min(50, Math.floor(value))) : 0;
+        const delay = Math.floor(Math.random() * (maximum + 1));
+        strip.waitTimer = Math.round(delay * 3.125);
         Prims.setTime(strip);
         strip.thisblock = strip.thisblock.next!;
     }
@@ -452,7 +462,8 @@ export default class Prims {
             return;
         }
         var s = strip.spr;
-        if (s.touchingAny()) {
+        const target = strip.thisblock.blocktype === 'ontouchsprite' ? String(strip.thisblock.getArgValue() || '') : undefined;
+        if (s.touchingAny(target)) {
             strip.stack.push(strip.firstBlock);
             strip.thisblock = strip.thisblock.next!;
         }

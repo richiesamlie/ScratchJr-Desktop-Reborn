@@ -440,7 +440,7 @@ export default class ScratchJr {
 
     static startGreenFlagThreads () {
         ScratchJr.resetSprites();
-        ScratchJr.startCurrentPageStrips(['onflag', 'ontouch', 'ontouchcolor']);
+        ScratchJr.startCurrentPageStrips(['onflag', 'ontouch', 'ontouchcolor', 'ontouchsprite']);
     }
 
     static startCurrentPageStrips (list: string[]) {

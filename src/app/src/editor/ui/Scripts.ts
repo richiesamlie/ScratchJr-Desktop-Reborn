@@ -37,6 +37,9 @@ export default class Scripts {
     }
 
     activate () {
+        for (const block of this.getBlocks()) {
+            if (block.arg?.argType === 'sprite') block.update(this.spr);
+        }
         setProps(this.sc.style, {
             visibility: 'visible'
         });
