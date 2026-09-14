@@ -3,14 +3,32 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## Unreleased — Issue #9 (partial)
+## [v2.6.0] - 2026-09-14
 
-- Added Random Wait (`waitrandom`): one maximum of 0–50 tenths of a second; samples an integer from zero through that maximum on each execution.
-- Added Start on Touching Character (`ontouchsprite`): picture picker for another character on the same page; uses existing bump collision and repeat semantics.
-- Character references use IDs, survive renames and same-page copies, and are cleared on deletion with undo/redo support. Cross-page copies need a new target selection.
-- Updated the in-app guide for these blocks, horizontal flip, and touching color. New strings use localization keys with English fallbacks.
-- Shared renderer implementation for Desktop, Web/PWA, and Android; no new native bridge methods.
-- Older ScratchJr/Reborn builds do not know the new block opcodes and may skip them. Do not promise backward playback compatibility; preserve original projects when sharing with older versions.
+**Minor Release: Random Wait and Touching Character Blocks, Reference-Safe Undo/Copying, Modernized In-App Reborn Blocks Guide, and 12-Language Localization.**
+
+### New Blocks & Features
+- **Random Wait Block (`waitrandom`)**:
+  - Waits a random duration from zero up to the configured maximum in tenths of a second (bounded 0–50 tenths).
+  - Resamples a new uniform integer delay each time the block executes.
+  - Fully compatible with the existing single-number input field and script serializer.
+- **Touching Character Trigger (`ontouchsprite`)**:
+  - Yellow event/trigger block allowing characters to react when touching a specific character on the same page.
+  - Interactive picture/character picker displaying same-page characters (excluding self and text boxes).
+  - Reuses bump collision detection, visibility checking, and repeat semantics without polling overhead.
+  - Empty or deleted targets safely no-op until a valid character is selected.
+- **Reference Integrity & Undo / Redo**:
+  - Character references use persistent IDs that survive character renaming and same-page script copying.
+  - Deleting a referenced character clears references on triggers targeting it, fully restored if the deletion is undone.
+  - Cross-page copying cleanly resets target references to require reselection on the new page.
+  - Palette default blocks maintain clean zero-state defaults independently of duplicated blocks.
+- **Modernized In-App Blocks Guide**:
+  - Dedicated documentation in `inapp/blocks.html` for all four Reborn blocks: Horizontal Flip (`flipX`), Touching Color (`ontouchcolor`), Random Wait (`waitrandom`), and Touching Character (`ontouchsprite`).
+- **Complete 12-Language Localization**:
+  - Added localized strings across all 11 non-English locales (`ca`, `de`, `es`, `fr`, `it`, `ja`, `nl`, `pt`, `sv`, `th`, `zh-cn`) matching native ScratchJr terminology, in addition to English (`en`).
+- **Cross-Platform Compatibility**:
+  - Implemented entirely in the shared renderer engine across Desktop (Electron), Web / PWA, and Android.
+  - Older ScratchJr/Reborn builds do not recognize the new block opcodes and will skip them; projects using new blocks require a v2.6.0+ build.
 
 ## [v2.5.0] - 2026-09-09
 
