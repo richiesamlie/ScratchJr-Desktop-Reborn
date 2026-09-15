@@ -70,6 +70,7 @@ export default class Sprite {
     homeflip!: boolean;
     str!: string;
     fontsize!: number;
+    fontFamily?: string;
     color!: string;
     border!: HTMLCanvasElement;
     balloon: HTMLElement | null = null;
@@ -935,11 +936,14 @@ Math.floor(h));
     createText (attr: Record<string, unknown>, whenDone?: (spr: Sprite) => void) {
         var page = attr.page as Page;
         setProps(this, attr);
+        if (!this.fontFamily) {
+            this.fontFamily = (window.Settings && window.Settings.textSpriteFont) || 'Roboto';
+        }
         this.div = newHTML('p', 'textsprite', page.div);
         setProps(this.div.style, {
             fontSize: this.fontsize + 'px',
             color: this.color,
-            fontFamily: window.Settings!.textSpriteFont
+            fontFamily: this.fontFamily
         });
         setModelRef(this.div, 'sprite', this);
         this.div.id = this.id;
@@ -981,15 +985,18 @@ Math.floor(h));
 
         // TODO: Merge these for iOS
         var styles;
+        const activeFont = this.fontFamily || (window.Settings && window.Settings.textSpriteFont) || 'Roboto';
         if (isAndroid) {
             styles = {
                 color: this.color,
-                fontSize: (this.fontsize * scaleMultiplier) + 'px'
+                fontSize: (this.fontsize * scaleMultiplier) + 'px',
+                fontFamily: activeFont
             };
         } else {
             styles = {
                 color: this.color,
-                fontSize: this.fontsize + 'px'
+                fontSize: this.fontsize + 'px',
+                fontFamily: activeFont
             };
         }
         var ci = BlockSpecs.fontcolors.indexOf(rgbToHex(this.color));
@@ -1054,8 +1061,14 @@ Math.floor(h));
             gn('textbox')!.className = 'pagetext off';
             gn('textcolormenu')!.className = 'textuicolormenu off';
             gn('textfontsizes')!.className = 'textuifont off';
+            if (gn('textfontfamilies')) {
+                gn('textfontfamilies')!.className = 'textuifont off';
+            }
             gn('fontsizebutton')!.className = 'fontsizeText off';
             gn('fontcolorbutton')!.className = 'changecolorText off';
+            if (gn('fontfamilybutton')) {
+                gn('fontfamilybutton')!.className = 'fontfamilyText off';
+            }
             form.textsprite = null;
             this.deactivateInput();
             if (changed) {
@@ -1231,12 +1244,22 @@ Math.floor(h));
         this.fontsize = n;
     }
 
+    setFontFamily (f: string) {
+        this.fontFamily = f;
+        if (this.div) {
+            this.div.style.fontFamily = f;
+        }
+        this.recalculateText();
+    }
+
     recalculateText () {
+        const activeFont = this.fontFamily || (window.Settings && window.Settings.textSpriteFont) || 'Roboto';
         this.div.style.color = this.color;
         this.div.style.fontSize = this.fontsize + 'px';
+        this.div.style.fontFamily = activeFont;
         this.div.textContent = this.str;
         var ctx = this.outline.getContext('2d')!;
-        ctx.font = 'bold ' + this.fontsize + 'px ' + window.Settings!.textSpriteFont;
+        ctx.font = 'bold ' + this.fontsize + 'px ' + activeFont;
         var w = ctx.measureText(this.str).width;
         this.w = (Math.round(w) + 1);
         this.div.style.width = (this.w * 2) + 'px';
@@ -1245,7 +1268,7 @@ Math.floor(h));
         this.cy = this.h / 2;
         setCanvasSize(this.outline, this.w, this.h);
         ctx.clearRect(0, 0, this.outline.width, this.outline.height);
-        ctx.font = 'bold ' + this.fontsize + 'px ' + window.Settings!.textSpriteFont;
+        ctx.font = 'bold ' + this.fontsize + 'px ' + activeFont;
         ctx.fillStyle = this.color;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
@@ -1394,6 +1417,7 @@ Math.floor(h));
         data.str = this.str;
         data.color = this.color;
         data.fontsize = this.fontsize;
+        data.fontFamily = this.fontFamily || (window.Settings && window.Settings.textSpriteFont) || 'Roboto';
         return data;
     }
 }

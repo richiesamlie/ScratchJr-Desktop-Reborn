@@ -424,6 +424,14 @@ spriteform.off {visibility: hidden; };
     background: url('../assets/paint/starOff.svg') no-repeat center top;
     background-size: 100%;
 }
+*.tool.text.on {
+    background: url('../assets/paint/textOn.svg') no-repeat center top;
+    background-size: 100%;
+}
+*.tool.text.off {
+    background: url('../assets/paint/textOff.svg') no-repeat center top;
+    background-size: 100%;
+}
 
 *.tool.paintbucket.off {
     background: url('../assets/paint/paintbucketOff.svg') no-repeat center top;
@@ -745,4 +753,150 @@ div.boxbkg{
 
 .colorpicker-visual {
     border-radius: 50% !important;
+}
+
+/* Paint Editor Text Dialog */
+.paint-text-backdrop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.painttextdialog {
+    background: #FFFFFF;
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    width: 360px;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    font-family: Roboto, -apple-system, sans-serif;
+    user-select: none;
+}
+
+.painttexttitle {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #2C3E50;
+    text-align: center;
+}
+
+.painttextinputwrap {
+    width: 100%;
+}
+
+.painttextinput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 14px;
+    font-size: 22px;
+    font-weight: bold;
+    border: 2px solid #35A8E0;
+    border-radius: 12px;
+    outline: none;
+    text-align: center;
+    background: #FAFDFF;
+}
+
+.painttextsectionlabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: #5A728A;
+    margin-top: 4px;
+}
+
+.painttextfontpicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.paintfontbtn {
+    flex: 1 1 30%;
+    padding: 6px 10px;
+    border: 2px solid #D5E7F7;
+    border-radius: 10px;
+    background: #F0F6FC;
+    color: #2C3E50;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 120ms ease;
+}
+
+.paintfontbtn:hover {
+    background: #E1EFFC;
+}
+
+.paintfontbtn.selected {
+    border-color: #35A8E0;
+    background: #35A8E0;
+    color: #FFFFFF;
+}
+
+.painttextsizepicker {
+    display: flex;
+    gap: 8px;
+}
+
+.paintsizebtn {
+    flex: 1;
+    padding: 6px 8px;
+    border: 2px solid #D5E7F7;
+    border-radius: 10px;
+    background: #F0F6FC;
+    color: #2C3E50;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 120ms ease;
+}
+
+.paintsizebtn:hover {
+    background: #E1EFFC;
+}
+
+.paintsizebtn.selected {
+    border-color: #FFA62B;
+    background: #FFA62B;
+    color: #FFFFFF;
+}
+
+.painttextactions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.painttextcancel {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #D5E7F7;
+    border-radius: 12px;
+    background: #F5F7FA;
+    color: #5A728A;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.painttextok {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 12px;
+    background: #48CC7E;
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(72, 204, 126, 0.35);
+}
+
+.painttextok:active {
+    transform: translateY(2px);
 }

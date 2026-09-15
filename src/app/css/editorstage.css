@@ -225,25 +225,92 @@
     position: absolute;
     margin: 0px;
     padding: 0px;
-    left: ${css_vh(1.30)};
+    left: ${css_vh(3.5)};
     width: ${css_vh(13.02)};
     height: ${css_vh(8.59)};
+    cursor: pointer;
 }
 
-.fontsizeText.off {	background:  url('../assets/ui/WordSizeOff.svg'); background-size: 102%; }
-.fontsizeText.on {	background:  url('../assets/ui/WordSizeOn.svg'); background-size: 102%; }
+.fontsizeText.off {	background:  url('../assets/ui/WordSizeOff.svg') center center no-repeat; background-size: contain; }
+.fontsizeText.on {	background:  url('../assets/ui/WordSizeOn.svg') center center no-repeat; background-size: contain; }
+
+.fontfamilyText {
+    position: absolute;
+    margin: 0px;
+    padding: 0px;
+    left: ${css_vh(25.13)};
+    width: ${css_vh(13.02)};
+    height: ${css_vh(8.59)};
+    cursor: pointer;
+}
+
+.fontfamilyText.off { background: url('../assets/ui/FontFamilyOff.svg') center center no-repeat; background-size: contain; }
+.fontfamilyText.on { background: url('../assets/ui/FontFamilyOn.svg') center center no-repeat; background-size: contain; }
 
 .changecolorText {
     position: absolute;
     margin: 0px;
     padding: 0px;
-    left: ${css_vh(52.08)};
+    left: ${css_vh(48.5)};
     width: ${css_vh(10.94)};
     height: ${css_vh(8.59)};
+    cursor: pointer;
 }
 
-.changecolorText.off {	background:  url('../assets/ui/PaintcanOff.svg'); background-size: 103%; }
-.changecolorText.on {	background:  url('../assets/ui/PaintcanOn.svg'); background-size: 103%; }
+.changecolorText.off {	background:  url('../assets/ui/PaintcanOff.svg') center center no-repeat; background-size: contain; }
+.changecolorText.on {	background:  url('../assets/ui/PaintcanOn.svg') center center no-repeat; background-size: contain; }
+
+*.textuifamilies {
+    position: relative;
+    background: #4682B5;
+    margin: ${css_vh(0.3)} 0px ${css_vh(0.8)};
+    padding: 0px ${css_vh(1.0)};
+    width: 100%;
+    height: ${css_vh(7.5)};
+    align-items: center;
+    justify-content: space-around;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+*.textuifamilies.on {
+    display: flex;
+}
+
+*.textuifamilies.off {
+    display: none;
+}
+
+.textuifamily {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: ${css_vh(0.5)} ${css_vh(0.8)};
+    border-radius: ${css_vh(1.4)};
+    background: rgba(255, 255, 255, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #FFFFFF;
+    cursor: pointer;
+    font-size: ${css_vh(2.05)};
+    line-height: 1;
+    transition: transform 80ms ease, background 80ms ease;
+    user-select: none;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.textuifamily:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: scale(1.03);
+}
+
+.textuifamily.on {
+    background: #FFFFFF !important;
+    color: #2C3E50 !important;
+    border-color: #FFFFFF !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+    font-weight: bold;
+}
 
 .textuisize {
     display: inline-block;

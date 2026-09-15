@@ -25,6 +25,8 @@ import ScratchAudio from '../../utils/ScratchAudio';
 import { getModelRefAs } from '../modelRegistry';
 import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, newDiv,
     newTextInput, getDocumentWidth, getDocumentHeight, setProps, globalx, applyResponsiveFrameScale} from '../../utils/lib';
+import { CURATED_FONTS } from '../../utils/FontList';
+import type { SjrFont } from '../../utils/FontList';
 
 // Named-form access: document.forms.projectname.myproject
 const namedForms = document.forms as unknown as Record<string, HTMLFormElement & Record<string, HTMLInputElement>>;
@@ -1086,12 +1088,16 @@ export default class UI {
         var clicky = newHTML('div', 'fontsizeText off', ta);
         clicky.setAttribute('id', 'fontsizebutton');
         clicky.onmousedown = UI.openFontSizeMenu;
+        var fontBtn = newHTML('div', 'fontfamilyText off', ta);
+        fontBtn.setAttribute('id', 'fontfamilybutton');
+        fontBtn.onmousedown = UI.openFontFamilyMenu;
         var col = newHTML('div', 'changecolorText off', ta);
         col.setAttribute('id', 'fontcolorbutton');
 
         col.onmousedown = UI.topLevelColor;
         UI.createColorMenu(tf);
         UI.createTextSizeMenu(tf);
+        UI.createFontFamilyMenu(tf);
     }
 
     static createColorMenu (div: HTMLElement) {
@@ -1169,6 +1175,12 @@ export default class UI {
         } else {
             gn('fontsizebutton')!.className = 'fontsizeText off';
             gn('textfontsizes')!.className = 'textuifont off';
+            if (gn('fontfamilybutton')) {
+                gn('fontfamilybutton')!.className = 'fontfamilyText off';
+            }
+            if (gn('textfontfamilies')) {
+                gn('textfontfamilies')!.className = 'textuifont textuifamilies off';
+            }
             var text = namedForms.activetextbox.textsprite;
             // Legacy: indexOf over the sprite object never matches (always -1)
             var indx = BlockSpecs.fontcolors.indexOf(text as unknown as string);
@@ -1220,6 +1232,12 @@ export default class UI {
         } else {
             gn('fontcolorbutton')!.className = 'changecolorText off';
             gn('textcolormenu')!.className = 'textuicolormenu off';
+            if (gn('fontfamilybutton')) {
+                gn('fontfamilybutton')!.className = 'fontfamilyText off';
+            }
+            if (gn('textfontfamilies')) {
+                gn('textfontfamilies')!.className = 'textuifont textuifamilies off';
+            }
             var text = namedForms.activetextbox.textsprite;
             var indx = BlockSpecs.fontsizes.indexOf(text!.fontsize!);
             if (indx > -1) {
@@ -1259,6 +1277,91 @@ export default class UI {
         setProps(namedForms.activetextbox.style, {
             height: ((t.fs! + 10) * scaleMultiplier) + 'px'
         });
+    }
+
+    static createFontFamilyMenu (div: HTMLElement) {
+        var spal = newHTML('div', 'textuifont textuifamilies off', div);
+        spal.setAttribute('id', 'textfontfamilies');
+        for (var i = 0; i < CURATED_FONTS.length; i++) {
+            var f = CURATED_FONTS[i];
+            var item = newHTML('div', 'textuifamily font-' + f.id, spal) as HTMLElement & { fontObj?: SjrFont };
+            item.fontObj = f;
+            var sf = newHTML('span', undefined, item);
+            sf.textContent = f.name;
+            sf.style.fontFamily = f.fontFamily;
+            item.onmousedown = UI.setFontFamily;
+        }
+        UI.setMenuFontFamily((window.Settings && (window.Settings as any).textSpriteFont) || 'roboto');
+    }
+
+    static openFontFamilyMenu (e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (gn('fontfamilybutton')!.className == 'fontfamilyText on') {
+            gn('fontfamilybutton')!.className = 'fontfamilyText off';
+            gn('textfontfamilies')!.className = 'textuifont textuifamilies off';
+        } else {
+            gn('fontsizebutton')!.className = 'fontsizeText off';
+            gn('textfontsizes')!.className = 'textuifont off';
+            gn('fontcolorbutton')!.className = 'changecolorText off';
+            gn('textcolormenu')!.className = 'textuicolormenu off';
+            var text = namedForms.activetextbox.textsprite;
+            var activeFamily = (text as any)?.fontFamily || (window.Settings && (window.Settings as any).textSpriteFont) || 'Roboto';
+            UI.setMenuFontFamily(activeFamily);
+            gn('textfontfamilies')!.className = 'textuifont textuifamilies on';
+            gn('fontfamilybutton')!.className = 'fontfamilyText on';
+        }
+    }
+
+    static setMenuFontFamily (fontIdOrFamily: string) {
+        var menu = gn('textfontfamilies');
+        if (!menu) return;
+        var target = (fontIdOrFamily || 'roboto').toLowerCase().trim();
+        var anyMatched = false;
+        for (var i = 0; i < menu.childElementCount; i++) {
+            var item = menu.childNodes[i] as HTMLElement & { fontObj?: SjrFont };
+            var f = item.fontObj;
+            var isMatch = false;
+            if (f) {
+                var fId = (f.id || '').toLowerCase();
+                var fName = (f.name || '').toLowerCase();
+                var fFamily = (f.fontFamily || '').toLowerCase();
+                isMatch = (fId === target || fFamily === target || fFamily.indexOf(target) >= 0 || target.indexOf(fId) >= 0 || target.indexOf(fName) >= 0);
+            }
+            if (isMatch) anyMatched = true;
+            item.className = 'textuifamily font-' + (f ? f.id : '') + (isMatch ? ' on' : ' off');
+        }
+        if (!anyMatched && menu.childElementCount > 0) {
+            var first = menu.childNodes[0] as HTMLElement & { fontObj?: SjrFont };
+            first.className = 'textuifamily font-' + (first.fontObj ? first.fontObj.id : 'roboto') + ' on';
+        }
+    }
+
+    static setFontFamily (e: MouseEvent) {
+        e.preventDefault();
+        e.stopPropagation();
+        var t: (HTMLElement & { fontObj?: SjrFont }) | null = e.target as HTMLElement;
+        if (t.nodeName === 'SPAN') {
+            t = t.parentNode as (HTMLElement & { fontObj?: SjrFont }) | null;
+        }
+        if (!t || !t.fontObj) return;
+        ScratchAudio.sndFX('tap.wav');
+        UI.setMenuFontFamily(t.fontObj.id);
+        var text = namedForms.activetextbox.textsprite;
+        if (text && text.setFontFamily) {
+            text.setFontFamily(t.fontObj.fontFamily);
+            var textOwnerPage = getModelRefAs<Page>(text.div!.parentNode as HTMLElement, 'page')!;
+            Undo.record({
+                action: 'edittext',
+                where: textOwnerPage.id,
+                who: text.id
+            });
+            ScratchJr.storyStart('UI.setFontFamily');
+            var ti = namedForms.activetextbox.typing;
+            if (ti) {
+                ti.style.fontFamily = t.fontObj.fontFamily;
+            }
+        }
     }
 
     ///////////////////////////////////////////

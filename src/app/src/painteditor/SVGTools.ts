@@ -239,6 +239,33 @@ export default class SVGTools {
         return shape;
     }
 
+    static addText (div: Element, x: number, y: number, text: string, fontSize?: number, fontFamily?: string, fill?: string) {
+        var shape = document.createElementNS(Paint.xmlns, 'text');
+        var fs = fontSize || 28;
+        var ff = fontFamily || 'Roboto, sans-serif';
+        var col = fill || Paint.fillcolor;
+        var attr: Record<string, string | number> = {
+            'x': x,
+            'y': y,
+            'font-size': fs,
+            'font-family': ff,
+            'font-weight': 'bold',
+            'dominant-baseline': 'hanging',
+            'text-anchor': 'start',
+            'fill': col,
+            'id': getIdFor('text'),
+            'opacity': 1
+        };
+        for (var val in attr) {
+            shape.setAttribute(val, String(attr[val]));
+        }
+        shape.textContent = text;
+        if (div) {
+            div.appendChild(shape);
+        }
+        return shape;
+    }
+
     static getPolyAttr (): Record<string, string | number> {
         var attr: Record<string, string | number> = {
             'fill': 'none',
@@ -562,6 +589,24 @@ export default class SVGTools {
             }
             box = SVGTools.getMinMax(list).expandBy(SVGTools.getPenWidthForm(elem));
             break;
+        case 'text':
+            try {
+                if (typeof (elem as SVGGraphicsElement).getBBox === 'function') {
+                    const bbox = (elem as SVGGraphicsElement).getBBox();
+                    if (bbox && (bbox.width > 0 || bbox.height > 0)) {
+                        box = new Rectangle(bbox.x, bbox.y, bbox.width, bbox.height);
+                        break;
+                    }
+                }
+            } catch (e) {
+                // fallback
+            }
+            var tx = Number(elem.getAttribute('x') || 0);
+            var ty = Number(elem.getAttribute('y') || 0);
+            var tfs = Number(elem.getAttribute('font-size') || 28);
+            var tlen = (elem.textContent || '').length;
+            box = new Rectangle(tx, ty, Math.max(24, tlen * (tfs * 0.6)), tfs * 1.2);
+            break;
         }
         return box;
     }
@@ -574,6 +619,10 @@ export default class SVGTools {
         case 'g': // give an approximantion
             var box = SVGTools.getBox(elem);
             area = box.width * box.height;
+            break;
+        case 'text':
+            var tbox = SVGTools.getBox(elem);
+            area = tbox.width * tbox.height;
             break;
         case 'circle':
             area = Math.PI * Number(elem.getAttribute('r')) * Number(elem.getAttribute('r'));

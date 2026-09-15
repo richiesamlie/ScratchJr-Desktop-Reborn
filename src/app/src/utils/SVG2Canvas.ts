@@ -492,11 +492,19 @@ export default class SVG2Canvas {
     }
 
     static drawText (kid: Element, ctx: DrawContext) {
-        ctx.font = kid.getAttribute('font-weight') + ' '
-            + kid.getAttribute('font-size') + 'px ' + kid.getAttribute('font-family');
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillText(kid.textContent!, 0, 0);
+        var fw = kid.getAttribute('font-weight') || 'bold';
+        var fs = kid.getAttribute('font-size') || '28';
+        var ff = kid.getAttribute('font-family') || 'Roboto, sans-serif';
+        var fill = kid.getAttribute('fill') || '#000000';
+        ctx.save();
+        ctx.font = fw + ' ' + fs + 'px ' + ff;
+        ctx.fillStyle = fill;
+        ctx.textAlign = (kid.getAttribute('text-anchor') as CanvasTextAlign) || 'left';
+        ctx.textBaseline = 'hanging';
+        var x = Number(kid.getAttribute('x') || 0);
+        var y = Number(kid.getAttribute('y') || 0);
+        ctx.fillText(kid.textContent || '', x, y);
+        ctx.restore();
     }
 
     static renderPath (spr: Element, ctx: DrawContext) {

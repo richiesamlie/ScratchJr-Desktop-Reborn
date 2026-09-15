@@ -336,6 +336,11 @@ export default class PaintAction {
     static triMouseDown () {
         currentShape = SVGTools.addTriangle(gn('layer1')! as Element, Paint.initialPoint.x, Paint.initialPoint.y);
     }
+    static textMouseDown (evt: PaintEvt) {
+        var pt = PaintAction.getScreenPt(evt);
+        var targetText = (target && target.tagName && target.tagName.toLowerCase() === 'text') ? (target as unknown as SVGTextElement) : undefined;
+        Paint.openTextEditor(pt, targetText);
+    }
 
     static grabMouseDown () {
         currentShape = target;
@@ -1346,7 +1351,8 @@ let cmdForMouseDown: Record<string, ModeHandler> = {
     'stamper': PaintAction.cloneMouseDown,
     'scissors': PaintAction.cloneMouseDown,
     'eraser': PaintAction.eraserMouseDown,
-    'camera': PaintAction.fingerDown
+    'camera': PaintAction.fingerDown,
+    'text': PaintAction.textMouseDown
 };
 
 let cmdForMouseMove: Record<string, ModeHandler> = {
@@ -1363,7 +1369,8 @@ let cmdForMouseMove: Record<string, ModeHandler> = {
     'stamper': PaintAction.cloneMouseMove,
     'scissors': PaintAction.cloneMouseMove,
     'eraser': PaintAction.eraserMouseMove,
-    'camera': PaintAction.fingerMove
+    'camera': PaintAction.fingerMove,
+    'text': PaintAction.ignoreEvt
 };
 
 let cmdForMouseUp: Record<string, ModeHandler> = {
@@ -1380,7 +1387,8 @@ let cmdForMouseUp: Record<string, ModeHandler> = {
     'stamper': PaintAction.ignoreEvt,
     'scissors': PaintAction.scissorsMouseUp,
     'eraser': PaintAction.eraserMouseUp,
-    'camera': PaintAction.cameraMouseUp
+    'camera': PaintAction.cameraMouseUp,
+    'text': PaintAction.ignoreEvt
 };
 
 let cmdForClick: Record<string, ModeHandler> = {
@@ -1397,5 +1405,6 @@ let cmdForClick: Record<string, ModeHandler> = {
     'stamper': PaintAction.cloneMouseUp,
     'scissors': PaintAction.ignoreEvt,
     'eraser': PaintAction.ignoreEvt,
-    'camera': PaintAction.ignoreEvt
+    'camera': PaintAction.ignoreEvt,
+    'text': PaintAction.ignoreEvt
 };

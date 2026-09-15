@@ -464,6 +464,7 @@ export default class Page {
             str: '',
             color: BlockSpecs.fontcolors[BlockSpecs.fontcolors.length - 1],
             fontsize: 36,
+            fontFamily: (window.Settings && (window.Settings as any).textSpriteFont) || 'Roboto',
             cx: 0,
             cy: (32 * 1.35 / 2),
             w: 0,

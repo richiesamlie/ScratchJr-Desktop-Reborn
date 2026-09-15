@@ -294,6 +294,8 @@ div.languagebuttons {
     margin: auto;
     margin-top: ${css_vh(4)};
     width: 90%;
+    display: flow-root;
+    clear: both;
 }
 
 div.localizationselect {
@@ -584,6 +586,43 @@ body:not([data-theme="classic"]) #topbar ul.reference > li {
     border: none;
 }
 
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+}
+
+:root:not([data-theme="classic"]) #topbar ul.reference,
+body:not([data-theme="classic"]) #topbar ul.reference {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    top: 0;
+    bottom: 0;
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav li.logo,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav li.logo {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    margin: 0;
+    border: none;
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .logo .logo-icon,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .logo .logo-icon {
+    width: ${css_vh(28.65)};
+    height: ${css_vh(8.2)};
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center left;
+    margin: 0 0 0 ${css_vh(1.0)};
+}
+
 :root:not([data-theme="classic"]) #topbar ul.topbar-nav li.home,
 :root:not([data-theme="classic"]) #topbar ul.topbar-nav li.help,
 :root:not([data-theme="classic"]) #topbar ul.reference li.gear,
@@ -592,38 +631,62 @@ body:not([data-theme="classic"]) #topbar ul.topbar-nav li.home,
 body:not([data-theme="classic"]) #topbar ul.topbar-nav li.help,
 body:not([data-theme="classic"]) #topbar ul.reference li.gear,
 body:not([data-theme="classic"]) #topbar ul.reference li.book {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: var(--sjr-radius-md);
-    margin: ${css_vh(0.8)} ${css_vh(0.6)};
-    height: ${css_vh(8.8)};
-    line-height: ${css_vh(8.8)};
+    width: ${css_vh(14.0)};
+    height: ${css_vh(8.4)};
+    margin: 0 ${css_vh(0.5)};
     box-sizing: border-box;
+    cursor: pointer;
     transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), background-color var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .home .home-icon,
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .help .help-icon,
+:root:not([data-theme="classic"]) #topbar ul.reference .gear .gear-icon,
+:root:not([data-theme="classic"]) #topbar ul.reference .book .book-icon,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .home .home-icon,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .help .help-icon,
+body:not([data-theme="classic"]) #topbar ul.reference .gear .gear-icon,
+body:not([data-theme="classic"]) #topbar ul.reference .book .book-icon {
+    display: block;
+    width: ${css_vh(9.8)};
+    height: ${css_vh(7.4)};
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    padding: 0;
+    margin: 0;
+}
+
+/* Optical alignment adjustment: house.svg artwork is drawn slightly higher in its viewBox */
+:root:not([data-theme="classic"]) #topbar ul.topbar-nav .home .home-icon,
+body:not([data-theme="classic"]) #topbar ul.topbar-nav .home .home-icon {
+    transform: translateY(${css_vh(0.38)});
 }
 
 :root:not([data-theme="classic"]) #topbar ul.topbar-nav .home.on,
 body:not([data-theme="classic"]) #topbar ul.topbar-nav .home.on {
     background: var(--sjr-accent-warm);
-    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark);
-    transform: translateY(-2px);
+    box-shadow: 0 3px 0 var(--sjr-accent-warm-dark);
 }
 
 :root:not([data-theme="classic"]) #topbar ul.topbar-nav .home.off:hover,
 body:not([data-theme="classic"]) #topbar ul.topbar-nav .home.off:hover {
     background: var(--sjr-border-light);
-    transform: translateY(-1px);
 }
 
 :root:not([data-theme="classic"]) #topbar ul.topbar-nav .help.on,
 body:not([data-theme="classic"]) #topbar ul.topbar-nav .help.on {
     background: var(--sjr-accent-primary);
-    box-shadow: 0 4px 0 var(--sjr-accent-primary-dark);
-    transform: translateY(-2px);
+    box-shadow: 0 3px 0 var(--sjr-accent-primary-dark);
 }
 
 :root:not([data-theme="classic"]) #topbar ul.topbar-nav .help.off:hover,
 body:not([data-theme="classic"]) #topbar ul.topbar-nav .help.off:hover {
     background: var(--sjr-border-light);
-    transform: translateY(-1px);
 }
 
 :root:not([data-theme="classic"]) #topbar ul.reference .gear.on,
@@ -631,8 +694,7 @@ body:not([data-theme="classic"]) #topbar ul.topbar-nav .help.off:hover {
 body:not([data-theme="classic"]) #topbar ul.reference .gear.on,
 body:not([data-theme="classic"]) #topbar ul.reference .book.on {
     background: var(--sjr-bg-primary);
-    box-shadow: 0 4px 0 var(--sjr-card-depth);
-    transform: translateY(-2px);
+    box-shadow: 0 3px 0 var(--sjr-card-depth);
 }
 
 :root:not([data-theme="classic"]) #topbar ul.reference .gear.off:hover,
@@ -640,7 +702,6 @@ body:not([data-theme="classic"]) #topbar ul.reference .book.on {
 body:not([data-theme="classic"]) #topbar ul.reference .gear.off:hover,
 body:not([data-theme="classic"]) #topbar ul.reference .book.off:hover {
     background: var(--sjr-border-light);
-    transform: translateY(-1px);
 }
 
 :root:not([data-theme="classic"]) .topsection.home > div.tabtitle,

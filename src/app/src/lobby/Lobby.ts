@@ -217,6 +217,82 @@ export default class Lobby {
                 window.location.href = '?place=gear';
             };
         }
+
+        // Theme settings
+        var themeTitle = newHTML('h1', 'localizationtitle', div);
+        themeTitle.textContent = Localization.localizeWithFallback('THEME', 'Theme');
+
+        var themeButtons = newHTML('div', 'languagebuttons theme-settings-buttons', div);
+        themeButtons.setAttribute('role', 'radiogroup');
+        themeButtons.setAttribute('aria-label', Localization.localizeWithFallback('THEME', 'Theme'));
+
+        var themes: Array<{id: string, labelKey: string, fallback: string}> = [
+            { id: 'light', labelKey: 'THEME_LIGHT', fallback: '☀️ Light' },
+            { id: 'dark', labelKey: 'THEME_DARK', fallback: '🌙 Dark' },
+            { id: 'classic', labelKey: 'THEME_CLASSIC', fallback: '🎨 Classic' }
+        ];
+
+        var defaultTheme = (window.Settings && (window.Settings as any).defaultTheme) || 'light';
+        var currentTheme = defaultTheme;
+        try {
+            if (typeof localStorage !== 'undefined') {
+                var storedTheme = localStorage.getItem('scratchjr-theme');
+                if (storedTheme) {
+                    currentTheme = storedTheme;
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
+        var themeOptionButtons: HTMLElement[] = [];
+        var applyLobbyTheme = function (themeId: string) {
+            ScratchAudio.sndFX('tap.wav');
+            currentTheme = themeId;
+            try {
+                localStorage.setItem('scratchjr-theme', themeId);
+            } catch (e) {
+                // ignore
+            }
+            if (typeof document !== 'undefined') {
+                if (document.documentElement) {
+                    document.documentElement.dataset.theme = themeId;
+                }
+                if (document.body) {
+                    document.body.dataset.theme = themeId;
+                }
+                const fr = document.getElementById('frame');
+                if (fr) {
+                    fr.dataset.theme = themeId;
+                }
+            }
+            themeOptionButtons.forEach(function (b, idx) {
+                var isSelected = themes[idx].id === themeId;
+                b.className = 'localizationselect' + (isSelected ? ' selected' : '');
+                b.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+            });
+        };
+
+        themes.forEach(function (t) {
+            var isSelected = currentTheme === t.id;
+            var btn = newHTML('div', 'localizationselect' + (isSelected ? ' selected' : ''), themeButtons);
+            btn.textContent = Localization.localizeWithFallback(t.labelKey, t.fallback);
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+            btn.setAttribute('tabindex', '0');
+
+            btn.onmousedown = function (e: MouseEvent) {
+                e.preventDefault();
+                applyLobbyTheme(t.id);
+            };
+            btn.onkeydown = function (e: KeyboardEvent) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    applyLobbyTheme(t.id);
+                }
+            };
+            themeOptionButtons.push(btn);
+        });
     }
 
     static async setSubMenu (page: string) {

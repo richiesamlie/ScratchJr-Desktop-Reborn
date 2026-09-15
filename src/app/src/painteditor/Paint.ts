@@ -25,6 +25,7 @@ import Transform from './Transform';
 import Vector from '../geom/Vector';
 import type {Point} from '../geom/Vector';
 import {gn, newHTML, setCanvasSize, getIdFor, setProps, hitRect, frame, utf8ToBase64} from '../utils/lib';
+import { CURATED_FONTS } from '../utils/FontList';
 
 // The costume name input carries a local `firstTime` expando flag (see nameFocus).
 interface PaintNameInput extends HTMLInputElement {
@@ -752,7 +753,7 @@ export default class Paint {
     static setupEditPalette (pal: HTMLElement) {
         var section = newHTML('div', 'section', pal);
         section.setAttribute('id', 'painttools');
-        var list = ['path', 'line', 'ellipse', 'rect', 'tri', 'star'];
+        var list = ['path', 'line', 'ellipse', 'rect', 'tri', 'star', 'text'];
         var i = 0;
         for (i = 0; i < list.length; i++) {
             var but = newHTML('div', 'element off', section);
@@ -975,6 +976,170 @@ export default class Paint {
             captureContainer.removeChild(gn('capture')!);
             captureContainerParent.removeChild(gn('capture-container')!);
         }
+    }
+
+    //////////////////////////////////
+    // Text Tool Editor
+    //////////////////////////////////
+
+    static openTextEditor (pt: Point, targetElem?: SVGTextElement) {
+        const existingDialog = gn('painttextdialog');
+        if (existingDialog && existingDialog.parentNode) {
+            existingDialog.parentNode.removeChild(existingDialog);
+        }
+        const existingBackdrop = gn('painttextbackdrop');
+        if (existingBackdrop && existingBackdrop.parentNode) {
+            existingBackdrop.parentNode.removeChild(existingBackdrop);
+        }
+
+        const bd = newHTML('div', 'modal-backdrop fade dark paint-text-backdrop', paintFrame!);
+        bd.setAttribute('id', 'painttextbackdrop');
+        setProps(bd.style, {
+            display: 'flex',
+            position: 'absolute',
+            top: '0px',
+            left: '0px',
+            width: '100%',
+            height: '100%',
+            zIndex: '15000',
+            backgroundColor: 'rgba(20, 35, 60, 0.55)',
+            alignItems: 'center',
+            justifyContent: 'center'
+        });
+
+        const dialog = newHTML('div', 'painttextdialog', bd);
+        dialog.setAttribute('id', 'painttextdialog');
+        dialog.onmousedown = (e: MouseEvent) => { e.stopPropagation(); };
+
+        const title = newHTML('h2', 'painttexttitle', dialog);
+        title.textContent = targetElem ? 'Edit Text' : 'Add Text';
+
+        const inputWrap = newHTML('div', 'painttextinputwrap', dialog);
+        const input = newHTML('input', 'painttextinput', inputWrap) as HTMLInputElement;
+        input.type = 'text';
+        input.maxLength = 30;
+        input.value = targetElem ? (targetElem.textContent || '') : '';
+        input.placeholder = 'Type here...';
+
+        let selectedFont = targetElem ? (targetElem.getAttribute('font-family') || CURATED_FONTS[0].fontFamily) : CURATED_FONTS[0].fontFamily;
+        let selectedSize = targetElem ? Number(targetElem.getAttribute('font-size') || 32) : 32;
+
+        input.style.fontFamily = selectedFont;
+        input.style.color = targetElem ? (targetElem.getAttribute('fill') || fillcolor) : fillcolor;
+
+        // Font Family Selector
+        const fontLabel = newHTML('div', 'painttextsectionlabel', dialog);
+        fontLabel.textContent = 'Font:';
+        const fontPicker = newHTML('div', 'painttextfontpicker', dialog);
+        const fontButtons: HTMLElement[] = [];
+        CURATED_FONTS.forEach((f) => {
+            const isFSelected = selectedFont.indexOf(f.id) >= 0 || selectedFont.indexOf(f.name) >= 0 || selectedFont === f.fontFamily;
+            const fbtn = newHTML('button', 'paintfontbtn' + (isFSelected ? ' selected' : ''), fontPicker);
+            fbtn.setAttribute('type', 'button');
+            fbtn.textContent = f.name;
+            fbtn.style.fontFamily = f.fontFamily;
+            fbtn.onclick = (e) => {
+                e.preventDefault();
+                selectedFont = f.fontFamily;
+                input.style.fontFamily = selectedFont;
+                fontButtons.forEach((b) => b.classList.remove('selected'));
+                fbtn.classList.add('selected');
+            };
+            fontButtons.push(fbtn);
+        });
+
+        // Font Size Selector
+        const sizeLabel = newHTML('div', 'painttextsectionlabel', dialog);
+        sizeLabel.textContent = 'Size:';
+        const sizePicker = newHTML('div', 'painttextsizepicker', dialog);
+        const sizes = [
+            { label: 'Small', size: 22 },
+            { label: 'Medium', size: 34 },
+            { label: 'Large', size: 48 }
+        ];
+        const sizeButtons: HTMLElement[] = [];
+        sizes.forEach((s) => {
+            const isSSelected = Math.abs(selectedSize - s.size) < 8;
+            const sbtn = newHTML('button', 'paintsizebtn' + (isSSelected ? ' selected' : ''), sizePicker);
+            sbtn.setAttribute('type', 'button');
+            sbtn.textContent = s.label;
+            sbtn.onclick = (e) => {
+                e.preventDefault();
+                selectedSize = s.size;
+                sizeButtons.forEach((b) => b.classList.remove('selected'));
+                sbtn.classList.add('selected');
+            };
+            sizeButtons.push(sbtn);
+        });
+
+        // Action Buttons (OK / Cancel)
+        const actions = newHTML('div', 'painttextactions', dialog);
+        const cancelBtn = newHTML('button', 'painttextcancel', actions);
+        cancelBtn.setAttribute('type', 'button');
+        cancelBtn.textContent = 'Cancel';
+
+        const okBtn = newHTML('button', 'painttextok', actions);
+        okBtn.setAttribute('type', 'button');
+        okBtn.textContent = 'Done';
+
+        const closeDialog = () => {
+            if (bd.parentNode) {
+                bd.parentNode.removeChild(bd);
+            }
+        };
+
+        cancelBtn.onclick = (e) => {
+            e.preventDefault();
+            ScratchAudio.sndFX('tap.wav');
+            closeDialog();
+        };
+
+        const commitText = () => {
+            const val = input.value.trim();
+            if (val.length > 0) {
+                PaintUndo.record();
+                if (targetElem) {
+                    targetElem.textContent = val;
+                    targetElem.setAttribute('font-family', selectedFont);
+                    targetElem.setAttribute('font-size', String(selectedSize));
+                    targetElem.setAttribute('fill', fillcolor);
+                } else {
+                    const textNode = SVGTools.addText(gn('layer1')!, pt.x, pt.y, val, selectedSize, selectedFont, fillcolor);
+                    if (textNode) {
+                        (textNode as unknown as SVGElement).onmousedown = Paint.detectGesture;
+                    }
+                }
+                ScratchAudio.sndFX('tap.wav');
+                Paint.selectButton('select');
+            }
+            closeDialog();
+        };
+
+        okBtn.onclick = (e) => {
+            e.preventDefault();
+            commitText();
+        };
+
+        input.onkeydown = (e: KeyboardEvent) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                commitText();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeDialog();
+            }
+        };
+
+        bd.onmousedown = (e: MouseEvent) => {
+            if (e.target === bd) {
+                closeDialog();
+            }
+        };
+
+        setTimeout(() => {
+            input.focus();
+            input.select();
+        }, 50);
     }
 
     //////////////////////////////////

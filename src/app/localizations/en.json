@@ -404,5 +404,10 @@
     "LIBRARY_SEARCH_PLACEHOLDER": "Search...",
     "LIBRARY_NO_RESULTS": "No items found",
     "OPEN_PROJECT_TITLE": "Open",
-    "MULTI_TAB_NOTICE": "ScratchJr is already open in another tab. This window is in safe read-only mode."
+    "MULTI_TAB_NOTICE": "ScratchJr is already open in another tab. This window is in safe read-only mode.",
+    "THEME": "Theme",
+    "THEME_LIGHT": "☀️ Light",
+    "THEME_DARK": "🌙 Dark",
+    "THEME_CLASSIC": "🎨 Classic",
+    "FONT_FAMILY": "Font"
 }

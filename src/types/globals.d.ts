@@ -264,8 +264,10 @@ interface HTMLFormElement {
         id?: string;
         div?: HTMLElement;
         fontsize?: number;
+        fontFamily?: string;
         setColor?(c: string): void;
         setFontSize?(n: number): void;
+        setFontFamily?(f: string): void;
     } | null;
 }
 

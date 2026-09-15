@@ -3,6 +3,31 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.7.0] - 2026-09-15
+
+**Minor Release: Curated Built-in Fonts, Paint Editor Vector Text Tool, Lobby Settings Theme Selector, and UI Alignment Polish.**
+
+### Added
+- **Curated Built-in Font Registry (`src/app/src/utils/FontList.ts`)**:
+  - Curated 5 child-friendly, legibility-focused font families: Modern Sans (`Roboto`), Crisp Sans (`Verdana`), Playful (`Comic Neue`), Storybook Serif (`Georgia`), and Easy Read (`OpenDyslexic`).
+  - Font resolution utilities with safe fallback to `Roboto` or system default.
+- **Stage Text Tool Font Picker (`src/app/src/editor/ui/UI.ts`)**:
+  - Added font family dropdown menu to the stage text creation / editing toolbar next to text size controls.
+  - Stage text sprites (`Sprite.ts`) now persist `fontFamily` in project data (`.sjr`) while maintaining 100% backward compatibility with legacy projects.
+  - Custom ScratchJr tactile vector button icons (`FontFamilyOff.svg` and `FontFamilyOn.svg`) styled to match the hand-drawn `Aa` aesthetic.
+- **Paint Editor Vector Text Tool (`src/app/src/painteditor/Paint.ts`)**:
+  - Added dedicated Vector Text Tool to the Paint Editor left palette with tactile `textOn.svg` / `textOff.svg` icons.
+  - Interactive modal dialog to input text, select font family, and adjust font size.
+  - Text rendered as native vector `<text>` SVG elements supporting move, rotate, duplicate, deletion, and full canvas rasterization (`SVG2Canvas.ts`).
+- **Lobby Settings Theme Selector (`src/app/src/lobby/Lobby.ts`)**:
+  - Integrated theme selector (☀️ Light, 🌙 Dark, 🎨 Classic) into the Lobby gear settings page with accessible WAI-ARIA `radiogroup`, instant UI switching, and persistence to `localStorage`.
+
+### Fixed
+- **Stage Text Toolbar Layout (`src/app/css/editorstage.css`)**:
+  - Restructured text controls toolbar with balanced 3-button spacing and eliminated font dropdown overlapping with stage elements.
+- **Lobby Topbar Icon Alignment (`src/app/css/lobby.css`)**:
+  - Corrected vertical centering and subpixel alignment of navigation buttons (Home, Question, Gear, and Book) across Light and Dark themes.
+
 ## [v2.6.0] - 2026-09-14
 
 **Minor Release: Random Wait and Touching Character Blocks, Reference-Safe Undo/Copying, Modernized In-App Reborn Blocks Guide, and 12-Language Localization.**

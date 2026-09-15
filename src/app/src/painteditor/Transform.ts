@@ -107,6 +107,7 @@ export default class Transform {
             break;
         case 'image':
         case 'rect':
+        case 'text':
             var corner = Transform.point(Number(elem.getAttribute('x')), Number(elem.getAttribute('y')), xform.matrix as SVGMatrix);
             elem.setAttributeNS(null, 'x', String(corner.x));
             elem.setAttributeNS(null, 'y', String(corner.y));
@@ -418,6 +419,7 @@ export default class Transform {
             break;
         case 'image':
         case 'rect':
+        case 'text':
             c = SVGTools.getBoxCenter(node);
             p = Transform.point(c.x, c.y, erot.matrix);
             delta = Vector.diff(p, c);
