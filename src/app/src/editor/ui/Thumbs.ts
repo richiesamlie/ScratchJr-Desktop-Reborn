@@ -1,7 +1,6 @@
 //////////////////////////////////////
 //   Pages
 /////////////////////////////////////
-
 import ScratchJr from '../ScratchJr';
 import Palette from './Palette';
 import Page from '../engine/Page';

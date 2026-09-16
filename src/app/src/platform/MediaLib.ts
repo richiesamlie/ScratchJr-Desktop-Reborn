@@ -1,4 +1,4 @@
-import IO from './IO.js';
+import PlatformBridge from './PlatformBridge';
 import Localization from '../utils/Localization';
 
 interface MediaItem {
@@ -44,18 +44,20 @@ export default class MediaLib {
     }
 
     static loadMediaLib (root: string, whenDone: () => void) {
-        IO.requestFromServer(root + 'media.json', (result: string) => {
-            let parsedResult = JSON.parse(result);
-            path = parsedResult.path;
-            samples = parsedResult.samples;
-            sprites = parsedResult.sprites;
-            backgrounds = parsedResult.backgrounds;
-            sounds = parsedResult.sounds;
+        PlatformBridge.waitForInterface(function () {
+            PlatformBridge.gettextresource(root + 'media.json', (result: string) => {
+                let parsedResult = JSON.parse(result);
+                path = parsedResult.path;
+                samples = parsedResult.samples;
+                sprites = parsedResult.sprites;
+                backgrounds = parsedResult.backgrounds;
+                sounds = parsedResult.sounds;
 
-            MediaLib.localizeMediaNames();
-            MediaLib.generateKeys();
+                MediaLib.localizeMediaNames();
+                MediaLib.generateKeys();
 
-            whenDone();
+                whenDone();
+            });
         });
     }
 

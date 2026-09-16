@@ -12,9 +12,8 @@ import Home from './Home.js';
 import Samples from './Samples.js';
 
 import {loadPage} from '../../appEntry.js';
+import { LobbyState } from './LobbyState.js';
 
-let version: string;
-let busy = false;
 let errorTimer: number | null = null;
 const host = 'inapp/';
 let currentPage: string | null = null;
@@ -22,11 +21,15 @@ let currentPage: string | null = null;
 export default class Lobby {
     // Getters/setters for properties used in other classes
     static get version () {
-        return version;
+        return LobbyState.version;
+    }
+
+    static get busy () {
+        return LobbyState.busy;
     }
 
     static set busy (newBusy: boolean) {
-        busy = newBusy;
+        LobbyState.busy = newBusy;
     }
 
     static get errorTimer () {
@@ -35,7 +38,7 @@ export default class Lobby {
 
     static appinit (v: string) {
         libInit();
-        version = v;
+        LobbyState.version = v;
         var urlvars = getUrlVars();
         var place = urlvars.place;
         ScratchAudio.addSound('sounds/', 'tap.wav', ScratchAudio.uiSounds);
@@ -101,7 +104,7 @@ export default class Lobby {
     }
 
     static setPage (page: string) {
-        if (busy) {
+        if (LobbyState.busy) {
             return;
         }
         if (gn('hometab')!.className == 'home on') {
@@ -125,12 +128,12 @@ export default class Lobby {
         }
         switch (page) {
         case 'home':
-            busy = true;
+            LobbyState.busy = true;
             ScratchAudio.sndFX('tap.wav');
             Lobby.loadProjects(div);
             break;
         case 'help':
-            busy = true;
+            LobbyState.busy = true;
             ScratchAudio.sndFX('tap.wav');
             Lobby.loadSamples(div);
             break;
@@ -296,11 +299,11 @@ export default class Lobby {
     }
 
     static async setSubMenu (page: string) {
-        if (busy) {
+        if (LobbyState.busy) {
             return;
         }
         document.onmousemove = null;
-        busy = true;
+        LobbyState.busy = true;
         ScratchAudio.sndFX('tap.wav');
         Lobby.selectSubButton(page);
         document.documentElement.scrollTop = 0;
@@ -386,7 +389,7 @@ export default class Lobby {
         	loadPage(loadedSubpage.id); // eslint-disable-line no-undef
         }
         
-        busy = false;
+        LobbyState.busy = false;
         
    }
 
@@ -404,7 +407,7 @@ export default class Lobby {
         var ht = newHTML('div', 'errormsg', div);
         var h = newHTML('h1', undefined, ht);
         h.textContent = str;
-        busy = false;
+        LobbyState.busy = false;
     }
 
     static missing (page: string, p: HTMLElement) {
@@ -414,7 +417,7 @@ export default class Lobby {
         div = newHTML('div', 'errormsg', div);
         var h = newHTML('h1', undefined, div);
         h.textContent = page.toUpperCase() + ': UNDER CONSTRUCTION';
-        busy = false;
+        LobbyState.busy = false;
     }
 
     static goHome () {

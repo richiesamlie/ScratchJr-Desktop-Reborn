@@ -4,8 +4,8 @@
 // A nice refactor would be to split them back into the "modules," but that will likely involve
 // some serious code changes - determining where the relevant Path.X are called, if any shared
 // data needs to be moved, etc. -TM
-
-import ScratchJr from '../editor/ScratchJr';
+import PaintCanvas from './PaintCanvas';
+import GeometryMath from '../geom/GeometryMath';
 import SVG2Canvas from '../utils/SVG2Canvas';
 
 function isCoarseInput (): boolean {
@@ -79,101 +79,19 @@ export default class Path {
     }
 
     static smoothPoints (points: Point[]) {
-        var n = points.length;
-        var plist: Point[] = [];
-        var interval = 3;
-        var i;
-        for (i = 0; i < (n - 1); i++) {
-            var ax = 0;
-            var ay = 0;
-            for (var j = -interval; j <= interval; j++) {
-                var nj = Math.max(0, i + j);
-                nj = Math.min(nj, n - 1);
-                ax += points[nj].x;
-                ay += points[nj].y;
-            }
-            ax /= ((interval * 2) + 1);
-            ay /= ((interval * 2) + 1);
-            plist.push({
-                x: ax,
-                y: ay
-            });
-        }
-        plist.push(points[n - 1]);
-        return plist;
+        return GeometryMath.smoothPoints(points);
     }
 
     static addPoints (points: Point[]) {
-        var it = 0;
-        var b = true;
-        var result: [boolean, Point[]] | undefined;
-        while (b) {
-            result = Path.fillWithPoints(points);
-            b = result![0];
-            it++;
-            if (it > 10) {
-                return result![1];
-            }
-        }
-        return result![1];
+        return GeometryMath.addPoints(points);
     }
 
     static fillWithPoints (points: Point[]): [boolean, Point[]] {
-        var n = points.length;
-        var i = 1;
-        var res = false;
-        var plist = [points[0]];
-        while (i < n - 1) {
-            var here = points[i];
-            var after = points[i + 1];
-            var l2 = Vector.len(Vector.diff(after, here));
-            plist.push(points[i]);
-            if (l2 > 5) {
-                var mp = Vector.mid(here, after);
-                plist.push({
-                    x: mp.x,
-                    y: mp.y
-                });
-                res = true;
-            }
-            i++;
-        }
-        plist.push(points[n - 1]);
-        return [res, plist];
+        return GeometryMath.fillWithPoints(points);
     }
 
     static deletePoints (points: Point[]) {
-        var n = points.length;
-        var i = 1;
-        var j = 0;
-        var plist: Point[] = [];
-        plist.push(points[0]);
-        var dist = isCoarseInput() ? 40 : 30;
-        var before, here, after;
-        while (i < n - 1) {
-            before = points[j];
-            here = points[i];
-            after = points[i + 1];
-            var l1 = Vector.diff(before, here);
-            var l2 = Vector.diff(after, here);
-            var div = Vector.len(l1) * Vector.len(l2);
-            if (div == 0) {
-                div = 0.01;
-            }
-            var factor = Vector.dot(l1, l2) / div;
-            if ((factor > -0.9) || (Vector.len(l2) > dist) || (Vector.len(l1) > dist)) {
-                plist.push(points[i]);
-                j = i;
-            }
-            i++;
-        }
-        before = points[n - 2];
-        here = points[n - 1];
-        if ((plist.length > 2) && (Vector.len(Vector.diff(before, here)) < 3)) {
-            plist.pop();
-        }
-        plist.push(points[n - 1]);
-        return plist;
+        return GeometryMath.deletePoints(points, isCoarseInput() ? 40 : 30);
     }
 
     static drawBezier (pointslist: Point[]) {
@@ -223,32 +141,7 @@ export default class Path {
     }
 
     static getControlPoint (before: Point, here: Point, after: Point) {
-        // needs more work on the fudge factor
-        var l1 = Vector.len(Vector.diff(before, here));
-        var l2 = Vector.len(Vector.diff(here, after));
-        var l3 = Vector.len(Vector.diff(before, after));
-        var l;
-        if ((l1 + l2) == 0) {
-            l = 0;
-        } else {
-            l = l3 / (l1 + l2);
-        }
-        var min = Math.min(l1, l2);
-        //if ((l1 + l2) >  3 * l3)	l = 0;
-        var beforev = Vector.diff(before, here);
-        var afterv = Vector.diff(after, here);
-        var bisect = Vector.sum(Vector.norm(beforev), Vector.norm(afterv));
-        var perp = Vector.perp(bisect);
-        if (Vector.dot(perp, afterv) < 0) {
-            perp = Vector.neg(perp);
-        }
-        if ((bisect.x == 0) || (bisect.y == 0)) {
-            var kappa = (Math.sqrt(2) - 1) / 3 * 4;
-            perp = Vector.norm(perp);
-            var lx = Vector.dot(Vector.diff(here, before), perp);
-            return Vector.diff(here, Vector.scale(perp, lx * kappa));
-        }
-        return Vector.diff(here, Vector.scale(perp, l * l * min * 0.666));
+        return GeometryMath.getControlPoint(before, here, after);
     }
 
     static curveSeg (before: Point, here: Point, after: Point) {
@@ -802,15 +695,12 @@ export default class Path {
         var rot = Transform.extract(shape!, 4);
         var newpt = Transform.point(Paint.initialPoint.x, Paint.initialPoint.y, rot.matrix.inverse());
         setCanvasSize(
-            ScratchJr.workingCanvas,
+            PaintCanvas.workingCanvas,
             Number(Paint.root.getAttribute('width')) * Paint.currentZoom,
             Number(Paint.root.getAttribute('height')) * Paint.currentZoom
         );
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
-        // uncomment for testing offscreen rendering for hit test
-        //	Paint.root.parentNode.appendChild(ScratchJr.workingCanvas);
-        //	setProps(ScratchJr.workingCanvas.style, {position: "absolute", left: "0px", top: "0px"});
-        ctx.clearRect(0, 0, ScratchJr.workingCanvas.width, ScratchJr.workingCanvas.height);
+        var ctx = PaintCanvas.workingCanvas.getContext('2d')!;
+        ctx.clearRect(0, 0, PaintCanvas.workingCanvas.width, PaintCanvas.workingCanvas.height);
         ctx.fillStyle = 'rgba(0,0,0,0)';
         ctx.lineWidth = Ghost.linemask;
         ctx.strokeStyle = '#ff00FF';
@@ -987,9 +877,9 @@ export default class Path {
     static getPointIndex (shape: Element, pt: Point) {
         var rot = Transform.extract(shape, 4);
         var newpt = Transform.point(pt.x, pt.y, rot.matrix.inverse());
-        setCanvasSize(ScratchJr.workingCanvas, Number(Paint.root.getAttribute('width')), Number(Paint.root.getAttribute('height')));
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
-        ctx.clearRect(0, 0, ScratchJr.workingCanvas.width, ScratchJr.workingCanvas.height);
+        setCanvasSize(PaintCanvas.workingCanvas, Number(Paint.root.getAttribute('width')), Number(Paint.root.getAttribute('height')));
+        var ctx = PaintCanvas.workingCanvas.getContext('2d')!;
+        ctx.clearRect(0, 0, PaintCanvas.workingCanvas.width, PaintCanvas.workingCanvas.height);
         ctx.fillStyle = 'rgba(0,0,0,0)';
         ctx.lineWidth = Ghost.linemask;
         ctx.strokeStyle = '#ff00FF';
@@ -1256,19 +1146,7 @@ export default class Path {
     }
 
     static atEdge (pt: Point) {
-        if (pt.x <= -10) {
-            return true;
-        }
-        if (pt.x >= 490) {
-            return true;
-        }
-        if (pt.y >= 370) {
-            return true;
-        }
-        if (pt.y <= -10) {
-            return true;
-        }
-        return false;
+        return GeometryMath.atEdge(pt);
     }
 
     static endsSameSide (shape: Element) {
@@ -1331,16 +1209,7 @@ export default class Path {
     }
 
     static withinBounds (box: {x: number; y: number; width: number; height: number}, box2: {x: number; y: number; width: number; height: number}) {
-        if ((box.x <= box2.x) && ((box.width + box.x) >= box2.width)) {
-            return false;
-        }
-        if (box.y > box2.y) {
-            return true;
-        }
-        if ((box.height + box.y) < box2.height) {
-            return true;
-        }
-        return false;
+        return GeometryMath.withinBounds(box, box2);
     }
 
     static strechEdges (shape: Element) {
@@ -1589,98 +1458,19 @@ export default class Path {
     }
 
     static getTurnType (list: Point[]) {
-        if (list.length < 3) {
-            return 'colinear';
-        }
-        var limitpoints = Path.getMinMaxPoints(list);
-        var a = Path.findGreaterThanIndex(limitpoints, -1);
-        if (!a) {
-            return 'colinear';
-        }
-        var b = Path.findGreaterThanIndex(limitpoints, a.index);
-        if (!b) {
-            return 'colinear';
-        }
-        var c = Path.findGreaterThanIndex(limitpoints, b.index);
-        if (!c) {
-            return 'colinear';
-        }
-        return Path.triangleAreaDir(a, b, c);
+        return GeometryMath.getTurnType(list);
     }
 
     static findGreaterThanIndex (list: Array<{type: string; x: number; y: number; index: number} | number>, min: number) {
-        var lastmin = 99999999;
-        var pos: {type: string; x: number; y: number; index: number} | null = null;
-        for (var i = 0; i < list.length; i++) {
-            var item = list[i] as {type: string; x: number; y: number; index: number};
-            if ((item.index > min) && (item.index < lastmin)) {
-                lastmin = item.index;
-                pos = item;
-            }
-        }
-        return pos;
+        return GeometryMath.findGreaterThanIndex(list, min);
     }
 
     static triangleAreaDir (a: {type: string; x: number; y: number; index: number}, b: {type: string; x: number; y: number; index: number}, c: {type: string; x: number; y: number; index: number}) {
-        var area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-        if (area > 0) {
-            return 'clockwise';
-        }
-        if (area < 0) {
-            return 'counterclockwise';
-        }
-        return 'colinear';
+        return GeometryMath.triangleAreaDir(a, b, c);
     }
 
     static getMinMaxPoints (list: Point[]) {
-        var res: Array<{ type: string; x: number; y: number; index: number } | number> = [0, 0, 0, 0];
-        if (list.length < 1) {
-            return res;
-        }
-        var minx = 9999999;
-        var miny = 9999999;
-        var maxx = -9999999;
-        var maxy = -9999999;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].x < minx) {
-                minx = list[i].x;
-                res[0] = {
-                    type: 'minx',
-                    x: list[i].x,
-                    y: list[i].y,
-                    index: i
-                };
-            }
-            if (list[i].x > maxx) {
-                maxx = list[i].x;
-                res[2] = {
-                    type: 'maxx',
-                    x: list[i].x,
-                    y: list[i].y,
-                    index: i
-                };
-            }
-
-            if (list[i].y < miny) {
-                miny = list[i].y;
-                res[1] = {
-                    type: 'miny',
-                    x: list[i].x,
-                    y: list[i].y,
-                    index: i
-                };
-            }
-            if (list[i].y > maxy) {
-                maxy = list[i].y;
-                res[3] = {
-                    type: 'maxy',
-                    x: list[i].x,
-                    y: list[i].y,
-                    index: i
-                };
-            }
-        }
-        return res;
+        return GeometryMath.getMinMaxPoints(list);
     }
 
     ////////////////////////////////////////////
@@ -1928,62 +1718,7 @@ export default class Path {
     ////////////////////////////////////////////////////////////
 
     static getBezierPoints (points: (string | number)[]) {
-        if (points.length < 8) {
-            return [];
-        }
-        var p1x: number, p2x: number, p3x: number, p4x: number, p1y: number, p2y: number, p3y: number, p4y: number;
-        p1x = points[0] as number;
-        p1y = points[1] as number;
-        p2x = points[2] as number;
-        p2y = points[3] as number;
-        p3x = points[4] as number;
-        p3y = points[5] as number;
-        p4x = points[6] as number;
-        p4y = points[7] as number;
-
-        var x, y, t;
-
-        var xl = p1x - 1;
-        var yl = p1y - 1;
-        t = 0;
-        var f = 1;
-
-        var k = 1.1;
-        //Array to hold all points on the bezier curve
-        var curvePoints: Point[] = [];
-
-        while ((t <= 1) && (t >= 0)) { // t goes from 0 to 1
-            x = 0;
-            y = 0;
-            x = (1 - t) * (1 - t) * (1 - t) * p1x + 3 * (1 - t) * (1 - t)
-                * t * p2x + 3 * (1 - t) * t * t * p3x + t * t * t * p4x;
-            y = (1 - t) * (1 - t) * (1 - t) * p1y + 3 * (1 - t) * (1 - t)
-                * t * p2y + 3 * (1 - t) * t * t * p3y + t * t * t * p4y;
-            x = Math.round(x);
-            y = Math.round(y);
-            if (x != xl || y != yl) {
-                if (t == 0) {
-                    xl = x;
-                    yl = y;
-                }
-                if (x - xl > 1 || y - yl > 1 || xl - x > 1 || yl - y > 1) {
-                    t -= f;
-                    f = f / k;
-                } else {
-                    curvePoints[curvePoints.length] = {
-                        x: x,
-                        y: y
-                    };
-                    xl = x;
-                    yl = y;
-                }
-            } else {
-                t -= f;
-                f = f * k;
-            }
-            t += f;
-        }
-        return curvePoints;
+        return GeometryMath.getBezierPoints(points);
     }
 
     // for debugging
@@ -1999,24 +1734,7 @@ export default class Path {
 
 
     static cleanBezier (points: Point[], dist: number) {
-        var n = points.length;
-        var i = 1;
-        var j = 0;
-        var plist: Point[] = [];
-        plist.push(points[0]);
-        while (i < n - 1) {
-            var before = points[j];
-            var here = points[i];
-            var after = points[i + 1];
-            var l1 = Vector.diff(before, here);
-            var l2 = Vector.diff(after, here);
-            if ((Vector.len(l2) > dist) || (Vector.len(l1) > dist)) {
-                plist.push(points[i]);
-                j = i;
-            }
-            i++;
-        }
-        return plist;
+        return GeometryMath.cleanBezier(points, dist);
     }
 
     static processCompoundPath (mt: Element, list: Element[]) {

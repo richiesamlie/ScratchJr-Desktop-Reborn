@@ -60,6 +60,7 @@ import Project from '../../src/app/src/editor/ui/Project.ts';
         undoRecord (obj) {
             globalThis.__enginePortCalls.push({ port: 'undoRecord', obj });
         },
+        paintInit () {},
         paletteShow () {},
         paletteHide () {},
         uiMascotData () {

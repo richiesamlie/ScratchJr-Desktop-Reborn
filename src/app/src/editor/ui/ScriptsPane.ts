@@ -1,6 +1,6 @@
 
 import ScratchJr from '../ScratchJr';
-import Project from './Project';
+import { enginePorts } from '../engine/ports';
 import Thumbs from './Thumbs';
 import Palette from './Palette';
 import Undo from './Undo';
@@ -14,6 +14,7 @@ import {gn, localx, localy, newHTML,
 import type Scripts from './Scripts';
 import type Sprite from '../engine/Sprite';
 import type Block from '../blocks/Block';
+import type { EncodedStrip } from './Project';
 
 let scroll!: Scroll;
 let watermark: HTMLElement;
@@ -208,7 +209,7 @@ export default class ScriptsPane {
                     Thumbs.quickRestore(thumb!);
                 }, 300);
                 const scScripts = getModelRefAs<Scripts>(gn(getModelRefAs<string>(thumb, 'spritethumb')! + '_scripts')!, 'scripts')!;
-                var strip = Project.encodeStrip(getModelRefAs<Block>(el, 'block')!);
+                var strip = enginePorts().projectEncodeStrip(getModelRefAs<Block>(el, 'block')!) as EncodedStrip;
                 var firstblock = strip[0];
                 var delta = scScripts.gettopblocks().length * 3;
                 firstblock[2] = (firstblock[2] as number) + delta;

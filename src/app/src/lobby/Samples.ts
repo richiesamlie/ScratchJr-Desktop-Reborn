@@ -2,7 +2,7 @@
 // Samples Screen
 //////////////////////////////////////////////////
 
-import Lobby from './Lobby.js';
+import { LobbyState } from './LobbyState.js';
 import IO from '../platform/IO';
 import PlatformBridge from '../platform/PlatformBridge';
 import MediaLib from '../platform/MediaLib';
@@ -66,7 +66,7 @@ export default class Samples {
     }
 
     static show () {
-        Lobby.busy = false;
+        LobbyState.busy = false;
         (frame.parentNode as HTMLElement).scrollTop = 0;
         gn('samples')!.className = 'samples on';
     }

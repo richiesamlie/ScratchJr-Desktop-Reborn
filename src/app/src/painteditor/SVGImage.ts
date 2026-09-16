@@ -14,7 +14,7 @@ import SVGTools from './SVGTools';
 import SVG2Canvas from '../utils/SVG2Canvas';
 import PaintAction from './PaintAction';
 import type {Point} from '../geom/Vector';
-import {getIdFor, gn, getIdForCamera, setCanvasSize, DEGTOR} from '../utils/lib';
+import {getIdFor, gn, getIdForCamera, setCanvasSize} from '../utils/lib';
 
 export default class SVGImage {
     static currentshape: HTMLElement;

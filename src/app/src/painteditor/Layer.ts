@@ -1,4 +1,4 @@
-import ScratchJr from '../editor/ScratchJr';
+import PaintCanvas from './PaintCanvas';
 import Paint from './Paint';
 import PaintUndo from './PaintUndo';
 import Path from './Path';
@@ -272,9 +272,7 @@ export default class Layer {
     }
 
     static findGroup (mt: Element) {
-        var dt = ScratchJr.getTime();
-        ScratchJr.log('findGroup start', dt, 'sec');
-        setCanvasSize(ScratchJr.workingCanvas, Paint.workspaceWidth, Paint.workspaceHeight);
+        setCanvasSize(PaintCanvas.workingCanvas, Paint.workspaceWidth, Paint.workspaceHeight);
         var list = Layer.getRelated(mt);
         var index = Layer.groupStartsAt(mt.parentNode as Element, mt);
         var test = (mt.getAttribute('fill') == 'none')
@@ -283,7 +281,6 @@ export default class Layer {
         var newlist = Layer.onTopOfBy(mt.parentNode as Element, mt, 0.5, index, list);
         // to keep righ laying order
         var g = Layer.ordering(mt.parentNode as Element, newlist);
-        ScratchJr.log('findGroup end', ScratchJr.getTime() - dt, 'sec');
         return g;
     }
 
@@ -310,8 +307,8 @@ export default class Layer {
 
         // write the other on the offscreen
         Layer.drawInOffscreen(other, offscreen);
-        setCanvasSize(ScratchJr.workingCanvas, Paint.workspaceWidth, Paint.workspaceHeight);
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
+        setCanvasSize(PaintCanvas.workingCanvas, Paint.workspaceWidth, Paint.workspaceHeight);
+        var ctx = PaintCanvas.workingCanvas.getContext('2d')!;
         ctx.clearRect(0, 0, Paint.workspaceWidth, Paint.workspaceHeight);
         ctx.save();
         ctx.globalCompositeOperation = 'source-over';
@@ -404,13 +401,13 @@ export default class Layer {
     /////////////////////////////
 
     static showmask () {
-        var mask = newDiv(Paint.frame!, 0, 0, ScratchJr.workingCanvas.width, ScratchJr.workingCanvas.height, {
+        var mask = newDiv(Paint.frame!, 0, 0, PaintCanvas.workingCanvas.width, PaintCanvas.workingCanvas.height, {
                 position: 'absolute',
                 zIndex: 200000,
                 visibility: 'visible'
             });
         mask.setAttribute('id', 'layermask');
-        mask.appendChild(ScratchJr.workingCanvas);
+        mask.appendChild(PaintCanvas.workingCanvas);
     }
 
     static on () {

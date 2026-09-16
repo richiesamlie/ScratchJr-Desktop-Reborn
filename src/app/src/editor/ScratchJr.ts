@@ -7,7 +7,7 @@ import { getModelRefAs, hasModelRef } from './modelRegistry';
 import type BlockArg from './blocks/BlockArg';
 import type Block from './blocks/Block';
 import ScratchAudio from '../utils/ScratchAudio';
-import Paint from '../painteditor/Paint';
+import { enginePorts } from './engine/ports';
 import Prims from './engine/Prims';
 import Undo from './ui/Undo';
 import Alert from './ui/Alert';
@@ -221,7 +221,7 @@ export default class ScratchJr {
         Project.setProgress(10);
         ScratchAudio.init();
         Library.init();
-        Paint.init();
+        enginePorts().paintInit?.();
         Record.init();
         Prims.init();
         runtime = new Runtime();

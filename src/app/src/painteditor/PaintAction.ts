@@ -1,4 +1,3 @@
-import ScratchJr from '../editor/ScratchJr';
 import Paint from './Paint';
 import PaintUndo from './PaintUndo';
 import ScratchAudio from '../utils/ScratchAudio';
@@ -925,7 +924,7 @@ Path.maxDistance()); // check the start
             return;
         }
         Camera.startFeed(currentShape);
-        ScratchJr.onBackButtonCallback.push(function () {
+        Paint.pushBackButtonCallback(function () {
             Paint.closeCameraMode();
         });
     }

@@ -1,4 +1,4 @@
-import ScratchJr from '../editor/ScratchJr';
+import PaintCanvas from './PaintCanvas';
 import SVGTools from './SVGTools';
 import Paint from './Paint';
 import PaintAction from './PaintAction';
@@ -295,8 +295,8 @@ export default class Ghost {
     }
 
     static hittedSingleObject (obj: Element, pt: Point) {
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
-        ctx.clearRect(0, 0, ScratchJr.workingCanvas.width, ScratchJr.workingCanvas.height);
+        var ctx = PaintCanvas.workingCanvas.getContext('2d')!;
+        ctx.clearRect(0, 0, PaintCanvas.workingCanvas.width, PaintCanvas.workingCanvas.height);
         ctx.save();
         Layer.drawInContext(obj, ctx, Paint.currentZoom);
         ctx.restore();
@@ -512,16 +512,16 @@ export default class Ghost {
         if (!Paint.root) {
             return null;
         }
-        setCanvasSize(ScratchJr.workingCanvas,
+        setCanvasSize(PaintCanvas.workingCanvas,
             Math.round(Number(Paint.root.getAttribute('width')) * Paint.currentZoom),
             Math.round(Number(Paint.root.getAttribute('height')) * Paint.currentZoom)
         );
-        var ctx = ScratchJr.workingCanvas.getContext('2d')!;
-        if (Ghost.outsideArea(pt, ScratchJr.workingCanvas)) {
+        var ctx = PaintCanvas.workingCanvas.getContext('2d')!;
+        if (Ghost.outsideArea(pt, PaintCanvas.workingCanvas)) {
             return null;
         }
-        ctx.clearRect(0, 0, ScratchJr.workingCanvas.width, ScratchJr.workingCanvas.height);
-        return Ghost.findHit(list as Element[], pt, ScratchJr.workingCanvas.getContext('2d')!, isTip, exclude);
+        ctx.clearRect(0, 0, PaintCanvas.workingCanvas.width, PaintCanvas.workingCanvas.height);
+        return Ghost.findHit(list as Element[], pt, PaintCanvas.workingCanvas.getContext('2d')!, isTip, exclude);
     }
 
     static findHit (list: Element[], pt: Point, ctx: CanvasRenderingContext2D, isTip?: boolean, exclude?: Element) {
@@ -549,7 +549,7 @@ export default class Ghost {
     static showmask () {
         var mask = newDiv(Paint.frame!, 0, 0, maskCanvas.width, maskCanvas.height, {
                 position: 'absolute',
-                zIndex: ScratchJr.layerTop + 20
+                zIndex: 30
             });
         mask.setAttribute('id', 'ghostmask');
         mask.appendChild(maskCanvas);

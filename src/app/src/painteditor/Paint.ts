@@ -227,6 +227,14 @@ export default class Paint {
         });
     }
 
+    static pushBackButtonCallback (fcn: () => void) {
+        ScratchJr.onBackButtonCallback.push(fcn);
+    }
+
+    static popBackButtonCallback () {
+        ScratchJr.onBackButtonCallback.pop();
+    }
+
 
     //Paint Editor Gestures
 

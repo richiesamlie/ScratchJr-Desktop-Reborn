@@ -9,6 +9,7 @@ import Scripts from '../editor/ui/Scripts';
 import ScriptsPane from '../editor/ui/ScriptsPane';
 import PlatformBridge from '../platform/PlatformBridge';
 import Camera from '../painteditor/Camera';
+import Paint from '../painteditor/Paint';
 import Record from '../editor/ui/Record';
 
 /**
@@ -53,6 +54,7 @@ setEnginePorts({
     thumbsPageMouseDown: (e) => Thumbs.pageMouseDown(e),
     thumbsOverpage: (thumb) => Thumbs.overpage(thumb),
     undoRecord: (obj) => Undo.record(obj),
+    paintInit: () => Paint.init(),
     paletteShow: () => Palette.show(),
     paletteHide: () => Palette.hide(),
     uiMascotData: (page) => UI.mascotData(page),

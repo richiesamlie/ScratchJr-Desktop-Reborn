@@ -1,4 +1,3 @@
-import ScratchJr from '../editor/ScratchJr';
 import PlatformBridge from '../platform/PlatformBridge';
 import ScratchAudio from '../utils/ScratchAudio';
 import Paint from './Paint';
@@ -9,7 +8,7 @@ import SVG2Canvas from '../utils/SVG2Canvas';
 import Rectangle from '../geom/Rectangle';
 import Layer from './Layer';
 import Ghost from './Ghost';
-import {gn, globalx, globaly, DEGTOR, setCanvasSize} from '../utils/lib';
+import {gn, globalx, globaly, setCanvasSize} from '../utils/lib';
 
 let view = 'front';
 let target: Element | null = null;
@@ -97,7 +96,7 @@ export default class Camera {
         var cnv = document.createElement('canvas');
         setCanvasSize(cnv, w, h);
         var ctx = cnv.getContext('2d')!;
-        ctx.fillStyle = ScratchJr.stagecolor;
+        ctx.fillStyle = '#dedede';
         ctx.fillRect(0, 0, cnv.width, cnv.height);
         SVG2Canvas.drawImage(gn('paintgrid')! as Element, ctx);
 

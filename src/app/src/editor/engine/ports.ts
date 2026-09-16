@@ -51,6 +51,7 @@ export interface EnginePorts {
     thumbsPageMouseDown (e: MouseEvent & { touches?: TouchList }): void;
     thumbsOverpage (thumb: HTMLElement): void;
     undoRecord (obj: Record<string, unknown>): void;
+    paintInit? (): void;
     paletteShow (): void;
     paletteHide (): void;
     uiMascotData (page?: Page): Record<string, unknown>;

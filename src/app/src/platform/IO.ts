@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 
 import PlatformBridge from './PlatformBridge.js';
 import MediaLib from './MediaLib.js';
-import {setCanvasSize, drawThumbnail, gn, utf8ToBase64, base64ToUtf8} from '../utils/lib';
+import {setCanvasSize, drawThumbnail, utf8ToBase64, base64ToUtf8} from '../utils/lib';
 import SVG2Canvas from '../utils/SVG2Canvas';
 
 const database = 'projects';

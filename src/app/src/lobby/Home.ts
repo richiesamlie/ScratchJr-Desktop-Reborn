@@ -2,7 +2,7 @@
 // Home Screen
 //////////////////////////////////////////////////
 
-import Lobby from './Lobby.js';
+import { LobbyState } from './LobbyState.js';
 import PlatformBridge from '../platform/PlatformBridge';
 import IO from '../platform/IO';
 import Localization from '../utils/Localization';
@@ -27,7 +27,7 @@ export default class Home {
     static scrolltop: number;
 
     static init () {
-        version = Lobby.version;
+        version = LobbyState.version;
         frame = gn('htmlcontents')!;
         var inner = newHTML('div', 'inner', frame);
         var div = newHTML('div', 'scrollarea', inner);
@@ -486,7 +486,7 @@ export default class Home {
             Home.addProjectLink(div, data[i]);
         }
         setTimeout(function () {
-            Lobby.busy = false;
+            LobbyState.busy = false;
         }, 1000);
         if (gn('wrapc')!) {
             gn('wrapc')!.scrollTop = scrollvalue;

@@ -31,3 +31,6 @@ dist-web/
 
 # Scratch directory
 scratch/
+
+# Audit artifacts
+graphify-out/

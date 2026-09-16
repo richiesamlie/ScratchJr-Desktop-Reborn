@@ -983,64 +983,37 @@ Math.floor(h));
         var ti = namedForms.activetextbox.typing;
         ti.value = this.str;
 
-        // TODO: Merge these for iOS
-        var styles;
         const activeFont = this.fontFamily || (window.Settings && window.Settings.textSpriteFont) || 'Roboto';
-        if (isAndroid) {
-            styles = {
-                color: this.color,
-                fontSize: (this.fontsize * scaleMultiplier) + 'px',
-                fontFamily: activeFont
-            };
-        } else {
-            styles = {
-                color: this.color,
-                fontSize: this.fontsize + 'px',
-                fontFamily: activeFont
-            };
-        }
+        const styles = {
+            color: this.color,
+            fontSize: this.fontsize + 'px',
+            fontFamily: activeFont
+        };
         var ci = BlockSpecs.fontcolors.indexOf(rgbToHex(this.color));
         enginePorts().uiSetMenuTextColor(gn('textcolormenu')!.childNodes[(ci < 0) ? 9 : ci] as HTMLElement);
         setProps(ti.style, styles);
 
-        // TODO: Merge these for iOS
-        var dy;
-        if (isAndroid) {
-            dy = box.y * scaleMultiplier + globaly(gn('stage')!) - 10 * scaleMultiplier;
-        } else {
-            dy = box.y + globaly(gn('stage')!) - 10;
-        }
+        var dy = box.y + globaly(gn('stage')!) - 10;
         var formsize = 470;
         gn('textbox')!.className = 'pagetext on';
 
-        // TODO: Merge these for iOS
-        var dx;
+        var dx = -10 + 240 - Math.round(formsize / 2) + globalx(gn('stage')!);
+        setProps(gn('textbox')!.style, {
+            top: dy + 'px',
+            left: dx + 'px',
+            zIndex: 10
+        });
+        setProps(sform.style, {
+            height: (this.fontsize + 10) + 'px'
+        });
+
         if (isAndroid) {
             const inputParent = ti.parentNode!.parentNode as HTMLElement;
             AndroidInterface.scratchjr_setsoftkeyboardscrolllocation(dy * window.devicePixelRatio, (dy
                 + inputParent.getBoundingClientRect().height * 1.7) * window.devicePixelRatio);
-            dx = (-10 + 240 - Math.round(formsize / 2)) * scaleMultiplier + globalx(gn('stage')!);
-            setProps(gn('textbox')!.style, {
-                top: dy + 'px',
-                left: dx + 'px',
-                zIndex: 10
-            });
-            setProps(sform.style, {
-                height: ((this.fontsize + 10) * scaleMultiplier) + 'px'
-            });
             setTimeout(function () {
                 AndroidInterface.scratchjr_forceShowKeyboard();
             }, 500);
-        } else {
-            dx = -10 + 240 - Math.round(formsize / 2) + globalx(gn('stage')!);
-            setProps(gn('textbox')!.style, {
-                top: dy + 'px',
-                left: dx + 'px',
-                zIndex: 10
-            });
-            setProps(sform.style, {
-                height: (this.fontsize + 10) + 'px'
-            });
         }
     }
 
@@ -1280,8 +1253,7 @@ Math.floor(h));
         var p = this.div.parentNode;
         var shake = newHTML('div', 'shakeme', p as HTMLElement);
         shake.id = 'shakediv';
-
-        // TODO: merge these for iOS
+        // Android WebView does not support CSS zoom; explicit width/height scaling is used
         if (isAndroid) {
             setProps(shake.style, {
                 position: 'absolute',
@@ -1337,7 +1309,7 @@ Math.floor(h));
             p.parentNode!.removeChild(p);
         }
 
-        // TODO: merge these for iOS
+        // Android WebView redraws via render() while desktop/web restores transform matrix
         if (isAndroid) {
             this.render();
         } else {
