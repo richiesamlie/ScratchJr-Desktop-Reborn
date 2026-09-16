@@ -34,3 +34,6 @@ scratch/
 
 # Audit artifacts
 graphify-out/
+
+# Tauri build outputs
+src-tauri/target/

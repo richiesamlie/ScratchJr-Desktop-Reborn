@@ -7,15 +7,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta http-equiv="cache-control" content="no-cache">
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' blob: data:; font-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' blob: data: ipc:; font-src 'self'">
 <title>ScratchJr</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preload" href="../sql-wasm.wasm" as="fetch" type="application/wasm" crossorigin>
 <script>
-if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-    window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js').catch(function () {});
-    });
+if ('serviceWorker' in navigator) {
+    if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (var i = 0; i < registrations.length; i++) {
+                registrations[i].unregister();
+            }
+        }).catch(function () {});
+    } else if (window.location.protocol.startsWith('http')) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('./sw.js').catch(function () {});
+        });
+    }
 }
 </script>
 <script src='../hostClient.js'></script>

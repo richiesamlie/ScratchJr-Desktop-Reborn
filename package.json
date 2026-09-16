@@ -21,6 +21,9 @@
         "build:android": "node scripts/build-android-assets.js",
         "build:web": "node scripts/build-web.js",
         "serve:web": "node scripts/serve-web.js",
+        "tauri": "node scripts/run-tauri.js",
+        "tauri:dev": "node scripts/run-tauri.js dev",
+        "tauri:build": "node scripts/run-tauri.js build",
         "postinstall": "node scripts/patch-for-node26.js && node scripts/build-renderer.js"
     },
     "keywords": [],
@@ -176,7 +179,9 @@
             "electron": true,
             "require": true,
             "globalThis": true,
-            "isTouch": true
+            "isTouch": true,
+            "__TAURI_INTERNALS__": true,
+            "__TAURI__": true
         },
         "env": {
             "browser": true,
@@ -195,6 +200,7 @@
         "@electron-forge/maker-zip": "^7.8.3",
         "@electron/packager": "^20.3.0",
         "@reforged/maker-appimage": "^5.0.0",
+        "@tauri-apps/cli": "^2.11.4",
         "@types/node": "^26.2.0",
         "electron": "^43.4.1",
         "electron-wix-msi": "^5.1.3",

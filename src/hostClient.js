@@ -16,6 +16,10 @@
         var s = document.createElement('script');
         s.src = '../electronClient.js';
         document.head.appendChild(s);
+    } else if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
+        var t = document.createElement('script');
+        t.src = '../tauriClient.js';
+        document.head.appendChild(t);
     } else if (typeof AndroidInterface !== 'undefined') {
         var h = document.createElement('script');
         h.src = '../webhost.js';

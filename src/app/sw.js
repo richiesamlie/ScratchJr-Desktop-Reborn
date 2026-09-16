@@ -58,7 +58,7 @@ var STATIC_ASSET_REGEX = /\.(wasm|svg|png|jpg|jpeg|gif|wav|webm|mp3|ogg|woff|wof
 self.addEventListener('fetch', function (/** @type {any} */ event) {
   if (event.request.method !== 'GET') return;
   var url = event.request.url;
-  if (!url.startsWith('http')) return;
+  if (!url.startsWith('http') || url.includes('tauri.localhost') || url.startsWith('ipc:')) return;
 
   var isStaticAsset = STATIC_ASSET_REGEX.test(url);
 

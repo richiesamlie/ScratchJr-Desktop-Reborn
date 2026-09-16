@@ -32,6 +32,14 @@ declare const AndroidInterface: AndroidInterfaceStatic;
 // waitForInterface Proxy prefers these over the native interface.
 interface Window {
     __androidHost?: Record<string, unknown>;
+    __TAURI_INTERNALS__?: {
+        invoke(cmd: string, args?: Record<string, unknown>): Promise<any>;
+    };
+    __TAURI__?: {
+        core?: {
+            invoke(cmd: string, args?: Record<string, unknown>): Promise<any>;
+        };
+    };
 }
 
 declare class WebKitCSSMatrix {
