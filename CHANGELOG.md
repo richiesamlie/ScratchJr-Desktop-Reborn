@@ -3,6 +3,30 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.7.1] - 2026-09-16
+
+**Patch Release: Architecture Refactoring, Circular Import Elimination, Geometry Modularization, and iOS Legacy Debt Removal.**
+
+### Architecture & Refactoring
+- **Circular Dependency Elimination**:
+  - Extracted `LobbyState.ts` to isolate global `busy` and `version` reactive state, permanently breaking the circular import cycle between `Lobby.ts`, `Home.ts`, and `Samples.ts`.
+  - Decoupled `MediaLib.ts` from `IO.ts` by fetching library metadata directly via `PlatformBridge`.
+  - Re-routed `Paint.init()` in `ScratchJr.ts` through `enginePorts().paintInit?.()`, completely detaching paint editor boot execution from editor core.
+  - Converted runtime import of `Project.ts` in `ScriptsPane.ts` to `import type { EncodedStrip }`, routing strip encoding through `enginePorts().projectEncodeStrip`.
+  - Cleaned unused imports in `Camera.ts`, `SVGImage.ts`, and `IO.ts`.
+- **Pure Geometry Modularization (`src/app/src/geom/GeometryMath.ts`)**:
+  - Extracted pure mathematical algorithms from `Path.ts` into a standalone high-cohesion module (`GeometryMath.ts`): Bézier rasterizer polynomial evaluation, moving-average point smoothing, curve downsampling, polygon winding and orientation detection (`triangleAreaDir`), and spatial boundary checks.
+  - Fully decoupled mathematical algorithms from DOM, `window`, and SVG elements for universal cross-platform consistency.
+  - Added dedicated unit test suite (`tests/unit/geometry-math.test.js`) with 15 test cases covering pure math routines.
+- **Paint Editor Offscreen Canvas Isolation (`src/app/src/painteditor/PaintCanvas.ts`)**:
+  - Created an independent offscreen canvas for the paint editor subsystem, completely eliminating dependency on `ScratchJr.workingCanvas` across `Ghost.ts`, `Layer.ts`, and `Path.ts`.
+  - Removed direct `ScratchJr` runtime imports from `Ghost.ts`, `Layer.ts`, `Path.ts`, `Camera.ts`, and `PaintAction.ts`.
+  - Prevents canvas state collisions and race conditions between stage runtime and paint editor tool operations.
+- **Legacy iOS Debt Removal (`Sprite.ts`)**:
+  - Removed 5 historical 2014–2015 `// TODO: Merge these for iOS` comments in `Sprite.ts`.
+  - Unified duplicated text sprite layout calculations and styles resulting from `scaleMultiplier = 1.0` while maintaining accurate Android soft-keyboard scroll adjustments.
+  - Explicitly documented Android WebView rendering differences (lack of CSS `zoom` support) for future maintainers.
+
 ## [v2.7.0] - 2026-09-15
 
 **Minor Release: Curated Built-in Fonts, Paint Editor Vector Text Tool, Lobby Settings Theme Selector, and UI Alignment Polish.**
