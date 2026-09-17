@@ -49,7 +49,11 @@ impl IoManager {
     }
 
     pub fn safe_app_path(&self, name: &str) -> Option<PathBuf> {
-        let clean = name.trim_start_matches('/').trim_start_matches('\\');
+        let mut clean = name.trim();
+        while clean.starts_with("./") || clean.starts_with(".\\") {
+            clean = &clean[2..];
+        }
+        let clean = clean.trim_start_matches('/').trim_start_matches('\\');
         if clean.contains("..") || clean.contains(':') {
             return None;
         }
@@ -83,9 +87,18 @@ impl IoManager {
         };
 
         let bytes = BASE64.decode(clean_b64.trim()).map_err(|e| e.to_string())?;
-        let tmp_path = path.with_extension("tmp");
+        let tmp_path = path.with_extension(format!("tmp.{}", std::process::id()));
         fs::write(&tmp_path, bytes).map_err(|e| e.to_string())?;
-        fs::rename(tmp_path, &path).map_err(|e| e.to_string())?;
+        if path.exists() {
+            let _ = fs::remove_file(&path);
+        }
+        if let Err(err) = fs::rename(&tmp_path, &path) {
+            if fs::copy(&tmp_path, &path).is_err() {
+                let _ = fs::remove_file(&tmp_path);
+                return Err(err.to_string());
+            }
+        }
+        let _ = fs::remove_file(&tmp_path);
 
         Ok(name.to_string())
     }

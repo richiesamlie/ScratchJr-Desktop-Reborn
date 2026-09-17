@@ -208,6 +208,19 @@ npm run serve:web
 node scripts/smoke-web.js
 ```
 
+## Desktop: Lightweight Tauri v2 Workflow
+
+```bash
+# 1. Dev mode (runs build:renderer + launches Tauri window)
+npm run tauri:dev
+
+# 2. Build release binaries (MSI, NSIS installer, and portable exe)
+npm run tauri:build
+
+# 3. Package to out/tauri-win32-x64/ and generate release zip + SHA256SUMS
+npm run package:tauri
+```
+
 ## Known quirks & follow-ups
 
 - `src/types/globals.d.ts` expando declarations must stay mutually consistent

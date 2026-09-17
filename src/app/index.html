@@ -13,7 +13,16 @@
 <link rel="preload" href="../sql-wasm.wasm" as="fetch" type="application/wasm" crossorigin>
 <script>
 if ('serviceWorker' in navigator) {
-    if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
+    var isTauri = Boolean(
+        window.__TAURI_INTERNALS__ ||
+        window.__TAURI__ ||
+        (window.location && (
+            window.location.hostname === 'tauri.localhost' ||
+            window.location.protocol === 'tauri:' ||
+            (window.location.origin && window.location.origin.indexOf('tauri.localhost') !== -1)
+        ))
+    );
+    if (isTauri) {
         navigator.serviceWorker.getRegistrations().then(function (registrations) {
             for (var i = 0; i < registrations.length; i++) {
                 registrations[i].unregister();

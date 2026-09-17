@@ -34,22 +34,48 @@ const pageEntries = {
  * (e.g. from the lobby) has no side effects.
  */
 export function bootApp () {
-	window.onload = () => loadPage(document.body.dataset.scratchjrPage || window.scratchJrPage || '').catch((err) => console.error('loadPage failed:', err)); // eslint-disable-line no-console
+	let started = false;
+	const start = () => {
+		if (started) return;
+		started = true;
+		const page = (document.body && document.body.dataset.scratchjrPage) || window.scratchJrPage || '';
+		loadPage(page).catch((err) => console.error('loadPage failed:', err)); // eslint-disable-line no-console
+	};
+
+	if (typeof document !== 'undefined' && document.readyState !== 'loading') {
+		setTimeout(start, 0);
+	} else if (typeof document !== 'undefined') {
+		document.addEventListener('DOMContentLoaded', start);
+		window.addEventListener('load', start);
+	}
 
 	// Close handshake lives here (not in the editor chunk) so quitting from any
 	// page acks immediately; the editor chunk saves first via window.ScratchJr.
 	// Electron preload sets window.scratchjr before any page script runs, so the
 	// handshake is skipped only on other hosts (e.g. Android WebView, where
 	// the host saves via onPause instead).
-	if (window.scratchjr) {
-		const ipc = window.scratchjr;
-		ipc.onAppClose(function () {
-			if (window.ScratchJr && window.ScratchJr.saveProject) {
-				window.ScratchJr.saveProject(null, function () { ipc.sendAppClosedAcked(); });
-			} else {
-				ipc.sendAppClosedAcked();
+	const bindCloseHandshake = () => {
+		if (window.scratchjr) {
+			const ipc = window.scratchjr;
+			ipc.onAppClose(function () {
+				if (window.ScratchJr && window.ScratchJr.saveProject) {
+					window.ScratchJr.saveProject(null, function () { ipc.sendAppClosedAcked(); });
+				} else {
+					ipc.sendAppClosedAcked();
+				}
+			});
+			return true;
+		}
+		return false;
+	};
+
+	if (!bindCloseHandshake() && typeof window !== 'undefined') {
+		const pollInterval = setInterval(() => {
+			if (bindCloseHandshake()) {
+				clearInterval(pollInterval);
 			}
-		});
+		}, 50);
+		setTimeout(() => clearInterval(pollInterval), 5000);
 	}
 }
 

@@ -372,8 +372,8 @@ body:not([data-theme="classic"]) .duplicatebtn {
     width: 36px;
     height: 36px;
     top: -8px;
-    right: -8px;
-    left: auto;
+    left: ${css_vh(24.5)};
+    right: auto;
     border-radius: 999px;
     background: var(--sjr-accent-primary) url('../assets/ui/copyit.svg') no-repeat center center;
     background-size: 65%;
@@ -396,8 +396,8 @@ body:not([data-theme="classic"]) .exportbtn {
     width: 36px;
     height: 36px;
     top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: ${css_vh(11.5)};
+    transform: none;
     border-radius: 999px;
     background: var(--sjr-accent-success) url('../assets/ui/exportit.svg') no-repeat center center;
     background-size: 65%;
@@ -407,12 +407,12 @@ body:not([data-theme="classic"]) .exportbtn {
 
 :root:not([data-theme="classic"]) .exportbtn:hover,
 body:not([data-theme="classic"]) .exportbtn:hover {
-    transform: translateX(-50%) scale(1.15);
+    transform: scale(1.15);
 }
 
 :root:not([data-theme="classic"]) .exportbtn:active,
 body:not([data-theme="classic"]) .exportbtn:active {
-    transform: translateX(-50%) scale(0.92);
+    transform: scale(0.92);
 }
 
 @keyframes sjr-card-wiggle {

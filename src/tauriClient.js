@@ -8,11 +8,39 @@
 /* global AudioCapture, CameraPickerDialog */
 /* eslint-disable no-console, no-alert */
 
-const tauriInvoke = (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke)
-    || (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke)
-    || function (/** @type {string} */ cmd, /** @type {any} */ args) {
+function getTauriInvoke() {
+    if (typeof window !== 'undefined') {
+        if (window.__TAURI_INTERNALS__ && typeof window.__TAURI_INTERNALS__.invoke === 'function') {
+            return window.__TAURI_INTERNALS__.invoke;
+        }
+        if (window.__TAURI__ && window.__TAURI__.core && typeof window.__TAURI__.core.invoke === 'function') {
+            return window.__TAURI__.core.invoke;
+        }
+    }
+    return null;
+}
+
+/**
+ * @param {string} cmd
+ * @param {any} [args]
+ * @param {number} [attempt]
+ * @returns {Promise<any>}
+ */
+function tauriInvoke(cmd, args, attempt) {
+    const currentAttempt = attempt || 0;
+    const invoker = getTauriInvoke();
+    if (invoker) {
+        return invoker(cmd, args);
+    }
+    if (currentAttempt >= 40) {
         return Promise.reject(new Error(`Tauri invoke unavailable: ${cmd} ${JSON.stringify(args)}`));
-    };
+    }
+    return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+            tauriInvoke(cmd, args, currentAttempt + 1).then(resolve, reject);
+        }, 25);
+    });
+}
 
 window.addEventListener('error', function (e) {
     console.error('[Tauri Client Error]', e.message, e.filename, e.lineno, e.error);
@@ -21,6 +49,15 @@ window.addEventListener('error', function (e) {
 window.addEventListener('unhandledrejection', function (e) {
     console.error('[Tauri Client Unhandled Rejection]', e.reason);
 });
+
+/** @param {Blob} blob */
+function readBlobAsDataURL(blob) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(/** @type {string} */ (reader.result));
+        reader.readAsDataURL(blob);
+    });
+}
 
 class TauriDesktopInterface {
     constructor() {
@@ -32,7 +69,7 @@ class TauriDesktopInterface {
         this.cameraPickerDialog = null;
     }
 
-    // ---- Relational Database ----
+    // Database operations
     /** @param {any} json */
     async database_stmt(json) {
         return await tauriInvoke('database_stmt', { raw: json });
@@ -43,14 +80,34 @@ class TauriDesktopInterface {
         return await tauriInvoke('database_query', { raw: json });
     }
 
-    // ---- Settings & Resources ----
+    // Settings and resources
     async io_getsettings() {
         return await tauriInvoke('io_getsettings');
     }
 
     /** @param {string} filename */
     async io_gettextresource(filename) {
-        return await tauriInvoke('io_gettextresource', { filename });
+        try {
+            const res = await tauriInvoke('io_gettextresource', { filename });
+            if (res) return res;
+        } catch (_) {
+            // Fall back to fetch below
+        }
+
+        try {
+            const res = await fetch(filename);
+            if (res.ok) {
+                return await res.text();
+            }
+            const res2 = await fetch('./' + filename);
+            if (res2.ok) {
+                return await res2.text();
+            }
+        } catch (_) {
+            // Ignore fetch failure
+        }
+
+        return '';
     }
 
     async io_getIsDebug() {
@@ -61,7 +118,7 @@ class TauriDesktopInterface {
         return await tauriInvoke('io_get_lang');
     }
 
-    // ---- File & Media Storage ----
+    // Storage and media files
     /** @param {string} file */
     async io_getmedia(file) {
         return await tauriInvoke('io_getmedia', { name: file });
@@ -104,10 +161,30 @@ class TauriDesktopInterface {
 
     /** @param {string} name */
     async io_getAudioData(name) {
-        return await tauriInvoke('io_get_audio_data', { audioName: name });
+        try {
+            const res = await tauriInvoke('io_get_audio_data', { audioName: name });
+            if (res) return res;
+        } catch (_) {
+            // Fall back to fetch below
+        }
+
+        const cleanName = name.replace(/^\.\//, '').replace(/^\//, '');
+        const directRes = await fetch(cleanName).catch(function () { return null; });
+        if (directRes && directRes.ok) {
+            const blob = await directRes.blob();
+            return await readBlobAsDataURL(blob);
+        }
+
+        const soundRes = await fetch(`sounds/${cleanName}`).catch(function () { return null; });
+        if (soundRes && soundRes.ok) {
+            const blob = await soundRes.blob();
+            return await readBlobAsDataURL(blob);
+        }
+
+        return null;
     }
 
-    // ---- Audio Engine ----
+    // Audio recording and playback
     /** @param {string} _dir @param {string} name */
     async io_registersound(_dir, name) {
         if (!this.currentAudio[name]) {
@@ -215,7 +292,7 @@ class TauriDesktopInterface {
         this.getAudioCaptureElement().stopPlay();
     }
 
-    // ---- Camera Support ----
+    // Camera capture support
     scratchjr_stopfeed() {
         if (this.cameraPickerDialog) {
             this.cameraPickerDialog.hide();
@@ -260,7 +337,7 @@ class TauriDesktopInterface {
         }
     }
 
-    // ---- Lifecycle, Device & Export ----
+    // Host device details and project export
     askForPermission() {
         return true;
     }
@@ -311,7 +388,7 @@ class TauriDesktopInterface {
         console.log('[ScratchJr-Tauri]', msg);
     }
 
-    // ---- Lifecycle & Push Events ----
+    // Lifecycle hooks and push events
     /** @param {() => void} callback */
     onAppClose(callback) {
         this.appCloseCallback = callback;

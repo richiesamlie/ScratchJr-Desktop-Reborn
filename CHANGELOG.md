@@ -3,6 +3,30 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.8.0] - 2026-09-17
+
+**Minor Release: Dual Desktop Runtime (Tauri v2 + Electron), Universal Multi-Target Architecture, Native File Menu, and Lobby UI Spacing Polish.**
+
+### Highlights
+- **Dual Desktop Runtime Architecture**:
+  - Introduced a high-performance, lightweight **Tauri v2 + Rust** desktop runtime alongside the battle-tested **Electron** desktop runtime.
+  - Both desktop engines share the exact same user database (`Documents\ScratchJR\scratchjr.sqllite`) with zero project loss, identical schema, and atomic rollback protection.
+  - Memory consumption in the Tauri port drops to ~28–41 MB RAM compared to ~120–150 MB in standard runtimes.
+- **Strict Host Isolation Seam (`src/hostClient.js`)**:
+  - Clean platform adapter routing: `src/electronClient.js` (Electron), `src/tauriClient.js` (Tauri v2), `src/webhost.js` (Android), and `src/browserClient.js` (Web/PWA).
+  - Core ScratchJr game engine code (`src/app/`) remains 100% agnostic to host environments.
+- **Native File Menu & Developer Tools**:
+  - Full native File menu across desktop platforms: Fullscreen toggle (`Ctrl+F`), Project Export (`.sjr`), Stage Export (PNG), Project Backup Restore, Developer Tools toggle (`F12`), and Quit (`Ctrl+Q`).
+- **Lobby Project Card UI Polish**:
+  - Corrected project thumbnail action buttons (Delete, Export, Duplicate) positioning using card-relative `css_vh(...)` units, ensuring consistent and balanced 13vh spacing across all aspect ratios and screen resolutions.
+
+### Packaging & Downloads
+- Releases now provide clearly segregated downloads:
+  - **Tauri v2 Edition**: `ScratchJr_2.8.0_x64-setup.exe` (NSIS), `ScratchJr_2.8.0_x64_en-US.msi` (MSI), and `ScratchJr-tauri-win32-x64.zip` (Portable).
+  - **Electron Edition**: `ScratchJr-win32-x64.msi`, `ScratchJr-win32-x64.zip`, macOS DMGs/ZIPs, and Linux packages.
+  - **Web / PWA**: Instant zero-install access at GitHub Pages `/play/`.
+  - **Android**: `ScratchJr-android.apk` and `ScratchJr-android.aab`.
+
 ## [v2.7.1] - 2026-09-16
 
 **Patch Release: Architecture Refactoring, Circular Import Elimination, Geometry Modularization, and iOS Legacy Debt Removal.**

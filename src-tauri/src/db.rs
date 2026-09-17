@@ -212,6 +212,10 @@ impl DatabaseManager {
                         return true;
                     }
                 }
+                // Rollback: restore handle to original file if copy or reopen failed
+                if let Ok(reopened) = Connection::open(&self.db_path) {
+                    *lock = reopened;
+                }
             }
         }
         false

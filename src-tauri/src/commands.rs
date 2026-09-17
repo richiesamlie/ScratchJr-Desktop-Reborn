@@ -162,7 +162,6 @@ pub async fn save_sjr_file(app: AppHandle, data_b64: String, suggested_name: Str
         format!("{}.sjr", clean_name)
     };
 
-    use tauri::Manager;
     let file_path = if let Some(w) = app.get_webview_window("main") {
         app.dialog()
             .file()
@@ -197,7 +196,6 @@ pub async fn save_stage_png(app: AppHandle, data_url: String, suggested_name: St
         format!("{}.png", clean_name)
     };
 
-    use tauri::Manager;
     let file_path = if let Some(w) = app.get_webview_window("main") {
         app.dialog()
             .file()
