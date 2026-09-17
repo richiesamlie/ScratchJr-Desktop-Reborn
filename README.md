@@ -7,7 +7,7 @@
 > A modernized, universal multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
 [![Version](https://img.shields.io/github/v/release/richiesamlie/ScratchJr-Desktop-Reborn?color=blue&label=version)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-209%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-249%20passed-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-orange.svg)]()
 
@@ -15,12 +15,13 @@
 
 ## 🚀 Launch Online & Downloads
 
-| Platform | Target | Distribution |
+| Edition / Target | Platform | Download & Description |
 | :--- | :--- | :--- |
 | **🌐 Web / PWA** | In-Browser (Chrome, Safari, Edge, Firefox) | **[🎮 Launch Web App](https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/)** · Installable PWA |
-| **🪟 Windows** | Windows 10/11 (x64) | [Download MSI Installer](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
-| **🍎 macOS** | Apple Silicon & Intel | [Download DMG / ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
-| **🐧 Linux** | Ubuntu, Debian, Fedora (x64, ARM64) | [Download Tarball / ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
+| **🚀 Lightweight Desktop (Tauri v2 + Rust)** | Windows 10/11 (x64) | [**Download Setup.exe**](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [MSI Installer](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)<br>*(Ultra-lightweight ~30MB RAM, instant cold start, WebView2)* |
+| **⚡ Universal Desktop (Electron)** | Windows 10/11 (x64) | [MSI Installer](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
+| | macOS (Apple Silicon & Intel) | [Download ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
+| | Linux (x64 & ARM64) | [Download ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
 | **📱 Android** | Phones, Tablets, Chromebooks (Android 7.0+) | [Download APK](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · Google Play Bundle |
 
 ---
@@ -29,8 +30,11 @@
 
 ### 🌐 Universal Multi-Target Architecture
 - **In-Browser Web & PWA**: Zero-install client-side execution via WebAssembly SQLite (`sql.js`) and IndexedDB with multi-tab concurrency guards.
+- **Dual Desktop Runtime (Tauri v2 + Electron)**:
+  - **🚀 Lightweight Desktop (Tauri v2 + Rust)**: Micro-footprint (~28–41 MB RAM) utilizing native Microsoft Edge WebView2, instant startup, with native Windows installers (`ScratchJr-tauri-*`).
+  - **⚡ Universal Desktop (Electron)**: Fully self-contained Chromium + Node.js runtime across Windows, macOS, and Linux with silent MSI fleet deployment (`ScratchJr-electron-*`).
+  - **Zero Conversion Project Parity**: Both desktop runtimes share the identical SQLite database (`Documents\ScratchJR\scratchjr.sqllite`) with atomic rollback protection.
 - **Native Android Shell**: High-performance Kotlin shell with native SQLite WAL, camera/mic permissions, and system file intents.
-- **Sandboxed Desktop**: Secure Electron runtime with strict context isolation, typed database intents, and silent MSI fleet deployment.
 
 ### 🎨 Creative Coding & Expanded Canvas
 - **Advanced Paint Editor**: Discrete zoom controls (`+`, `−`, `1:1`), a true freehand masking eraser tool with circular preview cursor, multiple brush styles (Normal, Flat, Dotted), custom spectrum color picker, and star/line shape tools.
@@ -47,19 +51,19 @@
 - **1-Click `.sjr` Open & Export**: Dedicated lobby import card and instant export to native Save dialogs, Android share sheet, or browser download.
 - **Self-Healing Asset Library**: Automatic SQLite repair and regeneration for custom sprite thumbnails.
 - **Crash Protection**: Atomic database writes, rolling `.bak` snapshots on Desktop, and automated corruption quarantine.
-- **209 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
+- **249 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
 
 ---
 
 ## 🛠️ Building from Source
 
-**Prerequisites:** Node.js 22+ and Git.
+**Prerequisites:** Node.js 22+ and Git. (Rust 1.77+ required for Tauri build).
 
 ```bash
 # Install dependencies
 npm install
 
-# Run unit tests and static analysis (209 tests, 0 errors)
+# Run unit tests and static analysis (249 tests, 0 errors)
 npm test
 npm run typecheck && npx eslint src
 
@@ -72,9 +76,13 @@ npm run build:android      # Sync web bundles to Android assets
 node scripts/smoke-web.js  # Headless browser test (PWA / Web)
 node scripts/smoke-test.js # Electron desktop smoke test
 
-# Desktop Packaging
-npm run make:zip           # Build portable ZIP
-npm run make               # Build platform installer (e.g. Windows MSI)
+# Desktop Packaging (Electron)
+npm run make:zip           # Build Electron portable ZIP
+npm run make               # Build Electron platform installer (e.g. Windows MSI)
+
+# Desktop Packaging (Tauri v2)
+npm run tauri:build        # Build Tauri release executable and installers
+npm run package:tauri      # Package Tauri MSI, Setup, and portable ZIP to out/tauri-win32-x64/
 ```
 
 ---
