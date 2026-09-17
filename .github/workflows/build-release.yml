@@ -19,19 +19,19 @@ jobs:
         include:
           - os: ubuntu-latest
             release_suffix: ubuntu
-            artifact_name: ScratchJr-linux-x64.zip
+            artifact_name: ScratchJr-electron-linux-x64.zip
           - os: ubuntu-latest
             release_suffix: ubuntu-arm64
-            artifact_name: ScratchJr-linux-arm64.zip
+            artifact_name: ScratchJr-electron-linux-arm64.zip
           - os: macos-latest
             release_suffix: mac
-            artifact_name: ScratchJr-darwin-x64.zip
+            artifact_name: ScratchJr-electron-darwin-x64.zip
           - os: macos-latest
             release_suffix: mac-arm64
-            artifact_name: ScratchJr-darwin-arm64.zip
+            artifact_name: ScratchJr-electron-darwin-arm64.zip
           - os: windows-latest
             release_suffix: windows
-            artifact_name: ScratchJr-win32-x64.zip
+            artifact_name: ScratchJr-electron-win32-x64.zip
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -145,15 +145,15 @@ jobs:
           unzip -q wix3.zip -d out/wix3
           echo "Building MSI..."
           node scripts/build-msi.js
-          cp out/installer/ScratchJr.msi ScratchJr-win32-x64.msi
-          echo "MSI created: ScratchJr-win32-x64.msi"
+          cp out/installer/ScratchJr.msi ScratchJr-electron-win32-x64.msi
+          echo "MSI created: ScratchJr-electron-win32-x64.msi"
 
       - name: Generate checksums
         shell: bash
         run: |
           sha256sum "${{ matrix.artifact_name }}" > "${{ matrix.artifact_name }}.sha256"
           if [ "${{ matrix.release_suffix }}" = "windows" ]; then
-            sha256sum "ScratchJr-win32-x64.msi" > "ScratchJr-win32-x64.msi.sha256"
+            sha256sum "ScratchJr-electron-win32-x64.msi" > "ScratchJr-electron-win32-x64.msi.sha256"
           fi
           echo "SHA256 checksums:"
           cat *.sha256
@@ -228,16 +228,16 @@ jobs:
             | **🌐 Web & PWA** | | |
             | [**Launch in Browser (Web / PWA)**](https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/) | Web (Chrome, Safari, Edge, Firefox) | Instant zero-install access |
             | **🚀 Lightweight Desktop (Tauri v2 + Rust)** | | |
-            | `ScratchJr_${{ github.ref_name }}_x64-setup.exe` | Windows x64 | NSIS Installer (~40 MB, ~30 MB RAM) |
-            | `ScratchJr_${{ github.ref_name }}_x64_en-US.msi` | Windows x64 | MSI Installer (~45 MB) |
+            | `ScratchJr-tauri-win32-x64-setup.exe` | Windows x64 | NSIS Installer (~40 MB, ~30 MB RAM) |
+            | `ScratchJr-tauri-win32-x64.msi` | Windows x64 | MSI Installer (~45 MB) |
             | `ScratchJr-tauri-win32-x64.zip` | Windows x64 | Portable ZIP |
             | **⚡ Universal Desktop (Electron)** | | |
-            | `ScratchJr-win32-x64.msi` | Windows x64 | MSI Installer |
-            | `ScratchJr-win32-x64.zip` | Windows x64 | Portable ZIP |
-            | `ScratchJr-darwin-x64.zip` | macOS x64 | Intel Mac |
-            | `ScratchJr-darwin-arm64.zip` | macOS ARM64 | Apple Silicon (M1/M2/M3/M4) |
-            | `ScratchJr-linux-x64.zip` | Linux x64 | 64-bit Linux |
-            | `ScratchJr-linux-arm64.zip` | Linux ARM64 | ARM 64-bit Linux |
+            | `ScratchJr-electron-win32-x64.msi` | Windows x64 | MSI Installer |
+            | `ScratchJr-electron-win32-x64.zip` | Windows x64 | Portable ZIP |
+            | `ScratchJr-electron-darwin-x64.zip` | macOS x64 | Intel Mac |
+            | `ScratchJr-electron-darwin-arm64.zip` | macOS ARM64 | Apple Silicon (M1/M2/M3/M4) |
+            | `ScratchJr-electron-linux-x64.zip` | Linux x64 | 64-bit Linux |
+            | `ScratchJr-electron-linux-arm64.zip` | Linux ARM64 | ARM 64-bit Linux |
             | **📱 Android Edition** | | |
             | `ScratchJr-android.apk` | Android 7.0+ | Universal APK |
             | `ScratchJr-android.aab` | Android | Google Play App Bundle |

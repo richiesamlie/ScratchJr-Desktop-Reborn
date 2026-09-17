@@ -142,11 +142,12 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
                     if (manifest.downloads) {
                         const platform = process.platform;
                         const arch = process.arch;
-                        const key = platform === 'win32'
-                            ? (manifest.downloads['win32-x64-msi'] ? 'win32-x64-msi' : 'win32-x64')
-                            : `${platform}-${arch}`;
-                        if (manifest.downloads[key]) {
-                            downloadUrl = manifest.downloads[key];
+                        const candidateKeys = platform === 'win32'
+                            ? ['win32-x64-electron-msi', 'win32-x64-msi', 'win32-x64-electron-zip', 'win32-x64']
+                            : [`${platform}-${arch}-electron`, `${platform}-${arch}`];
+                        const foundKey = candidateKeys.find((k) => manifest.downloads && manifest.downloads[k]);
+                        if (foundKey && manifest.downloads[foundKey]) {
+                            downloadUrl = manifest.downloads[foundKey];
                         }
                     }
 
@@ -240,25 +241,27 @@ function buildUpdateInfo (
         const platform = process.platform;
         const arch = process.arch;
 
-        // Pick the best matching asset
-        let assetName: string | null = null;
+        // Pick matching asset, prioritizing explicit ScratchJr-electron-* before legacy ScratchJr-*
+        const candidateNames: string[] = [];
         if (platform === 'win32') {
-            assetName = 'ScratchJr-win32-x64.zip';
+            candidateNames.push('ScratchJr-electron-win32-x64.zip', 'ScratchJr-win32-x64.zip');
         } else if (platform === 'darwin') {
-            assetName = arch === 'arm64'
-                ? 'ScratchJr-darwin-arm64.zip'
-                : 'ScratchJr-darwin-x64.zip';
+            if (arch === 'arm64') {
+                candidateNames.push('ScratchJr-electron-darwin-arm64.zip', 'ScratchJr-darwin-arm64.zip');
+            } else {
+                candidateNames.push('ScratchJr-electron-darwin-x64.zip', 'ScratchJr-darwin-x64.zip');
+            }
         } else if (platform === 'linux') {
-            assetName = arch === 'arm64'
-                ? 'ScratchJr-linux-arm64.zip'
-                : 'ScratchJr-linux-x64.zip';
+            if (arch === 'arm64') {
+                candidateNames.push('ScratchJr-electron-linux-arm64.zip', 'ScratchJr-linux-arm64.zip');
+            } else {
+                candidateNames.push('ScratchJr-electron-linux-x64.zip', 'ScratchJr-linux-x64.zip');
+            }
         }
 
-        if (assetName) {
-            const asset = release.assets.find((a) => a.name === assetName);
-            if (asset) {
-                downloadUrl = asset.browser_download_url;
-            }
+        const asset = release.assets.find((a) => candidateNames.includes(a.name));
+        if (asset) {
+            downloadUrl = asset.browser_download_url;
         }
     }
 

@@ -21,9 +21,9 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Corrected project thumbnail action buttons (Delete, Export, Duplicate) positioning using card-relative `css_vh(...)` units, ensuring consistent and balanced 13vh spacing across all aspect ratios and screen resolutions.
 
 ### Packaging & Downloads
-- Releases now provide clearly segregated downloads:
-  - **Tauri v2 Edition**: `ScratchJr_2.8.0_x64-setup.exe` (NSIS), `ScratchJr_2.8.0_x64_en-US.msi` (MSI), and `ScratchJr-tauri-win32-x64.zip` (Portable).
-  - **Electron Edition**: `ScratchJr-win32-x64.msi`, `ScratchJr-win32-x64.zip`, macOS DMGs/ZIPs, and Linux packages.
+- Releases now provide clearly segregated, self-documenting artifact names:
+  - **Tauri v2 Edition**: `ScratchJr-tauri-win32-x64-setup.exe` (NSIS), `ScratchJr-tauri-win32-x64.msi` (MSI), and `ScratchJr-tauri-win32-x64.zip` (Portable).
+  - **Electron Edition**: `ScratchJr-electron-win32-x64.msi`, `ScratchJr-electron-win32-x64.zip`, macOS `ScratchJr-electron-darwin-*.zip`, and Linux `ScratchJr-electron-linux-*.zip`.
   - **Web / PWA**: Instant zero-install access at GitHub Pages `/play/`.
   - **Android**: `ScratchJr-android.apk` and `ScratchJr-android.aab`.
 

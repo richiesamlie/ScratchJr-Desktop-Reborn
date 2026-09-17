@@ -46,9 +46,10 @@ if (fs.existsSync(srcExe)) {
 const nsisDir = path.join(tauriReleaseDir, 'bundle', 'nsis');
 if (fs.existsSync(nsisDir)) {
     const nsisFiles = fs.readdirSync(nsisDir).filter((f) => f.endsWith('.exe'));
-    for (const f of nsisFiles) {
-        fs.copyFileSync(path.join(nsisDir, f), path.join(outDir, f));
-        console.log(`[package-tauri] Copied NSIS installer -> ${path.join(outDir, f)}`);
+    if (nsisFiles.length > 0) {
+        const targetName = 'ScratchJr-tauri-win32-x64-setup.exe';
+        fs.copyFileSync(path.join(nsisDir, nsisFiles[0]), path.join(outDir, targetName));
+        console.log(`[package-tauri] Copied NSIS installer -> ${path.join(outDir, targetName)}`);
     }
 }
 
@@ -56,38 +57,55 @@ if (fs.existsSync(nsisDir)) {
 const msiDir = path.join(tauriReleaseDir, 'bundle', 'msi');
 if (fs.existsSync(msiDir)) {
     const msiFiles = fs.readdirSync(msiDir).filter((f) => f.endsWith('.msi'));
-    for (const f of msiFiles) {
-        fs.copyFileSync(path.join(msiDir, f), path.join(outDir, f));
-        console.log(`[package-tauri] Copied MSI installer -> ${path.join(outDir, f)}`);
+    if (msiFiles.length > 0) {
+        const targetName = 'ScratchJr-tauri-win32-x64.msi';
+        fs.copyFileSync(path.join(msiDir, msiFiles[0]), path.join(outDir, targetName));
+        console.log(`[package-tauri] Copied MSI installer -> ${path.join(outDir, targetName)}`);
     }
 }
 
-// 4. Generate SHA-256 Checksums
-const checksums = [];
-const packagedFiles = fs.readdirSync(outDir).filter((f) => f !== 'SHA256SUMS.txt');
-for (const f of packagedFiles) {
-    const hash = computeSha256(path.join(outDir, f));
-    checksums.push(`${hash}  ${f}`);
-}
-fs.writeFileSync(path.join(outDir, 'SHA256SUMS.txt'), checksums.join('\n') + '\n', 'utf8');
-console.log(`[package-tauri] Generated SHA256SUMS.txt`);
-
-// 5. Create Standalone Release Zip via PowerShell
+// 4. Create Standalone Portable Release Zip via PowerShell (contains ScratchJr.exe)
 if (fs.existsSync(zipOutPath)) {
     fs.unlinkSync(zipOutPath);
 }
-console.log(`[package-tauri] Creating ${zipOutPath}...`);
-const psCmd = `Compress-Archive -Path "${outDir}\\*" -DestinationPath "${zipOutPath}" -Force`;
+console.log(`[package-tauri] Creating portable zip ${zipOutPath}...`);
+const psCmd = `Compress-Archive -Path "${destExe}" -DestinationPath "${zipOutPath}" -Force`;
 const zipRes = spawnSync('powershell', ['-NoProfile', '-Command', psCmd], { stdio: 'inherit' });
 
 if (zipRes.status === 0 && fs.existsSync(zipOutPath)) {
     const zipSizeMB = (fs.statSync(zipOutPath).size / (1024 * 1024)).toFixed(2);
     console.log(`[package-tauri] Release zip created successfully (${zipSizeMB} MB)`);
+    // Also copy zip into outDir for unified distribution
+    fs.copyFileSync(zipOutPath, path.join(outDir, 'ScratchJr-tauri-win32-x64.zip'));
 } else {
     console.warn(`[package-tauri] Warning: Could not create zip archive`);
 }
+
+// 5. Generate Checksums (SHA256SUMS.txt + individual .sha256 files)
+const checksums = [];
+const releaseFiles = [
+    'ScratchJr-tauri-win32-x64-setup.exe',
+    'ScratchJr-tauri-win32-x64.msi',
+    'ScratchJr-tauri-win32-x64.zip',
+    'ScratchJr.exe',
+];
+
+for (const f of releaseFiles) {
+    const filePath = path.join(outDir, f);
+    if (fs.existsSync(filePath)) {
+        const hash = computeSha256(filePath);
+        checksums.push(`${hash}  ${f}`);
+        if (f.endsWith('.exe') && f !== 'ScratchJr.exe' || f.endsWith('.msi') || f.endsWith('.zip')) {
+            fs.writeFileSync(`${filePath}.sha256`, `${hash}  ${f}\n`, 'utf8');
+            console.log(`[package-tauri] Generated ${f}.sha256`);
+        }
+    }
+}
+fs.writeFileSync(path.join(outDir, 'SHA256SUMS.txt'), checksums.join('\n') + '\n', 'utf8');
+console.log(`[package-tauri] Generated SHA256SUMS.txt`);
 
 console.log('\n=========================================');
 console.log(`Local Tauri Output Ready in: ${outDir}`);
 console.log(`Release Archive: ${zipOutPath}`);
 console.log('=========================================');
+
