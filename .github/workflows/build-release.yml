@@ -186,9 +186,81 @@ jobs:
           if-no-files-found: warn
           retention-days: 5
 
+  build-tauri:
+    name: "Build Tauri (Windows x64)"
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Node 22 LTS
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '22'
+          cache: "npm"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # stable
+        with:
+          toolchain: stable
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@82a92a6e8fbeee089604da2575dc567ae9ddeaab # v2.7.5
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify package.json and tauri versions match tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+            PKG_VERSION=$(node -p "require('./package.json').version")
+            TAURI_VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+            if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+              echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
+              exit 1
+            fi
+            if [ "$TAG_VERSION" != "$TAURI_VERSION" ]; then
+              echo "::error::Tag version ($TAG_VERSION) does not match tauri.conf.json version ($TAURI_VERSION)."
+              exit 1
+            fi
+            echo "Tag ${GITHUB_REF_NAME} matches package.json and tauri.conf.json (${PKG_VERSION})."
+          fi
+
+      - name: Ensure WiX is in PATH
+        shell: bash
+        run: |
+          if [ -d "/c/Program Files (x86)/WiX Toolset v3.11/bin" ]; then
+            echo "C:\Program Files (x86)\WiX Toolset v3.11\bin" >> $GITHUB_PATH
+          fi
+
+      - name: Build and package Tauri
+        run: |
+          npm run tauri:build
+          npm run package:tauri
+
+      - name: Upload Tauri artifacts
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
+        with:
+          name: tauri-windows-build
+          path: |
+            out/tauri-win32-x64/ScratchJr-tauri-win32-x64-setup.exe
+            out/tauri-win32-x64/ScratchJr-tauri-win32-x64-setup.exe.sha256
+            out/tauri-win32-x64/ScratchJr-tauri-win32-x64.msi
+            out/tauri-win32-x64/ScratchJr-tauri-win32-x64.msi.sha256
+            out/ScratchJr-tauri-win32-x64.zip
+            out/tauri-win32-x64/ScratchJr-tauri-win32-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 5
+
   release:
     name: Create Release
-    needs: build
+    needs: [build, build-tauri]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
@@ -209,6 +281,7 @@ jobs:
           files: |
             artifacts/**/*.zip
             artifacts/**/*.msi
+            artifacts/**/*.exe
             artifacts/**/*.sha256
           body: |
             ## ScratchJr Reborn ${{ github.ref_name }}: Dual Desktop Runtime (Tauri v2 + Electron)
