@@ -1,5 +1,6 @@
 import BlockSpecs from './BlockSpecs';
 import BlockArg from './BlockArg';
+import SoundLib from '../../utils/SoundLib';
 import { setModelRef } from '../modelRegistry';
 import { enginePorts } from '../engine/ports';
 import type Sprite from '../engine/Sprite';
@@ -103,6 +104,12 @@ export default class Block {
         this.isReporter = (spec[1] == 'reporter');
         this.blocktype = spec[0] as string;
         this.icon = spec[1];
+        if (this.blocktype === 'playsnd' && spec[4] && spec[4] !== 'pop.mp3') {
+            const libIcon = SoundLib.getIcon(String(spec[4]));
+            if (libIcon) {
+                this.icon = libIcon;
+            }
+        }
         this.image = spec[2] as HTMLImageElement;
         this.aStart = (this.blocktype == 'caretstart') || (this.image == BlockSpecs.yellowStart);
         this.anEnd = (this.blocktype == 'caretend')

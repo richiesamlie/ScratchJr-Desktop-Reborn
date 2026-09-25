@@ -12,12 +12,21 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
+const net = require('net');
 const { sleep, waitForPage, Session, waitReady } = require('./cdp-session');
 
-const PORT = 8188;
-const CDP_PORT = 9555;
-const BASE = `http://127.0.0.1:${CDP_PORT}`;
 const distWebDir = path.resolve(__dirname, '..', 'dist-web');
+
+function getFreePort() {
+    return new Promise((resolve, reject) => {
+        const s = net.createServer();
+        s.listen(0, '127.0.0.1', () => {
+            const p = s.address().port;
+            s.close(() => resolve(p));
+        });
+        s.on('error', reject);
+    });
+}
 
 const MIME_TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -65,10 +74,10 @@ function startStaticServer() {
 
 function findChromePath() {
     const candidates = [
-        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
         'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+        'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+        'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
         '/usr/bin/google-chrome',
         '/usr/bin/chromium-browser',
         '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
@@ -103,11 +112,13 @@ async function main() {
     }
 
     const { server, port } = await startStaticServer();
+    const cdpPort = await getFreePort();
+    const base = `http://127.0.0.1:${cdpPort}`;
     const tempProfile = fs.mkdtempSync(path.join(os.tmpdir(), 'scratchjr-web-smoke-'));
 
-    console.log(`smoke-web: launching Chrome with CDP port ${CDP_PORT}...`);
+    console.log(`smoke-web: launching Chrome with CDP port ${cdpPort}...`);
     const browser = spawn(chromePath, [
-        `--remote-debugging-port=${CDP_PORT}`,
+        `--remote-debugging-port=${cdpPort}`,
         '--headless=new',
         '--no-sandbox',
         '--disable-gpu',
@@ -123,7 +134,7 @@ async function main() {
     try {
         // 1. Wait for start screen
         console.log('smoke-web: waiting for Start Screen (index.html)...');
-        const startTarget = await waitForPage(BASE, 'index.html', deadline, 'smoke-web');
+        const startTarget = await waitForPage(base, 'index.html', deadline, 'smoke-web');
         const s1 = new Session(startTarget.webSocketDebuggerUrl);
         await s1.connect();
         await s1.enable();
@@ -139,7 +150,7 @@ async function main() {
         await s1.eval('window.location.href = "home.html";');
         await sleep(1500);
 
-        const homeTarget = await waitForPage(BASE, 'home.html', deadline, 'smoke-web');
+        const homeTarget = await waitForPage(base, 'home.html', deadline, 'smoke-web');
         const s2 = new Session(homeTarget.webSocketDebuggerUrl);
         await s2.connect();
         await s2.enable();
@@ -167,7 +178,7 @@ async function main() {
         if (!clicked) throw new Error('smoke-web: could not click new project');
         s2.close();
 
-        const editorTarget = await waitForPage(BASE, 'editor.html', deadline, 'smoke-web');
+        const editorTarget = await waitForPage(base, 'editor.html', deadline, 'smoke-web');
         const s3 = new Session(editorTarget.webSocketDebuggerUrl);
         await s3.connect();
         await s3.enable();
@@ -224,7 +235,7 @@ async function main() {
         })`);
         s3.close();
 
-        const lobby2Target = await waitForPage(BASE, 'home.html', deadline, 'smoke-web');
+        const lobby2Target = await waitForPage(base, 'home.html', deadline, 'smoke-web');
         const s4 = new Session(lobby2Target.webSocketDebuggerUrl);
         await s4.connect();
         await s4.enable();
@@ -394,7 +405,7 @@ async function main() {
         // Navigate: lobby -> new project -> editor, then triggerExportProject
         // immediately (no edits, never saved).
         s4.close();
-        const lobbyTarget2 = await waitForPage(BASE, 'home.html', Date.now() + 15000, 'smoke-web');
+        const lobbyTarget2 = await waitForPage(base, 'home.html', Date.now() + 15000, 'smoke-web');
         const s5 = new Session(lobbyTarget2.webSocketDebuggerUrl);
         await s5.connect();
         await s5.enable();
@@ -409,7 +420,7 @@ async function main() {
             return true;
         })()`);
         s5.close();
-        const editorTarget2 = await waitForPage(BASE, 'editor.html', Date.now() + 20000, 'smoke-web');
+        const editorTarget2 = await waitForPage(base, 'editor.html', Date.now() + 20000, 'smoke-web');
         // Old editor target may still be listed; find the NEW one (different ws url from the first editor session)
         const s6 = new Session(editorTarget2.webSocketDebuggerUrl);
         await s6.connect();

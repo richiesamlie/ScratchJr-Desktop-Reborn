@@ -1,5 +1,6 @@
 import Localization from '../../utils/Localization';
 import IO from '../../platform/IO';
+import SoundLib from '../../utils/SoundLib';
 import type Block from './Block';
 import type Sprite from '../engine/Sprite';
 
@@ -69,6 +70,7 @@ export default class BlockSpecs {
     static endS: HTMLImageElement;
     static endLongS: HTMLImageElement;
     static repeatS: HTMLImageElement;
+    static addsound: HTMLImageElement;
 
     static get loadCount () {
         return loadCount;
@@ -153,7 +155,8 @@ export default class BlockSpecs {
         BlockSpecs.endS = BlockSpecs.getImageFrom('assets/blocks/shadowEndShort', 'svg');
         BlockSpecs.endLongS = BlockSpecs.getImageFrom('assets/blocks/shadowEndLong', 'svg');
         BlockSpecs.repeatS = BlockSpecs.getImageFrom('assets/blocks/shadowRepeat');
-
+        BlockSpecs.addsound = BlockSpecs.getImageFrom('assets/blockicons/addsound', 'svg');
+        SoundLib.init();
     }
 
     static getImageFrom (url: string, ext?: string) {
@@ -358,7 +361,9 @@ export default class BlockSpecs {
             'shrink': Localization.localize('BLOCK_DESC_SHRINK'),
             'same': Localization.localize('BLOCK_DESC_RESET_SIZE'),
             'playsnd': Localization.localize('BLOCK_DESC_PLAY_SOUND', {
-                SOUND_NAME: Localization.localize('BLOCK_DESC_PLAY_SOUND_POP')
+                SOUND_NAME: (b.getArgValue() && SoundLib.isLibrarySound(String(b.getArgValue())))
+                    ? SoundLib.getLabel(String(b.getArgValue()))
+                    : Localization.localize('BLOCK_DESC_PLAY_SOUND_POP')
             }),
             'playusersnd': Localization.localize('BLOCK_DESC_PLAY_RECORDED_SOUND'),
             'endstack': Localization.localize('BLOCK_DESC_END'),

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Wand -->
+    <line x1="20" y1="52" x2="48" y2="24" stroke="#64A01F" stroke-width="4" stroke-linecap="round" />
+    <line x1="42" y1="30" x2="48" y2="24" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" />
+    <!-- Big star at tip -->
+    <polygon points="52,14 54,20 60,22 54,24 52,30 50,24 44,22 50,20" fill="#64A01F" />
+    <!-- Smaller sparkle stars -->
+    <polygon points="32,16 33,19 36,20 33,21 32,24 31,21 28,20 31,19" fill="#64A01F" />
+    <polygon points="56,36 57,38 60,39 57,40 56,42 55,40 52,39 55,38" fill="#64A01F" />
+</svg>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Floppy ears -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 22,24 C 14,24 12,38 18,46 C 22,50 26,46 25,36 Z" />
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 54,24 C 62,24 64,38 58,46 C 54,50 50,46 51,36 Z" />
+    <!-- Head -->
+    <ellipse cx="38" cy="36" rx="18" ry="16" fill="#FFFFFF" stroke="#64A01F" stroke-width="3" />
+    <!-- Snout -->
+    <ellipse cx="38" cy="42" rx="10" ry="8" fill="#FFFFFF" stroke="#64A01F" stroke-width="2" />
+    <!-- Big cute nose -->
+    <path d="M 34,39 Q 38,37 42,39 Q 38,45 34,39 Z" fill="#64A01F" />
+    <path d="M 38,43 L 38,47 M 35,46 Q 38,49 41,46" fill="none" stroke="#64A01F" stroke-width="2" stroke-linecap="round" />
+    <!-- Eyes -->
+    <circle cx="31" cy="30" r="3" fill="#64A01F" />
+    <circle cx="45" cy="30" r="3" fill="#64A01F" />
+    <circle cx="32" cy="29" r="1" fill="#FFFFFF" />
+    <circle cx="46" cy="29" r="1" fill="#FFFFFF" />
+</svg>

@@ -42,7 +42,19 @@ if (targetPlatform === 'darwin' && process.platform === 'win32') {
             ? 'src/icons/mac/icon.icns'
             : 'src/icons/png/512x512.png'),
     asar: true,
-    ignore: [/^\/out\//],
+    ignore: [
+        /^\/out($|\/)/,
+        /^\/src-tauri($|\/)/,
+        /^\/android($|\/)/,
+        /^\/dist-web($|\/)/,
+        /^\/\.git($|\/)/,
+        /^\/\.github($|\/)/,
+        /^\/docs($|\/)/,
+        /^\/tests($|\/)/,
+        /^\/scripts($|\/)/,
+        /^\/scratch($|\/)/,
+        /^\/graphify-out($|\/)/,
+    ],
     appCopyright: pkg['app-copyright'] || '',
     appVersion: pkg.version,
 };

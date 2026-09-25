@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Squeeze bulb -->
+    <ellipse cx="22" cy="33" rx="8" ry="11" fill="#FFFFFF" stroke="#64A01F" stroke-width="3" />
+    <!-- Horn tube and bell -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 30,31 L 46,31 L 58,20 L 58,46 L 46,35 L 30,35 Z" />
+    <!-- Beep waves -->
+    <path d="M 61,24 Q 66,33 61,42" fill="none" stroke="#64A01F" stroke-width="2.5" stroke-linecap="round" />
+    <path d="M 66,20 Q 72,33 66,46" fill="none" stroke="#64A01F" stroke-width="2.5" stroke-linecap="round" />
+</svg>

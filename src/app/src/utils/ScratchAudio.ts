@@ -1,5 +1,7 @@
 import Sound from './Sound';
 import PlatformBridge from '../platform/PlatformBridge';
+import SoundLib from './SoundLib';
+import MediaLib from '../platform/MediaLib';
 
 ////////////////////////////////////////////////////
 /// Sound Playing
@@ -44,6 +46,13 @@ export default class ScratchAudio {
             ScratchAudio.addSound(prefix + 'sounds/', defaultSounds[i], uiSounds);
         }
         ScratchAudio.addSound(prefix, 'pop.mp3', projectSounds);
+
+        // Pre-register curated library sounds into projectSounds
+        SoundLib.init();
+        const libSounds = SoundLib.getAllSounds();
+        for (let j = 0; j < libSounds.length; j++) {
+            ScratchAudio.addSound(prefix + 'sounds/', libSounds[j].name, projectSounds);
+        }
     }
 
     static addSound (url: string, snd: string, dict: Record<string, Sound>, fcn?: (name: string) => void) {
@@ -70,9 +79,18 @@ export default class ScratchAudio {
         if (!md5) {
             return;
         }
+        if (projectSounds[md5] != undefined) {
+            if (fcn) fcn(md5);
+            return;
+        }
         var dir = '';
-        if (md5.indexOf('/') > -1) dir = 'HTML5/';
-        else dir = 'Documents';
+        if (md5.indexOf('/') > -1) {
+            dir = 'HTML5/';
+        } else if (SoundLib.isLibrarySound(md5) || (MediaLib.sounds && MediaLib.sounds.indexOf(md5) > -1)) {
+            dir = 'HTML5/sounds/';
+        } else {
+            dir = 'Documents';
+        }
         ScratchAudio.loadFromLocal(dir, md5, fcn);
     }
 

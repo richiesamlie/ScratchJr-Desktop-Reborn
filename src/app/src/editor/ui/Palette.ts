@@ -19,6 +19,7 @@ import Rectangle from '../../geom/Rectangle';
 import DrawPath from '../../utils/DrawPath';
 import ScratchAudio from '../../utils/ScratchAudio';
 import Record from './Record';
+import SoundPicker from './SoundPicker';
 import {frame, gn, localx, newHTML, scaleMultiplier, newDiv,
     setProps, globalx, localy, globaly, drawScaled, newCanvas,
     setCanvasSize, hitRect, writeText, getStringSize} from '../../utils/lib';
@@ -114,16 +115,19 @@ export default class Palette {
 
     static removeSound (ths: HTMLElement) {
         ScratchAudio.sndFX('cut.wav');
-        var indx = getModelRefAs<Block>(ths, 'block')!.getArgValue() as number;
+        var blk = getModelRefAs<Block>(ths, 'block')!;
+        var arg = blk.getArgValue();
         var spr = ScratchJr.getSprite() as Sprite;
         if (!spr) {
             return;
         }
         var page = getModelRefAs<Page>(spr.div.parentNode as HTMLElement, 'page')!;
         var sounds = spr.sounds.concat();
-        if (indx >= sounds.length) {
+        var indx = (typeof arg === 'number' && !Number.isNaN(arg)) ? arg : sounds.indexOf(String(arg));
+        if (indx < 0 || indx >= sounds.length) {
             return;
         }
+        var deletedSound = sounds[indx];
         sounds.splice(indx, 1);
         spr.sounds = sounds;
         // recreate the sprite scripts to make sure deleted sound is properly treated
@@ -141,7 +145,7 @@ export default class Palette {
             action: 'deletesound',
             who: spr.id,
             where: page.id,
-            sound: name
+            sound: deletedSound
         });
         ScratchJr.storyStart('Palette.removeSound'); // Record a change for sample projects in story-starter mode
 
@@ -163,7 +167,9 @@ export default class Palette {
         if (!hasModelRef(b)) {
             return;
         }
-        if (getModelRefAs<Block>(b, 'block')!.blocktype != 'playusersnd') {
+        var blk = getModelRefAs<Block>(b, 'block')!;
+        var isCustomSound = blk.blocktype == 'playusersnd' || (blk.blocktype == 'playsnd' && blk.getArgValue() != 'pop.mp3');
+        if (!isCustomSound) {
             Palette.showHelp(null, b); return;
         }
         ScratchJr.shaking = b;
@@ -447,6 +453,8 @@ export default class Palette {
         }
         if ((list.length < 6) && Record.available && newb) {
             Palette.drawRecordSound(newb.div.offsetWidth, newb.div.offsetHeight, dx);
+            dx += betweenblocks!;
+            Palette.drawAddSound(newb.div.offsetWidth, newb.div.offsetHeight, dx);
         }
     }
 
@@ -489,6 +497,49 @@ export default class Palette {
         };
         div.ontouchend = function (evt: TouchEvent) {
             Palette.recordSound(evt);
+        };
+    }
+
+    static drawAddSound (w: number, h: number, dx: number) {
+        var pal = gn('palette')!;
+        var div = newDiv(pal, dx, 0, w, h, {
+            top: (6 * scaleMultiplier) + 'px'
+        });
+        div.setAttribute('id', 'addsoundslot');
+        div.className = 'recordslot';
+        div.style.cursor = 'pointer';
+        div.setAttribute('title', 'Choose sound from library');
+        var cnv = newCanvas(div, 0, 0, div.offsetWidth * window.devicePixelRatio, div.offsetHeight * window.devicePixelRatio, {
+                webkitTransform: 'translate('
+                + (-div.offsetWidth * window.devicePixelRatio / 2) + 'px, '
+                + (-div.offsetHeight * window.devicePixelRatio / 2) + 'px) '
+                + 'scale(' + (1 / window.devicePixelRatio) + ') translate('
+                + (div.offsetWidth * window.devicePixelRatio / 2) + 'px, '
+                + (div.offsetHeight * window.devicePixelRatio / 2) + 'px)'
+            }
+        );
+        if (BlockSpecs.addsound && BlockSpecs.addsound.complete) {
+            drawScaled(BlockSpecs.addsound, cnv);
+        } else if (BlockSpecs.addsound) {
+            BlockSpecs.addsound.onload = function () {
+                drawScaled(BlockSpecs.addsound, cnv);
+            };
+        }
+        div.onmousedown = function (evt: MouseEvent) {
+            if (evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+            }
+            ScratchJr.clearSelection();
+            SoundPicker.open();
+        };
+        div.ontouchend = function (evt: TouchEvent) {
+            if (evt) {
+                evt.preventDefault();
+                evt.stopPropagation();
+            }
+            ScratchJr.clearSelection();
+            SoundPicker.open();
         };
     }
 

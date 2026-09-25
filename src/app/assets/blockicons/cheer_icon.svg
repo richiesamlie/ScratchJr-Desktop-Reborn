@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Two clapping hands -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 26,48 L 34,36 C 36,33 40,34 38,38 L 34,44 L 42,34 C 44,31 48,32 46,36 L 40,44 L 46,38 C 48,35 52,37 50,40 L 38,54 Z" />
+    <!-- Confetti / applause bursts -->
+    <line x1="22" y1="24" x2="16" y2="18" stroke="#64A01F" stroke-width="3" stroke-linecap="round" />
+    <line x1="38" y1="20" x2="38" y2="12" stroke="#64A01F" stroke-width="3" stroke-linecap="round" />
+    <line x1="54" y1="24" x2="60" y2="18" stroke="#64A01F" stroke-width="3" stroke-linecap="round" />
+    <circle cx="28" cy="18" r="2" fill="#64A01F" />
+    <circle cx="48" cy="18" r="2" fill="#64A01F" />
+</svg>

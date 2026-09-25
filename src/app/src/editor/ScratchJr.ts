@@ -13,6 +13,7 @@ import Undo from './ui/Undo';
 import Alert from './ui/Alert';
 import Palette from './ui/Palette';
 import Record from './ui/Record';
+import SoundPicker from './ui/SoundPicker';
 import IO from '../platform/IO';
 import PlatformBridge from '../platform/PlatformBridge';
 import UI from './ui/UI';
@@ -223,6 +224,7 @@ export default class ScratchJr {
         Library.init();
         enginePorts().paintInit?.();
         Record.init();
+        SoundPicker.init();
         Prims.init();
         runtime = new Runtime();
         Undo.init();

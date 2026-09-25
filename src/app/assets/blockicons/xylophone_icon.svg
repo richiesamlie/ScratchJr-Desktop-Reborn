@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Mallet -->
+    <line x1="22" y1="14" x2="48" y2="30" stroke="#64A01F" stroke-width="2.5" stroke-linecap="round" />
+    <circle cx="22" cy="14" r="4.5" fill="#64A01F" />
+    <!-- Slanted bars from large to small -->
+    <rect x="16" y="26" width="7" height="30" rx="2" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <rect x="26" y="30" width="7" height="26" rx="2" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <rect x="36" y="34" width="7" height="22" rx="2" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <rect x="46" y="38" width="7" height="18" rx="2" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <rect x="56" y="42" width="7" height="14" rx="2" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+</svg>

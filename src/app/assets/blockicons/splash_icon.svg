@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Central droplet -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3"
+          d="M 38,14 C 38,14 47,28 47,35 C 47,41 43,46 38,46 C 33,46 29,41 29,35 C 29,28 38,14 38,14 Z" />
+    <!-- Side splashes -->
+    <circle cx="20" cy="30" r="3.5" fill="#64A01F" />
+    <circle cx="56" cy="30" r="3.5" fill="#64A01F" />
+    <circle cx="16" cy="42" r="2.5" fill="#64A01F" />
+    <circle cx="60" cy="42" r="2.5" fill="#64A01F" />
+    <ellipse cx="38" cy="52" rx="18" ry="4" fill="none" stroke="#64A01F" stroke-width="2.5" />
+</svg>

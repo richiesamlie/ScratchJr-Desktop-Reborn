@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Piano body outline -->
+    <rect x="14" y="16" width="48" height="36" rx="4" fill="#FFFFFF" stroke="#64A01F" stroke-width="3" />
+    <!-- White keys dividers -->
+    <line x1="22" y1="16" x2="22" y2="52" stroke="#64A01F" stroke-width="2" />
+    <line x1="30" y1="16" x2="30" y2="52" stroke="#64A01F" stroke-width="2" />
+    <line x1="38" y1="16" x2="38" y2="52" stroke="#64A01F" stroke-width="2" />
+    <line x1="46" y1="16" x2="46" y2="52" stroke="#64A01F" stroke-width="2" />
+    <line x1="54" y1="16" x2="54" y2="52" stroke="#64A01F" stroke-width="2" />
+    <!-- Black keys -->
+    <rect x="19" y="16" width="6" height="22" fill="#64A01F" rx="1" />
+    <rect x="27" y="16" width="6" height="22" fill="#64A01F" rx="1" />
+    <rect x="43" y="16" width="6" height="22" fill="#64A01F" rx="1" />
+    <rect x="51" y="16" width="6" height="22" fill="#64A01F" rx="1" />
+</svg>

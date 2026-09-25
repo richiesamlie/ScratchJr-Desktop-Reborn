@@ -3,6 +3,33 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.9.0] - 2026-09-25
+
+**Minor Release: Curated Audio FX & Instrument Library, Authentic Natural Animal Sounds, and Cross-Platform Audio Engine Parity.**
+
+### Added
+- **Curated Audio FX & Instrument Library (`src/app/src/utils/SoundLib.ts`)**:
+  - Pre-reader friendly tactile audio library designed specifically for young creators (ages 5–7).
+  - 16 curated sounds across 3 visual categories:
+    - 🐾 **Animals**: Cat (`cat.wav`), Dog (`dog.wav`), Bird (`bird.wav`), Frog (`frog.wav`), Cow (`cow.wav`), Duck (`duck.wav`).
+    - 🎵 **Instruments**: Drum (`drum.wav`), Piano (`piano.wav`), Trumpet (`trumpet.wav`), Bell (`bell.wav`), Xylophone (`xylophone.wav`).
+    - ✨ **Fun FX**: Boing (`boing.wav`), Splash (`splash.wav`), Magic (`magic.wav`), Car Horn (`carhorn.wav`), Cheer (`cheer.wav`).
+  - Replaced synthetic sine oscillator audio with authentic CC0/Public Domain natural field recordings (warm cat meow, dog bark, woodland chirp, pasture moo, pond frog croak, duck quack) normalized to standard 44.1 kHz 16-bit mono PCM WAV.
+- **Sound Picker Modal UI (`src/app/src/editor/ui/SoundPicker.ts`)**:
+  - Full-screen tactile modal dialog with 3 category tabs, instant tap-to-listen audio preview cards, and OK/Cancel buttons.
+  - Added dedicated `+` ("add sound") button slot in the lime-green Sound block palette tray (`Palette.ts`).
+  - Sound blocks in palette and script stacks dynamically render illustrated SVG icons (cat, drum, bell, etc.) matching the selected sound.
+  - Fully integrated with Undo/Redo stack and long-press shake-to-delete interaction.
+  - 100% backward and cross-platform compatible via native `playsnd` block opcode without schema migrations.
+- **Cross-Platform Audio Engine Parity (`src/browserClient.js`, `src/electronClient.js`, `AndroidBridge.kt`)**:
+  - Fixed Web/PWA Web Audio API timing: wired `source.onended` to `PlatformBridge.soundDone(name)` and added missing-sound timeout fallback so script threads advance immediately to subsequent blocks upon sound completion.
+  - Normalized URL path resolution in browser client to handle `HTML5/` legacy prefix without 404s.
+  - Added `activeSources` map in browser client to ensure clean cancellation on `io_stopsound`.
+- **Unit & Integration Tests (`tests/unit/sound-lib.test.js`)**:
+  - 10 unit and parity tests verifying sound metadata, modal lifecycle, and identical asset presence across Desktop, Android, and Web targets.
+- **Smoke Test Robustness (`scripts/smoke-web.js`)**:
+  - Allocated dynamic free port for Chrome DevTools Protocol to prevent port conflicts with running browsers.
+
 ## [v2.8.0] - 2026-09-17
 
 **Minor Release: Dual Desktop Runtime (Tauri v2 + Electron), Universal Multi-Target Architecture, Native File Menu, and Lobby UI Spacing Polish.**

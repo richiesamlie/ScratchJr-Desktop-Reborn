@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Body -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 22,38 C 22,25 35,20 44,22 C 52,24 56,32 54,42 C 50,50 36,52 26,48 C 20,44 14,46 12,48 C 14,43 18,39 22,38 Z" />
+    <!-- Wing -->
+    <path d="M 26,36 C 30,34 38,36 37,44 C 32,46 27,42 26,36 Z" fill="#FFFFFF" stroke="#64A01F" stroke-width="2" />
+    <!-- Eye -->
+    <circle cx="45" cy="27" r="2.5" fill="#64A01F" />
+    <circle cx="46" cy="26.5" r="0.8" fill="#FFFFFF" />
+    <!-- Open Beak singing -->
+    <polygon points="53,28 62,25 54,32" fill="#64A01F" />
+    <polygon points="54,33 60,36 53,36" fill="#64A01F" />
+    <!-- Music note -->
+    <path d="M 60,18 L 65,16 L 65,22 M 60,18 L 60,24" stroke="#64A01F" stroke-width="1.8" fill="none" />
+    <circle cx="59" cy="24" r="2" fill="#64A01F" />
+    <circle cx="64" cy="22" r="2" fill="#64A01F" />
+</svg>

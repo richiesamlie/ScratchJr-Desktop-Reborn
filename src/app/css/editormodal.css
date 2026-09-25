@@ -347,3 +347,146 @@ body:not([data-theme="classic"]) .progressbar2 {
     transition: width 300ms ease-out;
 }
 
+/* ------------------------------------------------ */
+/* Sound Picker Library Dialog                      */
+/* ------------------------------------------------ */
+
+.soundpicker {
+    position: fixed;
+    top: calc(50% - ${160 * scaleMultiplier}px);
+    left: calc(50% - ${230 * scaleMultiplier}px);
+    width: ${460 * scaleMultiplier}px;
+    height: ${320 * scaleMultiplier}px;
+    z-index: 11000;
+    background-color: #f7f9f7;
+    border: 2px solid #59a626;
+    border-radius: ${12 * scaleMultiplier}px;
+    box-shadow: 0 ${6 * scaleMultiplier}px ${20 * scaleMultiplier}px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.soundpicker.fade {
+    transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+    opacity: 0;
+    transform: scale(0.92);
+    pointer-events: none;
+}
+
+.soundpicker.fade.in {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.soundpicker-topbar {
+    height: ${50 * scaleMultiplier}px;
+    background: #59a626;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 ${10 * scaleMultiplier}px;
+    box-sizing: border-box;
+}
+
+.soundpicker-btn {
+    width: ${38 * scaleMultiplier}px;
+    height: ${38 * scaleMultiplier}px;
+    cursor: pointer;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: transform 0.1s ease;
+}
+
+.soundpicker-btn:active {
+    transform: scale(0.92);
+}
+
+.soundpicker-cancel {
+    background-image: url('../assets/paint/cancel.svg');
+}
+
+.soundpicker-ok {
+    background-image: url('../assets/paint/ok.svg');
+}
+
+.soundpicker-tabs {
+    display: flex;
+    gap: ${8 * scaleMultiplier}px;
+}
+
+.soundpicker-tab {
+    padding: ${5 * scaleMultiplier}px ${12 * scaleMultiplier}px;
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    border-radius: ${16 * scaleMultiplier}px;
+    font-size: ${13 * scaleMultiplier}px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+.soundpicker-tab.active {
+    background: #ffffff;
+    color: #437515;
+    box-shadow: 0 ${2 * scaleMultiplier}px ${4 * scaleMultiplier}px rgba(0, 0, 0, 0.2);
+}
+
+.soundpicker-grid {
+    flex: 1;
+    padding: ${12 * scaleMultiplier}px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: ${10 * scaleMultiplier}px;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+.soundpicker-card {
+    background: #ffffff;
+    border: 2px solid #e0e5de;
+    border-radius: ${10 * scaleMultiplier}px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: ${8 * scaleMultiplier}px ${4 * scaleMultiplier}px;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.soundpicker-card:hover {
+    transform: translateY(-2px);
+    border-color: #87d32e;
+    box-shadow: 0 ${4 * scaleMultiplier}px ${8 * scaleMultiplier}px rgba(100, 160, 31, 0.2);
+}
+
+.soundpicker-card.selected {
+    border-color: #f7941d;
+    background: #fffcf5;
+    box-shadow: 0 0 0 ${3 * scaleMultiplier}px rgba(247, 148, 29, 0.35);
+    transform: scale(1.02);
+}
+
+.soundpicker-card-icon {
+    width: ${52 * scaleMultiplier}px;
+    height: ${44 * scaleMultiplier}px;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.soundpicker-card-label {
+    margin-top: ${4 * scaleMultiplier}px;
+    font-size: ${12 * scaleMultiplier}px;
+    font-weight: bold;
+    color: #333333;
+    text-align: center;
+    pointer-events: none;
+}
+
+

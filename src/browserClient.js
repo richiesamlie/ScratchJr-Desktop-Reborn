@@ -644,6 +644,8 @@
     // Sound player registry for Web Audio
     /** @type {Record<string, AudioBuffer>} */
     var soundBuffers = {};
+    /** @type {Record<string, AudioBufferSourceNode>} */
+    var activeSources = {};
     /** @type {AudioContext | null} */
     var audioCtx = null;
     function getAudioContext() {
@@ -882,7 +884,10 @@
                     var mime = ext === 'mp3' ? 'audio/mp3' : (ext === 'webm' ? 'audio/webm' : (ext === 'ogg' ? 'audio/ogg' : 'audio/wav'));
                     var dataUrl = b64.startsWith('data:') ? b64 : ('data:' + mime + ';base64,' + b64);
                     return fetch(dataUrl)
-                        .then(function (res) { return res.arrayBuffer(); })
+                        .then(function (res) {
+                            if (!res.ok) throw new Error('HTTP ' + res.status);
+                            return res.arrayBuffer();
+                        })
                         .then(function (buf) {
                             var ctx = getAudioContext();
                             if (ctx) {
@@ -895,9 +900,27 @@
                     console.warn('[browserClient] registerSound (Documents) error:', name, e);
                 });
             }
-            var url = (dir ? dir + '/' : '') + name;
+            // Strip legacy iOS/HTML5 prefix if present
+            var cleanDir = (dir || '').replace(/^HTML5\/?/, '');
+            if (!cleanDir || cleanDir === '') {
+                cleanDir = 'sounds';
+            }
+            cleanDir = cleanDir.replace(/\/+$/, '');
+            var url = cleanDir + '/' + name.replace(/^\/+/, '');
             return fetch(url)
-                .then(function (res) { return res.arrayBuffer(); })
+                .then(function (res) {
+                    if (!res.ok) {
+                        // Fallback: try root sounds/ if not already attempted
+                        if (!url.startsWith('sounds/')) {
+                            return fetch('sounds/' + name).then(function (r2) {
+                                if (!r2.ok) throw new Error('HTTP ' + r2.status);
+                                return r2.arrayBuffer();
+                            });
+                        }
+                        throw new Error('HTTP ' + res.status);
+                    }
+                    return res.arrayBuffer();
+                })
                 .then(function (buf) {
                     var ctx = getAudioContext();
                     if (ctx) {
@@ -913,19 +936,48 @@
 
         io_playsound: function (/** @type {string} */ name) {
             var ctx = getAudioContext();
+            var notifyDone = function () {
+                var hostBridge = /** @type {any} */ (window).PlatformBridge || /** @type {any} */ (window).iOS;
+                if (hostBridge && hostBridge.soundDone) {
+                    hostBridge.soundDone(name);
+                }
+            };
             if (ctx && soundBuffers[name]) {
                 if (ctx.state === 'suspended') {
-                    ctx.resume();
+                    ctx.resume().catch(function () {});
                 }
                 var source = ctx.createBufferSource();
                 source.buffer = soundBuffers[name];
                 source.connect(ctx.destination);
+                source.onended = function () {
+                    if (activeSources[name] === source) {
+                        delete activeSources[name];
+                    }
+                    notifyDone();
+                };
+                activeSources[name] = source;
                 source.start(0);
+            } else {
+                // Sound not registered or AudioContext not ready: notify done immediately
+                // so the thread / green block does not stall (parity with Electron and Android).
+                setTimeout(notifyDone, 1);
             }
         },
 
-        io_stopsound: function () {
-            // Web Audio stops when buffer finishes
+        io_stopsound: function (/** @type {string} */ [name]) {
+            if (name && activeSources[name]) {
+                try {
+                    activeSources[name].stop(0);
+                } catch (_) { /* ignore already stopped */ }
+                delete activeSources[name];
+            } else if (!name) {
+                Object.keys(activeSources).forEach(function (k) {
+                    try {
+                        activeSources[k].stop(0);
+                    } catch (_) { /* ignore already stopped */ }
+                    delete activeSources[k];
+                });
+            }
         },
 
         // ---- Microphone Recording (via webav.js) ----

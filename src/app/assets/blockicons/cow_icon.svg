@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Horns -->
+    <path d="M 22,22 Q 16,14 24,14" fill="none" stroke="#64A01F" stroke-width="3" stroke-linecap="round" />
+    <path d="M 54,22 Q 60,14 52,14" fill="none" stroke="#64A01F" stroke-width="3" stroke-linecap="round" />
+    <!-- Ears -->
+    <ellipse cx="18" cy="27" rx="7" ry="4" transform="rotate(-20 18 27)" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <ellipse cx="58" cy="27" rx="7" ry="4" transform="rotate(20 58 27)" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <!-- Head -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3"
+          d="M 24,20 L 52,20 C 54,28 54,34 50,40 L 26,40 C 22,34 22,28 24,20 Z" />
+    <!-- Spot -->
+    <path d="M 44,20 C 48,24 45,30 51,32 L 52,20 Z" fill="#64A01F" />
+    <!-- Big snout -->
+    <rect x="22" y="36" width="32" height="18" rx="9" fill="#FFFFFF" stroke="#64A01F" stroke-width="3" />
+    <ellipse cx="30" cy="45" rx="2.5" ry="3" fill="#64A01F" />
+    <ellipse cx="46" cy="45" rx="2.5" ry="3" fill="#64A01F" />
+    <!-- Eyes -->
+    <circle cx="31" cy="29" r="2.5" fill="#64A01F" />
+    <circle cx="45" cy="29" r="2.5" fill="#64A01F" />
+</svg>

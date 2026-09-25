@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Top ring -->
+    <path d="M 34,16 A 4,4 0 0,1 42,16" fill="none" stroke="#64A01F" stroke-width="3" />
+    <!-- Bell body -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 38,16 C 30,16 26,26 25,38 C 24,45 18,48 18,48 L 58,48 C 58,48 52,45 51,38 C 50,26 46,16 38,16 Z" />
+    <!-- Clapper (bottom ball) -->
+    <circle cx="38" cy="52" r="4.5" fill="#64A01F" />
+    <!-- Shimmer waves -->
+    <path d="M 14,28 Q 10,36 14,44" fill="none" stroke="#64A01F" stroke-width="2" stroke-linecap="round" />
+    <path d="M 62,28 Q 66,36 62,44" fill="none" stroke="#64A01F" stroke-width="2" stroke-linecap="round" />
+</svg>

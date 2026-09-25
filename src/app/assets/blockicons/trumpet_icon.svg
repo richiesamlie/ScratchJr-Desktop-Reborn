@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Bell Flare -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 52,22 L 62,14 L 62,50 L 52,42 Z" />
+    <!-- Main Tubes -->
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3"
+          d="M 16,36 L 20,36 L 20,32 L 52,32 L 52,36 L 24,36 L 24,40 L 52,40 L 52,32" />
+    <!-- Mouthpiece -->
+    <polygon points="12,34 16,36 16,38 12,40" fill="#64A01F" />
+    <!-- Valves -->
+    <rect x="30" y="22" width="3" height="10" fill="#64A01F" />
+    <circle cx="31.5" cy="21" r="2" fill="#64A01F" />
+    <rect x="36" y="22" width="3" height="10" fill="#64A01F" />
+    <circle cx="37.5" cy="21" r="2" fill="#64A01F" />
+    <rect x="42" y="22" width="3" height="10" fill="#64A01F" />
+    <circle cx="43.5" cy="21" r="2" fill="#64A01F" />
+    <!-- Sound waves -->
+    <path d="M 64,24 Q 69,32 64,40" fill="none" stroke="#64A01F" stroke-width="2.5" stroke-linecap="round" />
+</svg>

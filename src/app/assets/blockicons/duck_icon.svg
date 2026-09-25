@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Head and Body -->
+    <circle cx="35" cy="26" r="12" fill="#FFFFFF" stroke="#64A01F" stroke-width="3" />
+    <path fill="#FFFFFF" stroke="#64A01F" stroke-width="3" stroke-linejoin="round"
+          d="M 24,34 C 18,36 14,46 22,52 C 34,56 48,54 54,46 C 58,40 54,34 44,34 Z" />
+    <!-- Big Bill -->
+    <path d="M 43,26 Q 59,26 56,33 Q 45,36 43,32 Z" fill="#64A01F" />
+    <!-- Eye -->
+    <circle cx="38" cy="24" r="2.5" fill="#64A01F" />
+    <circle cx="39" cy="23" r="0.8" fill="#FFFFFF" />
+</svg>

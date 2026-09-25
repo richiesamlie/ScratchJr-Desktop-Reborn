@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="76px" height="66px" viewBox="0 0 76 66">
+<!-- Big musical eighth note -->
+    <path d="M 30,36 L 30,18 L 48,14 L 48,32 M 30,23 L 48,19" fill="none" stroke="#64A01F" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+    <ellipse cx="26" cy="38" rx="6" ry="4.5" fill="#64A01F" transform="rotate(-15 26 38)" />
+    <ellipse cx="44" cy="34" rx="6" ry="4.5" fill="#64A01F" transform="rotate(-15 44 34)" />
+    <!-- Tactile Plus badge in bottom corner -->
+    <circle cx="53" cy="49" r="9" fill="#FFFFFF" stroke="#64A01F" stroke-width="2.5" />
+    <line x1="53" y1="44" x2="53" y2="54" stroke="#64A01F" stroke-width="2.5" stroke-linecap="round" />
+    <line x1="48" y1="49" x2="58" y2="49" stroke="#64A01F" stroke-width="2.5" stroke-linecap="round" />
+</svg>
