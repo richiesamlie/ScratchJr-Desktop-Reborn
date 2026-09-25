@@ -49,6 +49,7 @@ jobs:
         run: npm ci
 
       - name: Verify package.json matches tag
+        if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
@@ -108,7 +109,11 @@ jobs:
           # (Forge wires package.json version into the MSI/zip metadata, but the
           # in-app Settings.scratchJrVersion comes from src/app/settings.json which
           # build-renderer.js rewrites in lockstep — guard against that ever drifting.)
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+          else
+            TAG_VERSION=$(node -p "require('./package.json').version")
+          fi
           EXPECTED="desktop-v${TAG_VERSION}"
 
           ASAR_FILE=$(find out -name 'app.asar' | head -1)
