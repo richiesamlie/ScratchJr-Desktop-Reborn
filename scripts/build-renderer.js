@@ -63,6 +63,16 @@ async function main() {
         await esbuild.build(options);
         console.log('Renderer bundle built successfully.');
     }
+
+    // Ensure wasm binary is present in src/ and src/app/ for local dev and desktop runtimes
+    const sqlDist = path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist');
+    const wasmSource = path.join(sqlDist, 'sql-wasm.wasm');
+    if (fs.existsSync(wasmSource)) {
+        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'sql-wasm.wasm'));
+        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'sql-wasm-browser.wasm'));
+        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'app', 'sql-wasm.wasm'));
+        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'app', 'sql-wasm-browser.wasm'));
+    }
 }
 
 main().catch((err) => {

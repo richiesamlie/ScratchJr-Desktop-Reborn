@@ -160,15 +160,24 @@ export default class BlockSpecs {
     }
 
     static getImageFrom (url: string, ext?: string) {
+        var path = url + (ext ? '.' + ext : '.png');
+        if (loadassets[path]) {
+            return loadassets[path];
+        }
         var img = document.createElement('img');
-        img.src = url + (ext ? '.' + ext : '.png');
+        img.src = path;
+        loadassets[path] = img;
         if (!img.complete) {
-            loadassets[img.src] = img;
             loadCount++;
-            img.onload = function () {
-                delete loadassets[img.src];
-                loadCount--;
+            var done = false;
+            var onDone = function () {
+                if (!done) {
+                    done = true;
+                    loadCount--;
+                }
             };
+            img.addEventListener('load', onDone, { once: true });
+            img.addEventListener('error', onDone, { once: true });
         }
         return img;
     }

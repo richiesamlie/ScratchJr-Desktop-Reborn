@@ -93,10 +93,13 @@ export default class Project {
         UI.clear();
     }
 
+    static delayLoadStartTime = 0;
+
     static load (md5?: string) {
         mediaCountBase = 1;
         ScratchJr.log('Project load status', ScratchJr.getTime(), 'sec', BlockSpecs.loadCount);
         if (BlockSpecs.loadCount > 0) {
+            Project.delayLoadStartTime = Date.now();
             setTimeout(function () {
                 Project.delayLoad();
             }, 32);
@@ -106,7 +109,12 @@ export default class Project {
     }
 
     static delayLoad () {
-        if (BlockSpecs.loadCount < 1) {
+        const elapsed = Date.now() - (Project.delayLoadStartTime || Date.now());
+        if (BlockSpecs.loadCount < 1 || elapsed > 2500) {
+            if (BlockSpecs.loadCount > 0) {
+                console.warn('Project.delayLoad timed out waiting for assets (loadCount=' + BlockSpecs.loadCount + '). Proceeding to load project.');
+                BlockSpecs.loadCount = 0;
+            }
             Project.startLoad();
         } else {
             setTimeout(function () {

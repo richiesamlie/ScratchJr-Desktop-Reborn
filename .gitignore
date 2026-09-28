@@ -2,6 +2,7 @@ node_modules
 out
 build
 src/app/dist
+*.wasm
 .DS_Store
 buglist.txt
 src/debug.log

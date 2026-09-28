@@ -74,6 +74,7 @@ function main() {
     const sqlDist = path.join(rootDir, 'node_modules', 'sql.js', 'dist');
     fs.copyFileSync(path.join(sqlDist, 'sql-wasm.js'), path.join(distWebDir, 'sql-wasm.js'));
     fs.copyFileSync(path.join(sqlDist, 'sql-wasm.wasm'), path.join(distWebDir, 'sql-wasm.wasm'));
+    fs.copyFileSync(path.join(sqlDist, 'sql-wasm.wasm'), path.join(distWebDir, 'sql-wasm-browser.wasm'));
 
     // 4. Copy app HTML, manifest, SW, settings, media.json, appEntry.js
     const appFiles = [

@@ -521,9 +521,9 @@ export default class Palette {
         if (BlockSpecs.addsound && BlockSpecs.addsound.complete) {
             drawScaled(BlockSpecs.addsound, cnv);
         } else if (BlockSpecs.addsound) {
-            BlockSpecs.addsound.onload = function () {
+            BlockSpecs.addsound.addEventListener('load', function () {
                 drawScaled(BlockSpecs.addsound, cnv);
-            };
+            }, { once: true });
         }
         div.onmousedown = function (evt: MouseEvent) {
             if (evt) {

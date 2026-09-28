@@ -91,9 +91,16 @@ export default class PlatformBridge {
     }
 
     static async query(json: DbSelectIntent, fcn: (result: string) => void) {
-        var result = await hostInterface!.database_query(json);
-        if (typeof (fcn) !== 'undefined') {
-            fcn(result as string);
+        try {
+            var result = await hostInterface!.database_query(json);
+            if (typeof (fcn) !== 'undefined') {
+                fcn((result as string) || '[]');
+            }
+        } catch (e) {
+            console.error('[db] query IPC error:', e);
+            if (typeof (fcn) !== 'undefined') {
+                fcn('[]');
+            }
         }
     }
 
@@ -109,70 +116,139 @@ export default class PlatformBridge {
     // IO functions
 
     static async cleanassets(ft: string, fcn: () => void) {
-        await hostInterface!.io_cleanassets(ft); fcn();
+        try {
+            await hostInterface!.io_cleanassets(ft);
+        } catch (e) {
+            console.error('[io] cleanassets error:', e);
+        }
+        fcn();
     }
 
     static async getmedia(file: string, fcn?: (data: string) => void): Promise<string> {
-        var result = await hostInterface!.io_getmedia(file);
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_getmedia(file);
+            if (fcn) {
+                fcn(result);
+            }
+            return result;
+        } catch (e) {
+            console.error('[io] getmedia error:', e);
+            if (fcn) {
+                fcn('');
+            }
+            return '';
         }
-        return result;
     }
 
     static async getsettings(fcn: (settings: string) => void) {
-        var result = await hostInterface!.io_getsettings();
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_getsettings();
+            if (fcn) {
+                fcn(result || '');
+            }
+        } catch (e) {
+            console.error('[io] getsettings error:', e);
+            if (fcn) {
+                fcn('');
+            }
         }
     }
 
     static async setmedia(str: string, ext: string, fcn?: (result: string) => void) {
-        var result = await hostInterface!.io_setmedia(str, ext);
-        if (fcn) {
-            fcn(result as string);
+        try {
+            var result = await hostInterface!.io_setmedia(str, ext);
+            if (fcn) {
+                fcn(result as string);
+            }
+        } catch (e) {
+            console.error('[io] setmedia error:', e);
+            if (fcn) {
+                fcn('');
+            }
         }
     }
 
     static async setmedianame(str: string, name: string, ext: string, fcn?: (result: unknown) => void) {
-        var result = await hostInterface!.io_setmedianame(str, name, ext);
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_setmedianame(str, name, ext);
+            if (fcn) {
+                fcn(result);
+            }
+        } catch (e) {
+            console.error('[io] setmedianame error:', e);
+            if (fcn) {
+                fcn('');
+            }
         }
     }
 
     static async getmd5(str: string, fcn?: (result: string | null) => void) {
-        var result = await hostInterface!.io_getmd5(str);
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_getmd5(str);
+            if (fcn) {
+                fcn(result);
+            }
+        } catch (e) {
+            console.error('[io] getmd5 error:', e);
+            if (fcn) {
+                fcn(null);
+            }
         }
     }
 
     static async remove(str: string, fcn?: (result: unknown) => void) {
-        var result = await hostInterface!.io_remove(str);
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_remove(str);
+            if (fcn) {
+                fcn(result);
+            }
+        } catch (e) {
+            console.error('[io] remove error:', e);
+            if (fcn) {
+                fcn(false);
+            }
         }
     }
 
     static async getfile(str: string, fcn?: (result: string) => void) {
-        var result = await hostInterface!.io_getfile(str);
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_getfile(str);
+            if (fcn) {
+                fcn(result || '');
+            }
+        } catch (e) {
+            console.error('[io] getfile error:', e);
+            if (fcn) {
+                fcn('');
+            }
         }
     }
 
     static async gettextresource(filename: string, fcn?: (result: string) => void) {
-        var result = await hostInterface!.io_gettextresource(filename);
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_gettextresource(filename);
+            if (fcn) {
+                fcn(result || '');
+            }
+        } catch (e) {
+            console.error('[io] gettextresource error:', e);
+            if (fcn) {
+                fcn('');
+            }
         }
     }
 
     static async setfile(name: string, str: string | number, fcn?: (result: unknown) => void) {
-        var result = await hostInterface!.io_setfile(name, btoa(String(str)));
-        if (fcn) {
-            fcn(result);
+        try {
+            var result = await hostInterface!.io_setfile(name, btoa(String(str)));
+            if (fcn) {
+                fcn(result);
+            }
+        } catch (e) {
+            console.error('[io] setfile error:', e);
+            if (fcn) {
+                fcn(-1);
+            }
         }
     }
 
@@ -334,6 +410,29 @@ export default class PlatformBridge {
                 Alert.open(frame, frame, errorMessage, '#ff0000');
             }
             console.error('PlatformBridge.loadProjectFromSjr error:', err);
+            throw err;
+        });
+    }
+
+    // Process and import legacy JustSch SQLite database file
+    static loadProjectsFromSqlite (buffer: ArrayBuffer) {
+        return IO.loadProjectsFromSqlite(buffer).then(function (count: number) {
+            if (count === 0) {
+                var frame = gn('frame');
+                if (frame) {
+                    Alert.open(frame, frame, 'No valid projects found in database.', '#ff9900');
+                }
+            } else {
+                window.location.reload();
+            }
+            return count;
+        }).catch(function (err: Error) {
+            var frame = gn('frame');
+            var errorMessage = 'Couldn\'t load database: ' + (err ? err.message : '');
+            if (frame) {
+                Alert.open(frame, frame, errorMessage, '#ff0000');
+            }
+            console.error('PlatformBridge.loadProjectsFromSqlite error:', err);
             throw err;
         });
     }

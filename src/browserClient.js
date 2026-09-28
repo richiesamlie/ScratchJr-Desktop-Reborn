@@ -450,6 +450,7 @@
                     };
                     var sqlInit = /** @type {any} */ (window).initSqlJs;
                     sqlInit({ locateFile: locateWasm }).then(function (/** @type {any} */ SQL) {
+                        /** @type {any} */ (window).SQL = SQL;
                         idbGet(STORE_SQLITE, 'db_bytes').then(function (savedBytes) {
                             if (savedBytes && savedBytes.length > 0) {
                                 try {

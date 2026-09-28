@@ -339,3 +339,22 @@ declare const webkitAudioContext: typeof AudioContext;
 // and loaded at runtime. They are not pre-declared here to avoid duplicate
 // identifier errors when checkJs is enabled. The classes are used directly
 // in electronClient.js where they are defined.
+
+declare module 'sql.js' {
+    export interface SqlJsConfig {
+        locateFile?: (file: string) => string;
+    }
+    export interface QueryExecResult {
+        columns: string[];
+        values: (string | number | null | Uint8Array)[][];
+    }
+    export interface SqlJsDatabase {
+        exec(sql: string): QueryExecResult[];
+        close(): void;
+    }
+    export interface SqlJsStatic {
+        Database: new (data?: ArrayBuffer | Uint8Array) => SqlJsDatabase;
+    }
+    export default function initSqlJs(config?: SqlJsConfig): Promise<SqlJsStatic>;
+}
+

@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import initSqlJs, { type SqlJsStatic } from 'sql.js';
 
 import PlatformBridge from './PlatformBridge.js';
 import MediaLib from './MediaLib.js';
@@ -728,6 +729,110 @@ export default class IO {
             });
         });
     }
+
+    static async loadProjectsFromSqlite (buffer: ArrayBuffer): Promise<number> {
+        var SQL: SqlJsStatic;
+        if (typeof window !== 'undefined' && (window as unknown as { SQL?: SqlJsStatic }).SQL) {
+            SQL = (window as unknown as { SQL: SqlJsStatic }).SQL;
+        } else {
+            SQL = await initSqlJs({
+                locateFile: function (file: string) {
+                    var normalized = file.replace('sql-wasm-browser', 'sql-wasm');
+                    if (typeof window !== 'undefined' && window.location) {
+                        return '../' + normalized;
+                    }
+                    return normalized;
+                }
+            });
+        }
+        var db = new SQL.Database(new Uint8Array(buffer));
+
+        // 1. Validate PROJECTS table
+        var tableCheck = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND (name='PROJECTS' OR name='projects');");
+        if (!tableCheck || tableCheck.length === 0 || !tableCheck[0].values || tableCheck[0].values.length === 0) {
+            db.close();
+            throw new Error('Not a valid ScratchJr database (missing PROJECTS table).');
+        }
+
+        // 2. Extract media from PROJECTFILES if present
+        var pfCheck = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND (name='PROJECTFILES' OR name='projectfiles');");
+        if (pfCheck && pfCheck.length > 0 && pfCheck[0].values && pfCheck[0].values.length > 0) {
+            var fileRows = db.exec('SELECT MD5, CONTENTS FROM PROJECTFILES;');
+            if (fileRows && fileRows.length > 0) {
+                var values = fileRows[0].values;
+                var assetPromises: Promise<void>[] = [];
+                for (var r = 0; r < values.length; r++) {
+                    var row = values[r];
+                    var md5 = String(row[0] || '');
+                    var contents = String(row[1] || '');
+                    if (!md5 || !contents) continue;
+                    var parts = md5.split('.');
+                    var ext = parts.pop() || '';
+                    var baseName = parts.join('.');
+                    if (!ext || !baseName) continue;
+                    (function (c: string, b: string, e: string) {
+                        assetPromises.push(new Promise<void>(function (resolve) {
+                            PlatformBridge.setmedianame(c, b, e, function () { resolve(); });
+                        }));
+                    }(contents, baseName, ext));
+                }
+                await Promise.all(assetPromises);
+            }
+        }
+
+        // 3. Extract projects from PROJECTS table
+        var projectRows = db.exec("SELECT ID, NAME, JSON, THUMBNAIL, VERSION FROM PROJECTS WHERE DELETED = 'NO' OR DELETED IS NULL;");
+        if (!projectRows || projectRows.length === 0 || !projectRows[0].values) {
+            db.close();
+            return 0;
+        }
+
+        var cols = projectRows[0].columns.map(function (c: string) { return c.toUpperCase(); });
+        var nameIdx = cols.indexOf('NAME');
+        var jsonIdx = cols.indexOf('JSON');
+        var thumbIdx = cols.indexOf('THUMBNAIL');
+        var verIdx = cols.indexOf('VERSION');
+
+        var importedCount = 0;
+        var pValues = projectRows[0].values;
+        for (var p = 0; p < pValues.length; p++) {
+            var pRow = pValues[p];
+            var rawName = nameIdx >= 0 ? String(pRow[nameIdx] || 'Project') : 'Project';
+            var rawJson = jsonIdx >= 0 ? (pRow[jsonIdx] as string) : null;
+            var rawThumb = thumbIdx >= 0 ? (pRow[thumbIdx] as string) : null;
+            var rawVer = verIdx >= 0 ? String(pRow[verIdx] || '') : '';
+
+            var record: Record<string, unknown> = {
+                name: rawName,
+                version: rawVer || window.Settings?.scratchJrVersion || '1.0.0',
+                mtime: Date.now().toString(),
+            };
+            if (rawJson) {
+                record.json = rawJson;
+            }
+            if (rawThumb) {
+                record.thumbnail = rawThumb;
+            }
+
+            await (function (rec: Record<string, unknown>) {
+                return new Promise<void>(function (resolve) {
+                    IO.uniqueProjectName(rec as Parameters<typeof IO.uniqueProjectName>[0], function (uniqueRec) {
+                        var recWithThumb = uniqueRec as { thumbnail?: unknown };
+                        if (!recWithThumb.thumbnail) {
+                            recWithThumb.thumbnail = JSON.stringify({ pagecount: 1, md5: '' });
+                        }
+                        IO.createProject(uniqueRec as unknown as ProjectRecord, function () {
+                            importedCount++;
+                            resolve();
+                        });
+                    });
+                });
+            }(record));
+        }
+
+        db.close();
+        return importedCount;
+    }
 }
 
 // Read-only debug/test seam
@@ -736,6 +841,7 @@ declare global {
         __ioDebug?: {
             zipProject: (ref: string, fcn: (contents: string) => void) => void;
             loadProjectFromSjr: (b64data: string) => void;
+            loadProjectsFromSqlite: (buffer: ArrayBuffer) => Promise<number>;
         };
     }
 }
@@ -744,5 +850,6 @@ if (typeof window !== 'undefined') {
     window.__ioDebug = {
         zipProject: (ref, fcn) => IO.zipProject(ref, fcn),
         loadProjectFromSjr: (b64) => IO.loadProjectFromSjr(b64),
+        loadProjectsFromSqlite: (buffer) => IO.loadProjectsFromSqlite(buffer),
     };
 }

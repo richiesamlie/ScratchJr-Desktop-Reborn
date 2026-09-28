@@ -66,12 +66,12 @@ export default class Home {
             input = document.createElement('input');
             input.type = 'file';
             input.id = 'open-project-file-input';
-            input.accept = '.sjr';
+            input.accept = '.sjr,.sqllite,.sqlite,.db';
             input.style.display = 'none';
             document.body.appendChild(input);
             input.onchange = function () {
                 if (input && input.files && input.files.length > 0) {
-                    Home.importSjrFile(input.files[0]);
+                    Home.importProjectFile(input.files[0]);
                     input.value = '';
                 }
             };
@@ -175,7 +175,9 @@ export default class Home {
             } else if (md5 && (md5 == 'openproject')) {
                 Home.openFileDialog();
             } else if (md5) {
-                PlatformBridge.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
+                var wrapcEl = gn('wrapc');
+                var scrollPos = wrapcEl ? wrapcEl.scrollTop : 0;
+                PlatformBridge.setfile('homescroll.sjr', scrollPos, function () {
                     doNext();
                 });
             }
@@ -336,7 +338,9 @@ export default class Home {
             });
             return;
         }
-        PlatformBridge.setfile('homescroll.sjr', gn('wrapc')!.scrollTop, function () {
+        var wrapcEl = gn('wrapc');
+        var scrollPos = wrapcEl ? wrapcEl.scrollTop : 0;
+        PlatformBridge.setfile('homescroll.sjr', scrollPos, function () {
             doNext(md5);
         });
         function doNext (md5: unknown) {
@@ -410,7 +414,7 @@ export default class Home {
     // Gather projects
     //////////////////////////
 
-    /** Import .sjr projects by dropping them anywhere on the lobby. */
+    /** Import .sjr and legacy .sqllite projects by dropping them anywhere on the lobby. */
     static installSjrDrop () {
         window.addEventListener('dragover', function (e) {
             e.preventDefault();
@@ -423,14 +427,35 @@ export default class Home {
             var files: File[] = [];
             for (var i = 0; i < e.dataTransfer.files.length; i++) {
                 var f = e.dataTransfer.files[i];
-                if (/\.sjr$/i.test(f.name)) {
+                if (/\.(sjr|sqllite|sqlite|db)$/i.test(f.name)) {
                     files.push(f);
                 }
             }
             for (var j = 0; j < files.length; j++) {
-                Home.importSjrFile(files[j]);
+                Home.importProjectFile(files[j]);
             }
         });
+    }
+
+    static importProjectFile (file: File) {
+        if (/\.(sqllite|sqlite|db)$/i.test(file.name)) {
+            Home.importSqliteFile(file);
+        } else {
+            Home.importSjrFile(file);
+        }
+    }
+
+    static importSqliteFile (file: File) {
+        ScratchAudio.sndFX('tap.wav');
+        var reader = new FileReader();
+        reader.onload = function () {
+            var buffer = reader.result as ArrayBuffer;
+            PlatformBridge.loadProjectsFromSqlite(buffer);
+        };
+        reader.onerror = function (err) {
+            console.error('FileReader error:', err);
+        };
+        reader.readAsArrayBuffer(file);
     }
 
     static importSjrFile (file: File) {
@@ -459,8 +484,19 @@ export default class Home {
     static displayYourProjects () {
         PlatformBridge.getfile('homescroll.sjr', gotScrollsState);
         function gotScrollsState (str: string) {
-            var num = Number(atob(str));
-            scrollvalue = (num.toString() == 'NaN') ? 0 : num;
+            var num = 0;
+            try {
+                if (str) {
+                    var decoded = atob(str);
+                    var parsed = Number(decoded);
+                    if (!Number.isNaN(parsed)) {
+                        num = parsed;
+                    }
+                }
+            } catch (_) {
+                num = 0;
+            }
+            scrollvalue = num;
             var json: DbSelectIntent = {
                 op: 'select', table: PlatformBridge.database,
                 items: ['name', 'thumbnail', 'id', 'isgift'],

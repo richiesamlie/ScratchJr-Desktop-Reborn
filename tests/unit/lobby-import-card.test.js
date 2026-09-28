@@ -53,7 +53,8 @@ describe("Lobby 1-Click .sjr Import Card", () => {
         const input = document.getElementById("open-project-file-input");
         expect(input).not.toBeNull();
         expect(input.type).toBe("file");
-        expect(input.accept).toBe(".sjr");
+        expect(input.accept).toContain(".sjr");
+        expect(input.accept).toContain(".sqlite");
         expect(clickSpy).toHaveBeenCalled();
         clickSpy.mockRestore();
     });

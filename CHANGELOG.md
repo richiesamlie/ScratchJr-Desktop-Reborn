@@ -3,7 +3,30 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.10.0] - 2026-09-28
+
+**Minor Release: Project Loading Deadlock Remediation, Asset Cache Deduplication, Refreshed Reborn Desktop Icon, and Legacy JustSch SQLite 1-Click Import.**
+
+### Fixed
+- **Project Opening & Navigation Freeze Safeguard (Issue #12)**:
+  - Fixed deadlock in `BlockSpecs.getImageFrom` by converting single `img.onload` property mutations into resilient event listeners (`addEventListener('load')` and `addEventListener('error')`), guaranteeing `BlockSpecs.loadCount` decrements even if an asset fails or hangs.
+  - Added asset deduplication cache in `BlockSpecs.getImageFrom` to prevent duplicate image loading calls from clobbering load tracking, eliminating transition lag and restoring instantaneous Lobby &rarr; Editor navigation.
+  - Resolved event handler collision in `Palette.drawAddSound` where assigning `BlockSpecs.addsound.onload` clobbered concurrent asset loader callbacks.
+  - Added fail-safe 2500ms timeout watchdog in `Project.delayLoad` to forcibly unblock and launch `Project.startLoad()` if external resources or network delays stall asset countdown.
+  - Wrapped `PlatformBridge` IPC invocation methods (`query`, `setfile`, `getfile`, `cleanassets`, etc.) with structured try/catch blocks so rejections or exceptions invoke failure callbacks cleanly rather than indefinitely stalling navigation steps.
+  - Hardened Lobby `gotScrollsState` and navigation handlers against unparseable scroll states or missing DOM nodes.
+  - Fixed WebAssembly binary path resolution for `sql.js` in browser and Electron renderer contexts.
+
+### Added
+- **Refreshed ScratchJr Reborn Application Icon (`src/icons/`)**:
+  - Re-designed application icons across all resolutions (`16x16` up to `1024x1024` and `icon.ico`) featuring a distinctive cosmic gradient badge with `★ REBORN` and metallic gold border, clearly distinguishing ScratchJr Reborn from legacy JustSch installations on desktop taskbars and start menus.
+- **Legacy JustSch Project Database Import (`src/app/src/platform/IO.ts`, `src/app/src/lobby/Home.ts`)**:
+  - Direct 1-click import and drag-and-drop support for legacy JustSch ScratchJr SQLite database files (`.sqllite`, `.sqlite`, `.db`).
+  - Seamlessly extracts legacy projects, automatically unpacks embedded base64 assets from `PROJECTFILES` into the active platform media directory, and assigns collision-free unique names in the Reborn lobby.
+  - Added unit test suite in `tests/unit/justsch-import.test.js` and automated E2E test in `scripts/smoke-web.js`.
+
 ## [v2.9.0] - 2026-09-25
+
 
 **Minor Release: Curated Audio FX & Instrument Library, Authentic Natural Animal Sounds, and Cross-Platform Audio Engine Parity.**
 

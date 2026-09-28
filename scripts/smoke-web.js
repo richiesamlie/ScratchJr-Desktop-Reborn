@@ -399,6 +399,58 @@ async function main() {
             throw new Error('smoke-web: imported project card has no thumbnail image: ' + JSON.stringify(thumbDiag));
         }
 
+        // 10b. Test legacy JustSch SQLite database import into ScratchJr Reborn.
+        console.log('smoke-web: verifying legacy JustSch SQLite database import...');
+        const sqliteImportCount = await s4.eval(`(async function() {
+            var SQL = window.SQL || await window.initSqlJs({ locateFile: function(f) { return '../' + f.replace('sql-wasm-browser', 'sql-wasm'); } });
+            var db = new SQL.Database();
+            db.exec(\`
+                CREATE TABLE PROJECTS (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    CTIME DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    MTIME DATETIME,
+                    ALTMD5 TEXT,
+                    POS INTEGER,
+                    NAME TEXT,
+                    JSON TEXT,
+                    THUMBNAIL TEXT,
+                    OWNER TEXT,
+                    GALLERY TEXT,
+                    DELETED TEXT,
+                    VERSION TEXT
+                );
+                CREATE TABLE PROJECTFILES (
+                    MD5 TEXT PRIMARY KEY,
+                    CONTENTS TEXT
+                );
+            \`);
+            var assetMd5 = 'smoke_justsch_cat.png';
+            var assetB64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+            db.run('INSERT INTO PROJECTFILES (MD5, CONTENTS) VALUES (?, ?);', [assetMd5, assetB64]);
+            var projectJson = JSON.stringify({
+                pages: ['page1'],
+                page1: {
+                    sprites: ['sprite1'],
+                    sprite1: { type: 'sprite', md5: assetMd5, name: 'JustSchCat' }
+                }
+            });
+            var projectThumb = JSON.stringify({ pagecount: 1, md5: assetMd5 });
+            db.run('INSERT INTO PROJECTS (NAME, JSON, THUMBNAIL, DELETED, VERSION) VALUES (?, ?, ?, ?, ?);', [
+                'Smoke JustSch Project',
+                projectJson,
+                projectThumb,
+                'NO',
+                '1.0.0'
+            ]);
+            var buffer = db.export().buffer;
+            db.close();
+            return window.PlatformBridge.loadProjectsFromSqlite(buffer);
+        })()`);
+        console.log('smoke-web: [sqlite-import] imported count:', sqliteImportCount);
+        if (sqliteImportCount !== 1) {
+            throw new Error('smoke-web: legacy SQLite database import failed or returned invalid count');
+        }
+
         // 11. Ctrl+S export of a NEVER-SAVED project must include a thumbnail.
         // Regression: zipProject reads the DB row, which had NULL json/thumbnail
         // until the first save. The export handler now saves before zipping.
