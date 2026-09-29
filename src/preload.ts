@@ -28,7 +28,6 @@ contextBridge.exposeInMainWorld('scratchjr', {
     // ---- Settings & Resources ----
     io_getsettings: () => ipcRenderer.invoke('io_getsettings', null),
     io_gettextresource: (filename: string) => ipcRenderer.invoke('io_gettextresource', filename),
-    io_getIsDebug: () => ipcRenderer.invoke('io_getIsDebug'),
     io_getLang: () => ipcRenderer.invoke('io_getLang'),
 
     // ---- File I/O ----
@@ -43,9 +42,6 @@ contextBridge.exposeInMainWorld('scratchjr', {
     io_setmedia: (str: string, ext: string) => ipcRenderer.invoke('io_setmedia', str, ext),
     io_setmedianame: (str: string, name: string, ext: string) => ipcRenderer.invoke('io_setmedianame', str, name, ext),
     io_getAudioData: (name: string) => ipcRenderer.invoke('io_getAudioData', name),
-
-    // ---- Debug (fire-and-forget) ----
-    debugWriteLog: (args: unknown) => ipcRenderer.send('debugWriteLog', args),
 
     // ---- Lifecycle (fire-and-forget) ----
     sendAppClosedAcked: () => ipcRenderer.send('app-closed-acked'),

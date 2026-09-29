@@ -14,6 +14,7 @@ const os = require('os');
 const { spawn } = require('child_process');
 const net = require('net');
 const { sleep, waitForPage, Session, waitReady } = require('./cdp-session');
+const { MIME_TYPES } = require('./serve-web');
 
 const distWebDir = path.resolve(__dirname, '..', 'dist-web');
 
@@ -27,20 +28,6 @@ function getFreePort() {
         s.on('error', reject);
     });
 }
-
-const MIME_TYPES = {
-    '.html': 'text/html; charset=utf-8',
-    '.js': 'application/javascript; charset=utf-8',
-    '.wasm': 'application/wasm',
-    '.json': 'application/json; charset=utf-8',
-    '.webmanifest': 'application/manifest+json; charset=utf-8',
-    '.css': 'text/css; charset=utf-8',
-    '.svg': 'image/svg+xml',
-    '.png': 'image/png',
-    '.wav': 'audio/wav',
-    '.mp3': 'audio/mpeg',
-    '.webm': 'audio/webm'
-};
 
 function startStaticServer() {
     const server = http.createServer((req, res) => {

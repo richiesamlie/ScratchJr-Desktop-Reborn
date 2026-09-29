@@ -1,13 +1,9 @@
 import type { Point } from './Vector';
 
-interface MatrixLike {
-    a: number; b: number; c: number; d: number; e: number; f: number;
-}
-
-export default class Matrix implements MatrixLike {
+export default class Matrix {
     a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
 
-    setMatrix(mtx: MatrixLike): void {
+    setMatrix(mtx: { a: number; b: number; c: number; d: number; e: number; f: number }): void {
         this.a = mtx.a; this.b = mtx.b; this.c = mtx.c;
         this.d = mtx.d; this.e = mtx.e; this.f = mtx.f;
     }

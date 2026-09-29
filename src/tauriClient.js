@@ -110,10 +110,6 @@ class TauriDesktopInterface {
         return '';
     }
 
-    async io_getIsDebug() {
-        return await tauriInvoke('io_get_is_debug');
-    }
-
     async io_getLang() {
         return await tauriInvoke('io_get_lang');
     }
@@ -338,14 +334,6 @@ class TauriDesktopInterface {
     }
 
     // Host device details and project export
-    askForPermission() {
-        return true;
-    }
-
-    hideSplash() {
-        return true;
-    }
-
     deviceName() {
         return 'desktop-tauri';
     }
@@ -381,11 +369,6 @@ class TauriDesktopInterface {
      */
     sendExportedPng(dataUrl, suggestedName) {
         return tauriInvoke('save_stage_png', { dataUrl, suggestedName });
-    }
-
-    /** @param {any} msg */
-    debugWriteLog(msg) {
-        console.log('[ScratchJr-Tauri]', msg);
     }
 
     // Lifecycle hooks and push events

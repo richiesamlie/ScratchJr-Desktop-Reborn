@@ -9,7 +9,7 @@ import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import {gn, newHTML, scaleMultiplier,
     getDocumentWidth, getDocumentHeight, setProps, newCanvas, frame, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
-import LibraryEx from './LibraryEx';
+import LibraryEx, { type LibraryMediaItem } from './LibraryEx';
 
 let selectedOne: string | null = null;
 let nativeJr = true;
@@ -31,18 +31,6 @@ interface LibraryThumb extends HTMLElement {
     scale?: number;
     fieldname?: string;
     byme?: number;
-}
-
-// Media-library asset bag (MediaLib.MediaItem or raw SQL rows); all-optional
-// shape keeps it assignable both from MediaItem[] and from JSON.parse results.
-interface LibraryMediaItem {
-    md5?: string;
-    width?: unknown;
-    height?: unknown;
-    name?: unknown;
-    scale?: unknown;
-    order?: string;
-    altmd5?: unknown;
 }
 
 export default class Library {

@@ -25,14 +25,7 @@ let fcnstart: ((e: MouseEvent) => void) | undefined;
 let fcnend: ((e: MouseEvent | TouchEvent, c: HTMLElement) => void) | undefined;
 let updatefcn: ((e: MouseEvent, c: HTMLElement) => void) | undefined;
 let fcnclick: ((e: MouseEvent | TouchEvent, c: HTMLElement) => void) | undefined;
-let scaleStartsAt = 1;
 let delta = 10;
-let pinchcenter = {
-    x: 0,
-    y: 0,
-    distance: 0
-};
-let lastZoomScale = 1;
 
 export default class Events {
     // Getters/setters for globally used properties
@@ -86,18 +79,6 @@ export default class Events {
 
     static get dragDiv () {
         return dragDiv;
-    }
-
-    static get scaleStartsAt () {
-        return scaleStartsAt;
-    }
-
-    static set scaleStartsAt (newScaleStartsAt) {
-        scaleStartsAt = newScaleStartsAt;
-    }
-
-    static get pinchcenter () {
-        return pinchcenter;
     }
 
     // Instead of popping the dragging block, etc to the outer-most frame,
@@ -207,7 +188,7 @@ export default class Events {
     }
 
     static distance (dx: number, dy: number) {
-        return Math.round(Math.sqrt((dx * dx) + (dy * dy)));
+        return Math.round(Math.hypot(dx, dy));
     }
 
     static mouseUp (e: MouseEvent | TouchEvent) {
@@ -312,38 +293,5 @@ export default class Events {
             x: (pt.x - frameRect.left) / scale,
             y: (pt.y - frameRect.top) / scale
         };
-    }
-
-    static updatePinchCenter (e: MouseEvent | TouchEvent) {
-        const te = e as TouchEvent;
-        if (te.touches.length != 2) {
-            return;
-        }
-        var x1 = te.touches[0].clientX,
-            y1 = te.touches[0].clientY;
-        var x2 = te.touches[1].clientX,
-            y2 = te.touches[1].clientY;
-        var cx = x1 + (x2 - x1) / 2,
-            cy = y1 + (y2 - y1) / 2;
-        var d = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-        pinchcenter = {
-            x: cx,
-            y: cy,
-            distance: d
-        };
-    }
-
-    static zoomScale (e: MouseEvent | TouchEvent) {
-        const te = e as TouchEvent;
-        if (te.touches.length !== 2) {
-            return lastZoomScale;
-        }
-        var x1 = te.touches[0].clientX,
-            y1 = te.touches[0].clientY;
-        var x2 = te.touches[1].clientX,
-            y2 = te.touches[1].clientY;
-        var d = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-        lastZoomScale = d / pinchcenter.distance;
-        return lastZoomScale;
     }
 }

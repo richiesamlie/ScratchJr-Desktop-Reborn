@@ -59,9 +59,7 @@ function indexFirstTime () {
         gn('blueguy')!.className = 'blue show';
         gn('redguy')!.className = 'red show';
     }
-    PlatformBridge.askpermission(); // ask for sound recording
-    
-   
+
     setTimeout(function () {
         indexLoadOptions();
     }, /*SPLASH SCREEN LOAD DELAY*/3000);

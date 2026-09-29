@@ -1,17 +1,12 @@
 import type {Point} from '../geom/Vector';
 
 export var frame: HTMLElement;  // eslint-disable-line import/no-mutable-exports
-/**
- * @deprecated Legacy 2014 touch detection flag. ScratchJr Reborn uses pointer events and dynamic pointer inspection.
- */
-export const isTouch = (typeof window !== 'undefined' && ('ontouchstart' in window || (typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0)));
 export const DEGTOR = Math.PI / 180;
 //export const WINDOW_INNER_HEIGHT = window.innerHeight;
 //export const WINDOW_INNER_WIDTH = window.innerWidth;
 export const scaleMultiplier = 1.0;  //WINDOW_INNER_HEIGHT / 768.0;
 
 export const isDesktop = true;
-export const isElectron = true;
 export const isiOS = false;
 export const isAndroid = false;
 
@@ -174,10 +169,6 @@ export async function preprocessAndLoadCss (baseUrl: string, url: string) {
     head.appendChild(style);
 }
 
-export function rl () {
-    window.location.reload();
-}
-
 export function newDiv (parent: HTMLElement, x: number, y: number, w: number, h: number, styles?: Record<string, string | number>) {
     var el = document.createElement('div');
     el.style.position = 'absolute';
@@ -287,34 +278,6 @@ export function hit3DRect (c: HTMLElement, pt: Point | null) {
         return false;
     }
     if (y > mtx.m42 + c.offsetHeight) {
-        return false;
-    }
-    return true;
-}
-
-export function hitTest (c: HTMLCanvasElement, pt: Point | null) {
-    if (!pt) {
-        return false;
-    }
-    var x = pt.x;
-    var y = pt.y;
-    if (x < c.offsetLeft) {
-        return false;
-    }
-    if (x > c.offsetLeft + c.offsetWidth) {
-        return false;
-    }
-    if (y < c.offsetTop) {
-        return false;
-    }
-    if (y > c.offsetTop + c.offsetHeight) {
-        return false;
-    }
-    var dx = pt.x - c.offsetLeft,
-        dy = pt.y - c.offsetTop;
-    var ctx = c.getContext('2d')!;
-    var pixel = ctx.getImageData(dx, dy, 1, 1).data;
-    if (pixel[3] == 0) {
         return false;
     }
     return true;

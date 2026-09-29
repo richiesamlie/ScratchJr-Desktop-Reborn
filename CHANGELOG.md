@@ -3,6 +3,22 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.10.1] - 2026-09-29
+
+### Cleaned & Optimized
+- **Codebase & Tooling Pruning (Audit Remediation)**:
+  - Deleted 6 orphaned asset creation and testing scripts (`generate-sound-assets.js`, `generate-sound-icons.js`, `generate-reborn-icon.js`, `test-custom-import-cdp.js`, `process-natural-animals.js`, `download-natural-animals.js`).
+  - Removed dead end-to-end IPC channels and handlers (`io_getIsDebug`, `debugWriteLog`, `database_close`).
+  - Removed dead host methods (`askForPermission()`, `hideSplash()`) across all 4 platform clients (Electron, Tauri, Android, Web).
+  - Pruned unused renderer exports and dead code: `Path.adaptPath`, `Path.getPointIndex`, `Path.placePoint`, `lib.hitTest`, `ScratchJr.gestureStart`, `lib.isTouch` (@deprecated), `lib.rl`, `lib.isElectron`, `PlatformBridge.parse`, `PlatformBridge.ignore`, and unreachable paint editor pinch gesture chain.
+  - Properly wired `window.ScratchJr.getUiScale()` so viewport scaling in `webav.js` dynamically queries UI scale across smartphone viewports.
+  - Replaced legacy UUID replacements in `src/webav.js` with `crypto.randomUUID()`.
+  - Consolidated version manifest to single root `version.json` source of truth and removed duplicate `docs/version.json`.
+  - Removed dead Electron Forge Linux makers (`deb`, `rpm`, `appimage`), `wix`, and `squirrel` from `forge.config.js` and dependencies.
+  - Simplified `scripts/patch-for-node26.js` patch chains and switched directory copying to native `fs.cpSync`.
+  - Deduplicated `scripts/smoke-web.js` MIME definitions via `scripts/serve-web.js`.
+  - Deduplicated Tauri intent parsing and file export dialog handlers in `src-tauri/src/commands.rs`.
+
 ## [v2.10.0] - 2026-09-28
 
 **Minor Release: Project Loading Deadlock Remediation, Asset Cache Deduplication, Refreshed Reborn Desktop Icon, and Legacy JustSch SQLite 1-Click Import.**

@@ -42,14 +42,19 @@ if (fs.existsSync(srcExe)) {
     process.exit(1);
 }
 
+const pkg = require('../package.json');
+
 // 2. Copy NSIS Setup Executable
 const nsisDir = path.join(tauriReleaseDir, 'bundle', 'nsis');
 if (fs.existsSync(nsisDir)) {
     const nsisFiles = fs.readdirSync(nsisDir).filter((f) => f.endsWith('.exe'));
-    if (nsisFiles.length > 0) {
+    const matched = nsisFiles.find((f) => f.includes(pkg.version)) || nsisFiles.sort((a, b) => (
+        fs.statSync(path.join(nsisDir, b)).mtimeMs - fs.statSync(path.join(nsisDir, a)).mtimeMs
+    ))[0];
+    if (matched) {
         const targetName = 'ScratchJr-tauri-win32-x64-setup.exe';
-        fs.copyFileSync(path.join(nsisDir, nsisFiles[0]), path.join(outDir, targetName));
-        console.log(`[package-tauri] Copied NSIS installer -> ${path.join(outDir, targetName)}`);
+        fs.copyFileSync(path.join(nsisDir, matched), path.join(outDir, targetName));
+        console.log(`[package-tauri] Copied NSIS installer (${matched}) -> ${path.join(outDir, targetName)}`);
     }
 }
 
@@ -57,10 +62,13 @@ if (fs.existsSync(nsisDir)) {
 const msiDir = path.join(tauriReleaseDir, 'bundle', 'msi');
 if (fs.existsSync(msiDir)) {
     const msiFiles = fs.readdirSync(msiDir).filter((f) => f.endsWith('.msi'));
-    if (msiFiles.length > 0) {
+    const matched = msiFiles.find((f) => f.includes(pkg.version)) || msiFiles.sort((a, b) => (
+        fs.statSync(path.join(msiDir, b)).mtimeMs - fs.statSync(path.join(msiDir, a)).mtimeMs
+    ))[0];
+    if (matched) {
         const targetName = 'ScratchJr-tauri-win32-x64.msi';
-        fs.copyFileSync(path.join(msiDir, msiFiles[0]), path.join(outDir, targetName));
-        console.log(`[package-tauri] Copied MSI installer -> ${path.join(outDir, targetName)}`);
+        fs.copyFileSync(path.join(msiDir, matched), path.join(outDir, targetName));
+        console.log(`[package-tauri] Copied MSI installer (${matched}) -> ${path.join(outDir, targetName)}`);
     }
 }
 

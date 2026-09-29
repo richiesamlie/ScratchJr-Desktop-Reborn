@@ -18,7 +18,6 @@ describe('preload bridge contract', () => {
         // Settings & Resources
         'io_getsettings',
         'io_gettextresource',
-        'io_getIsDebug',
         // File I/O
         'io_setfile',
         'io_getfile',
@@ -30,8 +29,6 @@ describe('preload bridge contract', () => {
         'io_setmedia',
         'io_setmedianame',
         'io_getAudioData',
-        // Debug
-        'debugWriteLog',
         // Lifecycle
         'sendAppClosedAcked',
     ];
@@ -69,7 +66,7 @@ describe('preload bridge contract', () => {
 
     it('uses invoke for all request/response channels', () => {
         for (const channel of requiredChannels) {
-            if (channel === 'debugWriteLog' || channel === 'sendAppClosedAcked') {
+            if (channel === 'sendAppClosedAcked') {
                 // These use async send(), not invoke
                 continue;
             }

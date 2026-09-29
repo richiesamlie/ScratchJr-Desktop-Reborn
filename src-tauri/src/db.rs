@@ -193,11 +193,6 @@ impl DatabaseManager {
         }
     }
 
-    pub fn has_restore_database(&self) -> bool {
-        let bak_path = self.db_path.with_extension("sqllite.bak");
-        bak_path.exists()
-    }
-
     pub fn restore_backup(&self) -> bool {
         let bak_path = self.db_path.with_extension("sqllite.bak");
         if !bak_path.exists() {

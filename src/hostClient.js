@@ -8,10 +8,15 @@
 //   - Browser / PWA: browserClient.js (in-browser sql.js WASM + IndexedDB)
 
 (function () {
-    var av = document.createElement('script');
-    av.src = '../webav.js';
-    av.async = false;
-    document.head.appendChild(av);
+    /** @param {string} src */
+    function load(src) {
+        var el = document.createElement('script');
+        el.src = src;
+        el.async = false;
+        document.head.appendChild(el);
+    }
+
+    load('../webav.js');
 
     var isTauri = Boolean(
         (typeof window !== 'undefined' && (window.__TAURI_INTERNALS__ || window.__TAURI__))
@@ -22,30 +27,14 @@
     );
 
     if (window.scratchjr) {
-        var s = document.createElement('script');
-        s.src = '../electronClient.js';
-        s.async = false;
-        document.head.appendChild(s);
+        load('../electronClient.js');
     } else if (isTauri) {
-        var t = document.createElement('script');
-        t.src = '../tauriClient.js';
-        t.async = false;
-        document.head.appendChild(t);
+        load('../tauriClient.js');
     } else if (typeof AndroidInterface !== 'undefined') {
-        var h = document.createElement('script');
-        h.src = '../webhost.js';
-        h.async = false;
-        document.head.appendChild(h);
+        load('../webhost.js');
     } else {
-        var sql = document.createElement('script');
-        sql.src = '../sql-wasm.js';
-        sql.async = false;
-        document.head.appendChild(sql);
-
-        var b = document.createElement('script');
-        b.src = '../browserClient.js';
-        b.async = false;
-        document.head.appendChild(b);
+        load('../sql-wasm.js');
+        load('../browserClient.js');
     }
 }());
 

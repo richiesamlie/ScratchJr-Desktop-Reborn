@@ -39,6 +39,13 @@ const server = http.createServer((req, res) => {
     fs.createReadStream(filePath).pipe(res);
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`[ScratchJr Web] Server running at http://localhost:${PORT}/app/index.html`);
-});
+if (require.main === module) {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`[ScratchJr Web] Server running at http://localhost:${PORT}/app/index.html`);
+    });
+}
+
+module.exports = {
+    MIME_TYPES,
+    server
+};

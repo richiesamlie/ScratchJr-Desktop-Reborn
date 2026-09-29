@@ -18,6 +18,17 @@ function avlog(...args) {
         console.log('[webav]', ...args); // eslint-disable-line no-console
     } catch (e) { /* logging must never break AV flows */ }
 }
+
+function generateUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 class AudioCapture {
     constructor () {
         this.audioCtx = new (window.AudioContext || webkitAudioContext)(); // eslint-disable-line no-undef
@@ -39,14 +50,8 @@ class AudioCapture {
 
     /** @param {boolean} [isNewRecording] */
     getId (isNewRecording) {
-
         if (isNewRecording || !this.id) {
-            // uuid generator
-            this.id =  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-
+            this.id = generateUUID();
         }
         return this.id;
     }
@@ -326,14 +331,8 @@ class VideoCapture {
 
 
     getId() {
-
         if (!this.id) {
-            // uuid generator
-            this.id =  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-
+            this.id = generateUUID();
         }
         return this.id;
     }

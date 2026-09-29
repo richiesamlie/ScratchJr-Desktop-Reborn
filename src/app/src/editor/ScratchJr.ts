@@ -26,7 +26,7 @@ import BlockSpecs from './blocks/BlockSpecs';
 import Runtime from './engine/Runtime';
 import Localization from '../utils/Localization';
 import {libInit, gn, scaleMultiplier, newHTML,
-    getUrlVars, CSSTransition3D, frame} from '../utils/lib';
+    getUrlVars, CSSTransition3D, frame, getUiScale} from '../utils/lib';
 
 // Named-form access
 const namedForms = document.forms as unknown as {
@@ -311,11 +311,8 @@ export default class ScratchJr {
         return getModelRefAs<Sprite>(gn(stage.currentPage.currentSpriteName) as HTMLElement, 'sprite')!;
     }
 
-    static gestureStart (e: Event) {
-        e.preventDefault();
-        if (ScratchAudio.firstTime) {
-            ScratchAudio.firstClick();
-        }
+    static getUiScale () {
+        return getUiScale();
     }
 
     static log (...args: unknown[]) {

@@ -18,7 +18,7 @@ All version references must be updated in lockstep:
 - `src/app/settings.json` (`scratchJrVersion: "desktop-vX.Y.Z"`)
 - `android/app/build.gradle.kts` (`versionCode`, `versionName`)
 - `src-tauri/Cargo.toml` (`version = "X.Y.Z"`) & `src-tauri/tauri.conf.json` (`"version": "X.Y.Z"`)
-- `version.json` & `docs/version.json`
+- `version.json`
 - `CHANGELOG.md`
 
 **Always Include Tauri in Releases**: Whenever creating a new release or bumping versions, Tauri release packages (`npm run tauri:build && npm run package:tauri`) MUST be built, checksummed, and uploaded to the GitHub release alongside Electron and Android packages.

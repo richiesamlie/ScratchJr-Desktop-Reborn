@@ -74,11 +74,6 @@ class AndroidBridge(
     }
 
     @JavascriptInterface
-    fun io_getIsDebug(): Boolean {
-        return false
-    }
-
-    @JavascriptInterface
     fun io_getLang(): String? {
         val locale = activity.resources.configuration.locales[0]
         return locale?.language
@@ -249,22 +244,6 @@ class AndroidBridge(
     @JavascriptInterface
     fun deviceName(): String {
         return "Android ${Build.MODEL}"
-    }
-
-    @JavascriptInterface
-    fun hideSplash(): Boolean {
-        activity.hideSplashScreen()
-        return true
-    }
-
-    @JavascriptInterface
-    fun askForPermission(): Boolean {
-        return activity.checkAndRequestHardwarePermissions()
-    }
-
-    @JavascriptInterface
-    fun debugWriteLog(args: String) {
-        Log.d("ScratchJr-JS", args)
     }
 
     @JavascriptInterface

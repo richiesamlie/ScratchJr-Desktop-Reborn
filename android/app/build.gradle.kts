@@ -10,9 +10,9 @@ android {
         applicationId = "org.scratchjr.android"
         minSdk = 24
         targetSdk = 36
-        // Unified release line: 2.10.0 ships as 21000 across Desktop, Android, and Web.
-        versionCode = 21000
-        versionName = "2.10.0"
+        // Unified release line: 2.10.1 ships as 21001 across Desktop, Android, and Web.
+        versionCode = 21001
+        versionName = "2.10.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -714,10 +714,6 @@
                 });
         },
 
-        io_getIsDebug: function () {
-            return Promise.resolve(window.location.search.indexOf('debug') > -1);
-        },
-
         io_getLang: function () {
             return Promise.resolve(localStorage.getItem('localization') || null);
         },
@@ -1170,20 +1166,8 @@
         },
 
         // ---- Misc Host Hooks ----
-        askForPermission: function () {
-            return true;
-        },
-
-        hideSplash: function () {
-            return true;
-        },
-
         deviceName: function () {
             return 'Web Browser';
-        },
-
-        debugWriteLog: function (/** @type {string} */ msg) {
-            console.log('[ScratchJr-Browser]', msg);
         },
 
         sendAppClosedAcked: function () {},

@@ -50,7 +50,6 @@
         },
         io_getsettings: fwd('io_getsettings'),
         io_gettextresource: fwd('io_gettextresource'),
-        io_getIsDebug: fwd('io_getIsDebug'),
         io_getLang: fwd('io_getLang'),
         io_setfile: fwd('io_setfile'),
         io_getfile: fwd('io_getfile'),
@@ -63,7 +62,6 @@
         io_getAudioData: fwd('io_getAudioData'),
 
         // ---- Debug / lifecycle / analytics ----
-        debugWriteLog: fwd('debugWriteLog'),
         sendAppClosedAcked: fwd('sendAppClosedAcked'),
         analyticsEvent: fwd('analyticsEvent'),
         sendExportedSjr: fwd('sendExportedSjr'),
@@ -173,14 +171,6 @@
         },
 
         // ---- Misc host surface ----
-
-        askForPermission: function () {
-            return /** @type {() => boolean} */ (AndroidInterface.askForPermission)();
-        },
-
-        hideSplash: function () {
-            return /** @type {() => boolean} */ (AndroidInterface.hideSplash)();
-        },
 
         deviceName: function () {
             return /** @type {() => string} */ (AndroidInterface.deviceName)();

@@ -390,82 +390,6 @@ export default class Path {
         return 20 / Paint.currentZoom;
     }
 
-    static adaptPath (list: (string | number)[][]) {
-        var res: (string | number)[][] = [];
-        var lastpt: Point = {
-            x: list[0][1] as number,
-            y: list[0][2] as number
-        };
-        var l;
-        res.push(list[0]);
-        for (var i = 1; i < list.length; i++) {
-            var pts = list[i].concat();
-            var cmd = pts.shift() as string;
-            switch (cmd.toLowerCase()) {
-            case 'h':
-                lastpt = {
-                    x: pts[0] as number,
-                    y: lastpt.y
-                };
-                res.push(['L', lastpt.x, lastpt.y]);
-                break;
-            case 'v':
-                lastpt = {
-                    x: lastpt.x,
-                    y: pts[0] as number
-                };
-                res.push(['L', lastpt.x, lastpt.y]);
-                break;
-            case 'l':
-                lastpt = {
-                    x: pts[0] as number,
-                    y: pts[1] as number
-                };
-                res.push(['L', lastpt.x, lastpt.y]);
-                break;
-            case 'c':
-                l = pts.length;
-                var nextpt: Point = {
-                    x: pts[l - 2] as number,
-                    y: pts[l - 1] as number
-                };
-                var thisPt: Point = {
-                    x: pts[0] as number,
-                    y: pts[1] as number
-                };
-                var diff = Math.floor(Vector.len(Vector.diff(lastpt, thisPt)));
-                if (diff == 0) {
-                    res.push(['L', lastpt.x, lastpt.y]);
-                }
-                //		if (diff == 0) console.log (i, "added at beginging");
-                res.push(list[i]);
-                var startAt: Point = {
-                    x: pts[l - 4] as number,
-                    y: pts[l - 3] as number
-                };
-                var diffend = Math.floor(Vector.len(Vector.diff(startAt, nextpt)));
-                if (diffend == 0) {
-                    res.push(['L', nextpt.x, nextpt.y]);
-                }
-                //		if (diffend == 0) console.log (i, "added at end");
-                lastpt = nextpt;
-                break;
-            case 'z':
-                res.push(list[i]);
-                break;
-            default:
-                l = pts.length;
-                lastpt = {
-                    x: pts[l - 2] as number,
-                    y: pts[l - 1] as number
-                };
-                res.push(list[i]);
-                break;
-            }
-        }
-        return res;
-    }
-
     /////////////////////////////////////////////////////////////
     // UI Management
     ////////////////////////////////////////////////////////////
@@ -872,18 +796,6 @@ export default class Path {
             return gn('grab ' + dot)!;
         }
         return null;
-    }
-
-    static getPointIndex (shape: Element, pt: Point) {
-        var rot = Transform.extract(shape, 4);
-        var newpt = Transform.point(pt.x, pt.y, rot.matrix.inverse());
-        setCanvasSize(PaintCanvas.workingCanvas, Number(Paint.root.getAttribute('width')), Number(Paint.root.getAttribute('height')));
-        var ctx = PaintCanvas.workingCanvas.getContext('2d')!;
-        ctx.clearRect(0, 0, PaintCanvas.workingCanvas.width, PaintCanvas.workingCanvas.height);
-        ctx.fillStyle = 'rgba(0,0,0,0)';
-        ctx.lineWidth = Ghost.linemask;
-        ctx.strokeStyle = '#ff00FF';
-        return Path.getHitIndex(ctx, SVG2Canvas.getSVGcommands(shape)!, Vector.floor(newpt));
     }
 
     static getClosestPath (pt: Point, current: Element, layer: Element, mindist: number) {
@@ -1720,18 +1632,6 @@ export default class Path {
     static getBezierPoints (points: (string | number)[]) {
         return GeometryMath.getBezierPoints(points);
     }
-
-    // for debugging
-    static placePoint (p: Element, pt: Point, c: string) {
-        var el = SVGTools.addEllipse(p, pt.x, pt.y);
-        el.setAttributeNS(null, 'stroke-width', '0.5');
-
-        el.setAttributeNS(null, 'rx', '4');
-        el.setAttributeNS(null, 'ry', '4');
-        el.setAttributeNS(null, 'fill', c);
-    }
-    // Path.placePoint(gn("testlayer")!, pt, c ? c : "#0093ff");
-
 
     static cleanBezier (points: Point[], dist: number) {
         return GeometryMath.cleanBezier(points, dist);

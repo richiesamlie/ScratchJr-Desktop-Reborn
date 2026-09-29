@@ -55,8 +55,6 @@ declare class WebKitCSSMatrix {
  * Exposed via contextBridge.exposeInMainWorld in preload.js.
  * Async methods resolve with the JSON/text payload from the main process.
  */
-/** @deprecated Use ScratchJrBridge */
-type TabletBridge = ScratchJrBridge;
 
 /**
  * Channels exposed by preload.ts on window.scratchjr.
@@ -70,7 +68,6 @@ interface IpcBridge {
     // ---- Settings & Resources ----
     io_getsettings(): Promise<string>;
     io_gettextresource(filename: string): Promise<string>;
-    io_getIsDebug(): Promise<boolean>;
     io_getLang(): Promise<string | null>;
 
     // ---- File I/O ----
@@ -85,9 +82,6 @@ interface IpcBridge {
     io_setmedia(str: string, ext: string): Promise<unknown>;
     io_setmedianame(str: string, name: string, ext: string): Promise<unknown>;
     io_getAudioData(name: string): Promise<string | null>;
-
-    // ---- Debug (fire-and-forget) ----
-    debugWriteLog(args: unknown): void;
 
     // ---- Lifecycle (fire-and-forget) ----
     sendAppClosedAcked(): void;
@@ -126,8 +120,6 @@ interface ScratchJrBridge extends IpcBridge {
     recordsound_recordclose(keep: string | boolean): void;
 
     // ---- Permission / Camera ----
-    askForPermission(): boolean;
-    hideSplash(): boolean;
     deviceName(): string;
     analyticsEvent(category: string, action: string, usageLabel: string, value: number): void;
     scratchjr_stopfeed(): void;

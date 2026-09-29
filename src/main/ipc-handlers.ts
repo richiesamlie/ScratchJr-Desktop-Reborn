@@ -29,12 +29,7 @@ const cliLangArg = process.argv.find((a) => a.startsWith('--lang='));
 const cliLang = cliLangArg ? cliLangArg.split('=')[1] : null;
 
 export function register(getDataStore: () => ScratchJRDataStore, getWindow: () => BrowserWindow | null): void {
-    ipcMain.handle('io_getIsDebug', () => DEBUG);
     ipcMain.handle('io_getLang', () => cliLang);
-
-    ipcMain.on('debugWriteLog', (_event: IpcMainEvent, args: unknown) => {
-        debugLog(args);
-    });
 
     ipcMain.handle('io_cleanassets', (_event: IpcMainInvokeEvent, fileType: string) => {
         try {
@@ -112,18 +107,6 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
         } catch (e) {
             debugLog('io_getsettings', e);
             return null;
-        }
-    });
-
-    ipcMain.handle('database_close', (_event: IpcMainInvokeEvent, dbName: string) => {
-        try {
-            debugLog('Closing database', dbName);
-            const dataStore = getDataStore();
-            dataStore.databaseManager = null;
-            return true;
-        } catch (e) {
-            debugLog('io_getsettings', e);
-            return false;
         }
     });
 

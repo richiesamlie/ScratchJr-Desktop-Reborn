@@ -100,7 +100,6 @@ pub fn run() {
             commands::database_query,
             commands::io_getsettings,
             commands::io_gettextresource,
-            commands::io_get_is_debug,
             commands::io_get_lang,
             commands::io_getfile,
             commands::io_getmedia,

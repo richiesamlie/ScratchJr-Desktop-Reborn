@@ -7,7 +7,7 @@ vi.mock('../../src/app/src/utils/SVG2Canvas.js', () => ({ default: {} }));
 vi.mock('../../src/app/src/platform/MediaLib.ts', () => ({ default: mockMediaLib }));
 
 // Real PlatformBridge module (not mocked): setfield's intent shape is the contract under test.
-import PlatformBridge, { iOS } from '../../src/app/src/platform/PlatformBridge.ts';
+import PlatformBridge from '../../src/app/src/platform/PlatformBridge.ts';
 
 describe('PlatformBridge.setfield builds a parameterized update intent', () => {
     beforeEach(() => {
@@ -34,7 +34,7 @@ describe('PlatformBridge.setfield builds a parameterized update intent', () => {
         });
     });
 
-    it('preserves the backwards-compatible iOS export alias', () => {
-        expect(iOS).toBe(PlatformBridge);
+    it('preserves the backwards-compatible window.iOS assignment', () => {
+        expect(globalThis.window.iOS).toBe(PlatformBridge);
     });
 });

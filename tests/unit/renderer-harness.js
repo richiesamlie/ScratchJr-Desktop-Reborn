@@ -63,7 +63,7 @@ if (typeof window.tablet === 'undefined') {
         recordsound_recordstart: voidNoop, recordsound_recordstop: voidNoop,
         recordsound_volume: () => 0, recordsound_recordclose: voidNoop,
         recordsound_startplay: voidNoop, recordsound_stopplay: voidNoop,
-        askForPermission: voidNoop, hideSplash: voidNoop, deviceName: () => 'test',
+        deviceName: () => 'test',
         analyticsEvent: voidNoop, scratchjr_stopfeed: voidNoop,
         scratchjr_choosecamera: voidNoop, scratchjr_captureimage: voidNoop,
         scratchjr_cameracheck: () => null, scratchjr_startfeed: voidNoop,

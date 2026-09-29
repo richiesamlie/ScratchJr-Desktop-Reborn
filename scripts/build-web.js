@@ -20,19 +20,7 @@ const targetAppDir = path.join(distWebDir, 'app');
 
 function copyDirRecursive(src, dest) {
     if (!fs.existsSync(src)) return;
-    fs.mkdirSync(dest, { recursive: true });
-    const entries = fs.readdirSync(src, { withFileTypes: true });
-
-    for (const entry of entries) {
-        const srcPath = path.join(src, entry.name);
-        const destPath = path.join(dest, entry.name);
-
-        if (entry.isDirectory()) {
-            copyDirRecursive(srcPath, destPath);
-        } else {
-            fs.copyFileSync(srcPath, destPath);
-        }
-    }
+    fs.cpSync(src, dest, { recursive: true });
 }
 
 function main() {
@@ -120,7 +108,7 @@ function main() {
         }
     }
 
-    // 6. Copy root landing page, screenshots, and version.json from docs/
+    // 6. Copy root landing page, screenshots, and docs
     const docsDir = path.join(rootDir, 'docs');
     const docsFiles = [
         'index.html',
@@ -128,7 +116,6 @@ function main() {
         'screenshot-lobby.webp',
         'screenshot-editor.webp',
         'screenshot-start.webp',
-        'version.json',
         'README.md',
         'development.md',
         'engine.md',
@@ -142,6 +129,9 @@ function main() {
             fs.copyFileSync(srcPath, path.join(distWebDir, docFile));
         }
     }
+
+    // Copy single source of truth version manifest from root
+    fs.copyFileSync(path.join(rootDir, 'version.json'), path.join(distWebDir, 'version.json'));
 
     // 7. Create /play/ launcher redirecting to /app/index.html
     const targetPlayDir = path.join(distWebDir, 'play');

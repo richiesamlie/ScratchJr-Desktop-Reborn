@@ -25,27 +25,6 @@ module.exports = {
     appCopyright: copyrightDate
   },
   "makers": [
-    ...(process.platform === 'win32' ? [{
-      "name": "@electron-forge/maker-wix",
-      "config": {
-        "icon": iconFile,
-        "upgradeCode": "{E4346E7F-98B4-4602-9FAA-5AF8C9844BA7}",
-        "arch": "x64",
-        "beforeCreate": async (creator) => {
-          // Inject database cleanup custom action + checkbox into the WXS template.
-          // The fragment contains <Property>, <CustomAction>, <InstallExecuteSequence>,
-          // and an overridden <UI Id="MaintenanceTypeDlg"> with a "Remove database" checkbox.
-          const cleanupFragment = fs.readFileSync(
-            path.join(__dirname, 'src/installer/cleanup-action.wxs'), 'utf8'
-          );
-          // Insert before </Product> (all elements are valid children of Product)
-          creator.wixTemplate = creator.wixTemplate.replace(
-            '</Product>',
-            cleanupFragment + '\n  </Product>'
-          );
-        },
-      }
-    }] : []),
     {
       "name": "@electron-forge/maker-zip",
       "platforms": [
@@ -53,39 +32,6 @@ module.exports = {
         "win32",
         "linux"
       ]
-    },
-    {
-      "name": "@electron-forge/maker-deb",
-      "config": {
-        "options": {
-          "icon": iconFile,
-          "categories": ["Education"]
-        }
-      }
-    },
-    {
-      "name": "@electron-forge/maker-rpm",
-      "config": {
-        "options": {
-          "icon": iconFile,
-          "categories": ["Education"]
-        }
-      }
-    },
-    {
-      "name": "@reforged/maker-appimage",
-      "config": {
-        "options": {
-          "name": "ScratchJr",
-          "bin": "ScratchJr",
-          "productName": "ScratchJr",
-          "icon": iconFile,
-          "categories": [
-            "Education"
-          ],
-          "AppImageKitRelease": "continuous"
-        }
-      }
     }
   ]
 

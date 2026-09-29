@@ -6,7 +6,6 @@ on:
       - "v*.*.*"
     branches:
       - master
-      - mobile/android
   workflow_dispatch:
 
 concurrency:

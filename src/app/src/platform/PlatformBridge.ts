@@ -324,13 +324,6 @@ export default class PlatformBridge {
         }
     }
 
-    // Record state
-    static askpermission () {
-        if (isiOS) {
-            hostInterface!.askForPermission();
-        }
-    }
-
     // Camera functions
 
     static hascamera () {
@@ -378,13 +371,6 @@ export default class PlatformBridge {
 
     static trace (str: unknown) {
         console.log(str); // eslint-disable-line no-console
-    }
-
-    static parse (str: string) {
-        console.log(JSON.parse(str)); // eslint-disable-line no-console
-    }
-
-    ignore () {
     }
 
     ///////////////
@@ -450,9 +436,6 @@ export default class PlatformBridge {
         hostInterface!.analyticsEvent(category, action, usageLabel, value);
     }
 }
-
-// Backwards-compatible aliases
-export { PlatformBridge as iOS };
 
 // Expose methods on window for callbacks
 window.PlatformBridge = PlatformBridge;

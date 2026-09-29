@@ -99,11 +99,6 @@ export default class Scripts {
                 continue;
             }
         
-            //    var t = new WebKitCSSMatrix(window.getComputedStyle(ths).webkitTransform);
-            // This line was causing repeat blocks to only drag when touched in the front and top
-            // It seems to have been checking if the drag was on the invisible shadow of the repeat block
-            // It's not clear to me why we would want this, and seems functional without it. -- TM
-            //if ((ths.owner.blocktype == "repeat") && !hitTest(ths.childNodes[1], pixel)) continue;
             Events.startDrag(e, ths as HTMLElement, ScriptsPane.prepareToDrag, ScriptsPane.dropBlock, ScriptsPane.draggingBlock, ScriptsPane.runBlock);
             return;
         }

@@ -11,44 +11,14 @@ const bridge = /** @type {ScratchJrBridge} */ (window.scratchjr);
 
 
 const DEBUG = false;
-//const DEBUG =   remote.getCurrentWebContents().browserWindowOptions.isDebug;  // grab the DEBUG variable from main. This is passed through the BrowserWindow creation
-const DEBUG_FILEIO =  DEBUG && true;       // saving and loading user files
-const DEBUG_RESOURCEIO = DEBUG && false;  // files from the application directory
-const DEBUG_NYI = DEBUG && true;          // stuff not yet implemented
-const DEBUG_DATABASE = DEBUG &&  false;    // database access
-const DEBUG_CAMERA = DEBUG && false;      // camera access
-const DEBUG_AUDIO = DEBUG && true;           // audio interface
-const _DEBUG_AUDIOMETER = DEBUG && false;    // volume feedback (used in webav.js)
-const DEBUG_WRITE_ERRLOG = DEBUG && true;
 
-/** @type {boolean | undefined} */
-let hasCapturedErrors;
-
-// Debugging the electron process:
-// note to use a debugger use 'npm run debugMain' and load up chrome://inspect
-// ============================================================================
-// use one wrapper for debugging so we can turn it on and off at a
-// central place
 /** @param {...unknown} args */
 function debugLog(...args) {
     if (DEBUG) {
         console.log(...args); // eslint-disable-line no-console
     }
-    
-    if (DEBUG_WRITE_ERRLOG) {
-    	if (!hasCapturedErrors) {
-    		hasCapturedErrors = true;
-    		
-    		// install an error event handler to capture unhandled messages
-    		window.addEventListener('error', function (e) {
-			  	bridge.debugWriteLog(e);
-			});
-    	}
-    	return bridge.debugWriteLog(args);
-    }
     return true;
 }
-debugLog('electronClient debugLog enabled =======================');
 
 
 // reload the projects if the database has been reloaded off disk.
@@ -79,16 +49,16 @@ class ElectronDesktopInterface {
     }
     /** @param {any} json */
     async database_query(json) {
-        if (DEBUG_DATABASE) debugLog('beginning database_query', json);
+        debugLog('beginning database_query', json);
         let res = await bridge.database_query(json);
-        if (DEBUG_DATABASE) debugLog('end database_query', res);
+        debugLog('end database_query', res);
         return res;
 
     }
 
     async io_getsettings(){
 
-        if (DEBUG_RESOURCEIO) debugLog('io_getsettings');
+        debugLog('io_getsettings');
         let settings = await bridge.io_getsettings();
         return settings;
 
@@ -98,44 +68,42 @@ class ElectronDesktopInterface {
     /** @param {string} file */
     async io_getmedia(file){
 
-        if (DEBUG_FILEIO) debugLog('io_getmedia', file);
+        debugLog('io_getmedia', file);
         return await bridge.io_getmedia(file);
 
     }
 
     /** @param {string} str @param {string} ext */
     async io_setmedia(str,  ext){
-        if (DEBUG_FILEIO)  debugLog('io_setmedia', str, ext);
+        debugLog('io_setmedia', str, ext);
         return await bridge.io_setmedia(str, ext);
 
     }
 
     /** @param {string} str @param {string} name @param {string} ext */
     async io_setmedianame(str, name, ext){
-        if (DEBUG_FILEIO) debugLog('io_setmedianame', name, ext);
+        debugLog('io_setmedianame', name, ext);
 
         return await bridge.io_setmedianame(str, name, ext);
     }
 
     /** @param {string} str */
     async io_getmd5(str){
-        if (DEBUG_FILEIO) debugLog('io_getmd5', str);
+        debugLog('io_getmd5', str);
         return (str) ? await bridge.io_getmd5(str) : null;
     }
 
 
     /** @param {string} str */
     async io_remove(str){
-        if (DEBUG_NYI)  debugLog('io_remove - NYI', str);
+        debugLog('io_remove - NYI', str);
         return await bridge.io_remove(str);
 
     }
 
     /** @param {string} str */
     async io_cleanassets(str){
-        if (DEBUG_NYI) {
-            debugLog('io_cleanassets - NYI', str);
-        }
+        debugLog('io_cleanassets - NYI', str);
         return await bridge.io_cleanassets(str);
 
     }
@@ -169,7 +137,7 @@ class ElectronDesktopInterface {
 
     /** @param {string} str */
     async io_getfile(str){
-        if (DEBUG_FILEIO) debugLog('io_getfile', str);
+        debugLog('io_getfile', str);
 
         // returns a file from the scratch jr documents folder
         return await bridge.io_getfile(str);
@@ -178,7 +146,7 @@ class ElectronDesktopInterface {
 
     /** @param {string} filename */
     async io_gettextresource(filename){
-        if (DEBUG_RESOURCEIO) debugLog('io_gettextresource', filename);
+        debugLog('io_gettextresource', filename);
 
         // returns a file from the app resource folder
         return await bridge.io_gettextresource(filename);
@@ -189,7 +157,7 @@ class ElectronDesktopInterface {
 
     /** @param {string} name @param {string} btoa_str */
     async io_setfile(name, btoa_str){
-        if (DEBUG_FILEIO)  debugLog('io_setfile', name, btoa_str);
+        debugLog('io_setfile', name, btoa_str);
 
         return await bridge.io_setfile(name, btoa_str);
     }
@@ -211,7 +179,7 @@ class ElectronDesktopInterface {
     // sounds
     /** @param {string} name */
     io_playsound(name){
-        if (DEBUG_AUDIO) debugLog('io_playsound', name);
+        debugLog('io_playsound', name);
 
 		let audioElement = this.currentAudio[name];
         if (!audioElement) {
@@ -252,7 +220,7 @@ class ElectronDesktopInterface {
 
     /** @param {string} name */
     io_stopsound(name){
-        if (DEBUG_AUDIO) debugLog('io_stopsound', name);
+        debugLog('io_stopsound', name);
 
 		let audioElement = this.currentAudio[name];
     
@@ -316,24 +284,15 @@ class ElectronDesktopInterface {
 
 
     recordsound_startplay (){
-        if (DEBUG_AUDIO) debugLog('recordsound_recordstart');
+        debugLog('recordsound_recordstart');
         return this.getAudioCaptureElement().startPlay();
     }
     recordsound_stopplay(){
-        if (DEBUG_AUDIO) debugLog('recordsound_stopplay');
+        debugLog('recordsound_stopplay');
         this.getAudioCaptureElement().stopPlay();
 
     }
 
-
-    askForPermission(){
-        if (DEBUG_AUDIO) debugLog('askForPermission', name);
-        return true;
-    }
-
-    hideSplash(){
-    	return true;
-    }
 
     deviceName(){
         return 'desktop';
@@ -341,7 +300,7 @@ class ElectronDesktopInterface {
 
     /** @param {string} category @param {string} action @param {string} usageLabel @param {number} value */
     analyticsEvent(category, action, usageLabel, value) {
-        if (DEBUG_NYI) debugLog('Analytics Event!', category, action, usageLabel, value);
+        debugLog('Analytics Event!', category, action, usageLabel, value);
     }
 
     /**
@@ -359,7 +318,7 @@ class ElectronDesktopInterface {
 
 
     scratchjr_stopfeed() {
-        if (DEBUG_CAMERA) debugLog('scratchjr_stopfeed NYI');
+        debugLog('scratchjr_stopfeed NYI');
         if (this.cameraPickerDialog) {
             this.cameraPickerDialog.hide();
             this.cameraPickerDialog = null;
@@ -369,12 +328,12 @@ class ElectronDesktopInterface {
     }
     /** @param {string} mode */
     scratchjr_choosecamera(mode) {
-        if (DEBUG_CAMERA) debugLog('scratchjr_choosecamera NYI', mode);
+        debugLog('scratchjr_choosecamera NYI', mode);
     }
 
     /** @param {() => void} whenDone */
     scratchjr_captureimage(whenDone) {
-        if (DEBUG_CAMERA) debugLog('scratchjr_captureimage', whenDone);
+        debugLog('scratchjr_captureimage', whenDone);
         var cam = /** @type {any} */ (window).Camera;
         if (this.cameraPickerDialog) {
             let imgData = this.cameraPickerDialog.snapshot();
@@ -400,13 +359,13 @@ class ElectronDesktopInterface {
 
     /** @param {...unknown} args */
     scratchjr_cameracheck(...args) {
-        if (DEBUG_CAMERA || DEBUG_NYI) debugLog('scratchjr_cameracheck', args);
+        debugLog('scratchjr_cameracheck', args);
 
         return true;
     }
     /** @param {string} str */
     scratchjr_startfeed(str) {
-        if (DEBUG_CAMERA) debugLog('scratchjr_startfeed', str);
+        debugLog('scratchjr_startfeed', str);
         let data = JSON.parse(str);
 
         if (!this.cameraPickerDialog) {

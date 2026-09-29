@@ -145,7 +145,3 @@ app.on('activate', () => {
         createWindow(dataStore);
     }
 });
-
-app.on('will-quit', () => {
-    // Window-scoped shortcuts clean up automatically with the window
-});

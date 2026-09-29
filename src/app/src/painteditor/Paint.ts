@@ -240,17 +240,12 @@ export default class Paint {
 
 
     static detectGesture (e: MouseEvent | TouchEvent) {
-       /* if (!e.touches) {
-            return;
-        }*/
         if (Camera.active) {
             return;
         }
         Paint.clearEvents(e);
         initialPoint = PaintAction.getScreenPt(e);
         deltaPoint = PaintAction.getScreenPt(e);
-        //var n = Math.min(3, e.touches.length);
-       // var cmdForGesture = [Paint.ignore, Paint.mouseDown, Paint.pinchStart, Paint.Scroll];
         Paint.mouseDown(e);
     }
 
@@ -262,11 +257,6 @@ export default class Paint {
         }
         Events.clearEvents();
         PaintAction.clearEvents();
-    }
-
-    static ignore (e: Event) {
-        e.preventDefault();
-        e.stopPropagation();
     }
 
     static Scroll (e: Event) {
@@ -285,69 +275,6 @@ export default class Paint {
             Paint.setCanvasTransform(currentZoom);
             PaintAction.clearEvents();
         };
-    }
-
-    static pinchStart (e: MouseEvent | TouchEvent) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (PaintAction.currentshape) {
-            return;
-        }
-        window.onmousemove = function () {
-            Paint.gestureStart(e);
-        };
-    }
-
-    static gestureStart (e: MouseEvent | TouchEvent) {
-        window.onmousemove = null;
-        var skipmodes = ['path', 'line', 'ellipse', 'rect', 'tri', 'star'];
-        if (skipmodes.indexOf(mode) > -1) {
-            if (PaintAction.currentshape && PaintAction.currentshape.parentNode) {
-                PaintAction.currentshape.parentNode.removeChild(PaintAction.currentshape);
-            }
-        }
-        Ghost.clearLayer();
-        Events.scaleStartsAt = currentZoom;
-        Events.updatePinchCenter(e);
-        initialPoint = PaintAction.zoomPt(Events.pinchcenter);
-        Events.clearEvents();
-        Events.clearDragAndDrop();
-        window.onmousemove = Paint.gestureChange;
-        window.onmouseup = Paint.gestureEnd;
-    }
-
-    static gestureChange (e: MouseEvent | TouchEvent) {
-        e.preventDefault();
-        var scale = Math.min(maxZoom, Events.scaleStartsAt * Events.zoomScale(e));
-        scale = Math.max(minZoom, scale);
-        var mc = gn('maincanvas')!;
-        var w = mc.offsetWidth * scale;
-        var h = mc.offsetHeight * scale;
-        var size = Math.min(w, h);
-        if (size < 240) {
-            return;
-        }
-        Paint.updateZoomScale(scale);
-        var pt = PaintAction.zoomPt(Events.pinchcenter);
-        var delta = Vector.diff(pt, initialPoint);
-        Paint.adjustPos(delta);
-    }
-
-    static gestureEnd (e: MouseEvent | TouchEvent) {
-        e.preventDefault();
-        window.onmousemove = null;
-        window.onmouseup = null;
-        var scale = Math.min(maxZoom, Events.scaleStartsAt * Events.zoomScale(e));
-        scale = Math.max(minZoom, scale);
-        Paint.updateZoomScale(scale);
-        var pt = PaintAction.zoomPt(Events.pinchcenter);
-        var delta = Vector.diff(pt, initialPoint);
-        Paint.adjustPos(delta);
-        Events.scaleStartsAt = currentZoom;
-        if (Path.selector) {
-            Path.showDots(Path.selector);
-        }
-        Paint.setZoomTo(scale);
     }
 
     static canvasFits () {

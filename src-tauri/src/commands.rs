@@ -13,18 +13,19 @@ pub struct AppState {
     pub io: Arc<IoManager>,
 }
 
+fn parse_db_intent(raw: Value) -> Result<DbIntent, ()> {
+    if raw.is_string() {
+        serde_json::from_str(raw.as_str().unwrap_or_default()).map_err(|_| ())
+    } else {
+        serde_json::from_value(raw).map_err(|_| ())
+    }
+}
+
 #[tauri::command]
 pub fn database_stmt(state: State<'_, AppState>, raw: Value) -> i64 {
-    let intent: DbIntent = if raw.is_string() {
-        match serde_json::from_str(raw.as_str().unwrap_or_default()) {
-            Ok(i) => i,
-            Err(_) => return -2,
-        }
-    } else {
-        match serde_json::from_value(raw) {
-            Ok(i) => i,
-            Err(_) => return -2,
-        }
+    let intent = match parse_db_intent(raw) {
+        Ok(i) => i,
+        Err(_) => return -2,
     };
 
     match state.db.execute_stmt(intent) {
@@ -38,16 +39,9 @@ pub fn database_stmt(state: State<'_, AppState>, raw: Value) -> i64 {
 
 #[tauri::command]
 pub fn database_query(state: State<'_, AppState>, raw: Value) -> String {
-    let intent: DbIntent = if raw.is_string() {
-        match serde_json::from_str(raw.as_str().unwrap_or_default()) {
-            Ok(i) => i,
-            Err(_) => return "[]".to_string(),
-        }
-    } else {
-        match serde_json::from_value(raw) {
-            Ok(i) => i,
-            Err(_) => return "[]".to_string(),
-        }
+    let intent = match parse_db_intent(raw) {
+        Ok(i) => i,
+        Err(_) => return "[]".to_string(),
     };
 
     state.db.execute_query(intent).unwrap_or_else(|_| "[]".to_string())
@@ -61,11 +55,6 @@ pub fn io_getsettings(state: State<'_, AppState>) -> String {
 #[tauri::command]
 pub fn io_gettextresource(state: State<'_, AppState>, filename: String) -> Option<String> {
     state.io.get_text_resource(&filename)
-}
-
-#[tauri::command]
-pub fn io_get_is_debug() -> bool {
-    false
 }
 
 #[tauri::command]
@@ -143,80 +132,63 @@ fn clean_base64_decode(raw: &str) -> Result<Vec<u8>, String> {
     };
 
     let sanitized: String = clean.chars().filter(|c| !c.is_whitespace()).collect();
-    if let Ok(bytes) = BASE64.decode(&sanitized) {
-        return Ok(bytes);
-    }
+    let base64_err = match BASE64.decode(&sanitized) {
+        Ok(bytes) => return Ok(bytes),
+        Err(e) => e,
+    };
     use base64::engine::general_purpose::URL_SAFE;
     if let Ok(bytes) = URL_SAFE.decode(&sanitized) {
         return Ok(bytes);
     }
-    BASE64.decode(&sanitized).map_err(|e| format!("Base64 decode error: {e}"))
+    Err(format!("Base64 decode error: {base64_err}"))
+}
+
+async fn save_file_helper(
+    app: AppHandle,
+    data: &str,
+    suggested_name: &str,
+    ext: &str,
+    filter_label: &str,
+) -> Result<Option<String>, String> {
+    let clean_name = suggested_name.replace(['\\', '/', ':', '*', '?', '"', '<', '>', '|'], "_");
+    let ext_dot = format!(".{}", ext);
+    let default_file = if clean_name.to_ascii_lowercase().ends_with(&ext_dot) {
+        clean_name
+    } else {
+        format!("{}{}", clean_name, ext_dot)
+    };
+
+    let file_path = if let Some(w) = app.get_webview_window("main") {
+        app.dialog()
+            .file()
+            .set_parent(&w)
+            .add_filter(filter_label, &[ext])
+            .set_file_name(&default_file)
+            .blocking_save_file()
+    } else {
+        app.dialog()
+            .file()
+            .add_filter(filter_label, &[ext])
+            .set_file_name(&default_file)
+            .blocking_save_file()
+    };
+
+    if let Some(path) = file_path {
+        let path_buf = path.into_path().map_err(|e| e.to_string())?;
+        let bytes = clean_base64_decode(data)?;
+        fs::write(&path_buf, bytes).map_err(|e| e.to_string())?;
+        Ok(Some(path_buf.to_string_lossy().to_string()))
+    } else {
+        Ok(None)
+    }
 }
 
 #[tauri::command]
 pub async fn save_sjr_file(app: AppHandle, data_b64: String, suggested_name: String) -> Result<Option<String>, String> {
-    let clean_name = suggested_name.replace(['\\', '/', ':', '*', '?', '"', '<', '>', '|'], "_");
-    let default_file = if clean_name.to_ascii_lowercase().ends_with(".sjr") {
-        clean_name
-    } else {
-        format!("{}.sjr", clean_name)
-    };
-
-    let file_path = if let Some(w) = app.get_webview_window("main") {
-        app.dialog()
-            .file()
-            .set_parent(&w)
-            .add_filter("ScratchJr Project (*.sjr)", &["sjr"])
-            .set_file_name(&default_file)
-            .blocking_save_file()
-    } else {
-        app.dialog()
-            .file()
-            .add_filter("ScratchJr Project (*.sjr)", &["sjr"])
-            .set_file_name(&default_file)
-            .blocking_save_file()
-    };
-
-    if let Some(path) = file_path {
-        let path_buf = path.into_path().map_err(|e| e.to_string())?;
-        let bytes = clean_base64_decode(&data_b64)?;
-        fs::write(&path_buf, bytes).map_err(|e| e.to_string())?;
-        Ok(Some(path_buf.to_string_lossy().to_string()))
-    } else {
-        Ok(None)
-    }
+    save_file_helper(app, &data_b64, &suggested_name, "sjr", "ScratchJr Project (*.sjr)").await
 }
 
 #[tauri::command]
 pub async fn save_stage_png(app: AppHandle, data_url: String, suggested_name: String) -> Result<Option<String>, String> {
-    let clean_name = suggested_name.replace(['\\', '/', ':', '*', '?', '"', '<', '>', '|'], "_");
-    let default_file = if clean_name.to_ascii_lowercase().ends_with(".png") {
-        clean_name
-    } else {
-        format!("{}.png", clean_name)
-    };
-
-    let file_path = if let Some(w) = app.get_webview_window("main") {
-        app.dialog()
-            .file()
-            .set_parent(&w)
-            .add_filter("PNG Image (*.png)", &["png"])
-            .set_file_name(&default_file)
-            .blocking_save_file()
-    } else {
-        app.dialog()
-            .file()
-            .add_filter("PNG Image (*.png)", &["png"])
-            .set_file_name(&default_file)
-            .blocking_save_file()
-    };
-
-    if let Some(path) = file_path {
-        let path_buf = path.into_path().map_err(|e| e.to_string())?;
-        let bytes = clean_base64_decode(&data_url)?;
-        fs::write(&path_buf, bytes).map_err(|e| e.to_string())?;
-        Ok(Some(path_buf.to_string_lossy().to_string()))
-    } else {
-        Ok(None)
-    }
+    save_file_helper(app, &data_url, &suggested_name, "png", "PNG Image (*.png)").await
 }
