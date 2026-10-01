@@ -3,6 +3,34 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.12.0] - 2026-10-01
+
+**Minor Release: "Go to Random Page" Block, Project Rename Persistence, Slow-Click Freeze Fix, Audio Replay & Tactile Sound FX, Resilient JustSch DB Import, and 12-Language Full Localization (Issue #13).**
+
+### Added
+- **"Go to Random Page" Block (`randompage`)**:
+  - Added new end block in the Red Palette tray right after `forever`.
+  - Custom vector block icon (`assets/blockicons/RandomPage.svg`) featuring page cards and die/shuffle iconography in ScratchJr red (`#AE1F24`).
+  - Seamlessly transitions execution to a random candidate page $\{p \in \text{Pages} \mid p \neq \text{CurrentPage}\}$ when project has $>1$ page; gracefully stops as a safe no-op on single-page projects.
+  - Added to no-highlight execution transition list (`Runtime.noh`).
+  - Full native localization across 12 languages (`en`, `es`, `ca`, `de`, `fr`, `it`, `ja`, `nl`, `pt`, `sv`, `th`, `zh-cn`).
+  - Documented in in-app blocks guide (`src/app/inapp/blocks.html`) under Reborn features and Red End blocks.
+
+### Fixed
+- **Project Rename Persistence (Bug 1)**:
+  - Bound `ti.onblur` to commit and persist project renames when clicking away or losing focus.
+  - Bound `ti.oninput` for real-time metadata synchronization.
+  - Bound `submitChange(e)` on Enter keydown to commit immediately and dismiss the dialog.
+- **Lobby "New Project" / "Open Project" Slow-Click Freeze (Bug 2)**:
+  - Guarded `holdit()` timer in `Home.ts` to exclude action target IDs `newproject` and `openproject`, preventing prolonged touches from trapping the lobby in project control edit mode.
+- **Sound Playback Stall on Repeated Actions & Tactile Drag Sounds (Bug 3)**:
+  - Added `audioElement.currentTime = 0;` before `.play()` in `electronClient.js` and `tauriClient.js`, fixing repeated UI sound effect playback on cached audio elements.
+  - Added tactile `grab.wav` sound effects to script canvas block picking (`ScriptsPane.pickBlock`) and stage sprite dragging (`Stage.startSpriteDrag`).
+- **Resilient Legacy JustSch SQLite Database Import (Bug 4)**:
+  - Added dynamic case-insensitive table discovery (`PROJECTS` / `projects`, `PROJECTFILES` / `projectfiles`) and column index resolution.
+  - Expanded deleted flag filtering to handle `0`, `'0'`, `NULL`, and `'NO'`.
+  - Added per-project error boundaries so individual corrupted records do not abort the entire database import.
+
 ## [v2.11.0] - 2026-10-01
 
 **Minor Release: "Go to Random Position" Motion Block, Retro Pixel Font, In-App Blocks Guide, and 12-Language Full Localization (Issue #12 Phase 2).**

@@ -753,35 +753,42 @@ export default class IO {
             db.close();
             throw new Error('Not a valid ScratchJr database (missing PROJECTS table).');
         }
+        var projectsTable = String(tableCheck[0].values[0][0]);
 
         // 2. Extract media from PROJECTFILES if present
         var pfCheck = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND (name='PROJECTFILES' OR name='projectfiles');");
         if (pfCheck && pfCheck.length > 0 && pfCheck[0].values && pfCheck[0].values.length > 0) {
-            var fileRows = db.exec('SELECT MD5, CONTENTS FROM PROJECTFILES;');
+            var pfTable = String(pfCheck[0].values[0][0]);
+            var fileRows = db.exec('SELECT * FROM ' + pfTable + ';');
             if (fileRows && fileRows.length > 0) {
-                var values = fileRows[0].values;
-                var assetPromises: Promise<void>[] = [];
-                for (var r = 0; r < values.length; r++) {
-                    var row = values[r];
-                    var md5 = String(row[0] || '');
-                    var contents = String(row[1] || '');
-                    if (!md5 || !contents) continue;
-                    var parts = md5.split('.');
-                    var ext = parts.pop() || '';
-                    var baseName = parts.join('.');
-                    if (!ext || !baseName) continue;
-                    (function (c: string, b: string, e: string) {
-                        assetPromises.push(new Promise<void>(function (resolve) {
-                            PlatformBridge.setmedianame(c, b, e, function () { resolve(); });
-                        }));
-                    }(contents, baseName, ext));
+                var pfCols = fileRows[0].columns.map(function (c: string) { return c.toUpperCase(); });
+                var md5Idx = pfCols.indexOf('MD5');
+                var contentsIdx = pfCols.indexOf('CONTENTS');
+                if (md5Idx >= 0 && contentsIdx >= 0) {
+                    var values = fileRows[0].values;
+                    var assetPromises: Promise<void>[] = [];
+                    for (var r = 0; r < values.length; r++) {
+                        var row = values[r];
+                        var md5 = String(row[md5Idx] || '');
+                        var contents = String(row[contentsIdx] || '');
+                        if (!md5 || !contents) continue;
+                        var parts = md5.split('.');
+                        var ext = parts.pop() || '';
+                        var baseName = parts.join('.');
+                        if (!ext || !baseName) continue;
+                        (function (c: string, b: string, e: string) {
+                            assetPromises.push(new Promise<void>(function (resolve) {
+                                PlatformBridge.setmedianame(c, b, e, function () { resolve(); });
+                            }));
+                        }(contents, baseName, ext));
+                    }
+                    await Promise.all(assetPromises);
                 }
-                await Promise.all(assetPromises);
             }
         }
 
         // 3. Extract projects from PROJECTS table
-        var projectRows = db.exec("SELECT ID, NAME, JSON, THUMBNAIL, VERSION FROM PROJECTS WHERE DELETED = 'NO' OR DELETED IS NULL;");
+        var projectRows = db.exec('SELECT * FROM ' + projectsTable + " WHERE DELETED IS NULL OR (DELETED != 'YES' AND DELETED != '1' AND DELETED != 'true');");
         if (!projectRows || projectRows.length === 0 || !projectRows[0].values) {
             db.close();
             return 0;
@@ -796,38 +803,42 @@ export default class IO {
         var importedCount = 0;
         var pValues = projectRows[0].values;
         for (var p = 0; p < pValues.length; p++) {
-            var pRow = pValues[p];
-            var rawName = nameIdx >= 0 ? String(pRow[nameIdx] || 'Project') : 'Project';
-            var rawJson = jsonIdx >= 0 ? (pRow[jsonIdx] as string) : null;
-            var rawThumb = thumbIdx >= 0 ? (pRow[thumbIdx] as string) : null;
-            var rawVer = verIdx >= 0 ? String(pRow[verIdx] || '') : '';
+            try {
+                var pRow = pValues[p];
+                var rawName = nameIdx >= 0 ? String(pRow[nameIdx] || 'Project') : 'Project';
+                var rawJson = jsonIdx >= 0 ? (pRow[jsonIdx] as string) : null;
+                var rawThumb = thumbIdx >= 0 ? (pRow[thumbIdx] as string) : null;
+                var rawVer = verIdx >= 0 ? String(pRow[verIdx] || '') : '';
 
-            var record: Record<string, unknown> = {
-                name: rawName,
-                version: rawVer || window.Settings?.scratchJrVersion || '1.0.0',
-                mtime: Date.now().toString(),
-            };
-            if (rawJson) {
-                record.json = rawJson;
-            }
-            if (rawThumb) {
-                record.thumbnail = rawThumb;
-            }
+                var record: Record<string, unknown> = {
+                    name: rawName,
+                    version: rawVer || window.Settings?.scratchJrVersion || '1.0.0',
+                    mtime: Date.now().toString(),
+                };
+                if (rawJson) {
+                    record.json = rawJson;
+                }
+                if (rawThumb) {
+                    record.thumbnail = rawThumb;
+                }
 
-            await (function (rec: Record<string, unknown>) {
-                return new Promise<void>(function (resolve) {
-                    IO.uniqueProjectName(rec as Parameters<typeof IO.uniqueProjectName>[0], function (uniqueRec) {
-                        var recWithThumb = uniqueRec as { thumbnail?: unknown };
-                        if (!recWithThumb.thumbnail) {
-                            recWithThumb.thumbnail = JSON.stringify({ pagecount: 1, md5: '' });
-                        }
-                        IO.createProject(uniqueRec as unknown as ProjectRecord, function () {
-                            importedCount++;
-                            resolve();
+                await (function (rec: Record<string, unknown>) {
+                    return new Promise<void>(function (resolve) {
+                        IO.uniqueProjectName(rec as Parameters<typeof IO.uniqueProjectName>[0], function (uniqueRec) {
+                            var recWithThumb = uniqueRec as { thumbnail?: unknown };
+                            if (!recWithThumb.thumbnail) {
+                                recWithThumb.thumbnail = JSON.stringify({ pagecount: 1, md5: '' });
+                            }
+                            IO.createProject(uniqueRec as unknown as ProjectRecord, function () {
+                                importedCount++;
+                                resolve();
+                            });
                         });
                     });
-                });
-            }(record));
+                }(record));
+            } catch (err) {
+                console.warn('Skipping corrupted project record:', err);
+            }
         }
 
         db.close();

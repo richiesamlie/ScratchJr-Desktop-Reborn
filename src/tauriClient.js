@@ -218,6 +218,7 @@ class TauriDesktopInterface {
         }
 
         try {
+            audioElement.currentTime = 0;
             const playPromise = audioElement.play();
             if (playPromise !== undefined) {
                 playPromise.catch(function (error) {
@@ -457,3 +458,7 @@ window.addEventListener('keydown', function (e) {
         }
     }
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TauriDesktopInterface;
+}

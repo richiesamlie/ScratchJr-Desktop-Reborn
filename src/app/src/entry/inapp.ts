@@ -140,7 +140,9 @@ export function inappBlocksGuide () {
         BLOCKS_RANDOM_WAIT: 'Random wait',
         BLOCKS_RANDOM_WAIT_DESCRIPTION: 'Waits a random time from zero to the number shown, in tenths of a second, then continues. 10 means up to one second; 50 means up to five seconds. A new delay is chosen each time the block runs.',
         BLOCKS_TOUCH_CHARACTER: 'Start on touching character',
-        BLOCKS_TOUCH_CHARACTER_DESCRIPTION: 'Choose another character on this page using the picture button. During play, starts when they touch, like Start on Bump but only for that character. It can repeat while they remain touching. A missing target does nothing; choose again after deleting the target or copying the script to another page.'
+        BLOCKS_TOUCH_CHARACTER_DESCRIPTION: 'Choose another character on this page using the picture button. During play, starts when they touch, like Start on Bump but only for that character. It can repeat while they remain touching. A missing target does nothing; choose again after deleting the target or copying the script to another page.',
+        BLOCKS_RANDOM_PAGE: 'Go to random page',
+        BLOCKS_RANDOM_PAGE_DESCRIPTION: 'Changes to a random page in the project.'
     };
     for (const [key, fallback] of Object.entries(reborn)) {
         gn(key)!.textContent = Localization.localizeWithFallback(key, fallback);
@@ -209,7 +211,9 @@ export function inappBlocksGuide () {
         'BLOCKS_REPEAT_FOREVER',
         'BLOCKS_REPEAT_FOREVER_DESCRIPTION',
         'BLOCKS_GO_TO_PAGE',
-        'BLOCKS_GO_TO_PAGE_DESCRIPTION'
+        'BLOCKS_GO_TO_PAGE_DESCRIPTION',
+        'BLOCKS_RANDOM_PAGE',
+        'BLOCKS_RANDOM_PAGE_DESCRIPTION'
     ];
 
     for (let i = 0; i < blockDescriptionKeys.length; i++) {

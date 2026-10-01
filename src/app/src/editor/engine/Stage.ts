@@ -498,6 +498,7 @@ export default class Stage {
     }
 
     startSpriteDrag (e?: MouseEvent) {
+        ScratchAudio.sndFX('grab.wav');
         var spr = getModelRefAs<Sprite>(Events.dragthumbnail as HTMLElement, 'sprite')!;
         spr.threads = enginePorts().getRuntime().removeRunScript(spr);
         this.currentPage.div.appendChild(Events.dragthumbnail);

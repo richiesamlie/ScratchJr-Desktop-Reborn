@@ -147,7 +147,7 @@ export default class Runtime {
         if (token == null) {
             token = Prims.table.missing;
         } else {
-            var noh = ['repeat', 'gotopage'];
+            var noh = ['repeat', 'gotopage', 'randompage'];
             if (noh.indexOf(this.thread.thisblock.blocktype!) < 0) {
                 this.thread.thisblock.highlight();
                 this.thread.oldblock = this.thread.thisblock;

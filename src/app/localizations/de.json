@@ -407,5 +407,8 @@
     "LIBRARY_SEARCH_PLACEHOLDER": "Suchen...",
     "LIBRARY_NO_RESULTS": "Keine Elemente gefunden",
     "OPEN_PROJECT_TITLE": "Öffnen",
-    "MULTI_TAB_NOTICE": "ScratchJr ist bereits in einem anderen Tab geöffnet. Dieses Fenster ist im schreibgeschützten Modus."
+    "MULTI_TAB_NOTICE": "ScratchJr ist bereits in einem anderen Tab geöffnet. Dieses Fenster ist im schreibgeschützten Modus.",
+    "BLOCKS_RANDOM_PAGE": "Gehe zu Zufallsseite",
+    "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Wechselt zu einer zufälligen Seite des Projekts.",
+    "BLOCK_DESC_RANDOM_PAGE": "GEHE ZU ZUFALLSSEITE"
 }

@@ -84,6 +84,7 @@ export default class ScriptsPane {
     }
 
     static pickBlock (x: number, y: number, e: MouseEvent) {
+        ScratchAudio.sndFX('grab.wav');
         if (!ScratchJr.runtime.inactive()) {
             ScratchJr.stopStrips();
         }

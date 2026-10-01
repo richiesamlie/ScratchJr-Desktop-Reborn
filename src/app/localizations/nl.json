@@ -407,5 +407,8 @@
     "LIBRARY_SEARCH_PLACEHOLDER": "Zoeken...",
     "LIBRARY_NO_RESULTS": "Geen items gevonden",
     "OPEN_PROJECT_TITLE": "Openen",
-    "MULTI_TAB_NOTICE": "ScratchJr is al geopend in een ander tabblad. Dit venster staat in de veilige alleen-lezen modus."
+    "MULTI_TAB_NOTICE": "ScratchJr is al geopend in een ander tabblad. Dit venster staat in de veilige alleen-lezen modus.",
+    "BLOCKS_RANDOM_PAGE": "Ga naar willekeurige pagina",
+    "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Ga naar een willekeurige pagina van het project.",
+    "BLOCK_DESC_RANDOM_PAGE": "GA NAAR WILLEKEURIGE PAGINA"
 }

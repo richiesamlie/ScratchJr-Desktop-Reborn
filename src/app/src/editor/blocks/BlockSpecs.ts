@@ -224,7 +224,7 @@ export default class BlockSpecs {
             ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show'],
             [],
             ['wait', 'waitrandom', 'stopmine', 'setspeed', 'repeat'],
-            ['endstack', 'forever']];
+            ['endstack', 'forever', 'randompage']];
     }
 
     ///////////////////////////////
@@ -317,6 +317,8 @@ export default class BlockSpecs {
                 BlockSpecs.redEndH, null, null, BlockSpecs.endS],
             'forever': ['forever', BlockSpecs.getImageFrom('assets/blockicons/Forever', 'svg'),
                 BlockSpecs.redEnd, null, null, BlockSpecs.redEndH, null, null, BlockSpecs.endS],
+            'randompage': ['randompage', BlockSpecs.getImageFrom('assets/blockicons/RandomPage', 'svg'),
+                BlockSpecs.redEnd, null, null, BlockSpecs.redEndH, null, null, BlockSpecs.endS],
             'gotopage': ['gotopage', null,
                 BlockSpecs.redEndLong, 'p', '2', BlockSpecs.redEndLongH, null, null, BlockSpecs.endLongS],
             'caretstart': ['caretstart', null,
@@ -383,6 +385,7 @@ export default class BlockSpecs {
                 CHARACTER_NAME: s.name ? s.name : ''
             }),
             'forever': Localization.localize('BLOCK_DESC_REPEAT_FOREVER'),
+            'randompage': Localization.localizeWithFallback('BLOCK_DESC_RANDOM_PAGE', 'Go to random page'),
             'gotopage': Localization.localize('BLOCK_DESC_GO_TO_PAGE', {
                 PAGE: str
             }),

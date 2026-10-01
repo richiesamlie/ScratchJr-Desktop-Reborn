@@ -407,5 +407,8 @@
     "LIBRARY_SEARCH_PLACEHOLDER": "Cerca...",
     "LIBRARY_NO_RESULTS": "Nessun elemento trovato",
     "OPEN_PROJECT_TITLE": "Apri",
-    "MULTI_TAB_NOTICE": "ScratchJr è già aperto in un'altra scheda. Questa finestra è in modalità di sola lettura."
+    "MULTI_TAB_NOTICE": "ScratchJr è già aperto in un'altra scheda. Questa finestra è in modalità di sola lettura.",
+    "BLOCKS_RANDOM_PAGE": "Vai a pagina casuale",
+    "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Si sposta a una pagina casuale del progetto.",
+    "BLOCK_DESC_RANDOM_PAGE": "VAI A PAGINA CASUALE"
 }

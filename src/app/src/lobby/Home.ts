@@ -99,13 +99,15 @@ export default class Home {
         function holdit () {
             frame.onmousemove = Home.handleMove;
             frame.ontouchmove = Home.handleMove as unknown as (this: GlobalEventHandlers, ev: TouchEvent) => any;
-            var repeat = function () {
-                if (Home.actionTarget) {
-                    Home.showProjectControls(Home.actionTarget);
-                    Home.holding = true;
-                }
-            };
-            timeoutEvent = setTimeout(repeat, 500);
+            if (Home.actionTarget && Home.actionTarget.id !== 'newproject' && Home.actionTarget.id !== 'openproject') {
+                var repeat = function () {
+                    if (Home.actionTarget) {
+                        Home.showProjectControls(Home.actionTarget);
+                        Home.holding = true;
+                    }
+                };
+                timeoutEvent = setTimeout(repeat, 500);
+            }
         }
         Home.scrolltop = document.body.scrollTop;
     }

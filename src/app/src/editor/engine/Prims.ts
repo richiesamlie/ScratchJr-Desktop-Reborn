@@ -54,6 +54,7 @@ export default class Prims {
             caretend: Prims.Ignore,
             caretrepeat: Prims.Ignore,
             gotopage: Prims.GotoPage,
+            randompage: Prims.RandomPage,
             endstack: Prims.DoNextBlock,
             stopall: Prims.StopAll,
             stopmine: Prims.StopMine,
@@ -157,6 +158,36 @@ export default class Prims {
                 strip.count = -1;
                 Prims.showTime(strip);
                 enginePorts().getStage().gotoPage(n);
+            } else {
+                strip.waitTimer = tinterval;
+                strip.count = count;
+            }
+        }
+    }
+    static RandomPage (strip: Thread) {
+        if (strip.count < 0) {
+            strip.count = 2; // delay for a 10th of a second
+            Prims.setTime(strip);
+        } else {
+            var count = strip.count;
+            count--;
+            if (count < 0) {
+                strip.count = -1;
+                Prims.showTime(strip);
+                var stage = enginePorts().getStage();
+                if (stage && stage.pages && stage.pages.length > 1) {
+                    var curIdx = stage.pages.indexOf(stage.currentPage);
+                    var candidates: number[] = [];
+                    for (var i = 0; i < stage.pages.length; i++) {
+                        if (i !== curIdx) {
+                            candidates.push(i + 1); // 1-based page number
+                        }
+                    }
+                    if (candidates.length > 0) {
+                        var randPageNum = candidates[Math.floor(Math.random() * candidates.length)];
+                        stage.gotoPage(randPageNum);
+                    }
+                }
             } else {
                 strip.waitTimer = tinterval;
                 strip.count = count;

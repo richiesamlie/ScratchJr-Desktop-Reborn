@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="85" height="66" viewBox="0 0 85 66">
+  <!-- Back page card tilted -->
+  <rect x="22" y="14" width="30" height="38" rx="4" fill="#FFDADA" stroke="#AE1F24" stroke-width="2.5" transform="rotate(-10 37 33)"/>
+  <!-- Front page card -->
+  <rect x="30" y="13" width="32" height="40" rx="4" fill="#FFFFFF" stroke="#AE1F24" stroke-width="2.5"/>
+  <!-- Folded corner effect on top-right of front card -->
+  <path d="M 52 13 L 62 23 L 52 23 Z" fill="#FFEAEA" stroke="#AE1F24" stroke-width="2"/>
+  <!-- Central die on the front page -->
+  <rect x="36" y="25" width="20" height="20" rx="4" fill="#AE1F24"/>
+  <!-- Die pips in crisp white (5-pip pattern) -->
+  <g fill="#FFFFFF">
+    <circle cx="40.5" cy="29.5" r="1.8"/>
+    <circle cx="51.5" cy="29.5" r="1.8"/>
+    <circle cx="46" cy="35" r="1.8"/>
+    <circle cx="40.5" cy="40.5" r="1.8"/>
+    <circle cx="51.5" cy="40.5" r="1.8"/>
+  </g>
+</svg>

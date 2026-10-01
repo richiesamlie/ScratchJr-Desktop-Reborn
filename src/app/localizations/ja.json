@@ -407,5 +407,8 @@
     "LIBRARY_SEARCH_PLACEHOLDER": "けんさく...",
     "LIBRARY_NO_RESULTS": "みつかりませんでした",
     "OPEN_PROJECT_TITLE": "ひらく",
-    "MULTI_TAB_NOTICE": "ScratchJr はすでに別のタブで開かれています。このウィンドウは安全な読み取り専用モードです。"
+    "MULTI_TAB_NOTICE": "ScratchJr はすでに別のタブで開かれています。このウィンドウは安全な読み取り専用モードです。",
+    "BLOCKS_RANDOM_PAGE": "らんだむなぺーじへいどう",
+    "BLOCKS_RANDOM_PAGE_DESCRIPTION": "ぷろじぇくとないの、らんだむなぺーじにいどうします。",
+    "BLOCK_DESC_RANDOM_PAGE": "らんだむなぺーじへすすむ"
 }

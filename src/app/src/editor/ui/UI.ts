@@ -375,8 +375,17 @@ export default class UI {
         ti.maxLength = 30;
         ti.onkeypress = null;
         ti.autocomplete = 'off';
-        ti.autocorrect = false;
-        ti.onblur = null;
+        ti.onblur = function () {
+            if (ScratchJr.isEditable()) {
+                UI.handleTextFieldSave(true);
+            }
+        };
+        ti.oninput = function () {
+            if (Project.metadata && ti.value) {
+                Project.metadata.name = ti.value.substring(0, ti.maxLength);
+                ScratchJr.changed = true;
+            }
+        };
         ti.onfocus = function (e: FocusEvent) {
             e.preventDefault();
             ti.oldvalue = ti.value;
@@ -393,7 +402,10 @@ export default class UI {
         function submitChange (e: Event) {
             e.preventDefault();
             var input = e.target as HTMLElement;
-            input.blur();
+            if (input && typeof (input as HTMLInputElement).blur === 'function') {
+                (input as HTMLInputElement).blur();
+            }
+            UI.hideInfoBox(e);
         }
         return ti;
     }

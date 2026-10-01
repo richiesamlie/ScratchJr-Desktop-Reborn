@@ -22,10 +22,12 @@ function debugLog(...args) {
 
 
 // reload the projects if the database has been reloaded off disk.
-bridge.onDatabaseRestored(function() {
-    // same as homeGoBack - reload the projects
-    window.location.href = 'index.html?back=yes';
-});
+if (bridge && typeof bridge.onDatabaseRestored === 'function') {
+    bridge.onDatabaseRestored(function() {
+        // same as homeGoBack - reload the projects
+        window.location.href = 'index.html?back=yes';
+    });
+}
 
 
 
@@ -198,6 +200,7 @@ class ElectronDesktopInterface {
         //https://medium.com/@Jeff_Duke_io/working-with-html5-audio-in-electron-645b2d2202bd
 
         try {
+            audioElement.currentTime = 0;
             let playPromise = audioElement.play();
 
             // In browsers that don’t yet support this functionality,
@@ -394,38 +397,43 @@ class ElectronDesktopInterface {
 
 
 
-bridge.onKeyboardShortcut(function(action) {
-  // The ESM bundle exposes ScratchJr/Undo/Home on window (globals.d.ts).
-  // Undo.prevStep/nextStep normally receive real MouseEvents; shortcuts pass a
-  // minimal stand-in since there is nothing to preventDefault here.
-  var syntheticEvt = {
-    preventDefault: function () {},
-    stopPropagation: function () {},
-    timeStamp: performance.now(),
-    touches: undefined
-  };
-  switch (action) {
-    case 'save':
-      if (typeof ScratchJr !== 'undefined' && ScratchJr.saveProject) { // eslint-disable-line no-undef
-        ScratchJr.saveProject(null, function() {}); // eslint-disable-line no-undef
-      }
-      break;
-    case 'undo':
-      if (typeof Undo !== 'undefined' && Undo.prevStep) { // eslint-disable-line no-undef
-        Undo.prevStep(syntheticEvt); // eslint-disable-line no-undef
-      }
-      break;
-    case 'redo':
-      if (typeof Undo !== 'undefined' && Undo.nextStep) { // eslint-disable-line no-undef
-        Undo.nextStep(syntheticEvt); // eslint-disable-line no-undef
-      }
-      break;
-    case 'new':
-      if (typeof Home !== 'undefined' && Home.createNewProject) { // eslint-disable-line no-undef
-        Home.createNewProject(); // eslint-disable-line no-undef
-      }
-      break;
-  }
-});
+if (bridge && typeof bridge.onKeyboardShortcut === 'function') {
+  bridge.onKeyboardShortcut(function(action) {
+    // The ESM bundle exposes ScratchJr/Undo/Home on window (globals.d.ts).
+    // Undo.prevStep/nextStep normally receive real MouseEvents; shortcuts pass a
+    // minimal stand-in since there is nothing to preventDefault here.
+    var syntheticEvt = {
+      preventDefault: function () {},
+      stopPropagation: function () {},
+      timeStamp: performance.now(),
+      touches: undefined
+    };
+    switch (action) {
+      case 'save':
+        if (typeof ScratchJr !== 'undefined' && ScratchJr.saveProject) { // eslint-disable-line no-undef
+          ScratchJr.saveProject(null, function() {}); // eslint-disable-line no-undef
+        }
+        break;
+      case 'undo':
+        if (typeof Undo !== 'undefined' && Undo.prevStep) { // eslint-disable-line no-undef
+          Undo.prevStep(syntheticEvt); // eslint-disable-line no-undef
+        }
+        break;
+      case 'redo':
+        if (typeof Undo !== 'undefined' && Undo.nextStep) { // eslint-disable-line no-undef
+          Undo.nextStep(syntheticEvt); // eslint-disable-line no-undef
+        }
+        break;
+      case 'new':
+        if (typeof Home !== 'undefined' && Home.createNewProject) { // eslint-disable-line no-undef
+          Home.createNewProject(); // eslint-disable-line no-undef
+        }
+        break;
+    }
+  });
+}
 
 /** @type {any} */ (window).tablet = new ElectronDesktopInterface();
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ElectronDesktopInterface;
+}
