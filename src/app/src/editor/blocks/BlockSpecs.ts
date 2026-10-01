@@ -220,7 +220,7 @@ export default class BlockSpecs {
 
     static setupPalettesDef () {
         return [['onflag', 'onclick', 'ontouch', 'ontouchsprite', 'ontouchcolor', 'onmessage', 'message'],
-            ['forward', 'back', 'up', 'down', 'right', 'left', 'flipX', 'hop', 'home'],
+            ['forward', 'back', 'up', 'down', 'right', 'left', 'flipX', 'hop', 'home', 'randompos'],
             ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show'],
             [],
             ['wait', 'waitrandom', 'stopmine', 'setspeed', 'repeat'],
@@ -281,6 +281,8 @@ export default class BlockSpecs {
             'flipX': ['flipX', BlockSpecs.getImageFrom('assets/blockicons/FlipX', 'svg'),
                 BlockSpecs.blueCmd, null, null, BlockSpecs.blueCmdH, null, null, BlockSpecs.cmdS],
             'home': ['home', BlockSpecs.getImageFrom('assets/blockicons/Home', 'svg'),
+                BlockSpecs.blueCmd, null, null, BlockSpecs.blueCmdH, null, null, BlockSpecs.cmdS],
+            'randompos': ['randompos', BlockSpecs.getImageFrom('assets/blockicons/RandomPos', 'svg'),
                 BlockSpecs.blueCmd, null, null, BlockSpecs.blueCmdH, null, null, BlockSpecs.cmdS],
             'hop': ['hop', BlockSpecs.getImageFrom('assets/blockicons/Hop', 'svg'),
                 BlockSpecs.blueCmd, 'n', 2, BlockSpecs.blueCmdH, -15, 15, BlockSpecs.cmdS],
@@ -354,6 +356,7 @@ export default class BlockSpecs {
             'up': Localization.localize('BLOCK_DESC_MOVE_UP'),
             'down': Localization.localize('BLOCK_DESC_MOVE_DOWN'),
             'home': Localization.localize('BLOCK_DESC_GO_HOME'),
+            'randompos': Localization.localizeWithFallback('BLOCK_DESC_RANDOM_POS', 'Go to random position'),
             'left': Localization.localize('BLOCK_DESC_TURN_LEFT'),
             'right': Localization.localize('BLOCK_DESC_TURN_RIGHT'),
             'flipX': Localization.localize('BLOCK_DESC_FLIP_X'),

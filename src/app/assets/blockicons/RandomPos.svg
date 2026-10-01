@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="76" height="66" viewBox="0 0 76 66">
+  <!-- Motion target crosshair / orbit -->
+  <circle cx="38" cy="33" r="24" fill="none" stroke="#308BA0" stroke-width="2" stroke-dasharray="3,3" opacity="0.7"/>
+  <!-- Directional arrow pointers around die -->
+  <path d="M 38 4 L 42 10 L 34 10 Z" fill="#308BA0"/>
+  <path d="M 38 62 L 42 56 L 34 56 Z" fill="#308BA0"/>
+  <path d="M 9 33 L 15 29 L 15 37 Z" fill="#308BA0"/>
+  <path d="M 67 33 L 61 29 L 61 37 Z" fill="#308BA0"/>
+  <!-- Playful central die representing random position -->
+  <rect x="23" y="18" width="30" height="30" rx="6" fill="#FFFFFF" stroke="#308BA0" stroke-width="3"/>
+  <!-- 5-pip pattern in motion category teal/blue -->
+  <g fill="#308BA0">
+    <circle cx="30" cy="25" r="2.5"/>
+    <circle cx="46" cy="25" r="2.5"/>
+    <circle cx="38" cy="33" r="2.5"/>
+    <circle cx="30" cy="41" r="2.5"/>
+    <circle cx="46" cy="41" r="2.5"/>
+  </g>
+</svg>

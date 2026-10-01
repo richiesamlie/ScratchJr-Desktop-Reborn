@@ -3,6 +3,24 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.11.0] - 2026-10-01
+
+**Minor Release: "Go to Random Position" Motion Block, Retro Pixel Font, In-App Blocks Guide, and 12-Language Full Localization (Issue #12 Phase 2).**
+
+### Added
+- **"Go to Random Position" Motion Block (`randompos`)**:
+  - Added new motion command block in the Blue Motion Palette tray right after `home`.
+  - Custom vector block icon (`assets/blockicons/RandomPos.svg`) featuring a clean motion target and die.
+  - Smoothly glides the character to a discrete random coordinate on the 20x15 stage grid (column 0..19, row 0..14) at the active animal speed (Snail, Person, Cheetah), preserving ScratchJr's pre-reader pedagogical foundations.
+  - Full localization and tooltip description support (`BLOCK_DESC_RANDOM_POS` & `BLOCKS_RANDOM_POS`).
+- **Retro "Pixel" Typography**:
+  - Added curated retro font option (`pixel`) to `CURATED_FONTS` with font stack `"Press Start 2P", "VT323", "Courier New", Courier, monospace`.
+  - Available across Stage text annotations and Paint Editor vector text tool.
+- **In-App Blocks Guide Update (`src/app/inapp/blocks.html`)**:
+  - Added entry for "Go to Random Position" in the Reborn Blocks showcase table with illustrated icon and localized descriptions.
+- **Full 12-Language Localization**:
+  - Complete native translations for block titles, descriptions, and tooltip bubble text across English (`en`), Spanish (`es`), Catalan (`ca`), German (`de`), French (`fr`), Italian (`it`), Japanese (`ja`), Dutch (`nl`), Portuguese (`pt`), Swedish (`sv`), Thai (`th`), and Simplified Chinese (`zh-cn`).
+
 ## [v2.10.1] - 2026-09-29
 
 ### Cleaned & Optimized

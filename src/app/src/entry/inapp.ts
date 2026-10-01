@@ -133,6 +133,8 @@ export function inappBlocksGuide () {
         BLOCKS_REBORN: 'ScratchJr Reborn blocks',
         BLOCKS_FLIP_REBORN: 'Flip horizontally',
         BLOCKS_FLIP_REBORN_DESCRIPTION: 'Mirrors the character left to right. Use it to make a character face the other way.',
+        BLOCKS_RANDOM_POS: 'Go to Random Position',
+        BLOCKS_RANDOM_POS_DESCRIPTION: 'Moves the character to a random square on the grid.',
         BLOCKS_TOUCH_COLOR: 'Start on touching color',
         BLOCKS_TOUCH_COLOR_DESCRIPTION: 'Starts the script when the character touches the selected stage color during play. Choose a color or use the eyedropper. For example, react when reaching a red area.',
         BLOCKS_RANDOM_WAIT: 'Random wait',

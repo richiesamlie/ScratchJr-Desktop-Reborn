@@ -41,6 +41,7 @@ export default class Prims {
             right: Prims.Right,
             flipX: Prims.FlipX,
             home: Prims.Home,
+            randompos: Prims.RandomPos,
             setspeed: Prims.SetSpeed,
             message: Prims.Message,
             setcolor: Prims.SetColor,
@@ -214,6 +215,47 @@ export default class Prims {
         spr.goHome();
         strip.waitTimer = tinterval;
         strip.thisblock = strip.thisblock.next!;
+    }
+    static RandomPos (strip: Thread) {
+        var s = strip.spr;
+        if (strip.distance == null || strip.distance < 0) {
+            var col = Math.floor(Math.random() * 20); // 0..19
+            var row = Math.floor(Math.random() * 15); // 0..14
+            var target = { x: col * GRID_SIZE, y: row * GRID_SIZE };
+            (strip as any).randomTarget = target;
+            var diff = Vector.diff(target, { x: s.xcoor, y: s.ycoor });
+            var dist = Vector.len(diff);
+            if (dist < 1) {
+                s.setPos(target.x, target.y);
+                strip.distance = -1;
+                (strip as any).randomTarget = null;
+                strip.thisblock = strip.thisblock.next!;
+                return;
+            }
+            strip.distance = dist;
+            strip.vector = Vector.norm(diff);
+            Prims.setTime(strip);
+        }
+        var step = s.speed * 2;
+        if (strip.distance <= step) {
+            var targetPos = (strip as any).randomTarget;
+            if (targetPos) {
+                s.setPos(targetPos.x, targetPos.y);
+            } else {
+                var finalDiff = Vector.scale(strip.vector, strip.distance);
+                s.setPos(s.xcoor + finalDiff.x, s.ycoor + finalDiff.y);
+            }
+            strip.distance = -1;
+            strip.vector = { x: 0, y: 0 };
+            (strip as any).randomTarget = null;
+            Prims.showTime(strip);
+            strip.thisblock = strip.thisblock.next!;
+        } else {
+            var dVector = Vector.scale(strip.vector, step);
+            s.setPos(s.xcoor + dVector.x, s.ycoor + dVector.y);
+            strip.distance -= step;
+            strip.waitTimer = tinterval;
+        }
     }
     static SetSpeed (strip: Thread) {
         var s = strip.spr;

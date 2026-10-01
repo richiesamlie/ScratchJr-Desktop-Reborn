@@ -2,7 +2,7 @@ export interface SjrFont {
     id: string;
     name: string;
     fontFamily: string;
-    category: 'sans' | 'rounded' | 'serif' | 'dyslexic';
+    category: 'sans' | 'rounded' | 'serif' | 'dyslexic' | 'pixel';
 }
 
 export const CURATED_FONTS: SjrFont[] = [
@@ -35,6 +35,12 @@ export const CURATED_FONTS: SjrFont[] = [
         name: 'Easy Read',
         fontFamily: 'OpenDyslexic, Lexend, Andika, "Trebuchet MS", sans-serif',
         category: 'dyslexic'
+    },
+    {
+        id: 'pixel',
+        name: 'Pixel',
+        fontFamily: '"Press Start 2P", "VT323", "Courier New", Courier, monospace',
+        category: 'pixel'
     }
 ];
 
