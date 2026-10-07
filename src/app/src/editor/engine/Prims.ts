@@ -67,7 +67,9 @@ export default class Prims {
             grow: Prims.Grow,
             shrink: Prims.Shrink,
             same: Prims.Same,
-            say: Prims.Say
+            say: Prims.Say,
+            color: Prims.Color,
+            fade: Prims.Fade
         };
     }
     static Done (strip: Thread) {
@@ -433,6 +435,7 @@ export default class Prims {
     }
     static Same (strip: Thread) {
         var s = strip.spr;
+        s.clearEffects();
         var n = (s.defaultScale - s.scale) / s.defaultScale * 10;
         if (n == 0) {
             strip.waitTimer = tinterval;
@@ -493,6 +496,28 @@ export default class Prims {
     }
     static Shrink (strip: Thread) {
         Prims.resizeSprite(strip, -1);
+    }
+    static Color (strip: Thread) {
+        var s = strip.spr;
+        var n = Number(strip.thisblock.getArgValue());
+        if (isNaN(n)) {
+            n = 1;
+        }
+        s.changeColorBy(n);
+        Prims.showTime(strip);
+        strip.waitTimer = tinterval;
+        strip.thisblock = strip.thisblock.next!;
+    }
+    static Fade (strip: Thread) {
+        var s = strip.spr;
+        var n = Number(strip.thisblock.getArgValue());
+        if (isNaN(n)) {
+            n = 1;
+        }
+        s.changeFadeBy(n);
+        Prims.showTime(strip);
+        strip.waitTimer = tinterval;
+        strip.thisblock = strip.thisblock.next!;
     }
     static fadeSprite (strip: Thread, shown: boolean) {
         var s = strip.spr;

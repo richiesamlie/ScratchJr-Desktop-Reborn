@@ -221,7 +221,7 @@ export default class BlockSpecs {
     static setupPalettesDef () {
         return [['onflag', 'onclick', 'ontouch', 'ontouchsprite', 'ontouchcolor', 'onmessage', 'message'],
             ['forward', 'back', 'up', 'down', 'right', 'left', 'flipX', 'hop', 'home', 'randompos'],
-            ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show'],
+            ['say', 'space', 'grow', 'shrink', 'same', 'space', 'hide', 'show', 'space', 'color', 'fade'],
             [],
             ['wait', 'waitrandom', 'stopmine', 'setspeed', 'repeat'],
             ['endstack', 'forever', 'randompage']];
@@ -308,6 +308,10 @@ export default class BlockSpecs {
                 BlockSpecs.pinkCmd, 'n', 2, BlockSpecs.pinkCmdH, -10, 10, BlockSpecs.cmdS],
             'same': ['same', BlockSpecs.getImageFrom('assets/blockicons/Reset', 'svg'),
                 BlockSpecs.pinkCmd, null, null, BlockSpecs.pinkCmdH, null, null, BlockSpecs.cmdS],
+            'color': ['color', BlockSpecs.getImageFrom('assets/blockicons/Color', 'svg'),
+                BlockSpecs.pinkCmd, 'n', 1, BlockSpecs.pinkCmdH, -10, 10, BlockSpecs.cmdS],
+            'fade': ['fade', BlockSpecs.getImageFrom('assets/blockicons/Fade', 'svg'),
+                BlockSpecs.pinkCmd, 'n', 1, BlockSpecs.pinkCmdH, -10, 10, BlockSpecs.cmdS],
 
             'playsnd': ['playsnd', BlockSpecs.getImageFrom('assets/blockicons/Speaker', 'svg'),
                 BlockSpecs.limeCmd, 's', 'pop.mp3', BlockSpecs.limeCmdH, null, null, BlockSpecs.cmdS],
@@ -374,6 +378,8 @@ export default class BlockSpecs {
             'grow': Localization.localize('BLOCK_DESC_GROW'),
             'shrink': Localization.localize('BLOCK_DESC_SHRINK'),
             'same': Localization.localize('BLOCK_DESC_RESET_SIZE'),
+            'color': Localization.localizeWithFallback('BLOCK_DESC_COLOR', 'COLOR'),
+            'fade': Localization.localizeWithFallback('BLOCK_DESC_FADE', 'FADE'),
             'playsnd': Localization.localize('BLOCK_DESC_PLAY_SOUND', {
                 SOUND_NAME: (b.getArgValue() && SoundLib.isLibrarySound(String(b.getArgValue())))
                     ? SoundLib.getLabel(String(b.getArgValue()))

@@ -41,8 +41,6 @@ export default class Lobby {
         LobbyState.version = v;
         var urlvars = getUrlVars();
         var place = urlvars.place;
-        ScratchAudio.addSound('sounds/', 'tap.wav', ScratchAudio.uiSounds);
-        ScratchAudio.addSound('sounds/', 'cut.wav', ScratchAudio.uiSounds);
         ScratchAudio.init();
         Lobby.setPage(place ? place : 'home');
 

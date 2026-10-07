@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr はすでに別のタブで開かれています。このウィンドウは安全な読み取り専用モードです。",
     "BLOCKS_RANDOM_PAGE": "らんだむなぺーじへいどう",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "ぷろじぇくとないの、らんだむなぺーじにいどうします。",
-    "BLOCK_DESC_RANDOM_PAGE": "らんだむなぺーじへすすむ"
+    "BLOCK_DESC_RANDOM_PAGE": "らんだむなぺーじへすすむ",
+    "BLOCKS_COLOR": "いろをかえる",
+    "BLOCKS_COLOR_DESCRIPTION": "きゃらくたーのいろをかえます。",
+    "BLOCK_DESC_COLOR": "いろ",
+    "BLOCKS_FADE": "とうめいにする",
+    "BLOCKS_FADE_DESCRIPTION": "きゃらくたーをはんとうめいにします。",
+    "BLOCK_DESC_FADE": "とうめい"
 }

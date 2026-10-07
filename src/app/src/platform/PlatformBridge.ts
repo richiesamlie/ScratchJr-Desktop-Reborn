@@ -256,6 +256,19 @@ export default class PlatformBridge {
 
     static registerSound (dir: string, name: string, fcn?: (result: unknown) => void) {
         var result = hostInterface!.io_registersound(dir, name);
+        if (result && typeof (result as Promise<unknown>).then === 'function') {
+            (result as Promise<unknown>).then(function (res) {
+                if (fcn) {
+                    fcn(res);
+                }
+            }).catch(function (err) {
+                console.error('Failed to register sound:', name, err);
+                if (fcn) {
+                    fcn('error');
+                }
+            });
+            return;
+        }
         if (fcn) {
             fcn(result);
         }
@@ -434,6 +447,10 @@ export default class PlatformBridge {
         }
         let usageLabel = label ? AppUsage.currentUsage + label : AppUsage.currentUsage;
         hostInterface!.analyticsEvent(category, action, usageLabel, value);
+    }
+
+    static resetHostInterfaceForTesting () {
+        hostInterface = null;
     }
 }
 

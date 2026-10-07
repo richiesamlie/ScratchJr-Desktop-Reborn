@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr 已在另一个标签页中打开。此窗口处于安全只读模式。",
     "BLOCKS_RANDOM_PAGE": "切换至随机页面",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "切换到项目中的随机页面。",
-    "BLOCK_DESC_RANDOM_PAGE": "切换至随机页面"
+    "BLOCK_DESC_RANDOM_PAGE": "切换至随机页面",
+    "BLOCKS_COLOR": "改变颜色",
+    "BLOCKS_COLOR_DESCRIPTION": "改变角色的颜色。",
+    "BLOCK_DESC_COLOR": "颜色",
+    "BLOCKS_FADE": "渐隐",
+    "BLOCKS_FADE_DESCRIPTION": "使角色变为半透明。",
+    "BLOCK_DESC_FADE": "渐隐"
 }

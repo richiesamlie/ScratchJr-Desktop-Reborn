@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr ถูกเปิดอยู่ในแท็บอื่นแล้ว หน้าต่างนี้อยู่ในโหมดอ่านอย่างเดียวเพื่อความปลอดภัย",
     "BLOCKS_RANDOM_PAGE": "ไปหน้าที่สุ่ม",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "เปลี่ยนหน้าไปเป็นหน้าสุ่มของโครงงาน",
-    "BLOCK_DESC_RANDOM_PAGE": "ไปหน้าที่สุ่ม"
+    "BLOCK_DESC_RANDOM_PAGE": "ไปหน้าที่สุ่ม",
+    "BLOCKS_COLOR": "เปลี่ยนสี",
+    "BLOCKS_COLOR_DESCRIPTION": "เปลี่ยนสีของตัวละคร",
+    "BLOCK_DESC_COLOR": "สี",
+    "BLOCKS_FADE": "ทำให้จางลง",
+    "BLOCKS_FADE_DESCRIPTION": "ทำให้ตัวละครโปร่งแสงครึ่งหนึ่ง",
+    "BLOCK_DESC_FADE": "จางลง"
 }

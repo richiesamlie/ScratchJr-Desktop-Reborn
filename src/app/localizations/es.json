@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr ya está abierto en otra pestaña. Esta ventana está en modo de solo lectura.",
     "BLOCKS_RANDOM_PAGE": "Ir a página aleatoria",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Cambia a una página aleatoria del proyecto.",
-    "BLOCK_DESC_RANDOM_PAGE": "IR A PÁGINA ALEATORIA"
+    "BLOCK_DESC_RANDOM_PAGE": "IR A PÁGINA ALEATORIA",
+    "BLOCKS_COLOR": "Cambiar color",
+    "BLOCKS_COLOR_DESCRIPTION": "Cambia el color del personaje.",
+    "BLOCK_DESC_COLOR": "COLOR",
+    "BLOCKS_FADE": "Desvanecer",
+    "BLOCKS_FADE_DESCRIPTION": "Hace que el personaje sea semitransparente.",
+    "BLOCK_DESC_FADE": "DESVANECER"
 }

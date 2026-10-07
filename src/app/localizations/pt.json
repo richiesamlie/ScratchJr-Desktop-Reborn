@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "O ScratchJr já está aberto noutra aba. Esta janela está no modo seguro apenas de leitura.",
     "BLOCKS_RANDOM_PAGE": "Ir para página aleatória",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Muda para uma página aleatória do projecto.",
-    "BLOCK_DESC_RANDOM_PAGE": "IR PARA PÁGINA ALEATÓRIA"
+    "BLOCK_DESC_RANDOM_PAGE": "IR PARA PÁGINA ALEATÓRIA",
+    "BLOCKS_COLOR": "Mudar de cor",
+    "BLOCKS_COLOR_DESCRIPTION": "Muda a cor do personagem.",
+    "BLOCK_DESC_COLOR": "COR",
+    "BLOCKS_FADE": "Desvanecer",
+    "BLOCKS_FADE_DESCRIPTION": "Torna o personagem semitransparente.",
+    "BLOCK_DESC_FADE": "DESVANECER"
 }

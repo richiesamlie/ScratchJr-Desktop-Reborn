@@ -68,6 +68,8 @@ export default class Sprite {
     homescale!: number;
     homeshown!: boolean;
     homeflip!: boolean;
+    colorEffect: number = 0;
+    fadeEffect: number = 0;
     str!: string;
     fontsize!: number;
     fontFamily?: string;
@@ -231,15 +233,46 @@ export default class Sprite {
             this.border.height = h;
             this.border.style.width = (w * this.scale) + 'px';
             this.border.style.height = (h * this.scale) + 'px';
-            SVG2Canvas.drawBorder(extxml, this.border.getContext('2d')!);
+            var ctxAndroid = this.border.getContext('2d')!;
+            if (SVG2Canvas.isRasterOnly(extxml) && this.img) {
+                this.drawRasterBorder(ctxAndroid, w, h);
+            } else {
+                SVG2Canvas.drawBorder(extxml, ctxAndroid);
+            }
         } else {
             this.border = document.createElement('canvas');
             w = this.img.width;
             h = this.img.height;
             extxml = this.svg;
             setCanvasSize(this.border, w, h);
-            SVG2Canvas.drawBorder(extxml, this.border.getContext('2d')!);
+            var ctx = this.border.getContext('2d')!;
+            if (SVG2Canvas.isRasterOnly(extxml) && this.img) {
+                this.drawRasterBorder(ctx, w, h);
+            } else {
+                SVG2Canvas.drawBorder(extxml, ctx);
+            }
         }
+    }
+
+    drawRasterBorder (ctx: CanvasRenderingContext2D, w: number, h: number) {
+        var outlineColor = (window.Settings && window.Settings.spriteOutlineColor) || '#66afe9';
+        // Draw expanded silhouette around image alpha
+        var offsets = [
+            [-3, -3], [0, -4], [3, -3],
+            [-4, 0],           [4, 0],
+            [-3, 3],  [0, 4],  [3, 3]
+        ];
+        ctx.save();
+        for (var i = 0; i < offsets.length; i++) {
+            ctx.drawImage(this.img, offsets[i][0], offsets[i][1], w, h);
+        }
+        ctx.globalCompositeOperation = 'source-in';
+        ctx.fillStyle = outlineColor;
+        ctx.fillRect(0, 0, w, h);
+        // Hollow out the interior so semi-transparent/faded sprites do not show solid border fill underneath
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.drawImage(this.img, 0, 0, w, h);
+        ctx.restore();
     }
 
     //////////////////////////////////////
@@ -319,6 +352,42 @@ export default class Sprite {
         this.render();
     }
 
+    applyEffects () {
+        const filters: string[] = [];
+        if (this.colorEffect) {
+            filters.push(`hue-rotate(${this.colorEffect * 36}deg)`);
+        }
+        if (this.fadeEffect) {
+            const opacityPct = Math.max(20, Math.min(100, 100 - this.fadeEffect * 10));
+            filters.push(`opacity(${opacityPct}%)`);
+        }
+        const filterVal = filters.join(' ');
+        if (this.img) {
+            this.img.style.filter = filterVal;
+            (this.img.style as unknown as Record<string, string>).webkitFilter = filterVal;
+        }
+    }
+
+    changeColorBy (n: number) {
+        this.colorEffect = ((this.colorEffect || 0) + n) % 10;
+        if (this.colorEffect < 0) {
+            this.colorEffect += 10;
+        }
+        this.applyEffects();
+    }
+
+    changeFadeBy (n: number) {
+        // Capped between 0 (0% fade) and 8 (80% ghost)
+        this.fadeEffect = Math.max(0, Math.min(8, (this.fadeEffect || 0) + n));
+        this.applyEffects();
+    }
+
+    clearEffects () {
+        this.colorEffect = 0;
+        this.fadeEffect = 0;
+        this.applyEffects();
+    }
+
     goHome () {
         this.setPos(this.homex, this.homey);
         this.scale = this.homescale;
@@ -326,6 +395,7 @@ export default class Sprite {
         this.flip = this.homeflip;
         this.div.style.opacity = this.shown ? '1' : '0';
         this.setHeading(0);
+        this.clearEffects();
         this.render();
     }
 
@@ -675,6 +745,7 @@ export default class Sprite {
             }
             this.setTransform(mtx);
         }
+        this.applyEffects();
     }
 
     select () {

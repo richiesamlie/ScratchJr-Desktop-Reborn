@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr ist bereits in einem anderen Tab geöffnet. Dieses Fenster ist im schreibgeschützten Modus.",
     "BLOCKS_RANDOM_PAGE": "Gehe zu Zufallsseite",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Wechselt zu einer zufälligen Seite des Projekts.",
-    "BLOCK_DESC_RANDOM_PAGE": "GEHE ZU ZUFALLSSEITE"
+    "BLOCK_DESC_RANDOM_PAGE": "GEHE ZU ZUFALLSSEITE",
+    "BLOCKS_COLOR": "Farbe ändern",
+    "BLOCKS_COLOR_DESCRIPTION": "Ändert die Farbe der Figur.",
+    "BLOCK_DESC_COLOR": "FARBE",
+    "BLOCKS_FADE": "Verblassen",
+    "BLOCKS_FADE_DESCRIPTION": "Macht die Figur halbtransparent.",
+    "BLOCK_DESC_FADE": "VERBLASSEN"
 }

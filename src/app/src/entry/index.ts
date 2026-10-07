@@ -139,6 +139,7 @@ function indexLoadUsage() {
 }
 
 function indexGohome () {
+    ScratchAudio.sndFX('tap.wav');
     PlatformBridge.setfile('homescroll.sjr', 0, function () {
         doNext();
     });

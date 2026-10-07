@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr är redan öppet i en annan flik. Detta fönster är i säkert skrivskyddat läge.",
     "BLOCKS_RANDOM_PAGE": "Gå till slumpmässig sida",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Ändrar till en slumpmässig sida för projektet.",
-    "BLOCK_DESC_RANDOM_PAGE": "GÅ TILL SLUMPMÄSSIG SIDA"
+    "BLOCK_DESC_RANDOM_PAGE": "GÅ TILL SLUMPMÄSSIG SIDA",
+    "BLOCKS_COLOR": "Ändra färg",
+    "BLOCKS_COLOR_DESCRIPTION": "Ändrar figurens färg.",
+    "BLOCK_DESC_COLOR": "FÄRG",
+    "BLOCKS_FADE": "Tona ut",
+    "BLOCKS_FADE_DESCRIPTION": "Gör figuren halvgenomskinlig.",
+    "BLOCK_DESC_FADE": "TONA UT"
 }

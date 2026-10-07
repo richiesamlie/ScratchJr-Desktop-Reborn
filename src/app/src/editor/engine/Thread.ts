@@ -178,7 +178,9 @@ export default class Thread {
                 s.homeshown = true;
             }
             break;
-        case 'same': s.noScaleFor();
+        case 'same':
+            s.noScaleFor();
+            s.clearEffects();
             break;
         case 'grow':
         case 'shrink':

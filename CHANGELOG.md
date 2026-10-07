@@ -3,6 +3,33 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.13.0] - 2026-10-07
+
+**Minor Release: "Change Color" and "Fade" Looks Blocks, Sound Registration Queue & Lobby Navigation Audio Fixes, Custom Raster Sprite Hit-Testing, and 12-Language Full Localization (Issue #14).**
+
+### Added
+- **"Change Color" Looks Block (`color`)**:
+  - Added new purple Looks block to alter character hue rotation via CSS `filter: hue-rotate(n * 36deg)`.
+  - Child-friendly vector block icon (`assets/blockicons/Color.svg`) styled as a painter's palette with vibrant paint dots.
+  - Takes a single number argument (`-10..10`), adhering to ScratchJr's pre-reader single-argument paradigm.
+- **"Fade" Looks Block (`fade`)**:
+  - Added new purple Looks block to adjust character ghosting/transparency via CSS `filter: opacity(...)`.
+  - Child-friendly vector block icon (`assets/blockicons/Fade.svg`) featuring fading silhouette figures consistent with `Grow` / `Shrink`.
+  - Capped at 80% ghosting (minimum 20% opacity) so characters remain interactive and never collide with `hide` / `show`.
+- **Looks Effects Reset**:
+  - `same` block and `goHome()` reset both color and fade effects to default (clearing CSS filters).
+- **12-Language Full Localization**:
+  - Added block titles, descriptions, and tooltip text for `color` and `fade` across all 12 supported locales (`en`, `ca`, `de`, `es`, `fr`, `it`, `ja`, `nl`, `pt`, `sv`, `th`, `zh-cn`).
+
+### Fixed
+- **Sound Registration Queue & Lobby Navigation Audio Fixes (Bug 1 & Lobby Sound)**:
+  - Fixed sound initialization race condition where early `sndFX` calls (such as home button clicks) could be dropped while async host interfaces (Electron, Tauri, browser) were still registering sounds. Added `pendingUiSounds` queue in `ScratchAudio` that drains once sound registration resolves.
+  - Fixed `ScratchAudio.soundDone(name)` to clear `uiSounds[name].playing = false` on sound completion. Previously only `projectSounds` was cleared, leaving UI sounds permanently locked in `playing = true`, which caused subsequent clicks to trigger `this.stop()` and fail with `AbortError` / silence.
+  - Added tap sound effect (`tap.wav`) to the editor home (`flipme`) button and Start Screen home cat icon (`startcode` / `indexGohome`).
+- **Custom Imported PNG/JPG Raster Sprites Hit-Testing & Dragging (Bug 2)**:
+  - Added `SVG2Canvas.isRasterOnly()` detection and updated `drawInCanvas()` to render raster-only image data directly into the hit-test outline canvas, fixing unresponsive drag interaction on stage for custom imported bitmap sprites.
+  - Added visible drag/selection border rendering for raster-only sprites.
+
 ## [v2.12.0] - 2026-10-01
 
 **Minor Release: "Go to Random Page" Block, Project Rename Persistence, Slow-Click Freeze Fix, Audio Replay & Tactile Sound FX, Resilient JustSch DB Import, and 12-Language Full Localization (Issue #13).**

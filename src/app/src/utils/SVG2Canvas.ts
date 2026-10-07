@@ -63,10 +63,24 @@ export default class SVG2Canvas {
         return strokevalues;
     }
 
+    /**
+     * True for imported PNG/JPG sprites: the SVG wraps a raster <image> and has
+     * no vector paths or pathborder clip, so the path rasterizer draws nothing.
+     */
+    static isRasterOnly (svg: Element): boolean {
+        return !!svg.querySelector('image') && !svg.querySelector('[id*="pathborder_image"]')
+            && !svg.querySelector('path, rect, circle, ellipse, polygon, polyline, line, text');
+    }
+
     static drawInCanvas (spr: Sprite) {
         svgerror = false;
         setCanvasSize(spr.outline, spr.originalImg.width, spr.originalImg.height);
         var ctx = spr.outline.getContext('2d')!;
+        if (SVG2Canvas.isRasterOnly(spr.svg) && spr.img) {
+            // Use the loaded raster so hit-testing follows the PNG's alpha channel
+            ctx.drawImage(spr.img, 0, 0, spr.outline.width, spr.outline.height);
+            return;
+        }
         SVG2Canvas.drawImage(spr.svg, ctx);
         var mask = spr.svg.querySelector('#paintEraserMask');
         if (mask) {

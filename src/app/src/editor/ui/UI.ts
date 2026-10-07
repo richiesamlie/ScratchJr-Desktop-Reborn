@@ -189,6 +189,7 @@ export default class UI {
         var flip = newHTML('div', 'flipme', sl);
         flip.setAttribute('id', 'flip');
         flip.onmousedown = function (evt: MouseEvent) {
+            ScratchAudio.sndFX('tap.wav');
             ScratchJr.saveAndFlip(evt);
         }; // move to project
         UI.layoutLibrary(sl);

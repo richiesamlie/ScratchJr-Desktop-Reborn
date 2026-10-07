@@ -410,5 +410,11 @@
     "MULTI_TAB_NOTICE": "ScratchJr ja està obert en una altra pestanya. Aquesta finestra està en mode només de lectura.",
     "BLOCKS_RANDOM_PAGE": "Vés a una pàgina aleatòria",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Canvia a una pàgina aleatòria del projecte.",
-    "BLOCK_DESC_RANDOM_PAGE": "VÉS A UNA PÀGINA ALEATÒRIA"
+    "BLOCK_DESC_RANDOM_PAGE": "VÉS A UNA PÀGINA ALEATÒRIA",
+    "BLOCKS_COLOR": "Canvia el color",
+    "BLOCKS_COLOR_DESCRIPTION": "Canvia el color del personatge.",
+    "BLOCK_DESC_COLOR": "COLOR",
+    "BLOCKS_FADE": "Esvaeix",
+    "BLOCKS_FADE_DESCRIPTION": "Fa que el personatge sigui semitransparent.",
+    "BLOCK_DESC_FADE": "ESVAEIX"
 }

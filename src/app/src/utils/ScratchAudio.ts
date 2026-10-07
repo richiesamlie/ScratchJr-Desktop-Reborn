@@ -11,6 +11,8 @@ let uiSounds: Record<string, Sound> = {};
 let defaultSounds = ['cut.wav', 'snap.wav', 'copy.wav', 'grab.wav', 'boing.wav', 'tap.wav',
     'keydown.wav', 'entertap.wav', 'exittap.wav', 'splash.wav'];
 let projectSounds: Record<string, Sound> = {};
+let pendingUiSounds: Record<string, Array<{ volume: number }>> = {};
+let registeringSounds: Record<string, boolean> = {};
 
 export default class ScratchAudio {
     // Attached by ScratchJr.js at startup
@@ -29,11 +31,20 @@ export default class ScratchAudio {
         ScratchAudio.sndFXWithVolume(name, 1.0);
     }
 
-    static sndFXWithVolume (name: string, _volume: number) {
-        if (!uiSounds[name]) {
+    static sndFXWithVolume (name: string, volume: number) {
+        if (uiSounds[name]) {
+            uiSounds[name].play();
             return;
         }
-        uiSounds[name].play();
+        if (registeringSounds[name]) {
+            if (!pendingUiSounds[name]) {
+                pendingUiSounds[name] = [];
+            }
+            // De-duplicate queued requests while loading
+            if (pendingUiSounds[name].length === 0) {
+                pendingUiSounds[name].push({ volume: volume });
+            }
+        }
     }
 
     static init (prefix?: string) {
@@ -41,6 +52,8 @@ export default class ScratchAudio {
             prefix = 'HTML5/';
         }
         uiSounds = {};
+        pendingUiSounds = {};
+        registeringSounds = {};
 
         for (var i = 0; i < defaultSounds.length; i++) {
             ScratchAudio.addSound(prefix + 'sounds/', defaultSounds[i], uiSounds);
@@ -57,10 +70,20 @@ export default class ScratchAudio {
 
     static addSound (url: string, snd: string, dict: Record<string, Sound>, fcn?: (name: string) => void) {
         var name = snd;
+        registeringSounds[snd] = true;
         var whenDone = function (str: unknown) {
+            delete registeringSounds[snd];
             if (str != 'error') {
                 dict[snd] = new Sound(snd);
+                if (pendingUiSounds[snd] && pendingUiSounds[snd].length > 0) {
+                    var pending = pendingUiSounds[snd];
+                    delete pendingUiSounds[snd];
+                    for (var k = 0; k < pending.length; k++) {
+                        dict[snd].play();
+                    }
+                }
             } else {
+                delete pendingUiSounds[snd];
                 name = 'error';
             }
             if (fcn) {
@@ -71,8 +94,12 @@ export default class ScratchAudio {
     }
 
     static soundDone (name: string) {
-        if (!projectSounds[name]) return;
-        projectSounds[name].playing = false;
+        if (projectSounds[name]) {
+            projectSounds[name].playing = false;
+        }
+        if (uiSounds[name]) {
+            uiSounds[name].playing = false;
+        }
     }
 
     static loadProjectSound (md5: string, fcn?: (name: string) => void) {

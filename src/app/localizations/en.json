@@ -415,5 +415,11 @@
     "FONT_FAMILY": "Font",
     "BLOCKS_RANDOM_PAGE": "Go to Random Page",
     "BLOCKS_RANDOM_PAGE_DESCRIPTION": "Changes to a random page in the project.",
-    "BLOCK_DESC_RANDOM_PAGE": "GO TO RANDOM PAGE"
+    "BLOCK_DESC_RANDOM_PAGE": "GO TO RANDOM PAGE",
+    "BLOCKS_COLOR": "Change Color",
+    "BLOCKS_COLOR_DESCRIPTION": "Changes the color of the character.",
+    "BLOCK_DESC_COLOR": "COLOR",
+    "BLOCKS_FADE": "Fade",
+    "BLOCKS_FADE_DESCRIPTION": "Makes the character semi-transparent.",
+    "BLOCK_DESC_FADE": "FADE"
 }

@@ -173,4 +173,11 @@ describe('Cross-Platform Audio Parity & Seams', () => {
         ScratchAudio.soundDone('cat.wav');
         expect(mockSnd.playing).toBe(false);
     });
+
+    it('ScratchAudio.soundDone clears playing state on uiSounds as well', () => {
+        const mockUiSnd = { name: 'tap.wav', playing: true };
+        ScratchAudio.uiSounds['tap.wav'] = mockUiSnd;
+        ScratchAudio.soundDone('tap.wav');
+        expect(mockUiSnd.playing).toBe(false);
+    });
 });
