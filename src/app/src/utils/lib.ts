@@ -7,8 +7,6 @@ export const DEGTOR = Math.PI / 180;
 export const scaleMultiplier = 1.0;  //WINDOW_INNER_HEIGHT / 768.0;
 
 export const isDesktop = true;
-export const isiOS = false;
-export const isAndroid = false;
 
 export let currentUiScale = 1.0;
 

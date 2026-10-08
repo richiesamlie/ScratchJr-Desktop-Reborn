@@ -21,8 +21,7 @@ import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import type Scripts from '../ui/Scripts';
 import {newHTML, newDiv, newP, gn,
-    setCanvasSizeScaledToWindowDocumentHeight,
-    DEGTOR, getIdFor, setProps, isDesktop, isAndroid,
+    DEGTOR, getIdFor, setProps, isDesktop,
     fitInRect, scaleMultiplier, setCanvasSize,
     globaly, globalx, rgbToHex, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
 import type Stage from './Stage';
@@ -222,35 +221,16 @@ export default class Sprite {
     }
 
     drawBorder () {
-        // TODO: Merge these to get better thumbnail rendering on iOS
-        var w, h, extxml;
-        if (isAndroid) {
-            this.border = document.createElement('canvas');
-            w = this.originalImg.width;
-            h = this.originalImg.height;
-            extxml = this.svg;
-            this.border.width = w;
-            this.border.height = h;
-            this.border.style.width = (w * this.scale) + 'px';
-            this.border.style.height = (h * this.scale) + 'px';
-            var ctxAndroid = this.border.getContext('2d')!;
-            if (SVG2Canvas.isRasterOnly(extxml) && this.img) {
-                this.drawRasterBorder(ctxAndroid, w, h);
-            } else {
-                SVG2Canvas.drawBorder(extxml, ctxAndroid);
-            }
+        var w = this.img.width;
+        var h = this.img.height;
+        var extxml = this.svg;
+        this.border = document.createElement('canvas');
+        setCanvasSize(this.border, w, h);
+        var ctx = this.border.getContext('2d')!;
+        if (SVG2Canvas.isRasterOnly(extxml) && this.img) {
+            this.drawRasterBorder(ctx, w, h);
         } else {
-            this.border = document.createElement('canvas');
-            w = this.img.width;
-            h = this.img.height;
-            extxml = this.svg;
-            setCanvasSize(this.border, w, h);
-            var ctx = this.border.getContext('2d')!;
-            if (SVG2Canvas.isRasterOnly(extxml) && this.img) {
-                this.drawRasterBorder(ctx, w, h);
-            } else {
-                SVG2Canvas.drawBorder(extxml, ctx);
-            }
+            SVG2Canvas.drawBorder(extxml, ctx);
         }
     }
 
@@ -285,14 +265,7 @@ export default class Sprite {
         tb.type = 'spritethumb';
         setModelRef(tb, 'spritethumb', this.id);
         var c = newHTML('canvas', 'thumbcanvas', tb) as HTMLCanvasElement;
-
-        // TODO: Merge these to get better thumbnail rendering on iOS
-        if (isAndroid) {
-            setCanvasSizeScaledToWindowDocumentHeight(c, 64, 64);
-        } else {
-            setCanvasSize(c, 64, 64);
-        }
-
+        setCanvasSize(c, 64, 64);
         this.drawMyImage(c, c.width, c.height);
         p = newHTML('p', 'sname', tb);
         p.textContent = this.name;
@@ -316,14 +289,7 @@ export default class Sprite {
             return;
         }
         setCanvasSize(cnv, w, h);
-
-        // TODO: Merge these to get better thumbnail rendering on iOS
-        var img: HTMLImageElement;
-        if (isAndroid) {
-            img = this.originalImg;
-        } else {
-            img = this.img;
-        }
+        var img: HTMLImageElement = this.img;
         var imgw = img.naturalWidth ? img.naturalWidth : img.width;
         var imgh = img.naturalHeight ? img.naturalHeight : img.height;
         var scale = Math.min(w / imgw, h / imgh);
@@ -701,50 +667,18 @@ export default class Sprite {
     }
 
     render () {
-        // TODO: Merge these to get better thumbnail rendering on iOS
-        var dx, dy, mtx;
-        if (isAndroid) {
-            mtx = '';
-            if (this.img) {
-                dx = this.xcoor - this.cx * this.scale;
-                dy = this.ycoor - this.cy * this.scale;
-                mtx = 'translate3d(' + dx + 'px,' + dy + 'px, 0px)';
-                mtx += ' rotate(' + this.angle + 'deg)';
-                if (this.flip) {
-                    mtx += ' scale(-1, 1)';
-                } else {
-                    mtx += ' scale(1, 1)';
-                }
-                var w = (this.originalImg.width * this.scale);
-                var h = (this.originalImg.height * this.scale);
-                this.div.style.width = w + 'px';
-                this.div.style.height = h + 'px';
-                if (this.border) {
-                    this.border.style.width = w + 'px';
-                    this.border.style.height = h + 'px';
-                }
-                this.img.style.width = w + 'px';
-                this.img.style.height = h + 'px';
+        var dx = this.xcoor - this.cx;
+        var dy = this.ycoor - this.cy;
+        var mtx = 'translate3d(' + dx + 'px,' + dy + 'px, 0px)';
+        if (this.img) {
+            mtx += ' rotate(' + this.angle + 'deg)';
+            if (this.flip) {
+                mtx += 'scale(' + -this.scale + ', ' + this.scale + ')';
             } else {
-                dx = this.xcoor - this.cx;
-                dy = this.ycoor - this.cy;
-                mtx = 'translate3d(' + dx + 'px,' + dy + 'px, 0px)';
+                mtx += 'scale(' + this.scale + ', ' + this.scale + ')';
             }
-            this.setTransform(mtx);
-        } else {
-            dx = this.xcoor - this.cx;
-            dy = this.ycoor - this.cy;
-            mtx = 'translate3d(' + dx + 'px,' + dy + 'px, 0px)';
-            if (this.img) {
-                mtx += ' rotate(' + this.angle + 'deg)';
-                if (this.flip) {
-                    mtx += 'scale(' + -this.scale + ', ' + this.scale + ')';
-                } else {
-                    mtx += 'scale(' + this.scale + ', ' + this.scale + ')';
-                }
-            }
-            this.setTransform(mtx);
         }
+        this.setTransform(mtx);
         this.applyEffects();
     }
 
@@ -1077,15 +1011,6 @@ Math.floor(h));
         setProps(sform.style, {
             height: (this.fontsize + 10) + 'px'
         });
-
-        if (isAndroid) {
-            const inputParent = ti.parentNode!.parentNode as HTMLElement;
-            AndroidInterface.scratchjr_setsoftkeyboardscrolllocation(dy * window.devicePixelRatio, (dy
-                + inputParent.getBoundingClientRect().height * 1.7) * window.devicePixelRatio);
-            setTimeout(function () {
-                AndroidInterface.scratchjr_forceShowKeyboard();
-            }, 500);
-        }
     }
 
     unfocusText () {
@@ -1099,9 +1024,6 @@ Math.floor(h));
         } else {
             this.contractText();
             this.div.style.visibility = 'visible';
-            if (isAndroid) {
-                gn('textbox')!.style.visibility = 'hidden';
-            }
             gn('textbox')!.className = 'pagetext off';
             gn('textcolormenu')!.className = 'textuicolormenu off';
             gn('textfontsizes')!.className = 'textuifont off';
@@ -1126,10 +1048,6 @@ Math.floor(h));
             }
         }
         enginePorts().thumbsUpdatePages();
-        if (isAndroid) {
-            enginePorts().popBackButtonCallback();
-            AndroidInterface.scratchjr_forceHideKeyboard();
-        }
     }
 
     deleteText (record: boolean) {
@@ -1197,17 +1115,7 @@ Math.floor(h));
         ti.onsubmit = function () {
             me.unfocusText();
         };
-        if (isAndroid) {
-            setTimeout(function () {
-                ti.focus();
-            }, 500);
-
-            enginePorts().pushBackButtonCallback(function () {
-                me.unfocusText();
-            });
-        } else {
-            ti.focus();
-        }
+        ti.focus();
     }
 
     handleWrite (e: KeyboardEvent) {
@@ -1324,25 +1232,14 @@ Math.floor(h));
         var p = this.div.parentNode;
         var shake = newHTML('div', 'shakeme', p as HTMLElement);
         shake.id = 'shakediv';
-        // Android WebView does not support CSS zoom; explicit width/height scaling is used
-        if (isAndroid) {
-            setProps(shake.style, {
-                position: 'absolute',
-                left: this.screenLeft() + 'px',
-                top: this.screenTop() + 'px',
-                width: (this.w * this.scale) + 'px',
-                height: (this.h * this.scale) + 'px'
-            });
-        } else {
-            setProps(shake.style, {
-                position: 'absolute',
-                left: (this.screenLeft() / this.scale) + 'px',
-                top: (this.screenTop() / this.scale) + 'px',
-                width: this.w + 'px',
-                height: this.h + 'px',
-                zoom: Math.floor(this.scale * 100) + '%'
-            });
-        }
+        setProps(shake.style, {
+            position: 'absolute',
+            left: (this.screenLeft() / this.scale) + 'px',
+            top: (this.screenTop() / this.scale) + 'px',
+            width: this.w + 'px',
+            height: this.h + 'px',
+            zoom: Math.floor(this.scale * 100) + '%'
+        });
         var mtx = 'translate3d(0px, 0px, 0px)';
         if (this.img) {
             mtx += ' rotate(' + this.angle + 'deg)';
@@ -1380,21 +1277,16 @@ Math.floor(h));
             p.parentNode!.removeChild(p);
         }
 
-        // Android WebView redraws via render() while desktop/web restores transform matrix
-        if (isAndroid) {
-            this.render();
-        } else {
-            var mtx = 'translate3d(' + (this.xcoor - this.cx) + 'px,' + (this.ycoor - this.cy) + 'px, 0px)';
-            if (this.img) {
-                mtx += ' rotate(' + this.angle + 'deg)';
-                if (this.flip) {
-                    mtx += 'scale(' + -this.scale + ', ' + this.scale + ')';
-                } else {
-                    mtx += 'scale(' + this.scale + ', ' + this.scale + ')';
-                }
+        var mtx = 'translate3d(' + (this.xcoor - this.cx) + 'px,' + (this.ycoor - this.cy) + 'px, 0px)';
+        if (this.img) {
+            mtx += ' rotate(' + this.angle + 'deg)';
+            if (this.flip) {
+                mtx += 'scale(' + -this.scale + ', ' + this.scale + ')';
+            } else {
+                mtx += 'scale(' + this.scale + ', ' + this.scale + ')';
             }
-            this.setTransform(mtx);
         }
+        this.setTransform(mtx);
     }
 
     //////////////////////////////////////////

@@ -1,4 +1,4 @@
-import {isiOS, gn} from '../utils/lib';
+import {gn} from '../utils/lib';
 import IO from './IO.js';
 import Alert from '../editor/ui/Alert';
 import ScratchAudio from '../utils/ScratchAudio';

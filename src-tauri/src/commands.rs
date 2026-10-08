@@ -57,9 +57,31 @@ pub fn io_gettextresource(state: State<'_, AppState>, filename: String) -> Optio
     state.io.get_text_resource(&filename)
 }
 
+fn parse_cli_lang_from_args<I, S>(args: I) -> Option<String>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let args: Vec<String> = args.into_iter().map(|s| s.as_ref().to_string()).collect();
+    for (i, arg) in args.iter().enumerate() {
+        if let Some(stripped) = arg.strip_prefix("--lang=") {
+            if !stripped.is_empty() {
+                return Some(stripped.to_string());
+            }
+        } else if arg == "--lang" {
+            if let Some(next_arg) = args.get(i + 1) {
+                if !next_arg.starts_with('-') && !next_arg.is_empty() {
+                    return Some(next_arg.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
 #[tauri::command]
 pub fn io_get_lang() -> Option<String> {
-    None
+    parse_cli_lang_from_args(std::env::args())
 }
 
 #[tauri::command]
@@ -191,4 +213,33 @@ pub async fn save_sjr_file(app: AppHandle, data_b64: String, suggested_name: Str
 #[tauri::command]
 pub async fn save_stage_png(app: AppHandle, data_url: String, suggested_name: String) -> Result<Option<String>, String> {
     save_file_helper(app, &data_url, &suggested_name, "png", "PNG Image (*.png)").await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_cli_lang() {
+        assert_eq!(
+            parse_cli_lang_from_args(["scratchjr", "--lang=fr"]),
+            Some("fr".to_string())
+        );
+        assert_eq!(
+            parse_cli_lang_from_args(["scratchjr", "--lang", "de"]),
+            Some("de".to_string())
+        );
+        assert_eq!(
+            parse_cli_lang_from_args(["scratchjr", "--lang="]),
+            None
+        );
+        assert_eq!(
+            parse_cli_lang_from_args(["scratchjr", "--lang", "--flag"]),
+            None
+        );
+        assert_eq!(
+            parse_cli_lang_from_args(["scratchjr"]),
+            None
+        );
+    }
 }

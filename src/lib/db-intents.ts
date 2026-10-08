@@ -31,7 +31,7 @@ export interface DbIntent {
 }
 
 // Columns mirror initTables()/runMigrations() in src/main/database.ts.
-const TABLES: Record<string, readonly string[]> = {
+export const TABLES: Record<string, readonly string[]> = {
     projects: [
         'id', 'ctime', 'mtime', 'altmd5', 'pos', 'name', 'json', 'thumbnail',
         'owner', 'gallery', 'deleted', 'version', 'isgift',

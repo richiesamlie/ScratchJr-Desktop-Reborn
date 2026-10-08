@@ -20,28 +20,28 @@ export default class Localization {
     // E.g., if we support 'en-US' but not 'en-GB', the user gets 'en-US'
     // The match in supported locales (or the default locale) is returned.
     static determineLocaleFromBrowser () {
-        let defaultLocale = window.Settings!.defaultLocale;
-        let supportedLocales = window.Settings!.supportedLocales;
+        let defaultLocale = (window.Settings && window.Settings.defaultLocale) || 'en';
+        let supportedLocales = (window.Settings && window.Settings.supportedLocales) || {};
 
-        var localizationLanguage = window.navigator.userLanguage || window.navigator.language || 'en-us';
+        var localizationLanguage = (
+            (typeof window !== 'undefined' && (window.navigator.userLanguage || window.navigator.language))
+            || 'en'
+        ).toLowerCase();
 
-        var localizationLanguageParts = localizationLanguage.split('-');
-        // Capitalize last part of localization for includes
-        localizationLanguageParts[localizationLanguageParts.length - 1] = (
-            localizationLanguageParts[localizationLanguageParts.length - 1].toUpperCase()
-        );
+        var supportedValues = Object.values(supportedLocales) as string[];
 
-        var desiredLocale = localizationLanguageParts.join('-');
-        if (desiredLocale in Object.keys(supportedLocales)) {
-            return desiredLocale;
+        // 1. Exact match (e.g., 'fr' == 'fr', 'zh-cn' == 'zh-cn')
+        if (supportedValues.includes(localizationLanguage)) {
+            return localizationLanguage;
         }
 
-        // We're not supporting this locale yet - do we support an ancestor?
-        for (var localeKey in supportedLocales) {
-            var supportedLocale = supportedLocales[localeKey];
-            var parts = supportedLocale.split('-');
-            if (parts[0] == localizationLanguageParts[0]) {
-                return supportedLocale; // Top-level is the same
+        // 2. Language subtag prefix match (e.g., 'fr-fr' -> 'fr', 'en-gb' -> 'en', 'zh-tw' -> 'zh-cn')
+        var primarySubtag = localizationLanguage.split('-')[0];
+        for (var i = 0; i < supportedValues.length; i++) {
+            var supportedLocale = supportedValues[i];
+            var supportedPrimary = supportedLocale.split('-')[0];
+            if (supportedPrimary === primarySubtag) {
+                return supportedLocale;
             }
         }
 

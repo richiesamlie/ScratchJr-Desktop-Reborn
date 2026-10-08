@@ -3,6 +3,18 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.13.1] - 2026-10-08
+
+**Patch Release: Browser Locale Detection Fix, Browser SQL Intent Hardening, Dead Branch Pruning, and Tauri CLI `--lang` Parity.**
+
+### Fixed
+- **Browser Locale Detection (`Localization.ts`)**: Corrected `determineLocaleFromBrowser()` where uppercased subtags and array property lookups caused single-subtag languages (such as `'fr'`, `'de'`, `'es'`) to fall back to English on initial launch. Added comprehensive unit tests (`tests/unit/localization.test.js`).
+- **Browser SQL Intent Composer Hardening (`browserClient.js`)**: Implemented strict schema and operator allowlists (`ALLOWED_TABLES` and `ALLOWED_WHERE_OPS`) matching `src/lib/db-intents.ts` to reject un-allowed tables, columns, and SQL clauses. Added schema parity test (`tests/unit/browser-intent-allowlist.test.js`).
+- **Tauri CLI `--lang` Flag Support (`src-tauri/src/commands.rs`)**: Implemented command-line argument parsing in Tauri's `io_get_lang` to detect `--lang=xx` and `--lang xx` flags matching Electron's behavior. Added unit tests in Rust (`commands::tests::test_parse_cli_lang`).
+
+### Cleaned & Optimized
+- **Dead Platform Branches & Flags (`Sprite.ts`, `lib.ts`, `PlatformBridge.ts`)**: Removed 10 unreachable `isAndroid` branches across `Sprite.ts` render, thumbnail, border, and text editing logic. Removed unused `isiOS` import from `PlatformBridge.ts` and pruned dead `isiOS` and `isAndroid` constants from `lib.ts`.
+
 ## [v2.13.0] - 2026-10-07
 
 **Minor Release: "Change Color" and "Fade" Looks Blocks, Sound Registration Queue & Lobby Navigation Audio Fixes, Custom Raster Sprite Hit-Testing, and 12-Language Full Localization (Issue #14).**

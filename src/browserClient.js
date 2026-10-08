@@ -520,16 +520,67 @@
     return dbInitPromise;
 }
 
-    // SQL Intent statement/query composer (matches src/lib/db-intents.ts)
+    // Canonical database schema allowlist mirroring src/lib/db-intents.ts
+    var ALLOWED_TABLES = {
+        projects: [
+            'id', 'ctime', 'mtime', 'altmd5', 'pos', 'name', 'json', 'thumbnail',
+            'owner', 'gallery', 'deleted', 'version', 'isgift'
+        ],
+        usershapes: [
+            'id', 'ctime', 'md5', 'altmd5', 'width', 'height', 'ext', 'name',
+            'owner', 'scale', 'version'
+        ],
+        userbkgs: [
+            'id', 'ctime', 'md5', 'altmd5', 'width', 'height', 'ext', 'owner', 'version'
+        ]
+    };
+    var ALLOWED_WHERE_OPS = ['=', '!=', 'IS NULL'];
+
+    // SQL Intent statement/query composer (hardened to match src/lib/db-intents.ts)
     /** @param {any} intent */
     function executeIntent(intent) {
         return initDatabase().then(function (/** @type {any} */ db) {
+            if (!intent || typeof intent !== 'object') {
+                throw new Error('invalid db intent');
+            }
             var op = intent.op;
-            var table = (intent.table || '').toUpperCase();
+            var tableLower = (intent.table || '').toLowerCase();
+            var rawCols = (/** @type {any} */ (ALLOWED_TABLES))[tableLower];
+            if (!rawCols) {
+                throw new Error('unknown table: ' + intent.table);
+            }
+            /** @type {string[]} */
+            var allowedCols = rawCols;
+            var table = tableLower.toUpperCase();
+
+            /** @param {string[]} cols */
+            function assertColumns(cols) {
+                for (var i = 0; i < cols.length; i++) {
+                    var colLower = cols[i].toLowerCase();
+                    if (allowedCols.indexOf(colLower) === -1) {
+                        throw new Error('unknown column on ' + tableLower + ': ' + cols[i]);
+                    }
+                }
+            }
+
+            /** @param {any} w */
+            function validateWhereClause(w) {
+                if (!w || !w.col) throw new Error('missing where column');
+                var colLower = w.col.toLowerCase();
+                if (allowedCols.indexOf(colLower) === -1) {
+                    throw new Error('unknown where column on ' + tableLower + ': ' + w.col);
+                }
+                var whereOp = w.op || '=';
+                if (ALLOWED_WHERE_OPS.indexOf(whereOp) === -1) {
+                    throw new Error('bad where op: ' + whereOp);
+                }
+                return { col: w.col, op: whereOp, value: w.value };
+            }
 
             if (op === 'insert') {
                 var row = intent.row || {};
                 var cols = Object.keys(row);
+                assertColumns(cols);
                 var placeholders = cols.map(function () { return '?'; }).join(', ');
                 var values = cols.map(function (c) { return row[c]; });
                 var sql = 'INSERT INTO ' + table + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ')';
@@ -543,6 +594,7 @@
             if (op === 'update') {
                 var updateRow = intent.row || {};
                 var updateCols = Object.keys(updateRow);
+                assertColumns(updateCols);
                 var setClauses = updateCols.map(function (c) { return c + ' = ?'; }).join(', ');
                 var setVals = updateCols.map(function (c) { return updateRow[c]; });
 
@@ -553,8 +605,13 @@
                     whereVals.push(intent.id);
                 } else if (intent.where && intent.where.length > 0) {
                     intent.where.forEach(function (/** @type {any} */ w) {
-                        whereClauses.push(w.col + ' ' + (w.op || '=') + ' ?');
-                        whereVals.push(w.value);
+                        var validated = validateWhereClause(w);
+                        if (validated.op === 'IS NULL') {
+                            whereClauses.push(validated.col + ' IS NULL');
+                        } else {
+                            whereClauses.push(validated.col + ' ' + validated.op + ' ?');
+                            whereVals.push(validated.value);
+                        }
                     });
                 }
                 var updateSql = 'UPDATE ' + table + ' SET ' + setClauses;
@@ -575,8 +632,13 @@
                     delVals.push(intent.id);
                 } else if (intent.where && intent.where.length > 0) {
                     intent.where.forEach(function (/** @type {any} */ w) {
-                        delWhere.push(w.col + ' ' + (w.op || '=') + ' ?');
-                        delVals.push(w.value);
+                        var validated = validateWhereClause(w);
+                        if (validated.op === 'IS NULL') {
+                            delWhere.push(validated.col + ' IS NULL');
+                        } else {
+                            delWhere.push(validated.col + ' ' + validated.op + ' ?');
+                            delVals.push(validated.value);
+                        }
                     });
                 }
                 var delSql = 'DELETE FROM ' + table;
@@ -590,6 +652,9 @@
             }
 
             if (op === 'select') {
+                if (intent.items && intent.items.length > 0) {
+                    assertColumns(intent.items);
+                }
                 var items = intent.items && intent.items.length > 0 ? intent.items.join(', ') : '*';
                 /** @type {string[]} */
                 var selWhere = [];
@@ -597,11 +662,12 @@
                 var selVals = [];
                 if (intent.where && intent.where.length > 0) {
                     intent.where.forEach(function (/** @type {any} */ w) {
-                        if (w.op === 'IS NULL') {
-                            selWhere.push(w.col + ' IS NULL');
+                        var validated = validateWhereClause(w);
+                        if (validated.op === 'IS NULL') {
+                            selWhere.push(validated.col + ' IS NULL');
                         } else {
-                            selWhere.push(w.col + ' ' + (w.op || '=') + ' ?');
-                            selVals.push(w.value);
+                            selWhere.push(validated.col + ' ' + validated.op + ' ?');
+                            selVals.push(validated.value);
                         }
                     });
                 }
@@ -610,7 +676,12 @@
                     selSql += ' WHERE ' + selWhere.join(' AND ');
                 }
                 if (intent.order && intent.order.col) {
-                    selSql += ' ORDER BY ' + intent.order.col + ' ' + (intent.order.dir || 'ASC');
+                    assertColumns([intent.order.col]);
+                    var dir = (intent.order.dir || 'ASC').toUpperCase();
+                    if (dir !== 'ASC' && dir !== 'DESC') {
+                        throw new Error('bad order dir: ' + dir);
+                    }
+                    selSql += ' ORDER BY ' + intent.order.col + ' ' + dir;
                 }
                 var queryRes = db.exec(selSql, selVals);
                 if (!queryRes || queryRes.length === 0) return '[]';
