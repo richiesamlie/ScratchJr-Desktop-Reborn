@@ -2,8 +2,15 @@ import {gn} from '../utils/lib';
 import Localization from '../utils/Localization';
 import PlatformBridge from '../platform/PlatformBridge';
 import Lobby from '../lobby/Lobby';
+import Home from '../lobby/Home';
 
 export function homeMain () {  // eslint-disable-line import/prefer-default-export
+    if (window.scratchjr && typeof window.scratchjr.onImportProjectRequest === 'function') {
+        window.scratchjr.onImportProjectRequest(() => {
+            Home.openFileDialog();
+        });
+    }
+
     const logotab = gn('logotab');
     if (logotab) {
         logotab.onmousedown = homeGoBack;

@@ -106,6 +106,11 @@ app.whenReady().then(async () => {
         fsMenu.push({ label: 'Restore projects', click: () => dataStore!.restoreProjects() });
     }
     fsMenu.push({
+        label: 'Import Project (.sjr)...',
+        accelerator: 'CmdOrCtrl+O',
+        click: () => { const w = getWindow(); if (w && !w.isDestroyed()) w.webContents.send('import-project-request'); },
+    });
+    fsMenu.push({
         label: 'Export Project (.sjr)...',
         click: () => { const w = getWindow(); if (w && !w.isDestroyed()) w.webContents.send('export-project-request'); },
     });

@@ -149,6 +149,8 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
         const key = input.key.toLowerCase();
         if (key === 's' && !input.shift && !input.alt) {
             win?.webContents.send('keyboard-shortcut', 'save');
+        } else if (key === 'o' && !input.shift && !input.alt) {
+            win?.webContents.send('import-project-request');
         } else if (key === 'z' && !input.shift && !input.alt) {
             win?.webContents.send('keyboard-shortcut', 'undo');
         } else if ((key === 'z' && input.shift) || (key === 'y' && !input.shift)) {

@@ -25,6 +25,9 @@ pub fn run() {
             let toggle_devtools = MenuItemBuilder::with_id("devtools", "Toggle Developer Tools")
                 .accelerator("F12")
                 .build(app)?;
+            let import_project = MenuItemBuilder::with_id("import_project", "Import Project (.sjr)...")
+                .accelerator("CmdOrCtrl+O")
+                .build(app)?;
             let export_project = MenuItemBuilder::with_id("export_project", "Export Project (.sjr)...")
                 .build(app)?;
             let export_stage = MenuItemBuilder::with_id("export_stage", "Export Stage as PNG...")
@@ -39,6 +42,7 @@ pub fn run() {
                 .item(&toggle_fullscreen)
                 .item(&toggle_devtools)
                 .item(&restore_projects)
+                .item(&import_project)
                 .item(&export_project)
                 .item(&export_stage)
                 .separator()
@@ -76,6 +80,9 @@ pub fn run() {
                         } else {
                             let _ = w.open_devtools();
                         }
+                    }
+                    "import_project" => {
+                        let _ = w.eval("if (window.scratchjr && window.scratchjr.importProjectRequestCallback) { window.scratchjr.importProjectRequestCallback(); } else if (window.Home && typeof window.Home.openFileDialog === 'function') { window.Home.openFileDialog(); }");
                     }
                     "export_project" => {
                         let _ = w.eval("if (window.scratchjr && window.scratchjr.exportProjectRequestCallback) { window.scratchjr.exportProjectRequestCallback(); }");

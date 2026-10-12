@@ -17,6 +17,7 @@ let scrollvalue: number;
 let version: string;
 let timeoutEvent: NodeJS.Timeout | null = null;
 let isDuplicating = false;
+let dropInstalled = false;
 
 export default class Home {
     // Dynamic statics used by the touch handlers below
@@ -66,7 +67,7 @@ export default class Home {
             input = document.createElement('input');
             input.type = 'file';
             input.id = 'open-project-file-input';
-            input.accept = '.sjr,.sqllite,.sqlite,.db';
+            input.accept = '.sjr,.zip,.sqllite,.sqlite,.db';
             input.style.display = 'none';
             document.body.appendChild(input);
             input.onchange = function () {
@@ -416,8 +417,12 @@ export default class Home {
     // Gather projects
     //////////////////////////
 
-    /** Import .sjr and legacy .sqllite projects by dropping them anywhere on the lobby. */
+    /** Import .sjr, .zip, and legacy .sqllite projects by dropping them anywhere on the lobby. */
     static installSjrDrop () {
+        if (dropInstalled) {
+            return;
+        }
+        dropInstalled = true;
         window.addEventListener('dragover', function (e) {
             e.preventDefault();
         });
@@ -429,9 +434,16 @@ export default class Home {
             var files: File[] = [];
             for (var i = 0; i < e.dataTransfer.files.length; i++) {
                 var f = e.dataTransfer.files[i];
-                if (/\.(sjr|sqllite|sqlite|db)$/i.test(f.name)) {
+                if (/\.(sjr|zip|sqllite|sqlite|db)$/i.test(f.name)) {
                     files.push(f);
                 }
+            }
+            if (files.length === 0 && e.dataTransfer.files.length > 0) {
+                var frame = gn('frame');
+                if (frame) {
+                    Alert.open(frame, frame, 'Unsupported file format. Please drop a .sjr, .zip, or .sqlite project file.', '#ff9900');
+                }
+                return;
             }
             for (var j = 0; j < files.length; j++) {
                 Home.importProjectFile(files[j]);
@@ -456,6 +468,10 @@ export default class Home {
         };
         reader.onerror = function (err) {
             console.error('FileReader error:', err);
+            var frame = gn('frame');
+            if (frame) {
+                Alert.open(frame, frame, 'Failed to read project file.', '#ff0000');
+            }
         };
         reader.readAsArrayBuffer(file);
     }
@@ -466,19 +482,14 @@ export default class Home {
         reader.onload = function () {
             var res = (reader.result as string) || '';
             var b64 = res.indexOf(',') > -1 ? res.split(',')[1] : res;
-            IO.loadProjectFromSjr(b64).then(function () {
-                window.location.reload();
-            }).catch(function (err: Error) {
-                console.error('importSjrFile failed:', err);
-                var frame = gn('frame');
-                var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? err.message : '');
-                if (frame) {
-                    Alert.open(frame, frame, errorMessage, '#ff0000');
-                }
-            });
+            PlatformBridge.loadProjectFromSjr(b64);
         };
         reader.onerror = function (err) {
             console.error('FileReader error:', err);
+            var frame = gn('frame');
+            if (frame) {
+                Alert.open(frame, frame, 'Failed to read project file.', '#ff0000');
+            }
         };
         reader.readAsDataURL(file);
     }

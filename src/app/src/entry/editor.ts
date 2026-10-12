@@ -78,6 +78,48 @@ setEnginePorts({
 // other hosts (Android WebView) have no window.scratchjr and surface
 // export through their own UI instead.
 if (window.scratchjr) {
+    if (typeof window.scratchjr.onImportProjectRequest === 'function') {
+        window.scratchjr.onImportProjectRequest(() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.sjr,.zip,.sqlite,.sqllite,.db';
+            input.style.display = 'none';
+            input.onchange = (e) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                const ext = file.name.split('.').pop()?.toLowerCase();
+                const reader = new FileReader();
+                reader.onload = () => {
+                    void import('../platform/PlatformBridge').then(({ default: PlatformBridge }) => {
+                        if (ext === 'sqlite' || ext === 'sqllite' || ext === 'db') {
+                            const u8 = new Uint8Array(reader.result as ArrayBuffer);
+                            void PlatformBridge.loadProjectsFromSqlite(u8.buffer).then(() => {
+                                window.location.href = 'home.html';
+                            });
+                        } else {
+                            const base64 = btoa(
+                                new Uint8Array(reader.result as ArrayBuffer).reduce((data, byte) => {
+                                    return data + String.fromCharCode(byte);
+                                }, '')
+                            );
+                            void PlatformBridge.loadProjectFromSjr(base64).then(() => {
+                                window.location.href = 'home.html';
+                            });
+                        }
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            };
+            document.body.appendChild(input);
+            input.click();
+            setTimeout(() => {
+                if (input.parentNode) {
+                    input.parentNode.removeChild(input);
+                }
+            }, 1000);
+        });
+    }
+
     window.scratchjr.onExportProjectRequest(() => {
         try {
             // Save first: an unsaved project has NULL json/thumbnail in the

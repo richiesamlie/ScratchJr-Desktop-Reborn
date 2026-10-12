@@ -39,3 +39,6 @@ anti-slop/
 
 # Tauri build outputs
 src-tauri/target/
+
+# Local tools
+.freebuff/

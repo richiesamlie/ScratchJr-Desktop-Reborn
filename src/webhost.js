@@ -48,6 +48,9 @@
             var str = typeof intent === 'string' ? intent : JSON.stringify(intent);
             return AndroidInterface.database_query(str);
         },
+        database_flush: function () {
+            return Promise.resolve();
+        },
         io_getsettings: fwd('io_getsettings'),
         io_gettextresource: fwd('io_gettextresource'),
         io_getLang: fwd('io_getLang'),

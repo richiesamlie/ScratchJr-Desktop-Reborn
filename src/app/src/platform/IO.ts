@@ -506,7 +506,11 @@ export default class IO {
             }
         };
 
-        var giftProjectNameParts = nameAndNumber(jsonData.name!);
+        if (!jsonData.name || typeof jsonData.name !== 'string' || !jsonData.name.trim()) {
+            jsonData.name = 'Project';
+        }
+
+        var giftProjectNameParts = nameAndNumber(jsonData.name);
 
         var json: DbSelectIntent = {
             op: 'select', table: PlatformBridge.database,
@@ -549,38 +553,68 @@ export default class IO {
         receivedZip.forEach(function (relativePath, file) {
             if (file.dir) return;
             var f = file as unknown as ZipEntryLike;
-            var fullName = relativePath.split('/').pop();
-            if (fullName === 'data.json') dataEntry = f;
-            else assetEntries.push({ relativePath, file: f });
+            var normalized = relativePath.replace(/\\/g, '/');
+            var fullName = normalized.split('/').pop() || '';
+            if (fullName.toLowerCase() === 'data.json') {
+                dataEntry = f;
+            } else {
+                assetEntries.push({ relativePath: normalized, file: f });
+            }
         });
 
         if (!dataEntry) {
             throw new Error('No data.json found in project archive.');
         }
-        var jsonData = JSON.parse(await (dataEntry as ZipEntryLike).async('text')) as {
-            version: string;
-            json: Record<string, unknown> & { pages: string[] };
+
+        var rawText = await (dataEntry as ZipEntryLike).async('text');
+        var jsonData: {
+            name?: string;
+            version?: string;
+            json?: Record<string, unknown> & { pages?: string[] };
+            thumbnail?: unknown;
+            isgift?: string;
         };
+        try {
+            jsonData = JSON.parse(rawText);
+        } catch (_) {
+            throw new Error('Project archive data.json is not valid JSON.');
+        }
 
-        var currentVersion = 1;
-        var projectVersion = parseInt(jsonData.version.replace('iOSv', '')) || 0;
+        if (typeof jsonData.json === 'string') {
+            try {
+                jsonData.json = JSON.parse(jsonData.json);
+            } catch (_) {}
+        }
+        if (typeof jsonData.thumbnail === 'string') {
+            try {
+                jsonData.thumbnail = JSON.parse(jsonData.thumbnail);
+            } catch (_) {}
+        }
 
-        if (projectVersion > currentVersion) {
-            throw new Error('Project created in a new version of ScratchJr. Please upgrade ScratchJr.');
+        // Project version compatibility check:
+        // Accept legacy and modern versions (e.g. iOSv01, androidv01, 1.x, 2.x, desktop-vX.Y.Z)
+        var projectVersionStr = String(jsonData.version || '');
+        var numericMajor = parseInt(projectVersionStr.replace(/^([a-zA-Z_\-]+v?)?/, ''), 10) || 0;
+        if (numericMajor > 99) {
+            throw new Error('Project created in an unsupported future version of ScratchJr.');
+        }
+
+        if (!jsonData.name || typeof jsonData.name !== 'string' || !jsonData.name.trim()) {
+            jsonData.name = 'Project';
         }
 
         var projectData = jsonData.json;
-        if (projectData && projectData.pages) {
+        if (projectData && projectData.pages && Array.isArray(projectData.pages)) {
             for (var p = 0; p < projectData.pages.length; p++) {
                 var pageReference = projectData.pages[p];
-                var page = projectData[pageReference] as { sprites: string[] } & Record<string, { type: string; md5: string; name: string }>;
-                if (page && page.sprites) {
+                var page = projectData[pageReference] as { sprites?: string[] } & Record<string, { type?: string; md5?: string; name?: string }>;
+                if (page && page.sprites && Array.isArray(page.sprites)) {
                     for (var s = 0; s < page.sprites.length; s++) {
                         var spriteReference = page.sprites[s];
                         var sprite = page[spriteReference];
-                        if (sprite && sprite.type == 'sprite') {
+                        if (sprite && sprite.type == 'sprite' && sprite.md5) {
                             characterNames[sprite.md5] = (
-                                ((unescape(sprite.name)).replace(/[0-9]/g, '')).replace(/\s*/g, '')
+                                ((unescape(sprite.name || '')).replace(/[0-9]/g, '')).replace(/\s*/g, '')
                             );
                         }
                     }
@@ -594,11 +628,11 @@ export default class IO {
             (function (entry) {
                 var relativePath = entry.relativePath;
                 var file = entry.file;
-                var subFolder = relativePath.split('/')[1];
-
-                var fullName = relativePath.split('/').pop()!;
-                var name = fullName.split('.')[0];
-                var ext = fullName.split('.').pop();
+                var parts = relativePath.split('/');
+                var fullName = parts[parts.length - 1];
+                var lastDot = fullName.lastIndexOf('.');
+                var name = lastDot > -1 ? fullName.substring(0, lastDot) : fullName;
+                var ext = lastDot > -1 ? fullName.substring(lastDot + 1).toLowerCase() : '';
 
                 if (!name || !ext) {
                     return;
@@ -608,58 +642,112 @@ export default class IO {
                     return;
                 }
 
+                var knownFolders = ['thumbnails', 'characters', 'backgrounds', 'sounds'];
+                var subFolder = '';
+                for (var k = 0; k < parts.length - 1; k++) {
+                    var seg = parts[k].toLowerCase();
+                    if (knownFolders.indexOf(seg) > -1) {
+                        subFolder = seg;
+                        break;
+                    }
+                }
+                if (!subFolder) {
+                    if (ext === 'wav' || ext === 'mp3' || ext === 'ogg' || ext === 'webm') {
+                        subFolder = 'sounds';
+                    } else if (ext === 'svg' || ext === 'png' || ext === 'jpg' || ext === 'jpeg') {
+                        subFolder = 'characters';
+                    }
+                }
+
                 assetPromises.push((async function () {
-                    var data = await file.async('binarystring');
-                    var b2data = btoa(data);
+                    try {
+                        var data = await file.async('binarystring');
+                        var b2data = btoa(data);
 
-                    if (subFolder == 'thumbnails' || subFolder == 'sounds') {
-                        await new Promise<void>(function (resolve) {
-                            PlatformBridge.setmedianame(b2data, name, ext!, function () {
-                                resolve();
+                        if (subFolder == 'thumbnails' || subFolder == 'sounds') {
+                            await new Promise<void>(function (resolve) {
+                                PlatformBridge.setmedianame(b2data, name, ext, function () {
+                                    resolve();
+                                });
                             });
-                        });
-                    } else if (subFolder == 'characters') {
-                        await new Promise<void>(function (resolve) {
-                            PlatformBridge.setmedianame(b2data, name, ext!, function () {
-                                var svgParser = new DOMParser().parseFromString(data, 'text/xml');
-                                var svgEl = svgParser.getElementsByTagName('svg')[0];
-                                var rawWidth = (svgEl && svgEl.width && svgEl.width.baseVal) ? svgEl.width.baseVal.value : 480;
-                                var rawHeight = (svgEl && svgEl.height && svgEl.height.baseVal) ? svgEl.height.baseVal.value : 360;
-                                var width = Math.min(Math.max(Number(rawWidth) || 0, 1), 4096);
-                                var height = Math.min(Math.max(Number(rawHeight) || 0, 1), 4096);
-                                var scale = '0.5';
+                        } else if (subFolder == 'characters') {
+                            await new Promise<void>(function (resolve) {
+                                PlatformBridge.setmedianame(b2data, name, ext, function () {
+                                    if (ext === 'svg') {
+                                        var svgParser = new DOMParser().parseFromString(data, 'text/xml');
+                                        var svgEl = svgParser.getElementsByTagName('svg')[0];
+                                        var rawWidth = (svgEl && svgEl.width && svgEl.width.baseVal) ? svgEl.width.baseVal.value : 480;
+                                        var rawHeight = (svgEl && svgEl.height && svgEl.height.baseVal) ? svgEl.height.baseVal.value : 360;
+                                        var width = Math.min(Math.max(Number(rawWidth) || 0, 1), 4096);
+                                        var height = Math.min(Math.max(Number(rawHeight) || 0, 1), 4096);
+                                        var scale = '0.5';
 
-                                IO.getImagesInSVG(data, gotSVGImages);
+                                        IO.getImagesInSVG(data, gotSVGImages);
 
-                                function gotSVGImages () {
-                                    var thumbnailDataURL = IO.getThumbnail(data, width, height, 120, 90);
-                                    var thumbnailPngBase64 = thumbnailDataURL.split(',')[1];
-                                    var charName = characterNames[fullName];
+                                        function gotSVGImages () {
+                                            var thumbnailDataURL = '';
+                                            try {
+                                                thumbnailDataURL = IO.getThumbnail(data, width, height, 120, 90) || '';
+                                            } catch (_) {}
+                                            var thumbnailPngBase64 = (thumbnailDataURL && thumbnailDataURL.indexOf(',') > -1)
+                                                ? thumbnailDataURL.split(',')[1]
+                                                : 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                                            var charName = characterNames[fullName] || name;
 
-                                    PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
+                                            PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
+                                                var json: DbSelectIntent = {
+                                                    op: 'select', table: 'usershapes',
+                                                    items: ['*'],
+                                                    where: [
+                                                        { col: 'ext', op: '=', value: 'svg' },
+                                                        { col: 'md5', op: '=', value: fullName },
+                                                        { col: 'altmd5', op: '=', value: thumbnailMD5 },
+                                                        { col: 'name', op: '=', value: charName },
+                                                        { col: 'scale', op: '=', value: scale },
+                                                        { col: 'width', op: '=', value: width.toString() },
+                                                        { col: 'height', op: '=', value: height.toString() },
+                                                    ],
+                                                    order: { col: 'ctime', dir: 'desc' },
+                                                };
+                                                IO.query('usershapes', json, function (results) {
+                                                    var rows = JSON.parse(results);
+                                                    if (rows.length == 0) {
+                                                        PlatformBridge.stmt({
+                                                            op: 'insert', table: 'usershapes',
+                                                            row: {
+                                                                scale, md5: fullName, altmd5: thumbnailMD5,
+                                                                version: PROJECT_FORMAT_VERSION, width: width.toString(),
+                                                                height: height.toString(), ext: 'svg', name: charName,
+                                                            },
+                                                        }, function () {
+                                                            resolve();
+                                                        });
+                                                    } else {
+                                                        resolve();
+                                                    }
+                                                });
+                                            });
+                                        }
+                                    } else {
+                                        var charName = characterNames[fullName] || name;
                                         var json: DbSelectIntent = {
                                             op: 'select', table: 'usershapes',
                                             items: ['*'],
                                             where: [
-                                                { col: 'ext', op: '=', value: 'svg' },
+                                                { col: 'ext', op: '=', value: ext },
                                                 { col: 'md5', op: '=', value: fullName },
-                                                { col: 'altmd5', op: '=', value: thumbnailMD5 },
-                                                { col: 'name', op: '=', value: charName },
-                                                { col: 'scale', op: '=', value: scale },
-                                                { col: 'width', op: '=', value: width.toString() },
-                                                { col: 'height', op: '=', value: height.toString() },
                                             ],
                                             order: { col: 'ctime', dir: 'desc' },
                                         };
                                         IO.query('usershapes', json, function (results) {
-                                            results = JSON.parse(results);
-                                            if (results.length == 0) {
+                                            var rows = JSON.parse(results);
+                                            if (rows.length == 0) {
                                                 PlatformBridge.stmt({
                                                     op: 'insert', table: 'usershapes',
                                                     row: {
-                                                        scale, md5: fullName, altmd5: thumbnailMD5,
-                                                        version: PROJECT_FORMAT_VERSION, width: width.toString(),
-                                                        height: height.toString(), ext: 'svg', name: charName,
+                                                        scale: '0.5', md5: fullName, altmd5: fullName,
+                                                        version: PROJECT_FORMAT_VERSION, width: '480',
+                                                        height: '360', ext: ext, name: charName,
                                                     },
                                                 }, function () {
                                                     resolve();
@@ -668,37 +756,70 @@ export default class IO {
                                                 resolve();
                                             }
                                         });
-                                    });
-                                }
+                                    }
+                                });
                             });
-                        });
-                    } else if (subFolder == 'backgrounds') {
-                        await new Promise<void>(function (resolve) {
-                            PlatformBridge.setmedianame(b2data, name, ext!, function () {
-                                IO.getImagesInSVG(data, gotSVGImages);
+                        } else if (subFolder == 'backgrounds') {
+                            await new Promise<void>(function (resolve) {
+                                PlatformBridge.setmedianame(b2data, name, ext, function () {
+                                    if (ext === 'svg') {
+                                        IO.getImagesInSVG(data, gotSVGImages);
 
-                                function gotSVGImages () {
-                                    var thumbnailDataURL = IO.getThumbnail(data, 480, 360, 120, 90);
-                                    var thumbnailPngBase64 = thumbnailDataURL.split(',')[1];
-                                    PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
+                                        function gotSVGImages () {
+                                            var thumbnailDataURL = '';
+                                            try {
+                                                thumbnailDataURL = IO.getThumbnail(data, 480, 360, 120, 90) || '';
+                                            } catch (_) {}
+                                            var thumbnailPngBase64 = (thumbnailDataURL && thumbnailDataURL.indexOf(',') > -1)
+                                                ? thumbnailDataURL.split(',')[1]
+                                                : 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                                            PlatformBridge.setmedia(thumbnailPngBase64, 'png', function (thumbnailMD5) {
+                                                var json: DbSelectIntent = {
+                                                    op: 'select', table: 'userbkgs',
+                                                    items: ['*'],
+                                                    where: [
+                                                        { col: 'ext', op: '=', value: 'svg' },
+                                                        { col: 'md5', op: '=', value: fullName },
+                                                        { col: 'altmd5', op: '=', value: thumbnailMD5 },
+                                                    ],
+                                                    order: { col: 'ctime', dir: 'desc' },
+                                                };
+                                                IO.query('userbkgs', json, function (results) {
+                                                    var rows = JSON.parse(results);
+                                                    if (rows.length == 0) {
+                                                        PlatformBridge.stmt({
+                                                            op: 'insert', table: 'userbkgs',
+                                                            row: {
+                                                                md5: fullName, altmd5: thumbnailMD5, version: PROJECT_FORMAT_VERSION,
+                                                                width: '480', height: '360', ext: 'svg',
+                                                            },
+                                                        }, function () {
+                                                            resolve();
+                                                        });
+                                                    } else {
+                                                        resolve();
+                                                    }
+                                                });
+                                            });
+                                        }
+                                    } else {
                                         var json: DbSelectIntent = {
                                             op: 'select', table: 'userbkgs',
                                             items: ['*'],
                                             where: [
-                                                { col: 'ext', op: '=', value: 'svg' },
+                                                { col: 'ext', op: '=', value: ext },
                                                 { col: 'md5', op: '=', value: fullName },
-                                                { col: 'altmd5', op: '=', value: thumbnailMD5 },
                                             ],
                                             order: { col: 'ctime', dir: 'desc' },
                                         };
                                         IO.query('userbkgs', json, function (results) {
-                                            results = JSON.parse(results);
-                                            if (results.length == 0) {
+                                            var rows = JSON.parse(results);
+                                            if (rows.length == 0) {
                                                 PlatformBridge.stmt({
                                                     op: 'insert', table: 'userbkgs',
                                                     row: {
-                                                        md5: fullName, altmd5: thumbnailMD5, version: PROJECT_FORMAT_VERSION,
-                                                        width: '480', height: '360', ext: 'svg',
+                                                        md5: fullName, altmd5: fullName, version: PROJECT_FORMAT_VERSION,
+                                                        width: '480', height: '360', ext: ext,
                                                     },
                                                 }, function () {
                                                     resolve();
@@ -707,10 +828,18 @@ export default class IO {
                                                 resolve();
                                             }
                                         });
-                                    });
-                                }
+                                    }
+                                });
                             });
-                        });
+                        } else {
+                            await new Promise<void>(function (resolve) {
+                                PlatformBridge.setmedianame(b2data, name, ext, function () {
+                                    resolve();
+                                });
+                            });
+                        }
+                    } catch (err) {
+                        console.warn('Skipping corrupted asset entry ' + fullName + ':', err);
                     }
                 })());
             })(assetEntries[e]);

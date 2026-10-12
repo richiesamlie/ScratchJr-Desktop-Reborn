@@ -64,6 +64,7 @@ interface IpcBridge {
     // ---- Database ----
     database_stmt(intent: DbWriteIntent | string): Promise<unknown>;
     database_query(intent: DbSelectIntent | string): Promise<unknown>;
+    database_flush?(): Promise<unknown>;
 
     // ---- Settings & Resources ----
     io_getsettings(): Promise<string>;
@@ -86,7 +87,9 @@ interface IpcBridge {
     // ---- Lifecycle (fire-and-forget) ----
     sendAppClosedAcked(): void;
 
-    // ---- Stage image export ----
+    // ---- Stage image export & project import ----
+    onImportProjectRequest?(callback: () => void): void;
+    importProjectRequestCallback?: () => void;
     onExportProjectRequest(callback: () => void): void;
     /** Resolves with the saved file path, or null when cancelled/failed */
     sendExportedSjr(dataB64: string, suggestedName: string): Promise<string | null>;
@@ -311,14 +314,14 @@ interface Window {
     // Editor globals exposed by the ESM bundle for electronClient keyboard shortcuts
     ScratchJr?: { saveProject(arg: unknown, cb: () => void): void };
     Undo?: { prevStep(e: object): void; nextStep(e: object): void };
-    Home?: { createNewProject(): void };
+    Home?: { createNewProject(): void; openFileDialog?(): void };
     Library?: unknown;
 }
 
 /** Editor globals referenced by electronClient.js (assigned to window by the bundle) */
 declare const ScratchJr: { saveProject(arg: unknown, cb: () => void): void };
 declare const Undo: { prevStep(e: object): void; nextStep(e: object): void };
-declare const Home: { createNewProject(): void };
+declare const Home: { createNewProject(): void; openFileDialog?(): void };
 declare const Library: unknown;
 declare const PlatformBridge: { soundDone(name: string): void };
 declare const iOS: { soundDone(name: string): void };

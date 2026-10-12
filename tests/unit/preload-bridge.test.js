@@ -37,6 +37,8 @@ describe('preload bridge contract', () => {
         'onDatabaseRestored',
         'onKeyboardShortcut',
         'onAppClose',
+        'onImportProjectRequest',
+        'onExportProjectRequest',
     ];
 
     for (const channel of requiredChannels) {

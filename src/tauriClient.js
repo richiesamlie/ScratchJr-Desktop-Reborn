@@ -80,6 +80,10 @@ class TauriDesktopInterface {
         return await tauriInvoke('database_query', { raw: json });
     }
 
+    async database_flush() {
+        return Promise.resolve();
+    }
+
     // Settings and resources
     async io_getsettings() {
         return await tauriInvoke('io_getsettings');
@@ -393,6 +397,11 @@ class TauriDesktopInterface {
     }
 
     /** @param {() => void} callback */
+    onImportProjectRequest(callback) {
+        this.importProjectRequestCallback = callback;
+    }
+
+    /** @param {() => void} callback */
     onExportProjectRequest(callback) {
         this.exportProjectRequestCallback = callback;
     }
@@ -427,6 +436,16 @@ window.addEventListener('keydown', function (e) {
             const scratchJrGlobal = /** @type {any} */ (window).ScratchJr;
             if (scratchJrGlobal && scratchJrGlobal.saveProject) {
                 scratchJrGlobal.saveProject(null, function () {});
+            }
+        } else if (key === 'o') {
+            e.preventDefault();
+            if (tauriHost.importProjectRequestCallback) {
+                tauriHost.importProjectRequestCallback();
+            } else {
+                const homeGlobal = /** @type {any} */ (window).Home;
+                if (homeGlobal && homeGlobal.openFileDialog) {
+                    homeGlobal.openFileDialog();
+                }
             }
         } else if (key === 'z' && !e.shiftKey) {
             e.preventDefault();

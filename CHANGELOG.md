@@ -3,6 +3,20 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.13.2] - 2026-10-12
+
+**Patch Release: Resilient Cross-Platform Project Import, Web IndexedDB Flush Seam, In-Place Lobby Refresh, and Desktop Import Menu Parity (Issue #15).**
+
+### Fixed
+- **Resilient Project Import (`.sjr`, `.zip`, `.sqlite`) (Issue #15)**:
+  - **IndexedDB Flush & Persistence Gate (`browserClient.js`, `PlatformBridge.ts`)**: Added explicit `database_flush` IPC / host seam method that flushes debounced in-memory SQLite WASM transactions down to IndexedDB. `PlatformBridge.loadProjectFromSjr` and `loadProjectsFromSqlite` await this flush before UI reload/refresh, eliminating the race condition where immediate reloads destroyed page context before IndexedDB could persist imported projects.
+  - **In-Place Lobby UI Update (`PlatformBridge.ts`, `Home.ts`)**: Upon successful import on the Lobby screen, `PlatformBridge` triggers `Home.displayYourProjects()` with `snap.wav` sound effect in-place without jarring full-page reloads, preventing white screen flashes and race conditions.
+  - **Project Format Version Compatibility (`IO.ts`)**: Removed legacy restriction rejecting project versions `> 1`. ScratchJr Reborn is v2.13.x, so projects with version strings `2.x`, `desktop-vX.Y.Z`, or legacy `iOSvXX` now import cleanly.
+  - **Archive Path Normalization & Structure Agnosticism (`IO.ts`)**: Normalized archive entry paths (`\` to `/`) ensuring zip files created on Windows or with backslash separators parse correctly. Supported flat archive hierarchies by inferring asset types (`characters`, `sounds`, `backgrounds`) from file extensions when folder prefixes are absent.
+  - **Asset Error Isolation & Stringified JSON Resilience (`IO.ts`)**: Isolated individual asset extraction and parsing errors within try/catch blocks so a single corrupt media file does not abort the entire project import. Safely parsed stringified `json` and `thumbnail` columns from legacy exports, and defaulted empty/missing project names safely to `'Project'`.
+  - **Desktop Menu & Shortcut Parity (`src/main.ts`, `src/main/window-lifecycle.ts`, `src/preload.ts`, `src-tauri/src/lib.rs`, `src/tauriClient.js`)**: Added `File > Import Project (.sjr)...` menu items and `CmdOrCtrl+O` keyboard shortcut across Electron and Tauri desktop targets. Added drag/drop event listener deduplication guards in `Home.ts`.
+  - **Comprehensive Import Resilience Unit Suite (`tests/unit/sjr-import-resilience.test.js`)**: Added 8 targeted unit tests covering modern versions, Windows paths, flat archives, stringified metadata, corrupted asset isolation, invalid zip handling, and database flush delegation.
+
 ## [v2.13.1] - 2026-10-08
 
 **Patch Release: Browser Locale Detection Fix, Browser SQL Intent Hardening, Dead Branch Pruning, and Tauri CLI `--lang` Parity.**

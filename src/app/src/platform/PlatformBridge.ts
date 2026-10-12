@@ -113,6 +113,17 @@ export default class PlatformBridge {
         PlatformBridge.stmt({ op: 'update', table: db, row, id }, fcn);
     }
 
+    static async flushDatabase (): Promise<void> {
+        var host = hostInterface || (typeof window !== 'undefined' ? (window.tablet as ScratchJrBridge) : null);
+        if (host && typeof host.database_flush === 'function') {
+            try {
+                await host.database_flush();
+            } catch (e) {
+                console.error('[db] flush error:', e);
+            }
+        }
+    }
+
     // IO functions
 
     static async cleanassets(ft: string, fcn: () => void) {
@@ -400,8 +411,14 @@ export default class PlatformBridge {
 
     // Process and store base64-encoded .SJR file
     static loadProjectFromSjr (b64data: string) {
-        return IO.loadProjectFromSjr(b64data).then(function () {
-            window.location.reload();
+        return IO.loadProjectFromSjr(b64data).then(async function () {
+            await PlatformBridge.flushDatabase();
+            if (typeof window !== 'undefined' && (window as unknown as { Home?: { displayYourProjects?: () => void } }).Home?.displayYourProjects) {
+                ScratchAudio.sndFX('snap.wav');
+                (window as unknown as { Home: { displayYourProjects: () => void } }).Home.displayYourProjects();
+            } else {
+                window.location.reload();
+            }
         }).catch(function (err: Error) {
             var frame = gn('frame');
             var errorMessage = 'Couldn\'t load share -- project data corrupted. ' + (err ? err.message : '');
@@ -415,14 +432,20 @@ export default class PlatformBridge {
 
     // Process and import legacy JustSch SQLite database file
     static loadProjectsFromSqlite (buffer: ArrayBuffer) {
-        return IO.loadProjectsFromSqlite(buffer).then(function (count: number) {
+        return IO.loadProjectsFromSqlite(buffer).then(async function (count: number) {
+            await PlatformBridge.flushDatabase();
             if (count === 0) {
                 var frame = gn('frame');
                 if (frame) {
                     Alert.open(frame, frame, 'No valid projects found in database.', '#ff9900');
                 }
             } else {
-                window.location.reload();
+                if (typeof window !== 'undefined' && (window as unknown as { Home?: { displayYourProjects?: () => void } }).Home?.displayYourProjects) {
+                    ScratchAudio.sndFX('snap.wav');
+                    (window as unknown as { Home: { displayYourProjects: () => void } }).Home.displayYourProjects();
+                } else {
+                    window.location.reload();
+                }
             }
             return count;
         }).catch(function (err: Error) {

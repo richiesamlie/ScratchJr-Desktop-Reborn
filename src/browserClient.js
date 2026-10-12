@@ -764,6 +764,10 @@
             }
         },
 
+        database_flush: function () {
+            return flushDbSave(true);
+        },
+
         // ---- Settings & Resources ----
         io_getsettings: function () {
             return Promise.resolve('browser,false,YES,YES');
@@ -1187,15 +1191,30 @@
         openImportSjrDialog: function () {
             var input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.sjr';
+            input.accept = '.sjr,.zip,.sqllite,.sqlite,.db';
             input.onchange = function (/** @type {any} */ e) {
                 if (e.target && e.target.files && e.target.files.length > 0) {
                     var file = e.target.files[0];
+                    if (typeof window !== 'undefined' && /** @type {any} */ (window).Home && typeof (/** @type {any} */ (window).Home.importProjectFile) === 'function') {
+                        /** @type {any} */ (window).Home.importProjectFile(file);
+                        return;
+                    }
+                    var ext = (file.name.split('.').pop() || '').toLowerCase();
+                    var bridge = /** @type {any} */ (window).PlatformBridge;
+                    if (ext === 'sqlite' || ext === 'sqllite' || ext === 'db') {
+                        var r = new FileReader();
+                        r.onload = function () {
+                            if (bridge && bridge.loadProjectsFromSqlite) {
+                                bridge.loadProjectsFromSqlite(r.result);
+                            }
+                        };
+                        r.readAsArrayBuffer(file);
+                        return;
+                    }
                     var reader = new FileReader();
                     reader.onload = function () {
                         var resStr = reader.result;
                         var b64 = String(resStr).split(',')[1] || '';
-                        var bridge = /** @type {any} */ (window).PlatformBridge;
                         if (bridge && bridge.loadProjectFromSjr) {
                             bridge.loadProjectFromSjr(b64);
                         }
@@ -1204,6 +1223,14 @@
                 }
             };
             input.click();
+        },
+
+        /** @type {Array<() => void>} */
+        importProjectCallbacks: [],
+        onImportProjectRequest: function (/** @type {() => void} */ callback) {
+            if (typeof callback === 'function') {
+                browserHost.importProjectCallbacks.push(callback);
+            }
         },
 
         /** @type {Array<() => void>} */

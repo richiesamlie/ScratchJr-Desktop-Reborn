@@ -58,6 +58,10 @@ class ElectronDesktopInterface {
 
     }
 
+    async database_flush() {
+        return Promise.resolve();
+    }
+
     async io_getsettings(){
 
         debugLog('io_getsettings');
@@ -429,6 +433,19 @@ if (bridge && typeof bridge.onKeyboardShortcut === 'function') {
           Home.createNewProject(); // eslint-disable-line no-undef
         }
         break;
+      case 'import':
+        if (typeof Home !== 'undefined' && Home.openFileDialog) { // eslint-disable-line no-undef
+          Home.openFileDialog(); // eslint-disable-line no-undef
+        }
+        break;
+    }
+  });
+}
+
+if (bridge && typeof bridge.onImportProjectRequest === 'function') {
+  bridge.onImportProjectRequest(function () {
+    if (typeof Home !== 'undefined' && typeof Home.openFileDialog === 'function') { // eslint-disable-line no-undef
+      Home.openFileDialog(); // eslint-disable-line no-undef
     }
   });
 }
