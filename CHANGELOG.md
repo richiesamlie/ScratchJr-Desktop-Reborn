@@ -3,6 +3,18 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.13.3] - 2026-10-14
+
+**Patch Release: Option to Disable Update Check for Managed School Deployments (Issue #16).**
+
+### Added
+- **Update Check Suppression for Managed School Fleets (`src/main/updater.ts`, `src/main.ts`) (Issue #16)**:
+  - **CLI Flags**: Supported `--no-update-check` and `--disable-update-check` command-line flags (e.g. for Ansible-deployed `.desktop` launchers on Linux / Chromebook fleets) to completely disable startup update popups and omit the "Check for Updates..." item from the `File` menu.
+  - **Environment Variables**: Supported `SCRATCHJR_NO_UPDATE_CHECK=1` and `SCRATCHJR_DISABLE_UPDATE_CHECK=1` (`'1'`, `'true'`, `'yes'`) for system-wide configuration via `/etc/environment` or session profiles.
+  - **Zero-Network Guard (`src/main/updater.ts`)**: Added `isUpdateCheckDisabled()` check in `checkForUpdate()` that short-circuits execution before making any outbound CDN or GitHub API HTTP requests.
+  - **Menu & Launch Orchestration (`src/main.ts`)**: Conditionally removed `Check for Updates...` from the application `File` menu without redundant menu separators, suppressed the 3-second startup auto-check timer, and added administrator notification fallback dialog in `showUpdateCheck()`.
+  - **Documentation & Unit Tests (`docs/SCHOOL-DEPLOYMENT.md`, `tests/unit/update-check-disable.test.js`)**: Documented fleet deployment best practices and added 10 unit tests verifying flag permutations, environment variables, and zero-network behavior.
+
 ## [v2.13.2] - 2026-10-12
 
 **Patch Release: Resilient Cross-Platform Project Import, Web IndexedDB Flush Seam, In-Place Lobby Refresh, and Desktop Import Menu Parity (Issue #15).**

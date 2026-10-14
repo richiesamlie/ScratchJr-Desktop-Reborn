@@ -81,6 +81,52 @@ export function compareVersions(a: string, b: string): number {
     return 0;
 }
 
+/**
+ * Determine if update checking is disabled by CLI flag or environment variable.
+ * Used by fleet managers / school admins to silence update prompts and network requests.
+ *
+ * Checks:
+ *   - CLI flags: --no-update-check, --disable-update-check
+ *   - Environment variables: SCRATCHJR_NO_UPDATE_CHECK, SCRATCHJR_DISABLE_UPDATE_CHECK ('1', 'true', 'yes')
+ */
+export function isUpdateCheckDisabled(
+    argv: string[] = process.argv,
+    env: NodeJS.ProcessEnv = process.env
+): boolean {
+    const hasDisableFlag = argv.some((arg) => {
+        if (arg === '--no-update-check' || arg === '--disable-update-check') {
+            return true;
+        }
+        if (arg.startsWith('--no-update-check=') || arg.startsWith('--disable-update-check=')) {
+            const val = arg.split('=')[1]?.trim().toLowerCase();
+            return val !== 'false' && val !== '0' && val !== 'no';
+        }
+        if (arg.startsWith('--update-check=')) {
+            const val = arg.split('=')[1]?.trim().toLowerCase();
+            return val === 'false' || val === '0' || val === 'no' || val === 'off';
+        }
+        return false;
+    });
+
+    if (hasDisableFlag) {
+        return true;
+    }
+
+    const envVal = env.SCRATCHJR_NO_UPDATE_CHECK ?? env.SCRATCHJR_DISABLE_UPDATE_CHECK;
+    if (envVal !== undefined) {
+        const normalized = envVal.trim().toLowerCase();
+        return normalized === '1' || normalized === 'true' || normalized === 'yes';
+    }
+
+    const updateCheckEnv = env.SCRATCHJR_UPDATE_CHECK;
+    if (updateCheckEnv !== undefined) {
+        const normalized = updateCheckEnv.trim().toLowerCase();
+        return normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off';
+    }
+
+    return false;
+}
+
 const CDN_URLS = [
     `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/master/version.json`,
     `https://cdn.jsdelivr.net/gh/${REPO_OWNER}/${REPO_NAME}@master/version.json`,
@@ -116,6 +162,14 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
         releasePageUrl,
         releaseNotes: '',
     };
+
+    if (isUpdateCheckDisabled()) {
+        debugLog('Update check skipped: updates disabled by configuration (--no-update-check)');
+        return {
+            ...defaultResult,
+            error: 'Update checks are disabled on this system.',
+        };
+    }
 
     // Tier 1: Try static CDN endpoints first (rate-limit free)
     for (const cdnUrl of CDN_URLS) {

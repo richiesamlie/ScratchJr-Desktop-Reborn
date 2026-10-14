@@ -13,7 +13,7 @@ import { logFile, debugLog } from './main/logging';
 import { ScratchJRDataStore } from './main/data-store';
 import { createWindow, getWindow } from './main/window-lifecycle';
 import * as ipcHandlers from './main/ipc-handlers';
-import { checkForUpdate, openExternalUrl } from './main/updater';
+import { checkForUpdate, openExternalUrl, isUpdateCheckDisabled } from './main/updater';
 
 let dataStore: ScratchJRDataStore | undefined;
 
@@ -47,6 +47,18 @@ ipcHandlers.register(() => dataStore as ScratchJRDataStore, getWindow);
 /** Check for updates and show a native dialog with the result.
  *  Silent unless announceUpToDate — the launch-time check must not nag. */
 async function showUpdateCheck(announceUpToDate = false): Promise<void> {
+    if (isUpdateCheckDisabled()) {
+        if (announceUpToDate) {
+            const win = getWindow();
+            dialog.showMessageBox(win!, {
+                type: 'info',
+                buttons: ['OK'],
+                title: 'Update Check Disabled',
+                message: 'Automatic and manual updates are disabled by the system administrator.',
+            });
+        }
+        return;
+    }
     const win = getWindow();
     const info = await checkForUpdate();
     if (info.available) {
@@ -119,10 +131,12 @@ app.whenReady().then(async () => {
         click: () => { const w = getWindow(); if (w && !w.isDestroyed()) w.webContents.send('export-stage-request'); },
     });
     fsMenu.push({ type: 'separator' });
-    fsMenu.push({
-        label: 'Check for Updates...',
-        click: () => { showUpdateCheck(true); },
-    });
+    if (!isUpdateCheckDisabled()) {
+        fsMenu.push({
+            label: 'Check for Updates...',
+            click: () => { showUpdateCheck(true); },
+        });
+    }
     fsMenu.push({ role: 'quit' });
 
     const template: MenuItemConstructorOptions[] = [
@@ -136,9 +150,11 @@ app.whenReady().then(async () => {
     Menu.setApplicationMenu(menu);
 
     // Auto-check for updates on launch (fire-and-forget, 3s delay to not slow startup)
-    setTimeout(() => {
-        showUpdateCheck();
-    }, 3000);
+    if (!isUpdateCheckDisabled()) {
+        setTimeout(() => {
+            showUpdateCheck();
+        }, 3000);
+    }
 });
 
 app.on('window-all-closed', () => {

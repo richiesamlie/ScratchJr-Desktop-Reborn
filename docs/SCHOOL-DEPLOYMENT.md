@@ -107,13 +107,18 @@ needs elevation.
 
 - The app's updater is **notification-only**: a dialog with
   Download/View/Cancel; it never downloads or installs anything by itself
-  (`src/main/main.ts:49-88`). Users can simply not click.
-- There is currently **no policy/registry key to disable the check**. If you
-  must suppress it: block `api.github.com` (and `github.com` for the
-  dialog's links) at the firewall, or vendor a build with `REPO_OWNER`
-  pointed at an internal mirror. A `--no-update-check` flag or
-  `DisableUpdateCheck` policy would be a small upstream contribution to
-  request.
+  (`src/main.ts:49-88`).
+- **Command-line flag**: Launch ScratchJr with `--no-update-check` (or `--disable-update-check`)
+  to completely suppress the automatic 3-second startup update check, eliminate all
+  outbound update network calls, and remove the "Check for Updates..." item from the
+  File menu.
+  - Example in a Linux desktop launcher (`.desktop` via Ansible):
+    ```ini
+    Exec=/usr/bin/scratchjr --no-update-check %U
+    ```
+- **Environment variable**: Set `SCRATCHJR_NO_UPDATE_CHECK=1` (or `SCRATCHJR_DISABLE_UPDATE_CHECK=1`)
+  in `/etc/environment` or session profiles to enforce update suppression fleet-wide without altering launchers.
+- On offline or firewall-restricted networks, update requests fail silently without disrupting the application.
 
 ## 7. Multi-user / shared-lab machines
 
