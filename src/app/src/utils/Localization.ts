@@ -78,7 +78,12 @@ export default class Localization {
 
         // Get messages
         IO.requestFromServer(localizationRoot + 'localizations/' + topLevel + '.json', (result: string) => {
-            localizationMessages = JSON.parse(result);
+            try {
+                localizationMessages = JSON.parse(result);
+            } catch (e) {
+                console.error('Failed to parse localization messages for:', topLevel, e);
+                localizationMessages = localizationMessages || {};
+            }
             whenDone();
         });
     }

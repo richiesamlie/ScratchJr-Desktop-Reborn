@@ -167,6 +167,36 @@ export async function preprocessAndLoadCss (baseUrl: string, url: string) {
     head.appendChild(style);
 }
 
+/**
+ * Loads a list of CSS files in parallel while preserving exact document.head
+ * DOM order so the CSS cascade remains deterministic.
+ */
+export async function loadCssList (baseUrl: string, urls: string[]) {
+    const results = await Promise.all(
+        urls.map(async (url) => {
+            if (typeof document !== 'undefined' && document.getElementById(url)) {
+                return null;
+            }
+            const data = await preprocessAndLoad(url);
+            let cssData = data.replace(/url\('/g, 'url(\'' + baseUrl + '/');
+            cssData = cssData.replace(/url\(([^'])/g, 'url(' + baseUrl + '/$1');
+            return { url, cssData };
+        })
+    );
+
+    if (typeof document !== 'undefined' && document.head) {
+        for (const item of results) {
+            if (!item || document.getElementById(item.url)) continue;
+            const head = document.head;
+            const style = document.createElement('style');
+            style.id = item.url;
+            style.type = 'text/css';
+            style.appendChild(document.createTextNode(item.cssData));
+            head.appendChild(style);
+        }
+    }
+}
+
 export function newDiv (parent: HTMLElement, x: number, y: number, w: number, h: number, styles?: Record<string, string | number>) {
     var el = document.createElement('div');
     el.style.position = 'absolute';

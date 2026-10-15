@@ -41,14 +41,19 @@ describe('startup layout bootstrap IPC contract', () => {
         expect(libSource).toContain('var cssData = await preprocessAndLoad(url);');
     });
 
+    it('exports loadCssList for parallel CSS loading with preserved cascade order', () => {
+        expect(libSource).toContain('export async function loadCssList');
+        expect(libSource).toContain('Promise.all');
+    });
+
     it('makes loadPage async and awaits all CSS loads', () => {
         expect(appEntrySource).toContain('export async function loadPage');
-        expect(appEntrySource).toContain('await preprocessAndLoadCss(');
-        // Every preprocessAndLoadCss call must be awaited
+        expect(appEntrySource).toMatch(/await (?:loadCssList|preprocessAndLoadCss)\(/);
+        // Every CSS load call must be awaited
         const lines = appEntrySource.split('\n');
-        const cssLines = lines.filter((l) => l.includes('preprocessAndLoadCss(') && !l.trim().startsWith('//'));
+        const cssLines = lines.filter((l) => (l.includes('preprocessAndLoadCss(') || l.includes('loadCssList(')) && !l.trim().startsWith('//'));
         for (const line of cssLines) {
-            expect(line).toContain('await preprocessAndLoadCss(');
+            expect(line).toMatch(/await (?:loadCssList|preprocessAndLoadCss)\(/);
         }
     });
 });

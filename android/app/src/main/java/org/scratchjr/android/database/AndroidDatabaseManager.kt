@@ -18,6 +18,7 @@ class AndroidDatabaseManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AndroidDatabaseManager"
+        private val ALLOWED_TABLES = setOf("PROJECTS", "USERSHAPES", "USERBKGS")
     }
 
     private val dbHelper = DbOpenHelper(context)
@@ -80,22 +81,13 @@ class AndroidDatabaseManager(private val context: Context) {
         return try {
             val json = JSONObject(jsonStr)
 
-            // Handle legacy { stmt: "...", values: [...] } wrapper
-            if (json.has("stmt")) {
-                val stmt = json.getString("stmt")
-                val values = json.optJSONArray("values")
-                val bindArgs = mutableListOf<String>()
-                if (values != null) {
-                    for (i in 0 until values.length()) {
-                        bindArgs.add(values.optString(i))
-                    }
-                }
-                db.execSQL(stmt, bindArgs.toTypedArray())
-                return "1"
-            }
-
             val op = json.getString("op").lowercase()
             val table = json.getString("table").uppercase()
+
+            if (!ALLOWED_TABLES.contains(table)) {
+                Log.w(TAG, "executeStmt: rejected unknown table: $table")
+                return "-1"
+            }
 
             when (op) {
                 "insert" -> {
@@ -159,21 +151,12 @@ class AndroidDatabaseManager(private val context: Context) {
         return try {
             val json = JSONObject(jsonStr)
 
-            // Handle legacy { stmt: "...", values: [...] } wrapper
-            if (json.has("stmt")) {
-                val stmt = json.getString("stmt")
-                val values = json.optJSONArray("values")
-                val bindArgs = mutableListOf<String>()
-                if (values != null) {
-                    for (i in 0 until values.length()) {
-                        bindArgs.add(values.optString(i))
-                    }
-                }
-                val cursor = db.rawQuery(stmt, bindArgs.toTypedArray())
-                return cursorToJsonArray(cursor).toString()
+            val table = json.getString("table").uppercase()
+            if (!ALLOWED_TABLES.contains(table)) {
+                Log.w(TAG, "executeQuery: rejected unknown table: $table")
+                return "[]"
             }
 
-            val table = json.getString("table").uppercase()
             val items = json.optJSONArray("items")
             val columns = if (items != null && items.length() > 0) {
                 Array(items.length()) { i -> items.getString(i).uppercase() }
@@ -190,13 +173,16 @@ class AndroidDatabaseManager(private val context: Context) {
                 for (i in 0 until where.length()) {
                     val clause = where.getJSONObject(i)
                     val col = clause.getString("col").uppercase()
-                    val op = clause.getString("op")
-                    if (op.equals("IS NULL", ignoreCase = true)) {
+                    val op = clause.getString("op").uppercase()
+                    if (op == "IS NULL") {
                         clauses.add("$col IS NULL")
-                    } else {
+                    } else if (op == "=" || op == "!=") {
                         clauses.add("$col $op ?")
                         val v = clause.opt("value")
                         selectionArgsList.add(v?.toString() ?: "")
+                    } else {
+                        Log.w(TAG, "executeQuery: rejected invalid where op: $op")
+                        return "[]"
                     }
                 }
                 selection = clauses.joinToString(" AND ")

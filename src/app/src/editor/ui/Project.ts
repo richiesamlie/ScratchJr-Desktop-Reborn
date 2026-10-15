@@ -94,6 +94,7 @@ export default class Project {
     }
 
     static delayLoadStartTime = 0;
+    static loadwaitStartTime = 0;
 
     static load (md5?: string) {
         mediaCountBase = 1;
@@ -258,6 +259,7 @@ export default class Project {
             window.clearInterval(interval);
         }
         mediaCountBase = _getMediaCount();
+        Project.loadwaitStartTime = Date.now();
         if (_getMediaCount() <= 0) {
             Project.getStarted(whenDone);
         } else {
@@ -268,7 +270,12 @@ export default class Project {
     }
 
     static loadTask (whenDone: () => void) {
-        if (_getMediaCount() <= 0) {
+        const elapsed = Date.now() - (Project.loadwaitStartTime || Date.now());
+        if (_getMediaCount() <= 0 || elapsed > 3500) {
+            if (_getMediaCount() > 0) {
+                console.warn('Project.loadwait timed out waiting for media (mediaCount=' + _getMediaCount() + '). Proceeding to load project.');
+                _setMediaCount(0);
+            }
             Project.getStarted(whenDone);
         } else {
             Project.setProgress(Project.getMediaLoadRatio(70));

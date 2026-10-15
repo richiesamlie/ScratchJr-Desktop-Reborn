@@ -141,21 +141,26 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
     });
 
     // Window-scoped keyboard shortcuts (never intercept background apps)
-    win.webContents.on('before-input-event', (_event, input) => {
+    win.webContents.on('before-input-event', (event, input) => {
         if (input.type !== 'keyDown') return;
         const isCmdOrCtrl = process.platform === 'darwin' ? input.meta : input.control;
         if (!isCmdOrCtrl) return;
 
         const key = input.key.toLowerCase();
         if (key === 's' && !input.shift && !input.alt) {
+            event.preventDefault();
             win?.webContents.send('keyboard-shortcut', 'save');
         } else if (key === 'o' && !input.shift && !input.alt) {
+            event.preventDefault();
             win?.webContents.send('import-project-request');
         } else if (key === 'z' && !input.shift && !input.alt) {
+            event.preventDefault();
             win?.webContents.send('keyboard-shortcut', 'undo');
         } else if ((key === 'z' && input.shift) || (key === 'y' && !input.shift)) {
+            event.preventDefault();
             win?.webContents.send('keyboard-shortcut', 'redo');
         } else if (key === 'n' && !input.shift && !input.alt) {
+            event.preventDefault();
             win?.webContents.send('keyboard-shortcut', 'new');
         }
     });

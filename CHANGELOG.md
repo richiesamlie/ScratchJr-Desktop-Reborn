@@ -3,6 +3,32 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.13.4] - 2026-10-15
+
+**Patch Release: Launch-to-Editor Architecture Optimizations, CSS Cascade Parallelism, Safety Timeouts, Shortcut Deduplication, and Android SQL Hardening.**
+
+### Optimized & Performance
+- **Parallel CSS Loading with Deterministic Cascade (`src/app/src/utils/lib.ts`, `src/app/appEntry.js`)**:
+  - Implemented `loadCssList` helper in `lib.ts` that fetches all page stylesheets concurrently using `Promise.all` while deterministically inserting `<style>` tags into `document.head` in exact list sequence. Eliminates the sequential HTTP/IPC round-trip waterfall in `loadPage` without any CSS specificity/cascade regressions.
+- **Cold Boot & Splash Screen Latency (`src/app/src/entry/index.ts`)**:
+  - Reduced splash screen auto-advance delay from 3000ms to 1500ms and added immediate click/tap-to-skip on the splash frame (`indexFirstTime()`).
+
+### Fixed & Hardened
+- **Project Media Load Deadlock Safety Timeout (`src/app/src/editor/ui/Project.ts`)**:
+  - Added a 3500ms safety timeout to `Project.loadTask()` during project initialization. In cases where corrupt, missing, or blocked image/audio assets prevent media decrement counters from reaching zero, the loader logs a warning and proceeds into the editor rather than hanging on an infinite loading spinner.
+- **Electron Shortcut Deduplication (`src/main/window-lifecycle.ts`)**:
+  - Added `event.preventDefault()` to intercepted window shortcuts (`Ctrl+S`, `Ctrl+O`, `Ctrl+Z`, `Ctrl+Y`, `Ctrl+N`) in `win.webContents.on('before-input-event')`, preventing keystrokes from double-firing both the custom renderer IPC message and the native Electron menu accelerator.
+- **Android SQL Intent Allowlist & Dead Raw-SQL Removal (`android/app/src/main/java/org/scratchjr/android/database/AndroidDatabaseManager.kt`)**:
+  - Enforced `ALLOWED_TABLES` table validation across all database operations (`PROJECTS`, `USERSHAPES`, `USERBKGS`).
+  - Removed dead legacy `stmt` raw-SQL branches in `executeStmt` and `executeQuery`.
+  - Restricted `WHERE` operators to an approved allowlist (`=`, `!=`, `IS NULL`), bringing Android database execution parity to parity with Electron and Tauri IPC security models.
+- **Settings and Localization Fallback Resilience (`src/app/appEntry.js`, `src/app/src/utils/Localization.ts`)**:
+  - Wrapped `settings.json` and locale JSON parsing in `try/catch` handlers with fallback default values, preventing permanent blank screens on startup if cache or config files are corrupted.
+
+### Documentation & Specifications
+- **Architecture Documentation Sync (`docs/ARCHITECTURE.md`)**:
+  - Updated documentation to reflect v2.13.4, documenting the multi-target architecture (Electron, Tauri v2, Android WebView, and Web/PWA with in-browser SQLite WASM), bridge contracts, and modern process topologies.
+
 ## [v2.13.3] - 2026-10-14
 
 **Patch Release: Option to Disable Update Check for Managed School Deployments (Issue #16).**

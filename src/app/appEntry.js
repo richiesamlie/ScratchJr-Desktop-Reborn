@@ -1,4 +1,4 @@
-import {preprocessAndLoadCss} from './src/utils/lib';
+import {loadCssList} from './src/utils/lib';
 import Localization from './src/utils/Localization';
 import AppUsage from './src/utils/AppUsage';
 import PlatformBridge from './src/platform/PlatformBridge';
@@ -8,7 +8,18 @@ import MediaLib from './src/platform/MediaLib';
 /** @param {string} settingsRoot @param {() => void} whenDone */
 function loadSettings (settingsRoot, whenDone) {
 	IO.requestFromServer(settingsRoot + 'settings.json', (result) => {
-		window.Settings = JSON.parse(result);
+		try {
+			window.Settings = JSON.parse(result);
+		} catch (e) {
+			console.error('Failed to parse settings.json, falling back to defaults:', e); // eslint-disable-line no-console
+			window.Settings = window.Settings || /** @type {any} */ ({
+				scratchJrVersion: 'desktop-v2.13.3',
+				edition: 'COMMUNITY',
+				stageColor: '#FFFFFF',
+				defaultSprite: 'Tic.svg',
+				autoSaveInterval: 60000,
+			});
+		}
 		whenDone();
 	});
 }
@@ -102,61 +113,60 @@ export async function loadPage(page) {
 		// Ignore storage access errors in sandboxed environments
 	}
 
-	// Load CSS per page
+	// Load CSS per page in parallel while preserving exact document.head cascade order
 	switch (page) {
 	default:
 	case 'index':
-		// Index page (splash screen)
-		await preprocessAndLoadCss('css', 'css/design-tokens.css');
-		await preprocessAndLoadCss('css', 'css/font.css');
-		await preprocessAndLoadCss('css', 'css/base.css');
-		await preprocessAndLoadCss('css', 'css/start.css');
-		await preprocessAndLoadCss('css', 'css/thumbs.css');
-		/* For parental gate. These CSS properties should be refactored */
-		await preprocessAndLoadCss('css', 'css/editor.css');
+		await loadCssList('css', [
+			'css/design-tokens.css',
+			'css/font.css',
+			'css/base.css',
+			'css/start.css',
+			'css/thumbs.css',
+			'css/editor.css',
+		]);
 		break;
 	case 'home':
-		// Lobby pages
-		await preprocessAndLoadCss('css', 'css/design-tokens.css');
-		await preprocessAndLoadCss('css', 'css/font.css');
-		await preprocessAndLoadCss('css', 'css/base.css');
-		await preprocessAndLoadCss('css', 'css/lobby.css');
-		await preprocessAndLoadCss('css', 'css/thumbs.css');
+		await loadCssList('css', [
+			'css/design-tokens.css',
+			'css/font.css',
+			'css/base.css',
+			'css/lobby.css',
+			'css/thumbs.css',
+		]);
 		break;
 	case 'editor':
-		// Editor pages
-		await preprocessAndLoadCss('css', 'css/design-tokens.css');
-		await preprocessAndLoadCss('css', 'css/font.css');
-		await preprocessAndLoadCss('css', 'css/base.css');
-		await preprocessAndLoadCss('css', 'css/editor.css');
-		await preprocessAndLoadCss('css', 'css/editorleftpanel.css');
-		await preprocessAndLoadCss('css', 'css/editorstage.css');
-		await preprocessAndLoadCss('css', 'css/editormodal.css');
-		await preprocessAndLoadCss('css', 'css/librarymodal.css');
-		await preprocessAndLoadCss('css', 'css/paintlook.css');
+		await loadCssList('css', [
+			'css/design-tokens.css',
+			'css/font.css',
+			'css/base.css',
+			'css/editor.css',
+			'css/editorleftpanel.css',
+			'css/editorstage.css',
+			'css/editormodal.css',
+			'css/librarymodal.css',
+			'css/paintlook.css',
+		]);
 		break;
 	case 'gettingStarted':
-		// Getting started video page
-		await preprocessAndLoadCss('css', 'css/design-tokens.css');
-		await preprocessAndLoadCss('css', 'css/font.css');
-		await preprocessAndLoadCss('css', 'css/base.css');
-		await preprocessAndLoadCss('css', 'css/gs.css');
+		await loadCssList('css', [
+			'css/design-tokens.css',
+			'css/font.css',
+			'css/base.css',
+			'css/gs.css',
+		]);
 		break;
 	case 'inappAbout':
-		// About ScratchJr in-app help frame
-		await preprocessAndLoadCss('style', 'inapp/style/about.css');
+		await loadCssList('style', ['inapp/style/about.css']);
 		break;
 	case 'inappInterfaceGuide':
-		// Interface guide in-app help frame
-		await preprocessAndLoadCss('style', 'inapp/style/interface.css');
+		await loadCssList('style', ['inapp/style/interface.css']);
 		break;
 	case 'inappPaintEditorGuide':
-		// Paint editor guide in-app help frame
-		await preprocessAndLoadCss('style', 'inapp/style/paint.css');
+		await loadCssList('style', ['inapp/style/paint.css']);
 		break;
 	case 'inappBlocksGuide':
-		// Blocks guide in-app help frame
-		await preprocessAndLoadCss('style', 'inapp/style/blocks.css');
+		await loadCssList('style', ['inapp/style/blocks.css']);
 		break;
 	}
 

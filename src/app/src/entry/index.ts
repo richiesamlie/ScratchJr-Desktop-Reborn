@@ -60,10 +60,25 @@ function indexFirstTime () {
         gn('redguy')!.className = 'red show';
     }
 
-    setTimeout(function () {
+    var splashTimer: ReturnType<typeof setTimeout> | null = null;
+    var advance = function () {
+        if (splashTimer) {
+            clearTimeout(splashTimer);
+            splashTimer = null;
+        }
+        var f = gn('frame');
+        if (f) {
+            f.onclick = null;
+        }
         indexLoadOptions();
-    }, /*SPLASH SCREEN LOAD DELAY*/3000);
-    
+    };
+
+    var frameEl = gn('frame');
+    if (frameEl) {
+        frameEl.onclick = advance;
+    }
+
+    splashTimer = setTimeout(advance, /*SPLASH SCREEN LOAD DELAY*/1500);
 }
 
 function indexLoadOptions () {

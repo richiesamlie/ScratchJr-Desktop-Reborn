@@ -1,8 +1,8 @@
 # Architecture — ScratchJr Desktop Reborn
 
-Verified from source (v1.9.0-android). Companion documents:
-`ANDROID-PORT-PLAN.md` (Android specs & audit), `THREAT-MODEL.md`
-(boundaries), `engine.md` (editor internals), `development.md` (build).
+Verified from source (v2.13.4). Companion documents:
+`ANDROID-PORT-PLAN.md` (Android specs & audit), `WEB-PORT-PLAN.md` (Web WASM architecture),
+`THREAT-MODEL.md` (boundaries), `engine.md` (editor internals), `development.md` (build).
 
 ## Process topology
 
@@ -10,7 +10,7 @@ Verified from source (v1.9.0-android). Companion documents:
 
 ```text
 ┌───────────────────────────── Main (Node 24, Electron 43) ─────────────────────┐
-│ main.ts (orchestrator, 151 ln)                                                  │
+│ main.ts (orchestrator, 169 ln)                                                  │
 │  ├─ window-lifecycle.ts   security config, nav policy, close handshake          │
 │  ├─ ipc-handlers.ts       19 channels, all renderer entry points                │
 │  │    ├─ db-intents.ts    allowlist + parameterized SQL composer                │
@@ -24,13 +24,13 @@ Verified from source (v1.9.0-android). Companion documents:
         │ sandbox:true, contextIsolation:true, nodeIntegration:false
 ┌──────────────────────────── Renderer (Chromium 150) ────────────────────────────┐
 │ 4 pages (index/home/editor/gettingstarted), CSP default-src 'self'               │
-│  ├─ hostClient.js         detects host: delegates to electronClient or webhost  │
-│  ├─ electronClient.js     legacy window.tablet adapter (loads outside bundle)   │
+│  ├─ hostClient.js         detects host: delegates to electronClient             │
+│  ├─ electronClient.js     window.tablet & window.scratchjr adapter              │
 │  ├─ webhost.js / webav.js shared bridge shim & camera/mic recording subsystem    │
 │  ├─ app.bundle.js         esbuild ESM bundle, code-split per page                │
 │  │   ├─ platform/         PlatformBridge, IO (zip .sjr, thumbnails), MediaLib   │
 │  │   ├─ editor/engine/    Runtime, Thread, Prims, Stage, Sprite, Page           │
-│  │   │     └─ ports.ts    typed EnginePorts seam (UI decoupling; see F-14)       │
+│  │   │     └─ ports.ts    typed EnginePorts seam (UI decoupling)                 │
 │  │   ├─ editor/ui/        Project, Library, Palette, Scripts, Undo, ...         │
 │  │   ├─ lobby/ painteditor/ geom/ utils/                                        │
 │  │   └─ modelRegistry.ts  WeakMap element→model (no DOM expandos)               │
@@ -42,7 +42,21 @@ Verified from source (v1.9.0-android). Companion documents:
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2. Android Host (Kotlin / Android 16 API 36)
+### 2. Desktop Host (Tauri v2 / Rust)
+
+```text
+┌─────────────────────────── Native Rust Backend ─────────────────────────────────┐
+│ lib.rs / commands.rs / db.rs / io.rs                                             │
+│  ├─ db.rs                 rusqlite direct ACID transactions, backup restore     │
+│  └─ io.rs                 safe filesystem I/O, media storage, md5 computation   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+        │ Tauri IPC invoke (tauriClient.js) — window.tablet & window.scratchjr
+┌──────────────────────────── Renderer (System WebView) ──────────────────────────┐
+│ Identical renderer bundle (app.bundle.js) & HTML pages                           │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3. Android Host (Kotlin / Android 16 API 36)
 
 ```text
 ┌────────────────────── Native Shell (Android API 36, AGP 9.3) ───────────────────┐
@@ -69,6 +83,17 @@ Verified from source (v1.9.0-android). Companion documents:
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### 4. Web / PWA Host (Browser SQLite WASM)
+
+```text
+┌──────────────────────────── Browser / PWA Runtime ──────────────────────────────┐
+│ Service Worker (sw.js) offline caching                                           │
+│  ├─ browserClient.js       in-browser sql.js WASM engine + IndexedDB persistence│
+│  ├─ webav.js              standard getUserMedia & MediaRecorder                 │
+│  └─ app.bundle.js         identical renderer bundle                             │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
 ## Key data flows
 
 **Save (debounced 100ms):** renderer `database_stmt` intent → allowlist
@@ -92,8 +117,7 @@ native save dialog → main writes file (`IO.ts:276-413`,
 
 **`.sjr` import:** drop → jszip parse → version gate → project row insert →
 asset writes (last-segment names, main-side basename guard) → thumbnails
-(`IO.ts:464-633`). Known gaps: non-transactional, silent corrupt-zip
-failure (audit F-07/F-08).
+(`IO.ts:464-633`).
 
 **Update check:** launch +3s → GitHub API (If-None-Match ETag) → compare →
 dialog → user's browser. Never downloads/executes.
@@ -115,17 +139,15 @@ dialog → user's browser. Never downloads/executes.
 
 | Module | Owns | Lines |
 |---|---|---:|
-| `main.ts` | wiring, crash flush, app menu, update dialog | 151 |
-| `ipc-handlers.ts` | all channels, save dialogs | 298 |
-| `database.ts` | sql.js lifecycle, persistence, recovery, migration | 528 |
+| `main.ts` | wiring, crash flush, app menu, update dialog | 169 |
+| `ipc-handlers.ts` | all channels, save dialogs | 282 |
+| `database.ts` | sql.js lifecycle, persistence, recovery, migration | 545 |
 | `data-store.ts` | init coordination, cache, path safety | 171 |
-| `window-lifecycle.ts` | BrowserWindow, security, close handshake | 163 |
-| `updater.ts` | release check, version compare | 224 |
+| `window-lifecycle.ts` | BrowserWindow, security, close handshake, shortcuts | 178 |
+| `updater.ts` | release check, version compare | 309 |
 | `logging.ts` | debug.log with rotation | 39 |
-| `lib/db-intents.ts` | intent validation + SQL composition | 166 |
+| `lib/db-intents.ts` | intent validation + SQL composition | 167 |
 | `lib/path-utils.ts` | path containment | 26 |
 
 No module imports renderer code; dependency direction is strictly
-main → lib. `ipc-handlers.ts` at 298 lines is the largest boundary module
-and is domain-organized by channel group — the "god module" risk from the
-2026-08 handoff brief did not materialize.
+main → lib.
