@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-console */
 // ScratchJr Reborn Service Worker (Offline PWA Cache)
-var CACHE_NAME = 'scratchjr-pwa-v2.0.0';
+var CACHE_NAME = 'scratchjr-pwa-v2.14.0';
 
 var PRECACHE_URLS = [
   './',
@@ -16,8 +16,16 @@ var PRECACHE_URLS = [
   './css/lobby.css',
   './css/editor.css',
   './css/librarymodal.css',
-  './css/painteditor.css',
+  './css/design-tokens.css',
+  './css/font.css',
+  './css/thumbs.css',
+  './css/editorleftpanel.css',
+  './css/editorstage.css',
+  './css/editormodal.css',
+  './css/paintlook.css',
+  './css/gs.css',
   './settings.json',
+  './media.json',
   '../sql-wasm.js',
   '../sql-wasm.wasm',
   '../browserClient.js',
@@ -31,9 +39,11 @@ self.addEventListener('install', function (/** @type {any} */ event) {
   sw.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      return cache.addAll(PRECACHE_URLS).catch(function (err) {
-        console.warn('[SW] Pre-cache partial warning:', err);
-      });
+      return Promise.allSettled(
+        PRECACHE_URLS.map(function (url) {
+          return cache.add(url);
+        })
+      );
     })
   );
 });

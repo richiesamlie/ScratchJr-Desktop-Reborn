@@ -26,6 +26,21 @@
                 || (window.location.origin && window.location.origin.indexOf('tauri.localhost') !== -1)))
     );
 
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+        if (isTauri) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (var i = 0; i < registrations.length; i++) {
+                    registrations[i].unregister();
+                }
+            }).catch(function () {});
+        } else if (!window.scratchjr && typeof AndroidInterface === 'undefined'
+            && window.location && window.location.protocol.startsWith('http')) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js').catch(function () {});
+            });
+        }
+    }
+
     if (window.scratchjr) {
         load('../electronClient.js');
     } else if (isTauri) {

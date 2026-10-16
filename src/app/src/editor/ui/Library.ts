@@ -314,7 +314,9 @@ export default class Library {
                 var svgBase64 = utf8ToBase64(svgText);
 
                 PlatformBridge.setmedia(svgBase64, 'svg', function (svgMd5: string) {
+                    if (!svgMd5) return;
                     PlatformBridge.setmedia(pngBase64, 'png', function (pngMd5: string) {
+                        if (!pngMd5) return;
                         var key = isCostume ? 'usershapes' : 'userbkgs';
                         var row: Record<string, DbValue> = isCostume
                             ? {
@@ -398,7 +400,9 @@ export default class Library {
                     var svgBase64 = utf8ToBase64(wrappedSvg);
 
                     PlatformBridge.setmedia(svgBase64, 'svg', function (svgMd5: string) {
+                        if (!svgMd5) return;
                         PlatformBridge.setmedia(pngThumbBase64, 'png', function (pngMd5: string) {
+                            if (!pngMd5) return;
                             var key = isCostume ? 'usershapes' : 'userbkgs';
                             var row: Record<string, DbValue> = isCostume
                                 ? {

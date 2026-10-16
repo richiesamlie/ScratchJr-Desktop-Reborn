@@ -42,10 +42,30 @@ class AudioCapture {
         /** @type {MediaStream | null} */ this.currentStream = null;
         /** @type {MediaRecorder | null} */ this.mediaRecorder = null;
         /** @type {Blob | null} */ this.savedBlob = null;
+        /** @type {string} */ this.recordedMimeType = 'audio/webm';
+        /** @type {Promise<void> | null} */ this.stopPromise = null;
+        /** @type {(() => void) | null} */ this._resolveStop = null;
         /** @type {any} */ this.audioProcessor = null;
         /** @type {MediaStreamAudioSourceNode | null} */ this.mediaStreamSource = null;
         /** @type {number} */ this.recordStartTime = 0;
         /** @type {number} */ this.recordDuration = 0;
+    }
+
+    detectSupportedMimeType() {
+        var candidates = [
+            'audio/webm;codecs=opus',
+            'audio/webm',
+            'audio/ogg;codecs=opus',
+            'audio/mp4'
+        ];
+        if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+            for (var i = 0; i < candidates.length; i++) {
+                if (MediaRecorder.isTypeSupported(candidates[i])) {
+                    return candidates[i];
+                }
+            }
+        }
+        return '';
     }
 
     /** @param {boolean} [isNewRecording] */
@@ -79,10 +99,27 @@ class AudioCapture {
         if ((/** @type {any} */ (this)).isRecordingPermitted === false) {
             throw (new Error('Recording audio is turned off'));
         }
-        this.chunks = null;
+        this.chunks = [];
         this.currentStream = stream;
-        this.mediaRecorder = new MediaRecorder(stream);
+        var mimeType = this.detectSupportedMimeType();
+        var recorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+        this.recordedMimeType = recorder.mimeType || mimeType || 'audio/webm';
+        this.mediaRecorder = recorder;
         this.mediaRecorder.ondataavailable = this.onRecordData.bind(this);
+        var self = this;
+        this.stopPromise = new Promise(function (resolve) {
+            self._resolveStop = resolve;
+        });
+        this.mediaRecorder.onstop = function () {
+            if (self.chunks && self.chunks.length > 0 && !self.savedBlob) {
+                self.savedBlob = new Blob(self.chunks, { type: self.recordedMimeType || 'audio/webm' });
+            }
+            if (self._resolveStop) {
+                var resolve = self._resolveStop;
+                self._resolveStop = null;
+                resolve();
+            }
+        };
         this.mediaRecorder.start();
 
     }
@@ -101,7 +138,9 @@ class AudioCapture {
         if (!this.chunks) {
             this.chunks = [];
         }
-        this.chunks.push(e.data);
+        if (e.data && e.data.size > 0) {
+            this.chunks.push(e.data);
+        }
 
 
     }
@@ -116,9 +155,9 @@ class AudioCapture {
                 }
             }
 
-            if (!this.chunks) return null;
+            if (!this.chunks || this.chunks.length === 0) return null;
 
-            let blob  = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
+            let blob  = new Blob(this.chunks, { type: this.recordedMimeType || 'audio/webm' });
             this.chunks = [];
 
             this.audioElement.srcObject = this.currentStream;
@@ -142,19 +181,44 @@ class AudioCapture {
 
         this.stopAudioMeter();
 
+        if (this.mediaRecorder) {
+            var recorder = this.mediaRecorder;
+            this.mediaRecorder = null;
+            if (recorder.state !== 'inactive') {
+                try {
+                    recorder.requestData();
+                } catch (e) { /* ignore */ }
+                try {
+                    recorder.stop();
+                } catch (e) {
+                    if (this._resolveStop) {
+                        var r = this._resolveStop;
+                        this._resolveStop = null;
+                        r();
+                    }
+                }
+            } else if (this._resolveStop) {
+                var r2 = this._resolveStop;
+                this._resolveStop = null;
+                r2();
+            }
+        } else if (this._resolveStop) {
+            var r3 = this._resolveStop;
+            this._resolveStop = null;
+            r3();
+        }
         if (this.currentStream) {
             var tracks = this.currentStream.getTracks();
             for (var i = 0; i < tracks.length; i++) {
                 tracks[i].stop();
             }
         }
-        if (this.mediaRecorder) {
-            this.mediaRecorder.requestData();
-            this.mediaRecorder.stop();
-        }
-        this.mediaRecorder = null;
         this.currentStream = null;
+        return this.waitForStop();
+    }
 
+    waitForStop() {
+        return this.stopPromise || Promise.resolve();
     }
 
     stopPlay() {
@@ -169,18 +233,20 @@ class AudioCapture {
             this.stopRecord();
         }
 
-        let blob = this.captureRecordingAsBlob();
+        const capture = this;
+        this.waitForStop().then(function () {
+            let blob = capture.captureRecordingAsBlob();
 
-        if (blob) {
-            let fileReader = new FileReader();
-            fileReader.onload = () => {
-                const capture = this;
-                capture.audioPlaybackElement = new Audio(/** @type {string} */ (fileReader.result));
-                capture.audioPlaybackElement.volume = 0.8; // don't oversaturate speakers;
-                capture.tryPlayAudio(capture.audioPlaybackElement);
-            };
-            fileReader.readAsDataURL(blob);
-        }
+            if (blob) {
+                let fileReader = new FileReader();
+                fileReader.onload = () => {
+                    capture.audioPlaybackElement = new Audio(/** @type {string} */ (fileReader.result));
+                    capture.audioPlaybackElement.volume = 0.8; // don't oversaturate speakers;
+                    capture.tryPlayAudio(capture.audioPlaybackElement);
+                };
+                fileReader.readAsDataURL(blob);
+            }
+        });
 
         return this.recordDuration || 1;
     }

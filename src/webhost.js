@@ -42,7 +42,9 @@
         // ---- Storage / DB / settings: forward to Kotlin ----
         database_stmt: function (/** @type {any} */ intent) {
             var str = typeof intent === 'string' ? intent : JSON.stringify(intent);
-            return AndroidInterface.database_stmt(str);
+            var res = AndroidInterface.database_stmt(str);
+            var num = Number(res);
+            return Number.isNaN(num) ? res : num;
         },
         database_query: function (/** @type {any} */ intent) {
             var str = typeof intent === 'string' ? intent : JSON.stringify(intent);
@@ -85,7 +87,7 @@
         },
 
         recordsound_recordstop: function () {
-            getAudioCapture().stopRecord();
+            return getAudioCapture().stopRecord();
         },
 
         recordsound_volume: function () {
@@ -102,26 +104,39 @@
 
         recordsound_recordclose: function (/** @type {string} */ keep) {
             try {
+                var capture = getAudioCapture();
                 if (keep === 'YES') {
-                    var capture = getAudioCapture();
-                    var blob = capture.captureRecordingAsBlob();
-                    if (blob) {
+                    return capture.waitForStop().then(function () {
+                        var blob = capture.captureRecordingAsBlob();
+                        if (!blob) return undefined;
                         var filename = capture.getId();
-                        var fileReader = new FileReader();
-                        fileReader.onload = function () {
-                            // Save the recording through the native media store
-                            // (same channel desktop uses: io_setmedianame).
-                            var result = /** @type {string} */ (fileReader.result);
-                            var b64 = String(result).split(',')[1];
-                            /** @type {(s: string, n: string, e: string) => void} */ (AndroidInterface.io_setmedianame)(b64, filename, 'webm');
-                        };
-                        fileReader.readAsDataURL(blob);
-                    }
+                        return new Promise(function (resolve) {
+                            var fileReader = new FileReader();
+                            fileReader.onload = function () {
+                                // Save the recording through the native media store
+                                // (same channel desktop uses: io_setmedianame).
+                                var result = /** @type {string} */ (fileReader.result);
+                                var b64 = String(result).split(',')[1];
+                                Promise.resolve(
+                                    /** @type {(s: string, n: string, e: string) => unknown} */ (AndroidInterface.io_setmedianame)(b64, filename, 'webm')
+                                ).then(function () {
+                                    resolve(undefined);
+                                }).catch(function () {
+                                    resolve(undefined);
+                                });
+                            };
+                            fileReader.onerror = function () {
+                                resolve(undefined);
+                            };
+                            fileReader.readAsDataURL(/** @type {Blob} */ (blob));
+                        });
+                    });
                 } else {
-                    getAudioCapture().stopRecord();
+                    return capture.stopRecord();
                 }
             } catch (e) {
                 console.error('webhost: save recording failed', e);
+                return Promise.resolve();
             }
         },
 

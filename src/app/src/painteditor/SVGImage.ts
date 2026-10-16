@@ -185,7 +185,7 @@ export default class SVGImage {
         var img = SVGImage.getClonedImage(elem);
         var imageid = img.id;
         var dataurl = elem.getAttribute('xlink:href') || elem.getAttribute('href');
-        if (!dataurl || !dataurl.startsWith('data:')) {
+        if (!dataurl || !dataurl.startsWith('data:image/')) {
             return;
         }
         var html5img = document.createElement('img');

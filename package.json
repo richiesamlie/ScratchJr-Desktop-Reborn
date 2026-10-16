@@ -1,7 +1,7 @@
 {
     "name": "ScratchJr",
     "productName": "ScratchJr",
-    "version": "2.13.4",
+    "version": "2.14.0",
     "description": "ScratchJr Desktop Edition",
     "main": "build/main.js",
     "scripts": {
@@ -11,7 +11,7 @@
         "make:zip": "node scripts/package-and-zip.js",
         "lint": "eslint src --color",
         "test": "vitest run",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc --noEmit && tsc -p tsconfig.main.json --noEmit",
         "smoke": "node scripts/smoke-test.js",
         "interact": "node scripts/interaction-test.js",
         "build:main": "tsc -p tsconfig.main.json",

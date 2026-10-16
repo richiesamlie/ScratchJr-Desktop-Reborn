@@ -186,7 +186,16 @@ class MainActivity : AppCompatActivity() {
             ): Boolean {
                 fileChooserCallback?.onReceiveValue(null)
                 fileChooserCallback = filePathCallback
-                filePickerLauncher.launch("image/*")
+                val acceptTypes = fileChooserParams?.acceptTypes
+                    ?.filter { it.isNotBlank() }
+                    ?: emptyList()
+                val mimeType = when {
+                    acceptTypes.isEmpty() -> "*/*"
+                    acceptTypes.all { it.startsWith("image/", ignoreCase = true) } -> "image/*"
+                    acceptTypes.all { it.startsWith("audio/", ignoreCase = true) } -> "audio/*"
+                    else -> "*/*"
+                }
+                filePickerLauncher.launch(mimeType)
                 return true
             }
         }
@@ -321,10 +330,11 @@ class MainActivity : AppCompatActivity() {
                 null
             )
         }
-        // Stop any live camera feed / recording so we don't hold the
-        // microphone or camera in the background (P6 audio/camera lifecycle).
+        // Stop any live camera feed, recording, or active audio playback so we don't hold the
+        // microphone, camera, or audio output in the background (P6 audio/camera lifecycle).
+        bridge.stopAllSounds()
         webView.evaluateJavascript(
-            "try { if (window.__androidHost) { window.__androidHost.scratchjr_stopfeed(); } } catch (e) {}",
+            "try { if (window.__androidHost) { window.__androidHost.scratchjr_stopfeed(); window.__androidHost.recordsound_recordstop(); window.__androidHost.recordsound_stopplay(); } } catch (e) {}",
             null
         )
         webView.onPause()

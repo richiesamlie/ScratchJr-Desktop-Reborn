@@ -3,6 +3,39 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.14.0] - 2026-10-16
+
+**Minor Release: Comprehensive Cross-Platform Architecture Audit & System-Wide Remediation (Tracks A, B, C, D).**
+
+### Security & Architecture Audit Remediation
+- **Comprehensive Cross-Platform System Remediation**:
+  - **Zero-Inline Strict CSP & SVG Sanitizer (`svgSanitizer.ts`, `*.html`, `tauri.conf.json`)**:
+    - Eliminated `'unsafe-inline'` from `script-src` across all entry HTML files and Tauri v2 configurations.
+    - Moved inline Service Worker script from `index.html` into `hostClient.js`.
+    - Introduced dedicated SVG sanitizer (`svgSanitizer.ts`) blocking malicious tags (`<script>`, `<foreignObject>`, `<use>`, `<animate*>`), inline `on*` event handlers, and untrusted `href`/`xlink:href` protocols.
+  - **Desktop Backend & Host Parity (Electron & Tauri v2)**:
+    - Enforced `#[serde(deny_unknown_fields)]`, per-operation field allowlists, primitive-only values, and strict `WHERE`/`ORDER BY` checks in `src-tauri/src/db.rs`.
+    - Implemented atomic backup rotation and integrity verification during corruption recovery in Tauri.
+    - Gated DevTools and debug manifest paths in release builds; added a 10s fallback close timer in Tauri `CloseRequested`.
+    - Separated intent rejection (`-2`) from SQLite runtime execution errors (`-3`) in Electron and Tauri.
+  - **Android Native Shell Hardening (`AndroidDatabaseManager.kt`, `AndroidBridge.kt`, `MainActivity.kt`)**:
+    - Added column allowlists and strict `ASC`/`DESC` validation to `AndroidDatabaseManager.kt`.
+    - Stripped base64 prefixes, deleted `.bak` files during clean, and protected against path traversal in `io_gettextresource`.
+    - Restricted FileProvider paths in `file_paths.xml` to `exports/` and `media/`.
+    - Dynamic MIME type resolution for WebView file chooser and background audio pausing in `MainActivity.kt`.
+  - **Web/PWA Resilience & Durability (`browserClient.js`, `webav.js`, `sw.js`)**:
+    - Cached `IDBDatabase` connection handles, enforced schema defaults, and guarded media operations with exclusive locks.
+    - Negotiated dynamic audio MIME types via `MediaRecorder.isTypeSupported` and eliminated async recording races.
+    - Corrected Service Worker precache list, eliminating broken 404 assets and dynamically caching all split chunks.
+  - **Renderer Engine & Paint Editor Hardening**:
+    - Queued concurrent `Project.save` callbacks, eliminating save callback drops and thumbnail deletion races.
+    - Clamped maximum canvas dimensions to 4096px preventing OOM crashes.
+    - Cleaned up event listeners and temporary DOM `<input>` elements in `Record.ts`, `inapp.ts`, `editor.ts`, and `Paint.ts`.
+  - **CI/CD Supply Chain & Packaging**:
+    - Pinned all GitHub Action dependencies to immutable 40-character commit SHAs.
+    - Configured secure Android release keystore secrets on GitHub Actions.
+    - Integrated Tauri unit tests (`cargo test`) and version lockstep validation in CI.
+
 ## [v2.13.4] - 2026-10-15
 
 **Patch Release: Launch-to-Editor Architecture Optimizations, CSS Cascade Parallelism, Safety Timeouts, Shortcut Deduplication, and Android SQL Hardening.**

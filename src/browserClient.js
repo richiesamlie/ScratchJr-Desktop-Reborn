@@ -47,11 +47,23 @@
             return md5cmn(c ^ (b | ~d), a, b, x, s, t);
         }
 
+        /** @type {Uint8Array | number[]} */
+        var bytes;
+        if (typeof TextEncoder !== 'undefined') {
+            bytes = new TextEncoder().encode(str);
+        } else {
+            var utf8Str = unescape(encodeURIComponent(str));
+            var arrBytes = [];
+            for (var bIdx = 0; bIdx < utf8Str.length; bIdx++) {
+                arrBytes.push(utf8Str.charCodeAt(bIdx) & 0xff);
+            }
+            bytes = arrBytes;
+        }
         /** @type {number[]} */
         var words = [];
-        var byteLen = str.length;
+        var byteLen = bytes.length;
         for (var i = 0; i < byteLen; i++) {
-            words[i >> 2] |= (str.charCodeAt(i) & 0xff) << ((i % 4) * 8);
+            words[i >> 2] |= (bytes[i] & 0xff) << ((i % 4) * 8);
         }
         words[byteLen >> 2] |= 0x80 << ((byteLen % 4) * 8);
         words[(((byteLen + 8) >> 6) << 4) + 14] = byteLen * 8;
@@ -152,8 +164,13 @@
     var IDB_VERSION = 1;
     var STORE_SQLITE = 'sqlite_db';
     var STORE_MEDIA = 'media_store';
+    /** @type {IDBDatabase | null} */
+    var cachedIdb = null;
 
     function openIdb() {
+        if (cachedIdb) {
+            return Promise.resolve(cachedIdb);
+        }
         return new Promise(function (/** @type {(db: IDBDatabase) => void} */ resolve, reject) {
             var req = indexedDB.open(IDB_NAME, IDB_VERSION);
             req.onupgradeneeded = function (/** @type {any} */ ev) {
@@ -165,7 +182,18 @@
                     db.createObjectStore(STORE_MEDIA);
                 }
             };
-            req.onsuccess = function () { resolve(req.result); };
+            req.onsuccess = function () {
+                var db = req.result;
+                cachedIdb = db;
+                db.onclose = function () {
+                    cachedIdb = null;
+                };
+                db.onversionchange = function () {
+                    db.close();
+                    cachedIdb = null;
+                };
+                resolve(db);
+            };
             req.onerror = function () { reject(req.error); };
         });
     }
@@ -473,20 +501,20 @@
                         sqlDb.run(
                             'CREATE TABLE IF NOT EXISTS PROJECTS ('
                             + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
-                            + 'CTIME TEXT, MTIME TEXT, ALTMD5 TEXT, POS INTEGER, '
+                            + 'CTIME DATETIME DEFAULT CURRENT_TIMESTAMP, MTIME TEXT, ALTMD5 TEXT, POS INTEGER, '
                             + 'NAME TEXT, JSON TEXT, THUMBNAIL TEXT, OWNER TEXT, '
-                            + 'GALLERY TEXT, DELETED TEXT, VERSION TEXT, ISGIFT INTEGER);'
+                            + 'GALLERY TEXT, DELETED TEXT DEFAULT \'NO\', VERSION TEXT, ISGIFT INTEGER DEFAULT 0);'
                         );
                         sqlDb.run(
                             'CREATE TABLE IF NOT EXISTS USERSHAPES ('
                             + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
-                            + 'CTIME TEXT, MD5 TEXT, ALTMD5 TEXT, WIDTH TEXT, HEIGHT TEXT, '
+                            + 'CTIME DATETIME DEFAULT CURRENT_TIMESTAMP, MD5 TEXT, ALTMD5 TEXT, WIDTH TEXT, HEIGHT TEXT, '
                             + 'EXT TEXT, NAME TEXT, OWNER TEXT, SCALE TEXT, VERSION TEXT);'
                         );
                         sqlDb.run(
                             'CREATE TABLE IF NOT EXISTS USERBKGS ('
                             + 'ID INTEGER PRIMARY KEY AUTOINCREMENT, '
-                            + 'CTIME TEXT, MD5 TEXT, ALTMD5 TEXT, WIDTH TEXT, HEIGHT TEXT, '
+                            + 'CTIME DATETIME DEFAULT CURRENT_TIMESTAMP, MD5 TEXT, ALTMD5 TEXT, WIDTH TEXT, HEIGHT TEXT, '
                             + 'EXT TEXT, OWNER TEXT, VERSION TEXT);'
                         );
                         sqlDb.run(
@@ -540,14 +568,21 @@
     /** @param {any} intent */
     function executeIntent(intent) {
         return initDatabase().then(function (/** @type {any} */ db) {
-            if (!intent || typeof intent !== 'object') {
-                throw new Error('invalid db intent');
+            /** @param {string} msg */
+            function validationError(msg) {
+                var err = /** @type {any} */ (new Error(msg));
+                err.code = -2;
+                return err;
+            }
+
+            if (!intent || typeof intent !== 'object' || Array.isArray(intent)) {
+                throw validationError('invalid db intent');
             }
             var op = intent.op;
             var tableLower = (intent.table || '').toLowerCase();
             var rawCols = (/** @type {any} */ (ALLOWED_TABLES))[tableLower];
             if (!rawCols) {
-                throw new Error('unknown table: ' + intent.table);
+                throw validationError('unknown table: ' + intent.table);
             }
             /** @type {string[]} */
             var allowedCols = rawCols;
@@ -556,30 +591,36 @@
             /** @param {string[]} cols */
             function assertColumns(cols) {
                 for (var i = 0; i < cols.length; i++) {
-                    var colLower = cols[i].toLowerCase();
+                    var colLower = String(cols[i]).toLowerCase();
                     if (allowedCols.indexOf(colLower) === -1) {
-                        throw new Error('unknown column on ' + tableLower + ': ' + cols[i]);
+                        throw validationError('unknown column on ' + tableLower + ': ' + cols[i]);
                     }
                 }
             }
 
             /** @param {any} w */
             function validateWhereClause(w) {
-                if (!w || !w.col) throw new Error('missing where column');
-                var colLower = w.col.toLowerCase();
+                if (!w || !w.col) throw validationError('missing where column');
+                var colLower = String(w.col).toLowerCase();
                 if (allowedCols.indexOf(colLower) === -1) {
-                    throw new Error('unknown where column on ' + tableLower + ': ' + w.col);
+                    throw validationError('unknown where column on ' + tableLower + ': ' + w.col);
                 }
-                var whereOp = w.op || '=';
-                if (ALLOWED_WHERE_OPS.indexOf(whereOp) === -1) {
-                    throw new Error('bad where op: ' + whereOp);
+                var whereOp = w.op;
+                if (!whereOp || ALLOWED_WHERE_OPS.indexOf(whereOp) === -1) {
+                    throw validationError('bad where op: ' + String(whereOp));
                 }
                 return { col: w.col, op: whereOp, value: w.value };
             }
 
             if (op === 'insert') {
-                var row = intent.row || {};
+                var row = intent.row;
+                if (!row || typeof row !== 'object' || Array.isArray(row)) {
+                    throw validationError('insert requires row');
+                }
                 var cols = Object.keys(row);
+                if (cols.length === 0) {
+                    throw validationError('insert requires at least one column');
+                }
                 assertColumns(cols);
                 var placeholders = cols.map(function () { return '?'; }).join(', ');
                 var values = cols.map(function (c) { return row[c]; });
@@ -592,18 +633,24 @@
             }
 
             if (op === 'update') {
-                var updateRow = intent.row || {};
+                var updateRow = intent.row;
+                if (!updateRow || typeof updateRow !== 'object' || Array.isArray(updateRow)) {
+                    throw validationError('update requires row');
+                }
                 var updateCols = Object.keys(updateRow);
+                if (updateCols.length === 0) {
+                    throw validationError('update requires at least one column');
+                }
                 assertColumns(updateCols);
                 var setClauses = updateCols.map(function (c) { return c + ' = ?'; }).join(', ');
                 var setVals = updateCols.map(function (c) { return updateRow[c]; });
 
                 var whereClauses = [];
                 var whereVals = [];
-                if (intent.id !== undefined) {
+                if (intent.id !== undefined && intent.id !== null) {
                     whereClauses.push('ID = ?');
                     whereVals.push(intent.id);
-                } else if (intent.where && intent.where.length > 0) {
+                } else if (Array.isArray(intent.where) && intent.where.length > 0) {
                     intent.where.forEach(function (/** @type {any} */ w) {
                         var validated = validateWhereClause(w);
                         if (validated.op === 'IS NULL') {
@@ -613,11 +660,10 @@
                             whereVals.push(validated.value);
                         }
                     });
+                } else {
+                    throw validationError('update requires id');
                 }
-                var updateSql = 'UPDATE ' + table + ' SET ' + setClauses;
-                if (whereClauses.length > 0) {
-                    updateSql += ' WHERE ' + whereClauses.join(' AND ');
-                }
+                var updateSql = 'UPDATE ' + table + ' SET ' + setClauses + ' WHERE ' + whereClauses.join(' AND ');
                 db.run(updateSql, setVals.concat(whereVals));
                 var updatedRows = db.getRowsModified();
                 flushDbSave();
@@ -627,10 +673,10 @@
             if (op === 'delete') {
                 var delWhere = [];
                 var delVals = [];
-                if (intent.id !== undefined) {
+                if (intent.id !== undefined && intent.id !== null) {
                     delWhere.push('ID = ?');
                     delVals.push(intent.id);
-                } else if (intent.where && intent.where.length > 0) {
+                } else if (Array.isArray(intent.where) && intent.where.length > 0) {
                     intent.where.forEach(function (/** @type {any} */ w) {
                         var validated = validateWhereClause(w);
                         if (validated.op === 'IS NULL') {
@@ -640,11 +686,10 @@
                             delVals.push(validated.value);
                         }
                     });
+                } else {
+                    throw validationError('delete requires id');
                 }
-                var delSql = 'DELETE FROM ' + table;
-                if (delWhere.length > 0) {
-                    delSql += ' WHERE ' + delWhere.join(' AND ');
-                }
+                var delSql = 'DELETE FROM ' + table + ' WHERE ' + delWhere.join(' AND ');
                 db.run(delSql, delVals);
                 var deletedRows = db.getRowsModified();
                 flushDbSave();
@@ -677,9 +722,9 @@
                 }
                 if (intent.order && intent.order.col) {
                     assertColumns([intent.order.col]);
-                    var dir = (intent.order.dir || 'ASC').toUpperCase();
+                    var dir = String(intent.order.dir === undefined ? 'ASC' : intent.order.dir).toUpperCase();
                     if (dir !== 'ASC' && dir !== 'DESC') {
-                        throw new Error('bad order dir: ' + dir);
+                        throw validationError('bad order dir: ' + dir);
                     }
                     selSql += ' ORDER BY ' + intent.order.col + ' ' + dir;
                 }
@@ -698,7 +743,7 @@
                 return JSON.stringify(rows);
             }
 
-            throw new Error('Unsupported intent op: ' + op);
+            throw validationError('Unsupported intent op: ' + op);
         });
     }
 
@@ -739,10 +784,12 @@
         database_stmt: function (/** @type {any} */ raw) {
             try {
                 var intent = typeof raw === 'string' ? JSON.parse(raw) : raw;
-                if (!intent || typeof intent !== 'object') return Promise.resolve(-2);
+                if (!intent || typeof intent !== 'object' || Array.isArray(intent) || intent.op === 'select') {
+                    return Promise.resolve(-2);
+                }
                 return executeIntent(intent).catch(function (/** @type {any} */ e) {
                     console.error('[browserClient] database_stmt error:', e);
-                    return -3;
+                    return (e && e.code === -2) ? -2 : -3;
                 });
             } catch (err) {
                 console.error('[browserClient] malformed intent JSON:', err);
@@ -753,7 +800,9 @@
         database_query: function (/** @type {any} */ raw) {
             try {
                 var intent = typeof raw === 'string' ? JSON.parse(raw) : raw;
-                if (!intent || typeof intent !== 'object') return Promise.resolve('[]');
+                if (!intent || typeof intent !== 'object' || Array.isArray(intent) || intent.op !== 'select') {
+                    return Promise.resolve('[]');
+                }
                 return executeIntent(intent).catch(function (/** @type {any} */ e) {
                     console.error('[browserClient] database_query error:', e);
                     return '[]';
@@ -799,6 +848,7 @@
         // ---- Virtual File & Media I/O (with In-Memory LRU Cache) ----
         io_setfile: function (/** @type {string} */ name, /** @type {string} */ contents) {
             putMediaCache(name, contents);
+            if (!hasExclusiveLock) return Promise.resolve(name);
             return idbPut(STORE_MEDIA, name, contents);
         },
 
@@ -816,6 +866,15 @@
 
         io_remove: function (/** @type {string} */ name) {
             removeMediaCache(name);
+            if (!hasExclusiveLock) return Promise.resolve(undefined);
+            if (sqlDb) {
+                try {
+                    sqlDb.run('DELETE FROM PROJECTFILES WHERE MD5 = ?', [name]);
+                    flushDbSave();
+                } catch (_) {
+                    /* ignore sqlite delete error */
+                }
+            }
             return idbDelete(STORE_MEDIA, name);
         },
 
@@ -829,10 +888,12 @@
 
         io_setmedia: function (/** @type {string} */ base64ContentStr, /** @type {string} */ ext) {
             try {
-                var hash = md5(base64ContentStr);
+                var cleanData = base64ContentStr.indexOf(',') > -1 ? base64ContentStr.split(',')[1] : base64ContentStr;
+                var hash = md5(cleanData);
                 var filename = hash + '.' + ext;
-                putMediaCache(filename, base64ContentStr);
-                return idbPut(STORE_MEDIA, filename, base64ContentStr).then(function () {
+                putMediaCache(filename, cleanData);
+                if (!hasExclusiveLock) return Promise.resolve(filename);
+                return idbPut(STORE_MEDIA, filename, cleanData).then(function () {
                     return filename;
                 });
             } catch (e) {
@@ -844,16 +905,10 @@
         io_setmedianame: function (/** @type {string} */ encodedData, /** @type {string} */ key, /** @type {string} */ ext) {
             try {
                 var filename = key.endsWith('.' + ext) ? key : (key + '.' + ext);
-                putMediaCache(filename, encodedData);
-                if (sqlDb) {
-                    try {
-                        sqlDb.run('INSERT OR REPLACE INTO PROJECTFILES (MD5, CONTENTS) VALUES (?, ?);', [filename, encodedData]);
-                        flushDbSave();
-                    } catch (_) {
-                        /* ignore sqlite fallback error */
-                    }
-                }
-                return idbPut(STORE_MEDIA, filename, encodedData).then(function () {
+                var cleanData = encodedData.indexOf(',') > -1 ? encodedData.split(',')[1] : encodedData;
+                putMediaCache(filename, cleanData);
+                if (!hasExclusiveLock) return Promise.resolve(filename);
+                return idbPut(STORE_MEDIA, filename, cleanData).then(function () {
                     return filename;
                 });
             } catch (e) {
@@ -887,8 +942,10 @@
                         if (res && res.length > 0 && res[0].values.length > 0) {
                             var rowVal = res[0].values[0][0];
                             if (rowVal && typeof rowVal === 'string') {
-                                idbPut(STORE_MEDIA, file, rowVal).catch(function () {});
                                 var cleanRow = rowVal.indexOf('data:') === 0 ? (rowVal.split(',')[1] || rowVal) : rowVal;
+                                if (hasExclusiveLock) {
+                                    idbPut(STORE_MEDIA, file, cleanRow).catch(function () {});
+                                }
                                 putMediaCache(file, cleanRow);
                                 return cleanRow;
                             }
@@ -1036,7 +1093,8 @@
             }
         },
 
-        io_stopsound: function (/** @type {string} */ [name]) {
+        io_stopsound: function (/** @type {string | string[]} */ nameArg) {
+            var name = Array.isArray(nameArg) ? nameArg[0] : nameArg;
             if (name && activeSources[name]) {
                 try {
                     activeSources[name].stop(0);
@@ -1058,7 +1116,7 @@
         },
 
         recordsound_recordstop: function () {
-            getAudioCapture().stopRecord();
+            return getAudioCapture().stopRecord();
         },
 
         recordsound_volume: function () {
@@ -1075,24 +1133,35 @@
 
         recordsound_recordclose: function (/** @type {string} */ keep) {
             try {
+                var capture = getAudioCapture();
                 if (keep === 'YES') {
-                    var capture = getAudioCapture();
-                    var blob = capture.captureRecordingAsBlob();
-                    if (blob) {
+                    return capture.waitForStop().then(function () {
+                        var blob = capture.captureRecordingAsBlob();
+                        if (!blob) return undefined;
                         var filename = capture.getId();
-                        var fileReader = new FileReader();
-                        fileReader.onload = function () {
-                            var result = fileReader.result;
-                            var b64 = String(result).split(',')[1];
-                            browserHost.io_setmedianame(b64, filename, 'webm');
-                        };
-                        fileReader.readAsDataURL(blob);
-                    }
+                        return new Promise(function (resolve) {
+                            var fileReader = new FileReader();
+                            fileReader.onload = function () {
+                                var result = fileReader.result;
+                                var b64 = String(result).split(',')[1];
+                                browserHost.io_setmedianame(b64, filename, 'webm').then(function () {
+                                    resolve(undefined);
+                                }).catch(function () {
+                                    resolve(undefined);
+                                });
+                            };
+                            fileReader.onerror = function () {
+                                resolve(undefined);
+                            };
+                            fileReader.readAsDataURL(blob);
+                        });
+                    });
                 } else {
-                    getAudioCapture().stopRecord();
+                    return capture.stopRecord();
                 }
             } catch (e) {
                 console.error('[browserClient] recordsound_recordclose error:', e);
+                return Promise.resolve();
             }
         },
 
@@ -1276,17 +1345,44 @@
         onAppClose: function () {}
     };
 
-    // Global shortcut listener for browser window (Ctrl+S to save/export, Ctrl+O to open/import)
+    // Global shortcut listener for browser window (Ctrl+S to save, Ctrl+O to open/import, Ctrl+Z/Y undo/redo, Ctrl+N new project)
     window.addEventListener('keydown', function (/** @type {KeyboardEvent} */ e) {
         if ((e.ctrlKey || e.metaKey) && !e.altKey) {
             var key = e.key.toLowerCase();
+            var syntheticEvt = {
+                preventDefault: function () {},
+                stopPropagation: function () {},
+                timeStamp: performance.now(),
+                touches: undefined
+            };
             if (key === 's') {
                 e.preventDefault();
-                flushDbSave();
-                browserHost.triggerExportProject();
+                var scratchJrGlobal = /** @type {any} */ (window).ScratchJr;
+                if (scratchJrGlobal && scratchJrGlobal.saveProject) {
+                    scratchJrGlobal.saveProject(null, function () {});
+                }
+                flushDbSave(true);
             } else if (key === 'o') {
                 e.preventDefault();
                 browserHost.openImportSjrDialog();
+            } else if (key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                var undoGlobal = /** @type {any} */ (window).Undo;
+                if (undoGlobal && undoGlobal.prevStep) {
+                    undoGlobal.prevStep(syntheticEvt);
+                }
+            } else if ((key === 'z' && e.shiftKey) || (key === 'y' && !e.shiftKey)) {
+                e.preventDefault();
+                var redoGlobal = /** @type {any} */ (window).Undo;
+                if (redoGlobal && redoGlobal.nextStep) {
+                    redoGlobal.nextStep(syntheticEvt);
+                }
+            } else if (key === 'n') {
+                e.preventDefault();
+                var homeGlobal = /** @type {any} */ (window).Home;
+                if (homeGlobal && homeGlobal.createNewProject) {
+                    homeGlobal.createNewProject();
+                }
             }
         }
     });

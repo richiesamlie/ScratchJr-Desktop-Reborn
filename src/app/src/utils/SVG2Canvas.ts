@@ -331,7 +331,7 @@ export default class SVG2Canvas {
         setCanvasSize(newcnv, ctx.canvas.width, ctx.canvas.height);
         var newctx = newcnv.getContext('2d')!;
         var dataurl = image.getAttribute('xlink:href') || image.getAttribute('href');
-        if (!dataurl || !dataurl.startsWith('data:')) {
+        if (!dataurl || !dataurl.startsWith('data:image/')) {
             return;
         }
         var img = document.createElement('img');

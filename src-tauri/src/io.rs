@@ -3,6 +3,9 @@ use base64::Engine;
 use md5::{Digest, Md5};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static TMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub struct IoManager {
     pub scratch_dir: PathBuf,
@@ -17,8 +20,9 @@ impl IoManager {
         let media_dir = scratch_dir.join("media");
         fs::create_dir_all(&media_dir).map_err(|e| e.to_string())?;
 
-        // Dynamic resolution: check next to executable, then manifest dir
-        let mut app_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("src").join("app");
+        // Dynamic resolution: check next to executable in release builds;
+        // fall back to CARGO_MANIFEST_DIR only in debug/dev builds.
+        let mut app_root = PathBuf::new();
         if let Ok(exe) = std::env::current_exe() {
             if let Some(parent) = exe.parent() {
                 let candidate1 = parent.join("resources").join("src").join("app");
@@ -27,7 +31,16 @@ impl IoManager {
                     app_root = candidate1;
                 } else if candidate2.exists() {
                     app_root = candidate2;
+                } else {
+                    app_root = parent.to_path_buf();
                 }
+            }
+        }
+        #[cfg(debug_assertions)]
+        if !app_root.join("index.html").exists() {
+            let manifest_app = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("src").join("app");
+            if manifest_app.exists() {
+                app_root = manifest_app;
             }
         }
 
@@ -61,8 +74,11 @@ impl IoManager {
     }
 
     pub fn safe_media_path(&self, name: &str) -> Option<PathBuf> {
+        if name.is_empty() || name.contains('/') || name.contains('\\') || name.contains("..") {
+            return None;
+        }
         let safe_name = Path::new(name).file_name()?.to_str()?;
-        if safe_name.contains('/') || safe_name.contains('\\') || safe_name.contains("..") {
+        if safe_name != name || safe_name == "." || safe_name == ".." {
             return None;
         }
         Some(self.media_dir.join(safe_name))
@@ -80,6 +96,11 @@ impl IoManager {
 
     pub fn write_file(&self, name: &str, contents_b64: &str) -> Result<String, String> {
         let path = self.safe_media_path(name).ok_or_else(|| "Unsafe filename".to_string())?;
+        let safe_name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| "Unsafe filename".to_string())?
+            .to_string();
         let clean_b64 = if let Some(idx) = contents_b64.find(',') {
             &contents_b64[idx + 1..]
         } else {
@@ -87,7 +108,8 @@ impl IoManager {
         };
 
         let bytes = BASE64.decode(clean_b64.trim()).map_err(|e| e.to_string())?;
-        let tmp_path = path.with_extension(format!("tmp.{}", std::process::id()));
+        let counter = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let tmp_path = PathBuf::from(format!("{}.tmp.{}.{}", path.display(), std::process::id(), counter));
         fs::write(&tmp_path, bytes).map_err(|e| e.to_string())?;
         if path.exists() {
             let _ = fs::remove_file(&path);
@@ -100,20 +122,18 @@ impl IoManager {
         }
         let _ = fs::remove_file(&tmp_path);
 
-        Ok(name.to_string())
+        Ok(safe_name)
     }
 
     pub fn set_media(&self, b64_str: &str, ext: &str) -> Result<String, String> {
         let hash = Self::get_md5(b64_str);
         let filename = format!("{}.{}", hash, ext);
-        self.write_file(&filename, b64_str)?;
-        Ok(filename)
+        self.write_file(&filename, b64_str)
     }
 
     pub fn set_media_name(&self, encoded_data: &str, key: &str, ext: &str) -> Result<String, String> {
         let filename = format!("{}.{}", key, ext);
-        self.write_file(&filename, encoded_data)?;
-        Ok(filename)
+        self.write_file(&filename, encoded_data)
     }
 
     pub fn remove_file(&self, name: &str) -> bool {
@@ -176,19 +196,20 @@ impl IoManager {
     }
 
     pub fn get_audio_data(&self, audio_name: &str) -> Option<String> {
-        // Check user media folder
         let mut candidates = Vec::new();
-        if let Some(user_media) = self.safe_media_path(audio_name) {
-            candidates.push(user_media);
-        }
 
-        // Check app directory sounds/ and app root safely
+        // Check app_root and app_root/sounds/ first (matching Electron)
         if let Some(app_path) = self.safe_app_path(audio_name) {
             candidates.push(app_path);
         }
         let sound_rel = format!("sounds/{}", audio_name.trim_start_matches('/').trim_start_matches('\\'));
         if let Some(sound_path) = self.safe_app_path(&sound_rel) {
             candidates.push(sound_path);
+        }
+
+        // Check user media folder last
+        if let Some(user_media) = self.safe_media_path(audio_name) {
+            candidates.push(user_media);
         }
 
         for candidate in candidates {
@@ -213,5 +234,39 @@ impl IoManager {
             }
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn dummy_io_manager() -> IoManager {
+        let base = std::env::temp_dir().join(format!("scratchjr_io_test_{}", std::process::id()));
+        IoManager {
+            scratch_dir: base.clone(),
+            media_dir: base.join("media"),
+            app_root: base.join("app"),
+        }
+    }
+
+    #[test]
+    fn test_safe_media_path_rejects_traversal_and_separators() {
+        let io = dummy_io_manager();
+        assert!(io.safe_media_path("valid_file.png").is_some());
+        assert_eq!(
+            io.safe_media_path("valid_file.png").unwrap(),
+            io.media_dir.join("valid_file.png")
+        );
+
+        assert!(io.safe_media_path("").is_none());
+        assert!(io.safe_media_path(".").is_none());
+        assert!(io.safe_media_path("..").is_none());
+        assert!(io.safe_media_path("../foo.png").is_none());
+        assert!(io.safe_media_path("..\\foo.png").is_none());
+        assert!(io.safe_media_path("sub/foo.png").is_none());
+        assert!(io.safe_media_path("sub\\foo.png").is_none());
+        assert!(io.safe_media_path("/abs/foo.png").is_none());
+        assert!(io.safe_media_path("foo..bar.png").is_none());
     }
 }

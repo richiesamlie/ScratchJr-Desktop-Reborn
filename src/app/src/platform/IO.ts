@@ -130,6 +130,10 @@ export default class IO {
         PlatformBridge.getmedia(md5, nextStep);
 
         function gotit (str: string) {
+            if (!str) {
+                fcn('');
+                return;
+            }
             var base64 = IO.getImageDataURL(md5, utf8ToBase64(str));
             if (str.indexOf('xlink:href') < 0 && str.indexOf('href=') < 0) {
                 fcn(md5); // does not have embedded images
@@ -141,6 +145,10 @@ export default class IO {
         }
 
         function nextStep (dataurl: string) {
+            if (!dataurl) {
+                fcn('');
+                return;
+            }
             if (IO.getExtension(md5) === 'png') {
                 fcn(IO.getImageDataURL(md5, dataurl));
                 return;
@@ -186,7 +194,7 @@ export default class IO {
                 }
                 for (var i = 0; i < images.length; i++) {
                     var dataurl = images[i].getAttribute('xlink:href') || images[i].getAttribute('href');
-                    if (dataurl && dataurl.startsWith('data:')) {
+                    if (dataurl && dataurl.startsWith('data:image/')) {
                         var svgimg = document.createElement('img');
                         svgimg.src = dataurl;
                         if (!svgimg.complete) {
@@ -710,19 +718,23 @@ export default class IO {
                                                     order: { col: 'ctime', dir: 'desc' },
                                                 };
                                                 IO.query('usershapes', json, function (results) {
-                                                    var rows = JSON.parse(results);
-                                                    if (rows.length == 0) {
-                                                        PlatformBridge.stmt({
-                                                            op: 'insert', table: 'usershapes',
-                                                            row: {
-                                                                scale, md5: fullName, altmd5: thumbnailMD5,
-                                                                version: PROJECT_FORMAT_VERSION, width: width.toString(),
-                                                                height: height.toString(), ext: 'svg', name: charName,
-                                                            },
-                                                        }, function () {
+                                                    try {
+                                                        var rows = JSON.parse(results);
+                                                        if (rows.length == 0) {
+                                                            PlatformBridge.stmt({
+                                                                op: 'insert', table: 'usershapes',
+                                                                row: {
+                                                                    scale, md5: fullName, altmd5: thumbnailMD5,
+                                                                    version: PROJECT_FORMAT_VERSION, width: width.toString(),
+                                                                    height: height.toString(), ext: 'svg', name: charName,
+                                                                },
+                                                            }, function () {
+                                                                resolve();
+                                                            });
+                                                        } else {
                                                             resolve();
-                                                        });
-                                                    } else {
+                                                        }
+                                                    } catch (_) {
                                                         resolve();
                                                     }
                                                 });
@@ -740,19 +752,23 @@ export default class IO {
                                             order: { col: 'ctime', dir: 'desc' },
                                         };
                                         IO.query('usershapes', json, function (results) {
-                                            var rows = JSON.parse(results);
-                                            if (rows.length == 0) {
-                                                PlatformBridge.stmt({
-                                                    op: 'insert', table: 'usershapes',
-                                                    row: {
-                                                        scale: '0.5', md5: fullName, altmd5: fullName,
-                                                        version: PROJECT_FORMAT_VERSION, width: '480',
-                                                        height: '360', ext: ext, name: charName,
-                                                    },
-                                                }, function () {
+                                            try {
+                                                var rows = JSON.parse(results);
+                                                if (rows.length == 0) {
+                                                    PlatformBridge.stmt({
+                                                        op: 'insert', table: 'usershapes',
+                                                        row: {
+                                                            scale: '0.5', md5: fullName, altmd5: fullName,
+                                                            version: PROJECT_FORMAT_VERSION, width: '480',
+                                                            height: '360', ext: ext, name: charName,
+                                                        },
+                                                    }, function () {
+                                                        resolve();
+                                                    });
+                                                } else {
                                                     resolve();
-                                                });
-                                            } else {
+                                                }
+                                            } catch (_) {
                                                 resolve();
                                             }
                                         });
@@ -785,18 +801,22 @@ export default class IO {
                                                     order: { col: 'ctime', dir: 'desc' },
                                                 };
                                                 IO.query('userbkgs', json, function (results) {
-                                                    var rows = JSON.parse(results);
-                                                    if (rows.length == 0) {
-                                                        PlatformBridge.stmt({
-                                                            op: 'insert', table: 'userbkgs',
-                                                            row: {
-                                                                md5: fullName, altmd5: thumbnailMD5, version: PROJECT_FORMAT_VERSION,
-                                                                width: '480', height: '360', ext: 'svg',
-                                                            },
-                                                        }, function () {
+                                                    try {
+                                                        var rows = JSON.parse(results);
+                                                        if (rows.length == 0) {
+                                                            PlatformBridge.stmt({
+                                                                op: 'insert', table: 'userbkgs',
+                                                                row: {
+                                                                    md5: fullName, altmd5: thumbnailMD5, version: PROJECT_FORMAT_VERSION,
+                                                                    width: '480', height: '360', ext: 'svg',
+                                                                },
+                                                            }, function () {
+                                                                resolve();
+                                                            });
+                                                        } else {
                                                             resolve();
-                                                        });
-                                                    } else {
+                                                        }
+                                                    } catch (_) {
                                                         resolve();
                                                     }
                                                 });
@@ -813,18 +833,22 @@ export default class IO {
                                             order: { col: 'ctime', dir: 'desc' },
                                         };
                                         IO.query('userbkgs', json, function (results) {
-                                            var rows = JSON.parse(results);
-                                            if (rows.length == 0) {
-                                                PlatformBridge.stmt({
-                                                    op: 'insert', table: 'userbkgs',
-                                                    row: {
-                                                        md5: fullName, altmd5: fullName, version: PROJECT_FORMAT_VERSION,
-                                                        width: '480', height: '360', ext: ext,
-                                                    },
-                                                }, function () {
+                                            try {
+                                                var rows = JSON.parse(results);
+                                                if (rows.length == 0) {
+                                                    PlatformBridge.stmt({
+                                                        op: 'insert', table: 'userbkgs',
+                                                        row: {
+                                                            md5: fullName, altmd5: fullName, version: PROJECT_FORMAT_VERSION,
+                                                            width: '480', height: '360', ext: ext,
+                                                        },
+                                                    }, function () {
+                                                        resolve();
+                                                    });
+                                                } else {
                                                     resolve();
-                                                });
-                                            } else {
+                                                }
+                                            } catch (_) {
                                                 resolve();
                                             }
                                         });
@@ -832,11 +856,14 @@ export default class IO {
                                 });
                             });
                         } else {
-                            await new Promise<void>(function (resolve) {
-                                PlatformBridge.setmedianame(b2data, name, ext, function () {
-                                    resolve();
+                            var safeAssetExts = ['svg', 'png', 'jpg', 'jpeg', 'gif', 'wav', 'mp3', 'ogg', 'webm'];
+                            if (safeAssetExts.indexOf(ext) > -1) {
+                                await new Promise<void>(function (resolve) {
+                                    PlatformBridge.setmedianame(b2data, name, ext, function () {
+                                        resolve();
+                                    });
                                 });
-                            });
+                            }
                         }
                     } catch (err) {
                         console.warn('Skipping corrupted asset entry ' + fullName + ':', err);

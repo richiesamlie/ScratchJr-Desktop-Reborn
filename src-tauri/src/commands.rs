@@ -134,10 +134,12 @@ pub fn io_get_audio_data(state: State<'_, AppState>, audio_name: String) -> Opti
 }
 
 #[tauri::command]
-pub fn app_closed_acked(app: AppHandle) {
+pub fn app_closed_acked(app: AppHandle, state: State<'_, AppState>) {
+    state.db.save_backup();
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.destroy();
     }
+    app.exit(0);
 }
 
 fn clean_base64_decode(raw: &str) -> Result<Vec<u8>, String> {
@@ -205,14 +207,25 @@ async fn save_file_helper(
     }
 }
 
+fn validate_png_data_url(data_url: &str) -> Result<&str, String> {
+    match data_url.strip_prefix("data:image/png;base64,") {
+        Some(b64) if !b64.trim().is_empty() => Ok(b64),
+        _ => Err("Invalid PNG data URL: must start with data:image/png;base64,".to_string()),
+    }
+}
+
 #[tauri::command]
 pub async fn save_sjr_file(app: AppHandle, data_b64: String, suggested_name: String) -> Result<Option<String>, String> {
+    if data_b64.trim().is_empty() {
+        return Ok(None);
+    }
     save_file_helper(app, &data_b64, &suggested_name, "sjr", "ScratchJr Project (*.sjr)").await
 }
 
 #[tauri::command]
 pub async fn save_stage_png(app: AppHandle, data_url: String, suggested_name: String) -> Result<Option<String>, String> {
-    save_file_helper(app, &data_url, &suggested_name, "png", "PNG Image (*.png)").await
+    let b64 = validate_png_data_url(&data_url)?;
+    save_file_helper(app, b64, &suggested_name, "png", "PNG Image (*.png)").await
 }
 
 #[cfg(test)]
@@ -241,5 +254,16 @@ mod tests {
             parse_cli_lang_from_args(["scratchjr"]),
             None
         );
+    }
+
+    #[test]
+    fn test_validate_png_data_url() {
+        assert_eq!(
+            validate_png_data_url("data:image/png;base64,iVBORw0KGgo="),
+            Ok("iVBORw0KGgo=")
+        );
+        assert!(validate_png_data_url("data:image/jpeg;base64,abc").is_err());
+        assert!(validate_png_data_url("data:image/png;base64,   ").is_err());
+        assert!(validate_png_data_url("iVBORw0KGgo=").is_err());
     }
 }

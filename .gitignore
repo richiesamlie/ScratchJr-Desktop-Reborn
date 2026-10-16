@@ -3,13 +3,19 @@ out
 build
 src/app/dist
 *.wasm
+src/sql-wasm-browser.wasm
+src/app/sql-wasm.wasm
+src/app/sql-wasm-browser.wasm
 .DS_Store
 buglist.txt
 src/debug.log
 *.log
-# CI build artifacts (zip + checksum files generated during release)
+# CI build artifacts (zip + msi + checksum files generated during release)
 ScratchJr-*.zip
 ScratchJr-*.zip.sha256
+ScratchJr-*.msi
+ScratchJr-*.msi.sha256
+wix3.zip
 
 # Internal migration tracking (never published)
 MIGRATION.md
@@ -24,6 +30,7 @@ android/app/build/
 android/local.properties
 android/.idea/
 android/captures/
+out-android/
 *.apk
 *.aab
 

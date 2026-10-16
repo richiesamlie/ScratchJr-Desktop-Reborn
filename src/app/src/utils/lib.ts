@@ -311,17 +311,21 @@ export function hit3DRect (c: HTMLElement, pt: Point | null) {
     return true;
 }
 
+const MAX_CANVAS_DIM = 4096;
+
 export function setCanvasSize (c: HTMLElement & {width?: number; height?: number}, w: number, h: number) {
-    c.width = w;
-    c.height = h;
-    c.style.width = w + 'px';
-    c.style.height = h + 'px';
+    const safeW = Math.max(0, Math.min(MAX_CANVAS_DIM, Math.round(Number(w) || 0)));
+    const safeH = Math.max(0, Math.min(MAX_CANVAS_DIM, Math.round(Number(h) || 0)));
+    c.width = safeW;
+    c.height = safeH;
+    c.style.width = safeW + 'px';
+    c.style.height = safeH + 'px';
 }
 
 export function setCanvasSizeScaledToWindowDocumentHeight (c: HTMLElement & {width?: number; height?: number}, w: number, h: number) {
     var multiplier = window.devicePixelRatio * scaleMultiplier;
-    var scaledWidth = Math.floor(w * multiplier);
-    var scaledHeight = Math.floor(h * multiplier);
+    var scaledWidth = Math.max(0, Math.min(MAX_CANVAS_DIM, Math.floor((Number(w) || 0) * multiplier)));
+    var scaledHeight = Math.max(0, Math.min(MAX_CANVAS_DIM, Math.floor((Number(h) || 0) * multiplier)));
     c.width = scaledWidth;
     c.height = scaledHeight;
     c.style.width = scaledWidth + 'px';
@@ -426,6 +430,7 @@ export function CSSTransition3D (el: HTMLElement, obj: TransitionOptions) {
     el.style.transition = items;
     el.style.transform = translate;
     function transitionDone () {
+        el.removeEventListener('transitionend', transitionDone, true);
         el.style.transition = '';
         var mtx = new DOMMatrix(window.getComputedStyle(el as Element).transform);
         el.left = mtx.m41;

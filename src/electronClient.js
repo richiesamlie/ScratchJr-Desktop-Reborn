@@ -442,14 +442,6 @@ if (bridge && typeof bridge.onKeyboardShortcut === 'function') {
   });
 }
 
-if (bridge && typeof bridge.onImportProjectRequest === 'function') {
-  bridge.onImportProjectRequest(function () {
-    if (typeof Home !== 'undefined' && typeof Home.openFileDialog === 'function') { // eslint-disable-line no-undef
-      Home.openFileDialog(); // eslint-disable-line no-undef
-    }
-  });
-}
-
 /** @type {any} */ (window).tablet = new ElectronDesktopInterface();
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ElectronDesktopInterface;

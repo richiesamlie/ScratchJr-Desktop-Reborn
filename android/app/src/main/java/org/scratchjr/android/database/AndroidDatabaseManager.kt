@@ -18,7 +18,20 @@ class AndroidDatabaseManager(private val context: Context) {
 
     companion object {
         private const val TAG = "AndroidDatabaseManager"
-        private val ALLOWED_TABLES = setOf("PROJECTS", "USERSHAPES", "USERBKGS")
+        private val TABLE_COLUMNS: Map<String, Set<String>> = mapOf(
+            "PROJECTS" to setOf(
+                "ID", "CTIME", "MTIME", "ALTMD5", "POS", "NAME", "JSON", "THUMBNAIL",
+                "OWNER", "GALLERY", "DELETED", "VERSION", "ISGIFT"
+            ),
+            "USERSHAPES" to setOf(
+                "ID", "CTIME", "MD5", "ALTMD5", "WIDTH", "HEIGHT", "EXT", "NAME",
+                "OWNER", "SCALE", "VERSION"
+            ),
+            "USERBKGS" to setOf(
+                "ID", "CTIME", "MD5", "ALTMD5", "WIDTH", "HEIGHT", "EXT", "OWNER", "VERSION"
+            )
+        )
+        private val ALLOWED_TABLES = TABLE_COLUMNS.keys
     }
 
     private val dbHelper = DbOpenHelper(context)
@@ -81,31 +94,39 @@ class AndroidDatabaseManager(private val context: Context) {
         return try {
             val json = JSONObject(jsonStr)
 
-            val op = json.getString("op").lowercase()
-            val table = json.getString("table").uppercase()
-
-            if (!ALLOWED_TABLES.contains(table)) {
+            val op = json.optString("op", "").lowercase()
+            val table = json.optString("table", "").uppercase()
+            val allowedCols = TABLE_COLUMNS[table]
+            if (allowedCols == null) {
                 Log.w(TAG, "executeStmt: rejected unknown table: $table")
-                return "-1"
+                return "-2"
             }
 
             when (op) {
                 "insert" -> {
-                    val row = json.getJSONObject("row")
-                    val values = contentValuesFrom(row)
+                    val row = json.optJSONObject("row")
+                    if (row == null || row.length() == 0) {
+                        Log.w(TAG, "executeStmt: insert requires non-empty row")
+                        return "-2"
+                    }
+                    val values = contentValuesFrom(row, allowedCols) ?: return "-2"
                     val id = db.insertWithOnConflict(table, null, values, SQLiteDatabase.CONFLICT_REPLACE)
                     id.toString()
                 }
                 "update" -> {
-                    val row = json.getJSONObject("row")
+                    val row = json.optJSONObject("row")
+                    if (row == null || row.length() == 0) {
+                        Log.w(TAG, "executeStmt: update requires non-empty row")
+                        return "-2"
+                    }
                     val id = json.opt("id")
-                    val values = contentValuesFrom(row)
+                    val values = contentValuesFrom(row, allowedCols) ?: return "-2"
                     // The renderer always sends ids (verified: IO.ts + PlatformBridge
                     // setfield); log-and-noop on an id-less update rather than
                     // silently rewriting every row.
                     if (id == null || id == JSONObject.NULL) {
                         Log.w(TAG, "executeStmt: update without id rejected")
-                        "-1"
+                        "-2"
                     } else {
                         db.update(table, values, "ID = ?", arrayOf(id.toString())).toString()
                     }
@@ -114,31 +135,42 @@ class AndroidDatabaseManager(private val context: Context) {
                     val id = json.opt("id")
                     if (id == null || id == JSONObject.NULL) {
                         Log.w(TAG, "executeStmt: delete without id rejected")
-                        "-1"
+                        "-2"
                     } else {
                         db.delete(table, "ID = ?", arrayOf(id.toString())).toString()
                     }
                 }
-                else -> "-1"
+                else -> "-2"
             }
         } catch (e: Exception) {
             Log.e(TAG, "executeStmt error with JSON: $jsonStr", e)
-            "-1"
+            "-3"
         }
     }
 
-    private fun contentValuesFrom(row: JSONObject): ContentValues {
+    private fun contentValuesFrom(row: JSONObject, allowedCols: Set<String>): ContentValues? {
         val values = ContentValues()
         val keys = row.keys()
         while (keys.hasNext()) {
             val key = keys.next()
+            val colUpper = key.uppercase()
+            if (!allowedCols.contains(colUpper)) {
+                Log.w(TAG, "contentValuesFrom: rejected unknown column: $key")
+                return null
+            }
             val value = row.opt(key)
             if (value == null || value == JSONObject.NULL) {
-                values.putNull(key.uppercase())
+                values.putNull(colUpper)
             } else when (value) {
-                is Number -> values.put(key.uppercase(), value.toDouble())
-                is Boolean -> values.put(key.uppercase(), if (value) 1 else 0)
-                else -> values.put(key.uppercase(), value.toString())
+                is JSONArray, is JSONObject -> {
+                    Log.w(TAG, "contentValuesFrom: rejected non-primitive value for $key")
+                    return null
+                }
+                is Int -> values.put(colUpper, value.toLong())
+                is Long -> values.put(colUpper, value.toLong())
+                is Number -> values.put(colUpper, value.toDouble())
+                is Boolean -> values.put(colUpper, if (value) 1 else 0)
+                else -> values.put(colUpper, value.toString())
             }
         }
         return values
@@ -150,16 +182,29 @@ class AndroidDatabaseManager(private val context: Context) {
     fun executeQuery(jsonStr: String): String {
         return try {
             val json = JSONObject(jsonStr)
+            val op = json.optString("op", "select").lowercase()
+            if (op != "select") {
+                Log.w(TAG, "executeQuery: rejected non-select op: $op")
+                return "[]"
+            }
 
-            val table = json.getString("table").uppercase()
-            if (!ALLOWED_TABLES.contains(table)) {
+            val table = json.optString("table", "").uppercase()
+            val allowedCols = TABLE_COLUMNS[table]
+            if (allowedCols == null) {
                 Log.w(TAG, "executeQuery: rejected unknown table: $table")
                 return "[]"
             }
 
             val items = json.optJSONArray("items")
             val columns = if (items != null && items.length() > 0) {
-                Array(items.length()) { i -> items.getString(i).uppercase() }
+                val arr = Array(items.length()) { i -> items.getString(i).uppercase() }
+                for (col in arr) {
+                    if (!allowedCols.contains(col)) {
+                        Log.w(TAG, "executeQuery: rejected unknown select column: $col")
+                        return "[]"
+                    }
+                }
+                arr
             } else {
                 null
             }
@@ -173,15 +218,22 @@ class AndroidDatabaseManager(private val context: Context) {
                 for (i in 0 until where.length()) {
                     val clause = where.getJSONObject(i)
                     val col = clause.getString("col").uppercase()
-                    val op = clause.getString("op").uppercase()
-                    if (op == "IS NULL") {
+                    if (!allowedCols.contains(col)) {
+                        Log.w(TAG, "executeQuery: rejected unknown where column: $col")
+                        return "[]"
+                    }
+                    val whereOp = clause.getString("op").uppercase()
+                    if (whereOp == "IS NULL") {
                         clauses.add("$col IS NULL")
-                    } else if (op == "=" || op == "!=") {
-                        clauses.add("$col $op ?")
+                    } else if (whereOp == "=" || whereOp == "!=") {
+                        clauses.add("$col $whereOp ?")
                         val v = clause.opt("value")
+                        if (v is JSONArray || v is JSONObject) {
+                            return "[]"
+                        }
                         selectionArgsList.add(v?.toString() ?: "")
                     } else {
-                        Log.w(TAG, "executeQuery: rejected invalid where op: $op")
+                        Log.w(TAG, "executeQuery: rejected invalid where op: $whereOp")
                         return "[]"
                     }
                 }
@@ -192,7 +244,15 @@ class AndroidDatabaseManager(private val context: Context) {
             val order = json.optJSONObject("order")
             if (order != null) {
                 val col = order.getString("col").uppercase()
+                if (!allowedCols.contains(col)) {
+                    Log.w(TAG, "executeQuery: rejected unknown order column: $col")
+                    return "[]"
+                }
                 val dir = order.optString("dir", "asc").uppercase()
+                if (dir != "ASC" && dir != "DESC") {
+                    Log.w(TAG, "executeQuery: rejected invalid order dir: $dir")
+                    return "[]"
+                }
                 orderBy = "$col $dir"
             }
 
@@ -249,7 +309,12 @@ class AndroidDatabaseManager(private val context: Context) {
             val targetFile = mediaFilePath(name) ?: return false
             val tmpFile = File(mediaDirectory, "${targetFile.name}.tmp")
 
-            val bytes = Base64.decode(base64Content, Base64.DEFAULT)
+            val cleanBase64 = if (base64Content.contains(",")) {
+                base64Content.substringAfter(",")
+            } else {
+                base64Content
+            }
+            val bytes = Base64.decode(cleanBase64, Base64.DEFAULT)
             FileOutputStream(tmpFile).use { fos ->
                 fos.write(bytes)
                 fos.flush()
@@ -326,6 +391,7 @@ class AndroidDatabaseManager(private val context: Context) {
         val file = mediaFilePath(name)
         if (file != null && file.exists()) {
             removed = file.delete()
+            File(mediaDirectory, "${file.name}.bak").delete()
         }
         try {
             db.delete("PROJECTFILES", "MD5 = ?", arrayOf(name))
@@ -354,6 +420,7 @@ class AndroidDatabaseManager(private val context: Context) {
                 val filename = file.name
                 if (!isMediaInUse(filename)) {
                     file.delete()
+                    File(mediaDirectory, "${file.name}.bak").delete()
                     Log.d(TAG, "cleanProjectFiles: deleted unused file $filename")
                 }
             }

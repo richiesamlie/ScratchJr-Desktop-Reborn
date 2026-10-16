@@ -120,17 +120,21 @@ describe('Audit Remediation: Database hardening and hygiene', () => {
 });
 
 describe('Audit Remediation: Supply Chain and CI Action Pins', () => {
-    it('F-03 / P0-001: All GitHub Actions in build-release.yml are SHA-pinned (40-hex SHA)', () => {
-        const workflowPath = path.resolve(__dirname, '../../.github/workflows/build-release.yml');
-        const content = fs.readFileSync(workflowPath, 'utf8');
+    it('F-03 / P0-001: All GitHub Actions in all workflow files are SHA-pinned (40-hex SHA)', () => {
+        const workflows = ['build-release.yml', 'build-android.yml', 'deploy-pages.yml'];
 
-        // Match lines like: uses: actions/checkout@...
-        const usesLines = content.split('\n').filter(line => /uses:\s+[^.\s]+@[^\s]+/.test(line));
-        expect(usesLines.length).toBeGreaterThan(0);
+        for (const wf of workflows) {
+            const workflowPath = path.resolve(__dirname, '../../.github/workflows', wf);
+            const content = fs.readFileSync(workflowPath, 'utf8');
 
-        for (const line of usesLines) {
-            const match = line.match(/uses:\s+([^@]+)@([a-f0-9]{40})/i);
-            expect(match, `Action line must use a 40-character SHA commit hash: "${line.trim()}"`).not.toBeNull();
+            // Match lines like: uses: actions/checkout@...
+            const usesLines = content.split('\n').filter(line => /uses:\s+[^.\s]+@[^\s]+/.test(line));
+            expect(usesLines.length, `${wf} should contain uses: lines`).toBeGreaterThan(0);
+
+            for (const line of usesLines) {
+                const match = line.match(/uses:\s+([^@]+)@([a-f0-9]{40})/i);
+                expect(match, `Action line in ${wf} must use a 40-character SHA commit hash: "${line.trim()}"`).not.toBeNull();
+            }
         }
     });
 

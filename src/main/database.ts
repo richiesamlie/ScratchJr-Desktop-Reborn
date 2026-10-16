@@ -511,7 +511,7 @@ export class DatabaseManager {
             }
         } catch (e) {
             debugLog('stmt failed:', e instanceof Error ? e.message : e, json);
-            return -1;
+            return -3;
         }
     }
 
@@ -529,7 +529,13 @@ export class DatabaseManager {
             try {
                 const rows: Record<string, unknown>[] = [];
                 while (statement.step()) {
-                    rows.push(statement.getAsObject());
+                    const raw = statement.getAsObject();
+                    const normalized: Record<string, unknown> = {};
+                    for (const [k, v] of Object.entries(raw)) {
+                        normalized[k] = v;
+                        normalized[k.toLowerCase()] = v;
+                    }
+                    rows.push(normalized);
                 }
 
                 return rows;

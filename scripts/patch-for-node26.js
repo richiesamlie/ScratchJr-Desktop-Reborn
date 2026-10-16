@@ -16,17 +16,22 @@ function patchFile(filePath, patches) {
     }
     let content = fs.readFileSync(filePath, 'utf8');
     let changed = false;
+    let drifted = 0;
     for (const [search, replace] of patches) {
         if (content.includes(search)) {
             content = content.replace(search, replace);
             changed = true;
+        } else if (!content.includes(replace)) {
+            drifted++;
         }
     }
     if (changed) {
         fs.writeFileSync(filePath, content);
-        console.log(`  PATCHED: ${filePath}`);
+        console.log(`  PATCHED: ${filePath}${drifted > 0 ? ` (${drifted} patch hunk(s) did not match upstream format)` : ''}`);
+    } else if (drifted > 0) {
+        console.warn(`  WARN: ${filePath} (${drifted} patch hunk(s) did not match search or replacement — upstream format may have drifted)`);
     } else {
-        console.log(`  OK: ${filePath} (already patched or different version)`);
+        console.log(`  OK: ${filePath} (already patched)`);
     }
     return changed;
 }

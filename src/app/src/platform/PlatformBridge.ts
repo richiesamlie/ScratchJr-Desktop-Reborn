@@ -342,8 +342,18 @@ export default class PlatformBridge {
     }
 
     static recorddisappear (b: string, fcn?: (result: unknown) => void) {
-        var result = hostInterface!.recordsound_recordclose(b as unknown as boolean);
-        if (fcn) {
+        var result = hostInterface!.recordsound_recordclose(b as unknown as boolean) as unknown;
+        if (result && typeof result === 'object' && 'then' in result && typeof (result as Promise<unknown>).then === 'function') {
+            (result as Promise<unknown>).then(function (val) {
+                if (fcn) {
+                    fcn(val);
+                }
+            }).catch(function (err) {
+                if (fcn) {
+                    fcn(err);
+                }
+            });
+        } else if (fcn) {
             fcn(result);
         }
     }

@@ -65,8 +65,16 @@ class AndroidBridge(
             // Renderer callers pass app-root-relative paths like "./settings.json"
             // or "svglibrary/Cat.svg"; AssetManager does not normalize "./" or
             // duplicate separators the way Node fs does, so normalize here.
-            val normalized = filename.replace("./", "").replace("\\", "/")
-            activity.assets.open("www/$normalized").bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
+            val normalized = filename.replace("\\", "/")
+                .removePrefix("./")
+                .removePrefix("/")
+            val segments = normalized.split("/").filter { it.isNotEmpty() && it != "." }
+            if (segments.isEmpty() || segments.any { it == ".." }) {
+                Log.w(TAG, "io_gettextresource rejected traversal path: $filename")
+                return ""
+            }
+            val safePath = "www/${segments.joinToString("/")}"
+            activity.assets.open(safePath).bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
         } catch (e: Exception) {
             Log.e(TAG, "io_gettextresource error for $filename", e)
             ""
@@ -120,15 +128,16 @@ class AndroidBridge(
 
     @JavascriptInterface
     fun io_setmedia(base64Str: String, ext: String): String {
-        val md5 = CryptoUtils.md5(base64Str)
+        val clean = if (base64Str.contains(",")) base64Str.substringAfter(",") else base64Str
+        val md5 = CryptoUtils.md5(clean)
         val filename = "$md5.$ext"
-        db.saveProjectFile(filename, base64Str)
+        db.saveProjectFile(filename, clean)
         return filename
     }
 
     @JavascriptInterface
     fun io_setmedianame(base64Str: String, name: String, ext: String): String {
-        val filename = "$name.$ext"
+        val filename = if (name.endsWith(".$ext")) name else "$name.$ext"
         db.saveProjectFile(filename, base64Str)
         return filename
     }
@@ -139,23 +148,28 @@ class AndroidBridge(
         // app's bundled sounds/ first, fall back to user media; return a
         // data: URI that loadSoundFromDataURI can feed to an Audio element.
         // Bundled sounds live in assets/www/sounds/.
+        val cleanName = name.replace("\\", "/").removePrefix("./").removePrefix("/")
+        if (cleanName.isEmpty() || File(cleanName).name != cleanName || cleanName == "." || cleanName == "..") {
+            Log.w(TAG, "io_getAudioData rejected invalid name: $name")
+            return null
+        }
         val mime = when {
-            name.endsWith(".mp3", ignoreCase = true) -> "audio/mp3"
-            name.endsWith(".wav", ignoreCase = true) -> "audio/wav"
-            name.endsWith(".webm", ignoreCase = true) -> "audio/webm"
-            name.endsWith(".ogg", ignoreCase = true) -> "audio/ogg"
+            cleanName.endsWith(".mp3", ignoreCase = true) -> "audio/mp3"
+            cleanName.endsWith(".wav", ignoreCase = true) -> "audio/wav"
+            cleanName.endsWith(".webm", ignoreCase = true) -> "audio/webm"
+            cleanName.endsWith(".ogg", ignoreCase = true) -> "audio/ogg"
             else -> return null
         }
         val bundled = try {
-            activity.assets.open("www/sounds/$name").use { it.readBytes() }
+            activity.assets.open("www/sounds/$cleanName").use { it.readBytes() }
         } catch (e: Exception) {
             null
         }
         val bytes = bundled ?: try {
-            val b64 = db.readProjectFile(name) ?: return null
+            val b64 = db.readProjectFile(cleanName) ?: return null
             Base64.decode(b64, Base64.DEFAULT)
         } catch (e: Exception) {
-            Log.e(TAG, "io_getAudioData error for $name", e)
+            Log.e(TAG, "io_getAudioData error for $cleanName", e)
             null
         } ?: return null
         return "data:$mime;base64," + Base64.encodeToString(bytes, Base64.NO_WRAP)
@@ -172,15 +186,14 @@ class AndroidBridge(
     /** Called by ScratchAudio.addSound: preload a sound and cache its data URI. */
     @JavascriptInterface
     fun io_registersound(dir: String, name: String) {
-        if (!currentAudio.containsKey(name)) {
+        if (currentAudio[name].isNullOrEmpty()) {
             val dataUri = io_getAudioData(name)
-            if (dataUri != null) {
+            if (!dataUri.isNullOrEmpty()) {
                 currentAudio[name] = dataUri
             } else {
                 // Desktop tolerates missing sounds: soundDone fires so script
                 // blocks keep progressing (electronClient.js io_playsound).
-                Log.w(TAG, "io_registersound: no data for $name (will no-op on play)")
-                currentAudio[name] = ""
+                Log.w(TAG, "io_registersound: no data for $name (will retry on play)")
             }
         }
     }
@@ -189,8 +202,14 @@ class AndroidBridge(
      *  PlatformBridge.soundDone so green sound blocks advance. */
     @JavascriptInterface
     fun io_playsound(name: String) {
-        val dataUri = currentAudio[name]
-        if (dataUri == null || dataUri.isEmpty()) {
+        var dataUri = currentAudio[name]
+        if (dataUri.isNullOrEmpty()) {
+            dataUri = io_getAudioData(name)
+            if (!dataUri.isNullOrEmpty()) {
+                currentAudio[name] = dataUri
+            }
+        }
+        if (dataUri.isNullOrEmpty()) {
             Log.w(TAG, "io_playsound: unregistered sound $name - skipping")
             notifySoundDone(name)
             return
@@ -221,6 +240,10 @@ class AndroidBridge(
 
     @JavascriptInterface
     fun io_stopsound(name: String) {
+        if (name.isEmpty()) {
+            stopAllSounds()
+            return
+        }
         playingAudio.remove(name)?.let {
             try { it.stop() } catch (_: Exception) {}
             it.release()
@@ -228,10 +251,21 @@ class AndroidBridge(
         notifySoundDone(name)
     }
 
+    fun stopAllSounds() {
+        val activeNames = playingAudio.keys.toList()
+        for (name in activeNames) {
+            playingAudio.remove(name)?.let {
+                try { it.stop() } catch (_: Exception) {}
+                it.release()
+            }
+        }
+    }
+
     private fun notifySoundDone(name: String) {
+        val quotedName = org.json.JSONObject.quote(name)
         activity.webView.post {
             activity.webView.evaluateJavascript(
-                "if (window.PlatformBridge && window.PlatformBridge.soundDone) { window.PlatformBridge.soundDone('$name'); }",
+                "if (window.PlatformBridge && window.PlatformBridge.soundDone) { window.PlatformBridge.soundDone($quotedName); }",
                 null
             )
         }
@@ -349,6 +383,13 @@ class AndroidBridge(
     // Lobby share button (shares .sjr via the Android share sheet)
     // ----------------------------------------------------
 
+    private fun sanitizeExportFileName(rawName: String, defaultBase: String, ext: String): String {
+        val cleaned = rawName.ifBlank { defaultBase }
+            .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+        val base = File(cleaned).name.ifBlank { defaultBase }
+        return if (base.endsWith(ext, ignoreCase = true)) base else "$base$ext"
+    }
+
     @JavascriptInterface
     fun sendSjrUsingShareDialog(
         fileName: String,
@@ -359,7 +400,8 @@ class AndroidBridge(
     ) {
         try {
             val exportDir = File(activity.cacheDir, "exports").apply { mkdirs() }
-            val target = File(exportDir, if (fileName.endsWith(".sjr")) fileName else "$fileName.sjr")
+            val safeFileName = sanitizeExportFileName(fileName, "Project", ".sjr")
+            val target = File(exportDir, safeFileName)
             FileOutputStream(target).use { it.write(Base64.decode(b64data, Base64.DEFAULT)) }
             val uri = FileProvider.getUriForFile(activity, "${activity.packageName}.fileprovider", target)
             val share = Intent(Intent.ACTION_SEND).apply {
@@ -385,7 +427,7 @@ class AndroidBridge(
     fun sendExportedSjr(dataB64: String, suggestedName: String): String? {
         return try {
             val exportDir = File(activity.cacheDir, "exports").apply { mkdirs() }
-            val fileName = if (suggestedName.endsWith(".sjr")) suggestedName else "$suggestedName.sjr"
+            val fileName = sanitizeExportFileName(suggestedName, "Project", ".sjr")
             val targetFile = File(exportDir, fileName)
 
             val bytes = Base64.decode(dataB64, Base64.DEFAULT)
@@ -418,7 +460,7 @@ class AndroidBridge(
     fun sendExportedPng(dataUrl: String, suggestedName: String): String? {
         return try {
             val exportDir = File(activity.cacheDir, "exports").apply { mkdirs() }
-            val fileName = if (suggestedName.endsWith(".png")) suggestedName else "$suggestedName.png"
+            val fileName = sanitizeExportFileName(suggestedName, "Stage", ".png")
             val targetFile = File(exportDir, fileName)
 
             val base64Data = if (dataUrl.contains(",")) dataUrl.substringAfter(",") else dataUrl

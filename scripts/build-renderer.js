@@ -60,18 +60,26 @@ async function main() {
         await ctx.watch();
         console.log('Watching for renderer changes...');
     } else {
+        fs.rmSync(path.join(__dirname, '../src/app/dist'), { recursive: true, force: true });
         await esbuild.build(options);
         console.log('Renderer bundle built successfully.');
     }
 
-    // Ensure wasm binary is present in src/ and src/app/ for local dev and desktop runtimes
+    // Ensure wasm binary is present in src/sql-wasm.wasm and remove any legacy duplicate copies
     const sqlDist = path.join(__dirname, '..', 'node_modules', 'sql.js', 'dist');
     const wasmSource = path.join(sqlDist, 'sql-wasm.wasm');
     if (fs.existsSync(wasmSource)) {
         fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'sql-wasm.wasm'));
-        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'sql-wasm-browser.wasm'));
-        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'app', 'sql-wasm.wasm'));
-        fs.copyFileSync(wasmSource, path.join(__dirname, '..', 'src', 'app', 'sql-wasm-browser.wasm'));
+        const duplicateWasms = [
+            path.join(__dirname, '..', 'src', 'sql-wasm-browser.wasm'),
+            path.join(__dirname, '..', 'src', 'app', 'sql-wasm.wasm'),
+            path.join(__dirname, '..', 'src', 'app', 'sql-wasm-browser.wasm'),
+        ];
+        for (const dup of duplicateWasms) {
+            if (fs.existsSync(dup)) {
+                fs.rmSync(dup, { force: true });
+            }
+        }
     }
 }
 

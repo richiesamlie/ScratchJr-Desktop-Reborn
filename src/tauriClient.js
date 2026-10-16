@@ -126,12 +126,22 @@ class TauriDesktopInterface {
 
     /** @param {string} str @param {string} ext */
     async io_setmedia(str, ext) {
-        return await tauriInvoke('io_setmedia', { base64ContentStr: str, ext });
+        try {
+            return await tauriInvoke('io_setmedia', { base64ContentStr: str, ext });
+        } catch (err) {
+            console.error('[tauriClient] io_setmedia failed:', err);
+            return null;
+        }
     }
 
     /** @param {string} str @param {string} name @param {string} ext */
     async io_setmedianame(str, name, ext) {
-        return await tauriInvoke('io_setmedianame', { encodedData: str, key: name, ext });
+        try {
+            return await tauriInvoke('io_setmedianame', { encodedData: str, key: name, ext });
+        } catch (err) {
+            console.error('[tauriClient] io_setmedianame failed:', err);
+            return null;
+        }
     }
 
     /** @param {string} str */
@@ -156,7 +166,12 @@ class TauriDesktopInterface {
 
     /** @param {string} name @param {string} btoa_str */
     async io_setfile(name, btoa_str) {
-        return await tauriInvoke('io_setfile', { name, contents: btoa_str });
+        try {
+            return await tauriInvoke('io_setfile', { name, contents: btoa_str });
+        } catch (err) {
+            console.error('[tauriClient] io_setfile failed:', err);
+            return -1;
+        }
     }
 
     /** @param {string} name */
@@ -188,7 +203,7 @@ class TauriDesktopInterface {
     /** @param {string} _dir @param {string} name */
     async io_registersound(_dir, name) {
         if (!this.currentAudio[name]) {
-            const dataUri = await tauriInvoke('io_get_audio_data', { audioName: name });
+            const dataUri = await this.io_getAudioData(name);
             this.loadSoundFromDataURI(name, dataUri || '');
         }
     }
@@ -364,7 +379,7 @@ class TauriDesktopInterface {
     sendExportedSjr(dataB64, suggestedName) {
         return tauriInvoke('save_sjr_file', { dataB64, suggestedName }).catch(function (err) {
             console.error('[tauriClient] save_sjr_file failed:', err);
-            throw err;
+            return null;
         });
     }
 
@@ -373,7 +388,10 @@ class TauriDesktopInterface {
      * @param {string} suggestedName
      */
     sendExportedPng(dataUrl, suggestedName) {
-        return tauriInvoke('save_stage_png', { dataUrl, suggestedName });
+        return tauriInvoke('save_stage_png', { dataUrl, suggestedName }).catch(function (err) {
+            console.error('[tauriClient] save_stage_png failed:', err);
+            return null;
+        });
     }
 
     // Lifecycle hooks and push events
@@ -432,15 +450,18 @@ window.addEventListener('keydown', function (e) {
             e.preventDefault();
             if (tauriHost.keyboardShortcutCallback) {
                 tauriHost.keyboardShortcutCallback('save');
-            }
-            const scratchJrGlobal = /** @type {any} */ (window).ScratchJr;
-            if (scratchJrGlobal && scratchJrGlobal.saveProject) {
-                scratchJrGlobal.saveProject(null, function () {});
+            } else {
+                const scratchJrGlobal = /** @type {any} */ (window).ScratchJr;
+                if (scratchJrGlobal && scratchJrGlobal.saveProject) {
+                    scratchJrGlobal.saveProject(null, function () {});
+                }
             }
         } else if (key === 'o') {
             e.preventDefault();
             if (tauriHost.importProjectRequestCallback) {
                 tauriHost.importProjectRequestCallback();
+            } else if (tauriHost.keyboardShortcutCallback) {
+                tauriHost.keyboardShortcutCallback('import');
             } else {
                 const homeGlobal = /** @type {any} */ (window).Home;
                 if (homeGlobal && homeGlobal.openFileDialog) {
@@ -451,28 +472,31 @@ window.addEventListener('keydown', function (e) {
             e.preventDefault();
             if (tauriHost.keyboardShortcutCallback) {
                 tauriHost.keyboardShortcutCallback('undo');
-            }
-            const undoGlobal = /** @type {any} */ (window).Undo;
-            if (undoGlobal && undoGlobal.prevStep) {
-                undoGlobal.prevStep(syntheticEvt);
+            } else {
+                const undoGlobal = /** @type {any} */ (window).Undo;
+                if (undoGlobal && undoGlobal.prevStep) {
+                    undoGlobal.prevStep(syntheticEvt);
+                }
             }
         } else if ((key === 'z' && e.shiftKey) || (key === 'y' && !e.shiftKey)) {
             e.preventDefault();
             if (tauriHost.keyboardShortcutCallback) {
                 tauriHost.keyboardShortcutCallback('redo');
-            }
-            const undoGlobal = /** @type {any} */ (window).Undo;
-            if (undoGlobal && undoGlobal.nextStep) {
-                undoGlobal.nextStep(syntheticEvt);
+            } else {
+                const undoGlobal = /** @type {any} */ (window).Undo;
+                if (undoGlobal && undoGlobal.nextStep) {
+                    undoGlobal.nextStep(syntheticEvt);
+                }
             }
         } else if (key === 'n') {
             e.preventDefault();
             if (tauriHost.keyboardShortcutCallback) {
                 tauriHost.keyboardShortcutCallback('new');
-            }
-            const homeGlobal = /** @type {any} */ (window).Home;
-            if (homeGlobal && homeGlobal.createNewProject) {
-                homeGlobal.createNewProject();
+            } else {
+                const homeGlobal = /** @type {any} */ (window).Home;
+                if (homeGlobal && homeGlobal.createNewProject) {
+                    homeGlobal.createNewProject();
+                }
             }
         }
     }

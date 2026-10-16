@@ -1,4 +1,3 @@
-import ScratchJr from '../ScratchJr';
 import { enginePorts } from './ports';
 import { bumpMediaCount, getMediaCount } from './mediaCounter';
 import { getModelRefAs, setModelRef } from '../modelRegistry';
@@ -12,6 +11,7 @@ import Vector from '../../geom/Vector';
 import {newHTML, newDiv, gn,
     setCanvasSizeScaledToWindowDocumentHeight,
     DEGTOR, getIdFor, setProps, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
+import { sanitizeSvgElement } from '../../utils/svgSanitizer';
 
 export default class Page {
     div: HTMLElement;
@@ -151,6 +151,12 @@ export default class Page {
             PlatformBridge.getmedia(md5, nextStep);
         }
         function nextStep (base64: string) {
+            if (!base64) {
+                if (fcn) {
+                    fcn();
+                }
+                return;
+            }
             var str = base64ToUtf8(base64);
             str = str.replace(/>\s*</g, '><');
             me.setSVG(str);
@@ -179,8 +185,9 @@ export default class Page {
 
     setSVG (str: string) {
         var xmlDoc = new DOMParser().parseFromString(str, 'text/xml');
+        sanitizeSvgElement(xmlDoc.documentElement);
         var extxml = document.importNode(xmlDoc.documentElement, true);
-        if (extxml.childNodes[0].nodeName == '#comment') {
+        if (extxml.childNodes[0] && extxml.childNodes[0].nodeName == '#comment') {
             extxml.removeChild(extxml.childNodes[0]);
         }
         this.svg = extxml as Element;
@@ -318,7 +325,7 @@ export default class Page {
         c.width = 480 * scale;
         c.height = 360 * scale;
         var ctx = c.getContext('2d')!;
-        ctx.fillStyle = ScratchJr.stagecolor || '#FFFFFF';
+        ctx.fillStyle = enginePorts().getStageColor() || '#FFFFFF';
         ctx.fillRect(0, 0, c.width, c.height);
         var bkgImg = (this.bkg && this.bkg.childElementCount > 0 && this.bkg.childNodes[0])
             ? (this.bkg.childNodes[0] as HTMLImageElement)

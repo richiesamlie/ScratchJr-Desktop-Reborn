@@ -24,6 +24,7 @@ import {newHTML, newDiv, newP, gn,
     DEGTOR, getIdFor, setProps, isDesktop,
     fitInRect, scaleMultiplier, setCanvasSize,
     globaly, globalx, rgbToHex, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
+import { sanitizeSvgElement } from '../../utils/svgSanitizer';
 import type Stage from './Stage';
 import type Page from './Page';
 import type Thread from './Thread';
@@ -139,6 +140,10 @@ export default class Sprite {
             PlatformBridge.getmedia(md5, nextStep);
         }
         function nextStep (base64: string) {
+            if (!base64) {
+                whenDone('');
+                return;
+            }
             var str = base64ToUtf8(base64);
             str = str.replace(/>\s*</g, '><');
             spr.setSVG(str);
@@ -167,8 +172,9 @@ export default class Sprite {
 
     setSVG (str: string) {
         var xmlDoc = new DOMParser().parseFromString(str, 'text/xml');
+        sanitizeSvgElement(xmlDoc.documentElement);
         var extxml = document.importNode(xmlDoc.documentElement, true);
-        if (extxml.childNodes[0].nodeName == '#comment') {
+        if (extxml.childNodes[0] && extxml.childNodes[0].nodeName == '#comment') {
             extxml.removeChild(extxml.childNodes[0]);
         }
         this.svg = extxml as Element;
@@ -484,7 +490,7 @@ export default class Sprite {
         var pageNode = this.div ? this.div.parentNode as HTMLElement : null;
         var page = (pageNode ? getModelRefAs<Page>(pageNode, 'page') : null)
             || (enginePorts().getStage() ? enginePorts().getStage().currentPage : null);
-        ctx.fillStyle = (window as unknown as { ScratchJr?: { stagecolor?: string } }).ScratchJr?.stagecolor || '#FFFFFF';
+        ctx.fillStyle = enginePorts().getStageColor() || '#FFFFFF';
         ctx.fillRect(0, 0, 480, 360);
 
         var bkgImg: HTMLImageElement | HTMLCanvasElement | null = null;

@@ -506,18 +506,20 @@ export default class Project {
         });
     }
 
+    static pendingSaveCallbacks: Array<() => void> = [];
+
     static save (id: string, whenDone?: () => void) {
+        if (saving) {
+            if (whenDone) {
+                Project.pendingSaveCallbacks.push(whenDone);
+            }
+            return;
+        }
         saving = true;
         var saved = false;
         // Safety timeout: if the async chain breaks, always reset saving
         var safetyTimer = window.setTimeout(function () {
-            if (!saved) {
-                saved = true;
-                saving = false;
-                if (whenDone) {
-                    whenDone();
-                }
-            }
+            resetSaving();
         }, 15000);
 
         function resetSaving () {
@@ -528,6 +530,16 @@ export default class Project {
             if (whenDone) {
                 whenDone();
             }
+            const pending = Project.pendingSaveCallbacks.slice();
+            Project.pendingSaveCallbacks = [];
+            for (const cb of pending) {
+                try {
+                    cb();
+                } catch (e) {
+                    // eslint-disable-next-line no-console
+                    console.error('Error in pending save callback:', e);
+                }
+            }
         }
 
         if (!metadata) {
@@ -535,18 +547,18 @@ export default class Project {
             return;
         }
 
-        try {
-            var th = metadata.thumbnail;
-            if (th && ScratchJr.editmode != 'storyStarter') { // Don't try to delete the thumbnail in a sample project
-                var thumb = (typeof th === 'string') ? JSON.parse(th) : th;
-                if (thumb && thumb.md5.indexOf('samples/') < 0) { // In case we've exited story-starter mode
-                    Project.thumbnailUnique(thumb.md5, id, function (isUnique) {
-                        if (isUnique) {
-                            PlatformBridge.remove(thumb.md5, PlatformBridge.trace); // remove thumb;
-                        }
-                    });
+        var oldThumbMd5: string | null = null;
+        if (metadata.thumbnail && ScratchJr.editmode !== 'storyStarter' && id !== 'new') {
+            try {
+                var th = metadata.thumbnail;
+                var thumb = (typeof th === 'string') ? JSON.parse(th) : th as { md5?: string };
+                if (thumb && thumb.md5 && thumb.md5.indexOf('samples/') < 0) {
+                    oldThumbMd5 = thumb.md5;
                 }
-            }
+            } catch (_) {}
+        }
+
+        try {
             metadata.id = id;
             metadata.json = Project.getProject(ScratchJr.stage.pages[0].id);
             Project.getThumbnailPNG(ScratchJr.stage.pages[0], 192, 144, getMD5);
@@ -584,7 +596,17 @@ export default class Project {
             metadata.mtime = (new Date()).getTime().toString();
             // IO.saveProject's ProjectRecord bag is structurally compatible with our metadata
             try {
-                IO.saveProject(metadata as unknown as Parameters<typeof IO.saveProject>[0], resetSaving);
+                IO.saveProject(metadata as unknown as Parameters<typeof IO.saveProject>[0], function () {
+                    const toRemoveMd5 = oldThumbMd5;
+                    if (toRemoveMd5 && toRemoveMd5 !== md5 && ScratchJr.editmode !== 'storyStarter') {
+                        Project.thumbnailUnique(toRemoveMd5, id, function (isUnique) {
+                            if (isUnique) {
+                                PlatformBridge.remove(toRemoveMd5, PlatformBridge.trace);
+                            }
+                        });
+                    }
+                    resetSaving();
+                });
             } catch (_e) {
                 resetSaving();
             }

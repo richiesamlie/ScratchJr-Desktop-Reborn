@@ -76,6 +76,10 @@ jobs:
           # Code signing: set these secrets in GitHub repo settings when available
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_NAME: ${{ secrets.CSC_NAME }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           npm run build:renderer
           if [[ "${{ matrix.release_suffix }}" == *"arm64"* ]]; then
@@ -142,6 +146,9 @@ jobs:
       - name: Build MSI installer (Windows only)
         if: runner.os == 'Windows'
         shell: bash
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: |
           echo "Downloading WiX 3.x binaries..."
           curl -sL "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314-binaries.zip" -o wix3.zip
@@ -226,6 +233,8 @@ jobs:
             TAG_VERSION="${GITHUB_REF_NAME#v}"
             PKG_VERSION=$(node -p "require('./package.json').version")
             TAURI_VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+            CARGO_VERSION=$(node -p "require('fs').readFileSync('./src-tauri/Cargo.toml', 'utf8').match(/^version\\s*=\\s*\"([^\"]+)\"/m)[1]")
+            VERSION_JSON=$(node -p "require('./version.json').version")
             if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
               echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
               exit 1
@@ -234,8 +243,19 @@ jobs:
               echo "::error::Tag version ($TAG_VERSION) does not match tauri.conf.json version ($TAURI_VERSION)."
               exit 1
             fi
-            echo "Tag ${GITHUB_REF_NAME} matches package.json and tauri.conf.json (${PKG_VERSION})."
+            if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
+              echo "::error::Tag version ($TAG_VERSION) does not match Cargo.toml version ($CARGO_VERSION)."
+              exit 1
+            fi
+            if [ "$TAG_VERSION" != "$VERSION_JSON" ]; then
+              echo "::error::Tag version ($TAG_VERSION) does not match version.json version ($VERSION_JSON)."
+              exit 1
+            fi
+            echo "Tag ${GITHUB_REF_NAME} matches package.json, tauri.conf.json, Cargo.toml, and version.json (${PKG_VERSION})."
           fi
+
+      - name: Run Rust unit tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
 
       - name: Ensure WiX is in PATH
         shell: bash

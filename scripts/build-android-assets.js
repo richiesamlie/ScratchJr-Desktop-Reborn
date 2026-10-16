@@ -52,7 +52,7 @@ function main() {
     // ../hostClient.js; the WebView serves pages from /assets/www/, so ../
     // resolves to /assets/ — the APK assets root, one level above www/.
     // (Same ../ layout as desktop's src/.)
-    for (const f of ['hostClient.js', 'webav.js', 'webhost.js']) {
+    for (const f of ['hostClient.js', 'webav.js', 'webhost.js', 'sql-wasm.wasm']) {
         fs.copyFileSync(
             path.join(rootDir, 'src', f),
             path.join(rootDir, 'android', 'app', 'src', 'main', 'assets', f)

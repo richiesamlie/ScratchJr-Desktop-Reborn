@@ -120,7 +120,7 @@ interface ScratchJrBridge extends IpcBridge {
     recordsound_volume(): number;
     recordsound_startplay(): number | void;
     recordsound_stopplay(): void;
-    recordsound_recordclose(keep: string | boolean): void;
+    recordsound_recordclose(keep: string | boolean): void | Promise<unknown>;
 
     // ---- Permission / Camera ----
     deviceName(): string;

@@ -26,6 +26,7 @@ import Vector from '../geom/Vector';
 import type {Point} from '../geom/Vector';
 import {gn, newHTML, setCanvasSize, getIdFor, setProps, hitRect, frame, utf8ToBase64} from '../utils/lib';
 import { CURATED_FONTS } from '../utils/FontList';
+import { sanitizeSvgElement } from '../utils/svgSanitizer';
 
 // The costume name input carries a local `firstTime` expando flag (see nameFocus).
 interface PaintNameInput extends HTMLInputElement {
@@ -175,8 +176,12 @@ export default class Paint {
 
     static init (w?: number, h?: number) {
         paintFrame = document.getElementById('paintframe');
-        paintFrame!.style.width = w + 'px';
-        paintFrame!.style.height = h + 'px';
+        if (w !== undefined) {
+            paintFrame!.style.width = w + 'px';
+        }
+        if (h !== undefined) {
+            paintFrame!.style.height = h + 'px';
+        }
         BlockSpecs.loadCount++;
         IO.requestFromServer('assets/paint/splash.svg', Paint.setSplash);
         BlockSpecs.loadCount++;
@@ -301,6 +306,11 @@ export default class Paint {
 
     static close () {
         saving = true;
+        if (Camera.active) {
+            Camera.close();
+        }
+        window.removeEventListener('keydown', Paint.handleCameraKeyDown);
+        document.removeEventListener('keydown', Paint.handleCameraKeyDown);
         paintFrame!.className = 'paintframe disappear';
         frame.style.display = 'block';
         ScratchJr.editorEvents();
@@ -1406,6 +1416,7 @@ export default class Paint {
         nativeJr = str.indexOf('Scratch Jr') > -1;
         str = str.replace(/>\s*</g, '><');
         var xmlDoc = new DOMParser().parseFromString(str, 'text/xml');
+        sanitizeSvgElement(xmlDoc.documentElement);
         var extxml = document.importNode(xmlDoc.documentElement, true);
         var flat = Paint.skipUnwantedElements(extxml as Element, []);
         for (var i = 0; i < flat.length; i++) {
@@ -1520,6 +1531,10 @@ export default class Paint {
             }
             svgdata = SVGTools.saveBackground(gn('layer1')! as Element, workspaceWidth, workspaceHeight);
             IO.setMedia(svgdata, 'svg', function (str: string) {
+                if (!str) {
+                    Paint.close();
+                    return;
+                }
                 Paint.changeBackground(str, fcn);
             });
         }
@@ -1569,6 +1584,12 @@ export default class Paint {
         var pngBase64 = dataurl.split(',')[1];
         PlatformBridge.setmedia(pngBase64, 'png', setBkgRecord);
         function setBkgRecord (pngmd5: string) {
+            if (!pngmd5) {
+                if (fcn) {
+                    fcn(-1);
+                }
+                return;
+            }
             PlatformBridge.stmt({
                 op: 'insert', table: 'userbkgs',
                 row: {
@@ -1608,6 +1629,10 @@ export default class Paint {
                 }
             }
             IO.setMedia(svgdata, 'svg', function (str: string) {
+                if (!str) {
+                    Paint.close();
+                    return;
+                }
                 Paint.addOrModifySprite(str, fcn);
             });
         } else {
@@ -1692,6 +1717,12 @@ export default class Paint {
         var pngBase64 = dataurl.split(',')[1];
         PlatformBridge.setmedia(pngBase64, 'png', setCostumeRecord);
         function setCostumeRecord (pngmd5: string) {
+            if (!pngmd5) {
+                if (fcn) {
+                    fcn(-1);
+                }
+                return;
+            }
             PlatformBridge.stmt({
                 op: 'insert', table: 'usershapes',
                 row: {
@@ -1789,6 +1820,7 @@ export default class Paint {
         Paint.setUpCanvasArea();
         str = str.replace(/>\s*</g, '><');
         var xmlDoc = new DOMParser().parseFromString(str, 'text/xml');
+        sanitizeSvgElement(xmlDoc.documentElement);
         var extxml = document.importNode(xmlDoc.documentElement, true);
         var flat = Paint.skipUnwantedElements(extxml as Element, []);
         for (var i = 0; i < flat.length; i++) {

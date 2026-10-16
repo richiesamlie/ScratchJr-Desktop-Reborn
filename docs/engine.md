@@ -75,7 +75,7 @@ See [development.md](./development.md) — typed as `ProjectData` / `PageData` /
 
 | Limit / area | Where | Current value |
 |---|---|---|
-| Pages per project | `window.Settings.maxPages` in `Thumbs.updatePages` | 8 (`src/app/settings.json`) |
+| Pages per project | `window.Settings.maxPages` in `Thumbs.updatePages` | 10 (`src/app/settings.json`) |
 | Character sidebar height | `#library .spritethumbs` `max-height` | `calc(100% - 10.29vh-px)` |
 | + button visibility | `.addsprite` / `#emptypage` | always visible (sized/pinned to fit) |
 

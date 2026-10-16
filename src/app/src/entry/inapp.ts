@@ -25,6 +25,16 @@ export function inappAbout () {
     }
 }
 
+let activeGuideListener: ((e: MouseEvent) => void) | null = null;
+
+function setGuideListener (listener: (e: MouseEvent) => void) {
+    if (activeGuideListener) {
+        document.removeEventListener('mousedown', activeGuideListener, false);
+    }
+    activeGuideListener = listener;
+    document.addEventListener('mousedown', listener, false);
+}
+
 export function inappInterfaceGuide () {
     var interfaceKeyHeaderNode = gn('interface-key-header')!;
     var interfaceKeyDescriptionNode = gn('interface-key-description')!;
@@ -75,7 +85,7 @@ export function inappInterfaceGuide () {
             window.parent.ScratchAudio!.sndFXWithVolume('keydown.wav', 0.3);
         }
     };
-    document.addEventListener('mousedown', switchHelp, false);
+    setGuideListener(switchHelp);
 }
 
 export function inappPaintEditorGuide () {
@@ -125,7 +135,7 @@ export function inappPaintEditorGuide () {
             window.parent.ScratchAudio!.sndFXWithVolume('keydown.wav', 0.3);
         }
     };
-    document.addEventListener('mousedown', switchHelp, false);
+    setGuideListener(switchHelp);
 }
 
 export function inappBlocksGuide () {

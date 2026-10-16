@@ -62,7 +62,6 @@ function main() {
     const sqlDist = path.join(rootDir, 'node_modules', 'sql.js', 'dist');
     fs.copyFileSync(path.join(sqlDist, 'sql-wasm.js'), path.join(distWebDir, 'sql-wasm.js'));
     fs.copyFileSync(path.join(sqlDist, 'sql-wasm.wasm'), path.join(distWebDir, 'sql-wasm.wasm'));
-    fs.copyFileSync(path.join(sqlDist, 'sql-wasm.wasm'), path.join(distWebDir, 'sql-wasm-browser.wasm'));
 
     // 4. Copy app HTML, manifest, SW, settings, media.json, appEntry.js
     const appFiles = [
@@ -84,6 +83,29 @@ function main() {
         } else {
             console.warn(`build-web: missing ${file}`);
         }
+    }
+
+    // Stamp Service Worker CACHE_NAME with package.json version and inject all code-split dist/*.js chunks into PRECACHE_URLS
+    const pkg = require(path.join(rootDir, 'package.json'));
+    const swDestPath = path.join(targetAppDir, 'sw.js');
+    if (fs.existsSync(swDestPath)) {
+        let swContent = fs.readFileSync(swDestPath, 'utf8');
+        swContent = swContent.replace(
+            /var CACHE_NAME\s*=\s*'scratchjr-pwa-v[^']*';/,
+            `var CACHE_NAME = 'scratchjr-pwa-v${pkg.version}';`
+        );
+        const distDir = path.join(srcAppDir, 'dist');
+        if (fs.existsSync(distDir)) {
+            const distJsUrls = fs.readdirSync(distDir)
+                .filter((f) => f.endsWith('.js'))
+                .sort()
+                .map((f) => `'./dist/${f}'`)
+                .join(',\n  ');
+            if (distJsUrls) {
+                swContent = swContent.replace(/'\.\/dist\/app\.bundle\.js'/, distJsUrls);
+            }
+        }
+        fs.writeFileSync(swDestPath, swContent, 'utf8');
     }
 
     // 5. Copy app asset folders: dist, assets, localizations, samples, css, inapp, sounds, svglibrary, pnglibrary

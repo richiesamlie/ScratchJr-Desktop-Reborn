@@ -22,9 +22,6 @@ pub fn run() {
             let toggle_fullscreen = MenuItemBuilder::with_id("fullscreen", "Toggle full screen")
                 .accelerator("CmdOrCtrl+F")
                 .build(app)?;
-            let toggle_devtools = MenuItemBuilder::with_id("devtools", "Toggle Developer Tools")
-                .accelerator("F12")
-                .build(app)?;
             let import_project = MenuItemBuilder::with_id("import_project", "Import Project (.sjr)...")
                 .accelerator("CmdOrCtrl+O")
                 .build(app)?;
@@ -32,16 +29,44 @@ pub fn run() {
                 .build(app)?;
             let export_stage = MenuItemBuilder::with_id("export_stage", "Export Stage as PNG...")
                 .build(app)?;
-            let restore_projects = MenuItemBuilder::with_id("restore_projects", "Restore projects")
-                .build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit", "Quit")
                 .accelerator("CmdOrCtrl+Q")
                 .build(app)?;
 
-            let file_submenu = SubmenuBuilder::new(app, "File")
-                .item(&toggle_fullscreen)
-                .item(&toggle_devtools)
-                .item(&restore_projects)
+            let mut file_submenu_builder = SubmenuBuilder::new(app, "File")
+                .item(&toggle_fullscreen);
+
+            #[cfg(debug_assertions)]
+            let show_devtools = true;
+            #[cfg(not(debug_assertions))]
+            let show_devtools = std::env::var("DEBUG_SCRATCHJR").is_ok();
+
+            let toggle_devtools = if show_devtools {
+                Some(
+                    MenuItemBuilder::with_id("devtools", "Toggle Developer Tools")
+                        .accelerator("F12")
+                        .build(app)?,
+                )
+            } else {
+                None
+            };
+            if let Some(ref item) = toggle_devtools {
+                file_submenu_builder = file_submenu_builder.item(item);
+            }
+
+            let state = app.state::<AppState>();
+            let restore_path = state.db.db_path.with_extension("sqllite.restore");
+            let bak_path = state.db.db_path.with_extension("sqllite.bak");
+            let restore_projects = if restore_path.exists() || bak_path.exists() {
+                Some(MenuItemBuilder::with_id("restore_projects", "Restore projects").build(app)?)
+            } else {
+                None
+            };
+            if let Some(ref item) = restore_projects {
+                file_submenu_builder = file_submenu_builder.item(item);
+            }
+
+            let file_submenu = file_submenu_builder
                 .item(&import_project)
                 .item(&export_project)
                 .item(&export_stage)
@@ -60,9 +85,16 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
-                if let Some(w) = window.app_handle().get_webview_window("main") {
+                let handle = window.app_handle().clone();
+                if let Some(w) = handle.get_webview_window("main") {
                     let _ = w.eval("if (window.scratchjr && window.scratchjr.appCloseCallback) { window.scratchjr.appCloseCallback(); } else if (window.scratchjr && window.scratchjr.sendAppClosedAcked) { window.scratchjr.sendAppClosedAcked(); } else if (window.__TAURI_INTERNALS__) { window.__TAURI_INTERNALS__.invoke('app_closed_acked'); }");
                 }
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(10));
+                    let state = handle.state::<AppState>();
+                    state.db.save_backup();
+                    handle.exit(0);
+                });
             }
         })
         .on_menu_event(|app, event| {
@@ -75,10 +107,16 @@ pub fn run() {
                         }
                     }
                     "devtools" => {
-                        if w.is_devtools_open() {
-                            let _ = w.close_devtools();
-                        } else {
-                            let _ = w.open_devtools();
+                        #[cfg(debug_assertions)]
+                        let allow_devtools = true;
+                        #[cfg(not(debug_assertions))]
+                        let allow_devtools = std::env::var("DEBUG_SCRATCHJR").is_ok();
+                        if allow_devtools {
+                            if w.is_devtools_open() {
+                                let _ = w.close_devtools();
+                            } else {
+                                let _ = w.open_devtools();
+                            }
                         }
                     }
                     "import_project" => {
@@ -97,6 +135,13 @@ pub fn run() {
                     }
                     "quit" => {
                         let _ = w.eval("if (window.scratchjr && window.scratchjr.appCloseCallback) { window.scratchjr.appCloseCallback(); } else if (window.scratchjr && window.scratchjr.sendAppClosedAcked) { window.scratchjr.sendAppClosedAcked(); } else if (window.__TAURI_INTERNALS__) { window.__TAURI_INTERNALS__.invoke('app_closed_acked'); }");
+                        let handle = app.clone();
+                        std::thread::spawn(move || {
+                            std::thread::sleep(std::time::Duration::from_secs(10));
+                            let state = handle.state::<AppState>();
+                            state.db.save_backup();
+                            handle.exit(0);
+                        });
                     }
                     _ => {}
                 }

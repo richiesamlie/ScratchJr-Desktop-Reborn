@@ -83,8 +83,13 @@ if (window.scratchjr) {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.sjr,.zip,.sqlite,.sqllite,.db';
-            input.style.display = 'none';
+            const removeInput = () => {
+                if (input.parentNode) {
+                    input.parentNode.removeChild(input);
+                }
+            };
             input.onchange = (e) => {
+                removeInput();
                 const file = (e.target as HTMLInputElement).files?.[0];
                 if (!file) return;
                 const ext = file.name.split('.').pop()?.toLowerCase();
@@ -111,12 +116,10 @@ if (window.scratchjr) {
                 reader.readAsArrayBuffer(file);
             };
             document.body.appendChild(input);
+            window.addEventListener('focus', () => {
+                setTimeout(removeInput, 500);
+            }, { once: true });
             input.click();
-            setTimeout(() => {
-                if (input.parentNode) {
-                    input.parentNode.removeChild(input);
-                }
-            }, 1000);
         });
     }
 

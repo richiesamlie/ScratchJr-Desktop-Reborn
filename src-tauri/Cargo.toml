@@ -1,6 +1,6 @@
 [package]
 name = "scratchjr"
-version = "2.13.4"
+version = "2.14.0"
 description = "ScratchJr Desktop Edition"
 authors = ["ScratchJr - Open Source Community Port"]
 license = "BSD-3-Clause"

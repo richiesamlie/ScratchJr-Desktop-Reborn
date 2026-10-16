@@ -127,7 +127,9 @@ export default class Record {
             }
         }, 333);
         dialogOpen = false;
-        ScratchJr.onBackButtonCallback.pop();
+        if (ScratchJr.onBackButtonCallback[ScratchJr.onBackButtonCallback.length - 1] === Record.saveSoundAndClose) {
+            ScratchJr.onBackButtonCallback.pop();
+        }
     }
 
     // Register toggle buttons and handlers
@@ -158,7 +160,13 @@ export default class Record {
         input.type = 'file';
         input.accept = 'audio/*,audio/wav,audio/mp3,audio/mpeg,audio/ogg,audio/webm,audio/x-m4a,audio/aac';
         input.style.display = 'none';
+        var removeInput = function () {
+            if (input.parentNode) {
+                input.parentNode.removeChild(input);
+            }
+        };
         input.onchange = function () {
+            removeInput();
             if (!input.files || input.files.length === 0) return;
             var file = input.files[0];
             var ext = file.name.split('.').pop()?.toLowerCase() || 'wav';
@@ -214,12 +222,10 @@ export default class Record {
             reader.readAsDataURL(file);
         };
         document.body.appendChild(input);
+        window.addEventListener('focus', function () {
+            setTimeout(removeInput, 500);
+        }, { once: true });
         input.click();
-        setTimeout(function () {
-            if (input.parentNode) {
-                input.parentNode.removeChild(input);
-            }
-        }, 1000);
     }
 
     // Toggle button appearance on/off

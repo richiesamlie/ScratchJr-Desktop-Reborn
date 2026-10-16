@@ -180,12 +180,20 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
     });
 
     ipcMain.handle('database_stmt', (_event: IpcMainInvokeEvent, raw: unknown) => {
+        let intent: ReturnType<typeof parseDbIntent>;
         try {
             // Renderer sends a structured intent; SQL is composed here from
             // allowlisted tables/columns only. No renderer SQL text exists.
             const rawObj = typeof raw === 'string' ? JSON.parse(raw) : raw;
-            const intent = parseDbIntent(rawObj);
+            intent = parseDbIntent(rawObj);
             if (intent.kind !== 'write') throw new Error('database_stmt only accepts write ops');
+        } catch (e: unknown) {
+            const message = e instanceof Error ? e.message : String(e);
+            debugLog('database_stmt blocked (' + DB_ERRORS.INTENT_REJECTED + '):', message);
+            return DB_ERRORS.INTENT_REJECTED;
+        }
+
+        try {
             const dataStore = getDataStore();
             const db = dataStore?.databaseManager;
             if (!db || !db.isOpen()) {
@@ -193,17 +201,16 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
                 return DB_ERRORS.DB_CLOSED;
             }
             const result = db.stmt({ stmt: intent.sql, values: intent.values as Array<string | number | boolean | null> });
-            // Only persist to disk if the statement succeeded
-            if (result >= 0) {
-                db.savePending();
+            if (result < 0) {
+                return result === DB_ERRORS.DB_CLOSED ? DB_ERRORS.DB_CLOSED : DB_ERRORS.SQL_ERROR;
             }
+            // Only persist to disk if the statement succeeded
+            db.savePending();
             return result;
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e);
-            const code = message.startsWith('unknown ') || message.includes('db intent') || message.includes('intent')
-                ? DB_ERRORS.INTENT_REJECTED : DB_ERRORS.SQL_ERROR;
-            debugLog('database_stmt blocked (' + code + '):', message);
-            return code;
+            debugLog('database_stmt SQL error (' + DB_ERRORS.SQL_ERROR + '):', message);
+            return DB_ERRORS.SQL_ERROR;
         }
     });
 
@@ -218,7 +225,14 @@ export function register(getDataStore: () => ScratchJRDataStore, getWindow: () =
                 debugLog('database_query called but database is not open');
                 return '[]';
             }
-            return JSON.stringify(db.query({ stmt: intent.sql, values: intent.values as Array<string | number | boolean | null> }));
+            const rows = db.query({ stmt: intent.sql, values: intent.values as Array<string | number | boolean | null> }).map((row) => {
+                const normalized: Record<string, unknown> = {};
+                for (const [k, v] of Object.entries(row)) {
+                    normalized[k.toLowerCase()] = v;
+                }
+                return normalized;
+            });
+            return JSON.stringify(rows);
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : String(e);
             debugLog('database_query blocked:', message);

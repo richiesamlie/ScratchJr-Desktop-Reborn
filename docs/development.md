@@ -12,17 +12,15 @@ the editor layout/limits map, the project file format, testing, and releasing.
 The renderer is bundled into **one file**: `src/app/dist/app.bundle.js` (esbuild,
 entry `src/app/renderer-entry.js`). Every HTML page loads **only** that bundle.
 
-- **The bundle is gitignored** — it is generated, never committed. A fresh
-  checkout has no bundle, so `npm start` shows a blank app until you run
-  `npm run build:renderer` once.
+- **The bundle is gitignored** — it is generated, never committed. `npm install`
+  automatically runs `build:renderer` via `postinstall` so fresh clones work out
+  of the box.
 - **`npm run make:zip` builds the bundle automatically** before packaging
   (`scripts/package-and-zip.js` runs `build-renderer.js` first). Do not remove
   that step — a release built without it ships an app that cannot load its UI
   (this actually happened in v1.5.0/v1.5.1 pre-fix).
 - After editing any renderer `.ts`, rebuild with `npm run build:renderer` before
   packaging or boot-verifying.
-- Recommended follow-up: run `build:renderer` from `postinstall` so fresh clones
-  work out of the box.
 
 **Verifying a packaged build:**
 
@@ -49,7 +47,7 @@ time** by `preprocessAndLoadCss()` (`src/app/src/utils/lib.ts`). Consequences:
 
 | Limit / area | Where | Current value |
 |---|---|---|
-| Pages per project | `window.Settings.maxPages` read in `Thumbs.updatePages` | 8 (`src/app/settings.json`) |
+| Pages per project | `window.Settings.maxPages` read in `Thumbs.updatePages` | 10 (`src/app/settings.json`) |
 | Character sidebar height | `#library .spritethumbs` `max-height` | `calc(100% - 10.29vh-px)` — leaves room for the **+ button** |
 | Add-character (+) button | `.addsprite` sibling below `.spritethumbs` | always visible by construction (see below) |
 | Add-page (+) button | `#emptypage`, `position: sticky; bottom: 0` in `#pagecc` | pinned while the page list scrolls |
