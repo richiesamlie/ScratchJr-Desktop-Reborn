@@ -9,6 +9,8 @@
 const fs = require('fs');
 const path = require('path');
 
+let totalDrift = 0;
+
 function patchFile(filePath, patches) {
     if (!fs.existsSync(filePath)) {
         console.log(`  SKIP: ${filePath} not found`);
@@ -25,6 +27,7 @@ function patchFile(filePath, patches) {
             drifted++;
         }
     }
+    totalDrift += drifted;
     if (changed) {
         fs.writeFileSync(filePath, content);
         console.log(`  PATCHED: ${filePath}${drifted > 0 ? ` (${drifted} patch hunk(s) did not match upstream format)` : ''}`);
@@ -141,3 +144,8 @@ patchFile(crossZipPath, [
 ]);
 
 console.log('Done.');
+
+if (totalDrift > 0 && process.env.CI) {
+    console.error(`ERROR: ${totalDrift} patch hunk(s) drifted in CI environment.`);
+    process.exit(1);
+}
