@@ -59,6 +59,26 @@ function readBlobAsDataURL(blob) {
     });
 }
 
+/**
+ * Wraps a promise with a timeout.
+ * @param {Promise<any>} promise
+ * @param {number} ms
+ * @param {string} cmd
+ * @returns {Promise<any>}
+ */
+function withTimeout(promise, ms, cmd) {
+    /** @type {ReturnType<typeof setTimeout> | undefined} */
+    let timer;
+    const timeoutPromise = new Promise(function (_, reject) {
+        timer = setTimeout(function () {
+            reject(new Error(`Tauri invoke timed out: ${cmd}`));
+        }, ms);
+    });
+    return Promise.race([promise, timeoutPromise]).finally(function () {
+        clearTimeout(timer);
+    });
+}
+
 class TauriDesktopInterface {
     constructor() {
         /** @type {Record<string, HTMLAudioElement>} */
@@ -70,14 +90,16 @@ class TauriDesktopInterface {
     }
 
     // Database operations
-    /** @param {any} json */
-    async database_stmt(json) {
-        return await tauriInvoke('database_stmt', { raw: json });
+    /** @param {any} json @param {number} [timeoutMs] */
+    async database_stmt(json, timeoutMs) {
+        const ms = timeoutMs || 15000;
+        return await withTimeout(tauriInvoke('database_stmt', { raw: json }), ms, 'database_stmt');
     }
 
-    /** @param {any} json */
-    async database_query(json) {
-        return await tauriInvoke('database_query', { raw: json });
+    /** @param {any} json @param {number} [timeoutMs] */
+    async database_query(json, timeoutMs) {
+        const ms = timeoutMs || 15000;
+        return await withTimeout(tauriInvoke('database_query', { raw: json }), ms, 'database_query');
     }
 
     async database_flush() {
@@ -130,7 +152,7 @@ class TauriDesktopInterface {
             return await tauriInvoke('io_setmedia', { base64ContentStr: str, ext });
         } catch (err) {
             console.error('[tauriClient] io_setmedia failed:', err);
-            return null;
+            throw err;
         }
     }
 
@@ -140,7 +162,7 @@ class TauriDesktopInterface {
             return await tauriInvoke('io_setmedianame', { encodedData: str, key: name, ext });
         } catch (err) {
             console.error('[tauriClient] io_setmedianame failed:', err);
-            return null;
+            throw err;
         }
     }
 
@@ -170,7 +192,7 @@ class TauriDesktopInterface {
             return await tauriInvoke('io_setfile', { name, contents: btoa_str });
         } catch (err) {
             console.error('[tauriClient] io_setfile failed:', err);
-            return -1;
+            throw err;
         }
     }
 
@@ -289,8 +311,14 @@ class TauriDesktopInterface {
                     const filename = audioCaptureElement.getId();
                     const fileReader = new FileReader();
                     fileReader.onload = function () {
-                        tauriDesktopInterface.io_setmedianame(/** @type {string} */ (fileReader.result), filename, 'webm');
-                        tauriDesktopInterface.loadSoundFromDataURI(`${filename}.webm`, /** @type {string} */ (fileReader.result));
+                        const dataUrl = /** @type {string} */ (fileReader.result);
+                        tauriDesktopInterface.io_setmedianame(dataUrl, filename, 'webm')
+                            .then(function () {
+                                tauriDesktopInterface.loadSoundFromDataURI(`${filename}.webm`, dataUrl);
+                            })
+                            .catch(function (err) {
+                                console.error('[tauriClient] Failed to persist recording:', err);
+                            });
                     };
                     fileReader.readAsDataURL(blob);
                 }

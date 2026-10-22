@@ -82,7 +82,9 @@
         recordsound_recordstart: function () {
             // Native side triggers the Android runtime permission dialog
             // (bridge method), then the web AudioCapture does the recording.
-            try { /** @type {() => void} */ (AndroidInterface.recordsound_recordstart)(); } catch (e) { /* ignore */ }
+            try { /** @type {() => void} */ (AndroidInterface.recordsound_recordstart)(); } catch (e) {
+                console.error('webhost: recordsound_recordstart error', e);
+            }
             return getAudioCapture().startRecord();
         },
 
@@ -121,11 +123,13 @@
                                     /** @type {(s: string, n: string, e: string) => unknown} */ (AndroidInterface.io_setmedianame)(b64, filename, 'webm')
                                 ).then(function () {
                                     resolve(undefined);
-                                }).catch(function () {
+                                }).catch(function (err) {
+                                    console.error('webhost: io_setmedianame failed', err);
                                     resolve(undefined);
                                 });
                             };
-                            fileReader.onerror = function () {
+                            fileReader.onerror = function (err) {
+                                console.error('webhost: fileReader error during sound save', err);
                                 resolve(undefined);
                             };
                             fileReader.readAsDataURL(/** @type {Blob} */ (blob));

@@ -274,10 +274,15 @@ class ElectronDesktopInterface {
 
 					let fileReader = new FileReader();
 					fileReader.onload = function () {
-						// saving new sound...  will save as a webm file.
-						electronDesktopInterface.io_setmedianame(/** @type {string} */ (fileReader.result), filename, 'webm');
-						electronDesktopInterface.loadSoundFromDataURI(filename + '.webm', /** @type {string} */ (fileReader.result));
-			
+						// saving new sound... will save as a webm file.
+						let dataUrl = /** @type {string} */ (fileReader.result);
+						electronDesktopInterface.io_setmedianame(dataUrl, filename, 'webm')
+							.then(function () {
+								electronDesktopInterface.loadSoundFromDataURI(filename + '.webm', dataUrl);
+							})
+							.catch(function (err) {
+								debugLog('Failed to persist recording:', err);
+							});
 					};
 					fileReader.readAsDataURL(blob);
 				}
@@ -387,8 +392,76 @@ class ElectronDesktopInterface {
 
     }
 
+    async io_getLang() {
+        debugLog('io_getLang');
+        return await bridge.io_getLang();
+    }
 
+    /** @param {string} name */
+    async io_getAudioData(name) {
+        debugLog('io_getAudioData', name);
+        return await bridge.io_getAudioData(name);
+    }
 
+    /** @param {string} dataB64 @param {string} suggestedName */
+    async sendExportedSjr(dataB64, suggestedName) {
+        debugLog('sendExportedSjr', suggestedName);
+        return await bridge.sendExportedSjr(dataB64, suggestedName);
+    }
+
+    /** @param {string} dataUrl @param {string} suggestedName */
+    async sendExportedPng(dataUrl, suggestedName) {
+        debugLog('sendExportedPng', suggestedName);
+        return await bridge.sendExportedPng(dataUrl, suggestedName);
+    }
+
+    /** @param {() => void} callback */
+    onAppClose(callback) {
+        if (bridge.onAppClose) {
+            bridge.onAppClose(callback);
+        }
+    }
+
+    sendAppClosedAcked() {
+        if (bridge.sendAppClosedAcked) {
+            bridge.sendAppClosedAcked();
+        }
+    }
+
+    /** @param {() => void} callback */
+    onDatabaseRestored(callback) {
+        if (bridge.onDatabaseRestored) {
+            bridge.onDatabaseRestored(callback);
+        }
+    }
+
+    /** @param {(action: string) => void} callback */
+    onKeyboardShortcut(callback) {
+        if (bridge.onKeyboardShortcut) {
+            bridge.onKeyboardShortcut(callback);
+        }
+    }
+
+    /** @param {() => void} callback */
+    onImportProjectRequest(callback) {
+        if (bridge.onImportProjectRequest) {
+            bridge.onImportProjectRequest(callback);
+        }
+    }
+
+    /** @param {() => void} callback */
+    onExportProjectRequest(callback) {
+        if (bridge.onExportProjectRequest) {
+            bridge.onExportProjectRequest(callback);
+        }
+    }
+
+    /** @param {() => void} callback */
+    onExportStageRequest(callback) {
+        if (bridge.onExportStageRequest) {
+            bridge.onExportStageRequest(callback);
+        }
+    }
 
 } // class ElectronDesktopInterface
 
@@ -437,6 +510,8 @@ if (bridge && typeof bridge.onKeyboardShortcut === 'function') {
         if (typeof Home !== 'undefined' && Home.openFileDialog) { // eslint-disable-line no-undef
           Home.openFileDialog(); // eslint-disable-line no-undef
         }
+        break;
+      default:
         break;
     }
   });
