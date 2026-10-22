@@ -179,6 +179,53 @@ describe('SJR Project Import Resilience (Issue #15)', () => {
         await expect(IO.loadProjectFromSjr(b64)).rejects.toThrow('Project archive data.json is not valid JSON.');
     });
 
+    it('rejects archive when compressed payload exceeds 50MB limit', async () => {
+        const hugeFakeB64 = { length: 70 * 1024 * 1024 };
+        await expect(IO.loadProjectFromSjr(hugeFakeB64)).rejects.toThrow('This project file is too big to open.');
+    });
+
+    it('rejects archive with more than 2000 entries', async () => {
+        const zip = new JSZip();
+        zip.file('data.json', '{}');
+        for (let i = 0; i <= 2000; i++) {
+            zip.file(`asset_${i}.png`, '');
+        }
+        const b64 = await zip.generateAsync({ type: 'base64' });
+        await expect(IO.loadProjectFromSjr(b64)).rejects.toThrow('This project file is too big to open (too many files).');
+    });
+
+    it('rejects archive when total uncompressed size exceeds 200MB limit', async () => {
+        const zip = new JSZip();
+        zip.file('data.json', '{}');
+        const b64 = await zip.generateAsync({ type: 'base64' });
+        const loaded = await JSZip.loadAsync(b64, { base64: true });
+        loaded.file('huge.bin', '');
+        loaded.files['huge.bin']._data = {
+            uncompressedSize: 201 * 1024 * 1024,
+            compressedSize: 10,
+            crc32: 0,
+            compression: null,
+            compressedContent: null,
+        };
+        vi.spyOn(JSZip, 'loadAsync').mockResolvedValueOnce(loaded);
+
+        await expect(IO.loadProjectFromSjr(b64)).rejects.toThrow('This project file is too big to open.');
+    });
+
+    it('rejects archive containing directory traversal or unsafe filenames', async () => {
+        const zip1 = new JSZip();
+        zip1.file('data.json', '{}');
+        zip1.file('../traversal.png', 'fake');
+        const b64_1 = await zip1.generateAsync({ type: 'base64' });
+        await expect(IO.loadProjectFromSjr(b64_1)).rejects.toThrow('Project archive contains invalid file names.');
+
+        const zip2 = new JSZip();
+        zip2.file('data.json', '{}');
+        zip2.file('bad*name.png', 'fake');
+        const b64_2 = await zip2.generateAsync({ type: 'base64' });
+        await expect(IO.loadProjectFromSjr(b64_2)).rejects.toThrow('Project archive contains invalid file names.');
+    });
+
     it('PlatformBridge.flushDatabase delegates to window.tablet.database_flush and resolves', async () => {
         const flushSpy = vi.fn().mockReturnValue(Promise.resolve());
         window.tablet.database_flush = flushSpy;

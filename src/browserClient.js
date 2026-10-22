@@ -563,6 +563,17 @@
         ]
     };
     var ALLOWED_WHERE_OPS = ['=', '!=', 'IS NULL'];
+    var OPS = ['select', 'insert', 'update', 'delete'];
+    var SELECT_KEYS = ['op', 'table', 'items', 'where', 'order'];
+    var WRITE_KEYS = ['op', 'table', 'row', 'id'];
+
+    /**
+     * @param {any} v
+     * @returns {boolean}
+     */
+    function isDbPrimitive(v) {
+        return v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean';
+    }
 
     // SQL Intent statement/query composer (hardened to match src/lib/db-intents.ts)
     /** @param {any} intent */
@@ -579,37 +590,35 @@
                 throw validationError('invalid db intent');
             }
             var op = intent.op;
-            var tableLower = (intent.table || '').toLowerCase();
-            var rawCols = (/** @type {any} */ (ALLOWED_TABLES))[tableLower];
-            if (!rawCols) {
-                throw validationError('unknown table: ' + intent.table);
+            if (OPS.indexOf(op) === -1) {
+                throw validationError('bad db op: ' + String(op));
+            }
+            var table = intent.table;
+            if (typeof table !== 'string' || !Object.prototype.hasOwnProperty.call(ALLOWED_TABLES, table)) {
+                throw validationError('unknown table: ' + String(table));
             }
             /** @type {string[]} */
-            var allowedCols = rawCols;
-            var table = tableLower.toUpperCase();
+            var allowedCols = (/** @type {any} */ (ALLOWED_TABLES))[table];
+            var tableName = table.toUpperCase();
 
-            /** @param {string[]} cols */
-            function assertColumns(cols) {
-                for (var i = 0; i < cols.length; i++) {
-                    var colLower = String(cols[i]).toLowerCase();
-                    if (allowedCols.indexOf(colLower) === -1) {
-                        throw validationError('unknown column on ' + tableLower + ': ' + cols[i]);
-                    }
+            var intentKeys = Object.keys(intent);
+            var expectedKeys = op === 'select' ? SELECT_KEYS : WRITE_KEYS;
+            for (var k = 0; k < intentKeys.length; k++) {
+                if (expectedKeys.indexOf(intentKeys[k]) === -1) {
+                    throw validationError('unexpected key on ' + op + ': ' + intentKeys[k]);
                 }
             }
 
-            /** @param {any} w */
-            function validateWhereClause(w) {
-                if (!w || !w.col) throw validationError('missing where column');
-                var colLower = String(w.col).toLowerCase();
-                if (allowedCols.indexOf(colLower) === -1) {
-                    throw validationError('unknown where column on ' + tableLower + ': ' + w.col);
+            /**
+             * @param {string[]} cols
+             * @param {string} what
+             */
+            function assertColumns(cols, what) {
+                for (var i = 0; i < cols.length; i++) {
+                    if (allowedCols.indexOf(cols[i]) === -1) {
+                        throw validationError('unknown ' + what + ' column on ' + table + ': ' + cols[i]);
+                    }
                 }
-                var whereOp = w.op;
-                if (!whereOp || ALLOWED_WHERE_OPS.indexOf(whereOp) === -1) {
-                    throw validationError('bad where op: ' + String(whereOp));
-                }
-                return { col: w.col, op: whereOp, value: w.value };
             }
 
             if (op === 'insert') {
@@ -621,10 +630,15 @@
                 if (cols.length === 0) {
                     throw validationError('insert requires at least one column');
                 }
-                assertColumns(cols);
+                assertColumns(cols, 'insert');
+                for (var ci = 0; ci < cols.length; ci++) {
+                    if (!isDbPrimitive(row[cols[ci]])) {
+                        throw validationError('insert values must be primitives');
+                    }
+                }
                 var placeholders = cols.map(function () { return '?'; }).join(', ');
                 var values = cols.map(function (c) { return row[c]; });
-                var sql = 'INSERT INTO ' + table + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ')';
+                var sql = 'INSERT INTO ' + tableName + ' (' + cols.join(', ') + ') VALUES (' + placeholders + ')';
                 db.run(sql, values);
                 var res = db.exec('SELECT last_insert_rowid() AS id');
                 var insertId = res[0].values[0][0];
@@ -641,93 +655,95 @@
                 if (updateCols.length === 0) {
                     throw validationError('update requires at least one column');
                 }
-                assertColumns(updateCols);
-                var setClauses = updateCols.map(function (c) { return c + ' = ?'; }).join(', ');
-                var setVals = updateCols.map(function (c) { return updateRow[c]; });
-
-                var whereClauses = [];
-                var whereVals = [];
-                if (intent.id !== undefined && intent.id !== null) {
-                    whereClauses.push('ID = ?');
-                    whereVals.push(intent.id);
-                } else if (Array.isArray(intent.where) && intent.where.length > 0) {
-                    intent.where.forEach(function (/** @type {any} */ w) {
-                        var validated = validateWhereClause(w);
-                        if (validated.op === 'IS NULL') {
-                            whereClauses.push(validated.col + ' IS NULL');
-                        } else {
-                            whereClauses.push(validated.col + ' ' + validated.op + ' ?');
-                            whereVals.push(validated.value);
-                        }
-                    });
-                } else {
+                assertColumns(updateCols, 'update');
+                if (!isDbPrimitive(intent.id)) {
                     throw validationError('update requires id');
                 }
-                var updateSql = 'UPDATE ' + table + ' SET ' + setClauses + ' WHERE ' + whereClauses.join(' AND ');
-                db.run(updateSql, setVals.concat(whereVals));
+                for (var ui = 0; ui < updateCols.length; ui++) {
+                    if (!isDbPrimitive(updateRow[updateCols[ui]])) {
+                        throw validationError('update values must be primitives');
+                    }
+                }
+                var setClauses = updateCols.map(function (c) { return c + ' = ?'; }).join(', ');
+                var setVals = updateCols.map(function (c) { return updateRow[c]; });
+                setVals.push(intent.id);
+
+                var updateSql = 'UPDATE ' + tableName + ' SET ' + setClauses + ' WHERE id = ?';
+                db.run(updateSql, setVals);
                 var updatedRows = db.getRowsModified();
                 flushDbSave();
                 return Promise.resolve(updatedRows);
             }
 
             if (op === 'delete') {
-                var delWhere = [];
-                var delVals = [];
-                if (intent.id !== undefined && intent.id !== null) {
-                    delWhere.push('ID = ?');
-                    delVals.push(intent.id);
-                } else if (Array.isArray(intent.where) && intent.where.length > 0) {
-                    intent.where.forEach(function (/** @type {any} */ w) {
-                        var validated = validateWhereClause(w);
-                        if (validated.op === 'IS NULL') {
-                            delWhere.push(validated.col + ' IS NULL');
-                        } else {
-                            delWhere.push(validated.col + ' ' + validated.op + ' ?');
-                            delVals.push(validated.value);
-                        }
-                    });
-                } else {
+                if (!isDbPrimitive(intent.id)) {
                     throw validationError('delete requires id');
                 }
-                var delSql = 'DELETE FROM ' + table + ' WHERE ' + delWhere.join(' AND ');
-                db.run(delSql, delVals);
+                var delSql = 'DELETE FROM ' + tableName + ' WHERE id = ?';
+                db.run(delSql, [intent.id]);
                 var deletedRows = db.getRowsModified();
                 flushDbSave();
                 return Promise.resolve(deletedRows);
             }
 
             if (op === 'select') {
-                if (intent.items && intent.items.length > 0) {
-                    assertColumns(intent.items);
+                var items = '*';
+                if (intent.items !== undefined) {
+                    if (!Array.isArray(intent.items)) {
+                        throw validationError('items must be an array');
+                    }
+                    assertColumns(intent.items, 'items');
+                    items = intent.items.join(', ');
                 }
-                var items = intent.items && intent.items.length > 0 ? intent.items.join(', ') : '*';
+
                 /** @type {string[]} */
                 var selWhere = [];
                 /** @type {any[]} */
                 var selVals = [];
-                if (intent.where && intent.where.length > 0) {
-                    intent.where.forEach(function (/** @type {any} */ w) {
-                        var validated = validateWhereClause(w);
-                        if (validated.op === 'IS NULL') {
-                            selWhere.push(validated.col + ' IS NULL');
-                        } else {
-                            selWhere.push(validated.col + ' ' + validated.op + ' ?');
-                            selVals.push(validated.value);
+                if (intent.where !== undefined) {
+                    if (!Array.isArray(intent.where)) {
+                        throw validationError('where must be an array');
+                    }
+                    for (var wi = 0; wi < intent.where.length; wi++) {
+                        var w = intent.where[wi];
+                        if (!w || typeof w !== 'object' || Array.isArray(w) || allowedCols.indexOf(w.col) === -1) {
+                            throw validationError('unknown where column on ' + table + ': ' + String(w && w.col));
                         }
-                    });
+                        if (ALLOWED_WHERE_OPS.indexOf(w.op) === -1) {
+                            throw validationError('bad where op: ' + String(w.op));
+                        }
+                        if (w.op === 'IS NULL') {
+                            if ('value' in w && w.value !== undefined) {
+                                throw validationError('IS NULL takes no value');
+                            }
+                            selWhere.push(w.col + ' IS NULL');
+                        } else {
+                            if (!isDbPrimitive(w.value)) {
+                                throw validationError('where value must be a primitive');
+                            }
+                            selWhere.push(w.col + ' ' + w.op + ' ?');
+                            selVals.push(w.value);
+                        }
+                    }
                 }
-                var selSql = 'SELECT ' + items + ' FROM ' + table;
+
+                var selSql = 'SELECT ' + items + ' FROM ' + tableName;
                 if (selWhere.length > 0) {
                     selSql += ' WHERE ' + selWhere.join(' AND ');
                 }
-                if (intent.order && intent.order.col) {
-                    assertColumns([intent.order.col]);
-                    var dir = String(intent.order.dir === undefined ? 'ASC' : intent.order.dir).toUpperCase();
-                    if (dir !== 'ASC' && dir !== 'DESC') {
-                        throw validationError('bad order dir: ' + dir);
+
+                if (intent.order !== undefined) {
+                    var orderObj = intent.order;
+                    if (!orderObj || typeof orderObj !== 'object' || Array.isArray(orderObj) || allowedCols.indexOf(String(orderObj.col)) === -1) {
+                        throw validationError('unknown order column on ' + table);
                     }
-                    selSql += ' ORDER BY ' + intent.order.col + ' ' + dir;
+                    var dir = orderObj.dir === undefined ? 'asc' : orderObj.dir;
+                    if (dir !== 'asc' && dir !== 'desc') {
+                        throw validationError('order dir must be asc|desc');
+                    }
+                    selSql += ' ORDER BY ' + orderObj.col + ' ' + dir.toUpperCase();
                 }
+
                 var queryRes = db.exec(selSql, selVals);
                 if (!queryRes || queryRes.length === 0) return '[]';
 
@@ -975,9 +991,9 @@
                         assetPath = 'assets/' + file;
                     }
                     return fetch(assetPath)
-                        .then(function (res) {
-                            if (!res.ok) throw new Error('Asset 404: ' + assetPath);
-                            return res.blob();
+                        .then(function (response) {
+                            if (!response.ok) throw new Error('Asset 404: ' + assetPath);
+                            return response.blob();
                         })
                         .then(function (blob) {
                             return new Promise(function (resolve) {
@@ -1024,6 +1040,7 @@
                                     soundBuffers[name] = decoded;
                                 });
                             }
+                            return undefined;
                         });
                 }).catch(function (/** @type {unknown} */ e) {
                     console.warn('[browserClient] registerSound (Documents) error:', name, e);
@@ -1057,6 +1074,7 @@
                             soundBuffers[name] = decoded;
                         });
                     }
+                    return undefined;
                 })
                 .catch(function (e) {
                     console.warn('[browserClient] registerSound error:', name, e);

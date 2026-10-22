@@ -92,7 +92,7 @@ export function parseDbIntent(raw: unknown): { sql: string; values: DbValue[]; k
     const intent = raw as Record<string, unknown> & DbIntent;
 
     if (!OPS.has(intent.op)) throw new Error(`bad db op: ${String(intent.op)}`);
-    if (typeof intent.table !== 'string' || !TABLES[intent.table]) {
+    if (typeof intent.table !== 'string' || !Object.hasOwn(TABLES, intent.table)) {
         throw new Error(`unknown table: ${String(intent.table)}`);
     }
 

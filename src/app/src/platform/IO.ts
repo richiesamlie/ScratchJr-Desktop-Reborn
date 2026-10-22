@@ -551,18 +551,56 @@ export default class IO {
     }
 
     static async loadProjectFromSjr (b64data: string) {
+        // Enforce 50 MB compressed size limit (~67MB base64 string)
+        const MAX_COMPRESSED_BYTES = 50 * 1024 * 1024;
+        const b64len = (typeof b64data === 'string')
+            ? (b64data.length * 3) / 4
+            : ((b64data as unknown as { byteLength?: number; length?: number })?.byteLength
+                || (b64data as unknown as { byteLength?: number; length?: number })?.length
+                || 0);
+        if (b64len > MAX_COMPRESSED_BYTES) {
+            throw new Error('This project file is too big to open.');
+        }
+
         var receivedZip = await JSZip.loadAsync(b64data, { base64: true });
 
         var characterNames: Record<string, string> = {};
 
-        type ZipEntryLike = { dir: boolean; async (type: string): Promise<string> };
+        type ZipEntryLike = { dir: boolean; _data?: { uncompressedSize?: number }; async (type: string): Promise<string> };
         var dataEntry: ZipEntryLike | null = null;
         var assetEntries: Array<{ relativePath: string; file: ZipEntryLike }> = [];
+
+        var entryCount = 0;
+        var totalUncompressedBytes = 0;
+        const MAX_ZIP_ENTRIES = 2000;
+        const MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024;
+        const SAFE_BASENAME_RE = /^[A-Za-z0-9._-]+$/;
+
         receivedZip.forEach(function (relativePath, file) {
-            if (file.dir) return;
+            entryCount++;
+            if (entryCount > MAX_ZIP_ENTRIES) {
+                throw new Error('This project file is too big to open (too many files).');
+            }
+
             var f = file as unknown as ZipEntryLike;
+            var uncompressed = (f._data && typeof f._data.uncompressedSize === 'number') ? f._data.uncompressedSize : 0;
+            totalUncompressedBytes += uncompressed;
+            if (totalUncompressedBytes > MAX_UNCOMPRESSED_BYTES) {
+                throw new Error('This project file is too big to open.');
+            }
+
             var normalized = relativePath.replace(/\\/g, '/');
+            if (normalized.startsWith('/') || normalized.split('/').includes('..')) {
+                throw new Error('Project archive contains invalid file names.');
+            }
+
+            if (file.dir) return;
+
             var fullName = normalized.split('/').pop() || '';
+            if (!fullName || !SAFE_BASENAME_RE.test(fullName) || fullName === '.' || fullName === '..') {
+                throw new Error('Project archive contains invalid file names.');
+            }
+
             if (fullName.toLowerCase() === 'data.json') {
                 dataEntry = f;
             } else {
