@@ -3,4 +3,10 @@
     <string name="app_name">ScratchJr</string>
     <string name="camera_permission_rationale">ScratchJr needs camera access to let you take photos for your characters.</string>
     <string name="mic_permission_rationale">ScratchJr needs microphone access to record your own sounds.</string>
+    <string name="import_project_dialog_title">Add this project?</string>
+    <string name="import_project_dialog_message">Do you want to add \"%1$s\" to your ScratchJr projects?</string>
+    <string name="import_project_dialog_message_generic">Do you want to add this project to your ScratchJr projects?</string>
+    <string name="import_project_button_add">Add</string>
+    <string name="import_project_button_cancel">Cancel</string>
+    <string name="import_project_too_large">This project file is too big to open.</string>
 </resources>

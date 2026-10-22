@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude regenerable WebView caches while keeping databases, media, and settings -->
+    <exclude domain="root" path="app_webview/Default/HTTP Cache" />
+    <exclude domain="root" path="app_webview/Default/Code Cache" />
+    <exclude domain="root" path="app_webview/Default/Service Worker/CacheStorage" />
+</full-backup-content>
