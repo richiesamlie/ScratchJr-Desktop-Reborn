@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { app, dialog, ipcMain, BrowserWindow, IpcMainInvokeEvent, IpcMainEvent } from 'electron';
 import {
-    DEBUG, debugLog
+    debugLog
 } from './logging';
 import { parseDbIntent } from '../lib/db-intents';
 import type { ScratchJRDataStore } from './data-store';

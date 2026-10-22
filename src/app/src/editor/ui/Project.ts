@@ -157,7 +157,7 @@ export default class Project {
             Project.loadData(metadata.json as Record<string, unknown>, doneProjectLoad);
         } else {
             _setMediaCount(0);
-            let page = new Page(getIdFor('page')); // eslint-disable-line no-unused-vars
+            new Page(getIdFor('page'));
             Palette.selectCategory(1);
             // On Android 4.2, this comes up blank the first time, so try again in 100ms.
             setTimeout(function () {

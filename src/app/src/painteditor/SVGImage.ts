@@ -11,9 +11,7 @@ import Layer from './Layer';
 import Transform from './Transform';
 import Rectangle from '../geom/Rectangle';
 import SVGTools from './SVGTools';
-import SVG2Canvas from '../utils/SVG2Canvas';
 import PaintAction from './PaintAction';
-import type {Point} from '../geom/Vector';
 import {getIdFor, gn, getIdForCamera, setCanvasSize} from '../utils/lib';
 
 export default class SVGImage {

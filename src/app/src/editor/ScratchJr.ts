@@ -75,7 +75,6 @@ let stopShaking: ((b: HTMLElement) => void) | undefined;
 let version: string;
 
 let autoSaveEnabled = true;
-let autoSaveSetInterval: number | null = null;
 
 let onBackButtonCallback: Array<() => void> = [];
 
@@ -232,7 +231,7 @@ export default class ScratchJr {
         Project.load(currentProject);
         Events.init();
         if (window.Settings!.autoSaveInterval > 0) {
-            autoSaveSetInterval = window.setInterval(function () {
+            window.setInterval(function () {
                 const projectWithSaving = Project as unknown as { saving: boolean };
         if (autoSaveEnabled && !onHold && !projectWithSaving.saving && !UI.infoBoxOpen) {
                     ScratchJr.saveProject(null, function () {
@@ -607,7 +606,6 @@ export default class ScratchJr {
         var sc = ScratchJr.getActiveScript();
         div = sc.parentNode as HTMLElement;
         var w = div.offsetWidth;
-        var h = div.offsetHeight;
         var dx = ((pt.x + 480 * scaleMultiplier) > w) ? (w - 486 * scaleMultiplier) : pt.x - 6 * scaleMultiplier;
         var ti = namedForms.editable.field;
         ti.style.textAlign = 'center';

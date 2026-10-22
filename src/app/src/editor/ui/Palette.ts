@@ -7,7 +7,7 @@ import Block from '../blocks/Block';
 import BlockSpecs from '../blocks/BlockSpecs';
 import ScriptsPane from './ScriptsPane';
 import Undo from './Undo';
-import { getModelRefAs, hasModelRef, findUpModelRefEl } from '../modelRegistry';
+import { getModelRefAs, hasModelRef } from '../modelRegistry';
 import PlatformBridge from '../../platform/PlatformBridge';
 import MediaLib from '../../platform/MediaLib';
 import Events from '../../utils/Events';

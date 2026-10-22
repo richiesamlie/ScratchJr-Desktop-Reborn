@@ -149,8 +149,8 @@ class AudioCapture {
         if (this.savedBlob) return this.savedBlob;
 
         try {
-            if (!this.chunks || this.chunks.length == 0) {
-                if (this.mediaRecorder && this.mediaRecorder.state != 'inactive') {
+            if (!this.chunks || this.chunks.length === 0) {
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
                     this.mediaRecorder.requestData();
                 }
             }
@@ -255,7 +255,7 @@ class AudioCapture {
         try {
             let playPromise = audioElement.play();
             if (playPromise !== undefined) {
-                playPromise.then(function(){}).catch(function(error) {}); // eslint-disable-line no-unused-vars
+                playPromise.then(() => {}).catch((err) => { avlog('play promise rejected', err); });
             }
         } catch (e) {
             avlog('could not play sound', e);
@@ -307,7 +307,7 @@ class AudioCapture {
             // "It is recommended for authors to not specify this buffer size and allow the implementation to pick a good
             // buffer size to balance between latency and audio quality."
             // https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createScriptProcessor
-            let processor = audioContext.createScriptProcessor((typeof AudioContext != 'undefined' ? undefined : 512), 1, 1);
+            let processor = audioContext.createScriptProcessor((typeof AudioContext !== 'undefined' ? undefined : 512), 1, 1);
             processor.onaudioprocess = this.processVolume.bind(this);
             processor.clipping = false;
             /** @type {any} */ (processor).lastClip = 0;

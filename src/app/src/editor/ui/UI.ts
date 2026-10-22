@@ -23,7 +23,7 @@ import Events from '../../utils/Events';
 import Localization from '../../utils/Localization';
 import ScratchAudio from '../../utils/ScratchAudio';
 import { getModelRefAs } from '../modelRegistry';
-import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor, newDiv,
+import {frame, gn, localx, newHTML, scaleMultiplier, getIdFor,
     newTextInput, getDocumentWidth, getDocumentHeight, setProps, globalx, applyResponsiveFrameScale} from '../../utils/lib';
 import { CURATED_FONTS } from '../../utils/FontList';
 import type { SjrFont } from '../../utils/FontList';

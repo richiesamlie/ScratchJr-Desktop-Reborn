@@ -22,7 +22,7 @@ import ScratchAudio from '../../utils/ScratchAudio';
 import type Scripts from '../ui/Scripts';
 import {newHTML, newDiv, newP, gn,
     DEGTOR, getIdFor, setProps, isDesktop,
-    fitInRect, scaleMultiplier, setCanvasSize,
+    fitInRect, setCanvasSize,
     globaly, globalx, rgbToHex, utf8ToBase64, base64ToUtf8} from '../../utils/lib';
 import { sanitizeSvgElement } from '../../utils/svgSanitizer';
 import type Stage from './Stage';

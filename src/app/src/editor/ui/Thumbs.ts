@@ -398,7 +398,7 @@ export default class Thumbs {
             getModelRefAs<Scripts>(sc, 'scripts')!.deactivate();
         }
         ScratchJr.unfocus(e);
-        let page =  new Page(getIdFor('page'));  // eslint-disable-line no-unused-vars
+        new Page(getIdFor('page'));
     }
 
     static highlighPage (page: HTMLElement) {
