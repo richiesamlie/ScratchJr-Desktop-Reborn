@@ -1,12 +1,12 @@
 # Architecture — ScratchJr Desktop Reborn
 
-Verified from source (v2.13.4). Companion documents:
+Verified from source (v2.14.0). Companion documents:
 `ANDROID-PORT-PLAN.md` (Android specs & audit), `WEB-PORT-PLAN.md` (Web WASM architecture),
 `THREAT-MODEL.md` (boundaries), `engine.md` (editor internals), `development.md` (build).
 
 ## Process topology
 
-### 1. Desktop Host (Electron 43 / Node 24)
+### 1. Desktop Host (Electron 43 / Embedded Node 24 runtime; Node 22 LTS build tooling)
 
 ```text
 ┌───────────────────────────── Main (Node 24, Electron 43) ─────────────────────┐

@@ -16,6 +16,7 @@ ScratchJr Reborn is a universal multi-target project supporting **Desktop** (Ele
 All version references must be updated in lockstep:
 - `package.json` & `package-lock.json`
 - `src/app/settings.json` (`scratchJrVersion: "desktop-vX.Y.Z"`)
+- `src/app/sw.js` (`CACHE_NAME = "scratchjr-pwa-vX.Y.Z"`)
 - `android/app/build.gradle.kts` (`versionCode`, `versionName`)
 - `src-tauri/Cargo.toml` (`version = "X.Y.Z"`) & `src-tauri/tauri.conf.json` (`"version": "X.Y.Z"`)
 - `version.json`

@@ -3,6 +3,53 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [Unreleased]
+
+### Security
+- **External URL Validation Choke Point (`src/main/updater.ts`, `docs/THREAT-MODEL.md`)**:
+  - Implemented `safeExternalUrl` allowlist restricting `openExternalUrl` strictly to HTTPS GitHub release and documentation URLs, rejecting insecure HTTP, non-allowlisted origins, and embedded credentials.
+- **Android WebView Hardening (`MainActivity.kt`, `WebSecurityUtils.kt`)**:
+  - Disabled `allowFileAccess` and `allowContentAccess` in WebView settings.
+  - Blocked external navigation via `shouldOverrideUrlLoading` and returned HTTP 403 Forbidden via `shouldInterceptRequest` for requests outside `appassets.androidplatform.net`.
+- **Media Permission Origin Lockdown (`src/main/window-lifecycle.ts`)**:
+  - Restricted camera and microphone permissions strictly to the app's local `file://` origin (`isAppFileUrl`), blocking foreign web or arbitrary local file origins.
+- **Project Archive Import Bounds & Path Traversal Guard (`src/app/src/platform/IO.ts`)**:
+  - Implemented 50MB compressed size cap, 2000 archive entries cap, 200MB uncompressed size cap, and `/^[A-Za-z0-9._-]+$/` safe basename check to prevent zip-slip and denial-of-service crashes.
+- **Bounded Stream Reading & Import Confirmation (`MainActivity.kt`, `IoUtils.kt`, `AndroidManifest.xml`)**:
+  - Added bounded stream reader (`IoUtils.readBounded`, 50MB cap) for Android intent imports, added kid-friendly confirmation dialog before opening external projects, and dropped `<data android:scheme="file" />` from intent filter.
+- **Android Cloud Backup Security Rules (`res/xml/backup_rules.xml`, `res/xml/data_extraction_rules.xml`)**:
+  - Preserved cloud restore for user databases and media (`allowBackup="true"`) while excluding temporary WebView caches.
+- **Least-Privilege GitHub Actions Workflow (`.github/workflows/build-android.yml`)**:
+  - Set `build-android` job permissions to read-only (`contents: read`) and isolated `contents: write` to the release publishing job.
+
+### Fixed
+- **Host Error Rejection Parity (`src/tauriClient.js`)**:
+  - Re-threw failed media/file persistence promises (`io_setmedia`, `io_setmedianame`, `io_setfile`) so UI call sites can handle failures rather than silently assuming success.
+- **Audio Persistence Race Elimination (`src/tauriClient.js`, `src/electronClient.js`, `src/webhost.js`)**:
+  - Ensured recorded audio is fully written to persistent storage before loading data URIs for playback.
+- **Tauri IPC Command Timeouts (`src/tauriClient.js`)**:
+  - Added default 15-second timeouts to database statements and queries to prevent hanging renderer promises.
+- **Tauri Storage Failure Transparency (`src-tauri/src/lib.rs`, `src-tauri/src/db.rs`, `src-tauri/src/commands.rs`)**:
+  - Replaced startup `.expect()` panics with structured error handling and native dialog alerts; surfaced backup/restore failures.
+- **Browser SQL Intent Validator Parity (`src/browserClient.js`)**:
+  - Enforced strict schema allowlists matching `db-intents.ts` (table lookups via `hasOwnProperty`, unexpected key rejection, primitive value assertions, and strict ID requirements on updates/deletes).
+- **Control Flow & Lint Fixes (`src/electronClient.js`, `src/browserClient.js`, `src/webav.js`)**:
+  - Added missing `default` case in keyboard shortcut dispatch, resolved fetch parameter shadowing, and logged audio play rejections.
+- **Localization Parity Across All Locales (`src/app/localizations/*.json`)**:
+  - Added missing UI theme and font keys (`THEME`, `THEME_LIGHT`, `THEME_DARK`, `THEME_CLASSIC`, `FONT_FAMILY`) to all 11 non-English locales.
+
+### Internal
+- **Re-enabled Core ESLint Correctness Rules (`package.json`)**:
+  - Restored `eqeqeq`, `radix`, `no-new-func`, `guard-for-in`, `default-case`, `no-shadow`, and `import/no-cycle`.
+- **Strict TypeScript Compiler Options (`tsconfig.json`, `tsconfig.main.json`)**:
+  - Enabled `noImplicitReturns`, `noFallthroughCasesInSwitch`, and `noUnusedLocals`; eliminated dead variables and unused imports.
+- **CI Dependency Patch Guard (`scripts/patch-for-node26.js`)**:
+  - Configured non-zero exit on patch hunk drift when running under `process.env.CI`.
+- **Documentation & Lockstep Synchronization (`docs/RELEASE.md`, `docs/ARCHITECTURE.md`, `AGENTS.md`, `GEMINI.md`)**:
+  - Added `src/app/sw.js` cache name to version lockstep protocols, refreshed architecture references to v2.14.0, and updated runbook test counts.
+- **Comprehensive Unit Test Expansion (`tests/unit/`)**:
+  - Added dedicated test suites for updater URL validation, Tauri error contracts, SQL intent allowlist parity, SJR import resilience, window permission origins, and IPC handler dispatching (expanded test suite to 365 tests).
+
 ## [v2.14.0] - 2026-10-16
 
 **Minor Release: Comprehensive Cross-Platform Architecture Audit & System-Wide Remediation (Tracks A, B, C, D).**
