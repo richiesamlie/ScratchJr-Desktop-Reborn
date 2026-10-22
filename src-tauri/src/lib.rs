@@ -12,13 +12,32 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let db = Arc::new(DatabaseManager::new().expect("Failed to initialize database manager"));
-    let io = Arc::new(IoManager::new().expect("Failed to initialize IO manager"));
-
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(AppState { db, io })
         .setup(|app| {
+            let db_res = DatabaseManager::new();
+            let io_res = IoManager::new();
+
+            let (db, io) = match (db_res, io_res) {
+                (Ok(db), Ok(io)) => (Arc::new(db), Arc::new(io)),
+                (Err(e), _) | (_, Err(e)) => {
+                    use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+                    let docs_dir_msg = dirs::document_dir()
+                        .map(|p| p.display().to_string())
+                        .unwrap_or_else(|| "Documents".to_string());
+                    app.dialog()
+                        .message(format!(
+                            "ScratchJr could not open or create its storage folder in:\n{}\n\nError: {}\n\nPlease check your folder permissions and try again.",
+                            docs_dir_msg, e
+                        ))
+                        .kind(MessageDialogKind::Error)
+                        .title("ScratchJr - Storage Error")
+                        .blocking_show();
+                    return Err(Box::new(std::io::Error::other(e)));
+                }
+            };
+            app.manage(AppState { db, io });
+
             let toggle_fullscreen = MenuItemBuilder::with_id("fullscreen", "Toggle full screen")
                 .accelerator("CmdOrCtrl+F")
                 .build(app)?;
@@ -92,7 +111,9 @@ pub fn run() {
                 std::thread::spawn(move || {
                     std::thread::sleep(std::time::Duration::from_secs(10));
                     let state = handle.state::<AppState>();
-                    state.db.save_backup();
+                    if !state.db.save_backup() {
+                        eprintln!("Warning: database backup failed on close timeout");
+                    }
                     handle.exit(0);
                 });
             }
@@ -130,8 +151,12 @@ pub fn run() {
                     }
                     "restore_projects" => {
                         let state = app.state::<AppState>();
-                        state.db.restore_backup();
-                        let _ = w.eval("if (window.scratchjr && window.scratchjr.databaseRestoredCallback) { window.scratchjr.databaseRestoredCallback(); } else { window.location.href = 'index.html?back=yes'; }");
+                        if state.db.restore_backup() {
+                            let _ = w.eval("if (window.scratchjr && window.scratchjr.databaseRestoredCallback) { window.scratchjr.databaseRestoredCallback(); } else { window.location.href = 'index.html?back=yes'; }");
+                        } else {
+                            eprintln!("Restore projects failed: backup file was missing or invalid");
+                            let _ = w.eval("console.error('ScratchJr: Restore projects failed.');");
+                        }
                     }
                     "quit" => {
                         let _ = w.eval("if (window.scratchjr && window.scratchjr.appCloseCallback) { window.scratchjr.appCloseCallback(); } else if (window.scratchjr && window.scratchjr.sendAppClosedAcked) { window.scratchjr.sendAppClosedAcked(); } else if (window.__TAURI_INTERNALS__) { window.__TAURI_INTERNALS__.invoke('app_closed_acked'); }");
@@ -139,7 +164,9 @@ pub fn run() {
                         std::thread::spawn(move || {
                             std::thread::sleep(std::time::Duration::from_secs(10));
                             let state = handle.state::<AppState>();
-                            state.db.save_backup();
+                            if !state.db.save_backup() {
+                                eprintln!("Warning: database backup failed on quit timeout");
+                            }
                             handle.exit(0);
                         });
                     }
@@ -166,6 +193,9 @@ pub fn run() {
             commands::save_stage_png,
             commands::app_closed_acked,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running ScratchJr Tauri application");
+        .run(tauri::generate_context!());
+
+    if let Err(err) = app {
+        eprintln!("ScratchJr error: {err}");
+    }
 }

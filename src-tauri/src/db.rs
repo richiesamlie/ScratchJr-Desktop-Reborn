@@ -96,14 +96,20 @@ impl DatabaseManager {
         if !db_valid {
             if Self::is_file_valid_sqlite(&bak_path) {
                 let _ = fs::remove_file(&db_path);
-                fs::copy(&bak_path, &db_path).map_err(|e| e.to_string())?;
+                fs::copy(&bak_path, &db_path).map_err(|e| {
+                    eprintln!("Failed to restore corrupted DB from backup: {e}");
+                    e.to_string()
+                })?;
             } else {
                 // Both main DB and backup are corrupt or missing: quarantine corrupt DB
                 // and remove invalid backup so a fresh database can be initialized cleanly.
                 let corrupt_path = scratch_dir.join("scratchjr.sqllite.corrupt");
                 let _ = fs::remove_file(&corrupt_path);
-                if fs::rename(&db_path, &corrupt_path).is_err() {
-                    let _ = fs::remove_file(&db_path);
+                if let Err(e) = fs::rename(&db_path, &corrupt_path) {
+                    eprintln!("Could not quarantine corrupted DB via rename ({e}); attempting removal");
+                    if let Err(re) = fs::remove_file(&db_path) {
+                        eprintln!("Failed to remove corrupted DB: {re}");
+                    }
                 }
                 if bak_path.exists() {
                     let _ = fs::remove_file(&bak_path);
@@ -220,29 +226,44 @@ impl DatabaseManager {
             }
         }
         if !has_isgift {
-            let _ = conn.execute("ALTER TABLE PROJECTS ADD COLUMN ISGIFT INTEGER DEFAULT 0", []);
+            if let Err(e) = conn.execute("ALTER TABLE PROJECTS ADD COLUMN ISGIFT INTEGER DEFAULT 0", []) {
+                let err_msg = e.to_string();
+                if !err_msg.to_lowercase().contains("duplicate column") {
+                    eprintln!("Failed to migrate PROJECTS table to add ISGIFT column: {err_msg}");
+                    return Err(format!("Migration failed: {err_msg}"));
+                }
+            }
         }
         Ok(())
     }
 
-    pub fn save_backup(&self) {
+    pub fn save_backup(&self) -> bool {
         let Ok(_guard) = self.conn.lock() else {
-            return;
+            eprintln!("save_backup failed: could not acquire db lock");
+            return false;
         };
         if !self.db_path.exists() {
-            return;
+            eprintln!("save_backup: db_path does not exist: {}", self.db_path.display());
+            return false;
         }
         let bak_path = self.db_path.with_extension("sqllite.bak");
         let tmp_bak_path = self
             .db_path
             .with_extension(format!("sqllite.bak.tmp.{}", std::process::id()));
-        if fs::copy(&self.db_path, &tmp_bak_path).is_ok() {
-            if fs::rename(&tmp_bak_path, &bak_path).is_err() {
-                let _ = fs::remove_file(&bak_path);
-                let _ = fs::rename(&tmp_bak_path, &bak_path);
-            }
-            let _ = fs::remove_file(&tmp_bak_path);
+        if let Err(e) = fs::copy(&self.db_path, &tmp_bak_path) {
+            eprintln!("save_backup copy to tmp failed: {e}");
+            return false;
         }
+        if fs::rename(&tmp_bak_path, &bak_path).is_err() {
+            let _ = fs::remove_file(&bak_path);
+            if let Err(e) = fs::rename(&tmp_bak_path, &bak_path) {
+                eprintln!("save_backup rename tmp to bak failed: {e}");
+                let _ = fs::remove_file(&tmp_bak_path);
+                return false;
+            }
+        }
+        let _ = fs::remove_file(&tmp_bak_path);
+        true
     }
 
     pub fn restore_backup(&self) -> bool {
@@ -687,6 +708,80 @@ mod tests {
             assert_eq!(rows_str, "[]");
             assert!(dir.join("scratchjr.sqllite.corrupt").exists());
         }
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_run_migrations_isgift_idempotent() {
+        let dir = temp_scratch_dir("migration");
+        let mgr = DatabaseManager::new_in_dir(&dir).unwrap();
+
+        // Initial setup runs migrations: ISGIFT column should exist
+        let res = mgr.run_migrations();
+        assert!(res.is_ok());
+
+        // Re-running migrations is idempotent and succeeds without error
+        let res_again = mgr.run_migrations();
+        assert!(res_again.is_ok());
+
+        // Verify ISGIFT can be queried
+        let sel: DbIntent = serde_json::from_value(json!({
+            "op": "select",
+            "table": "projects",
+            "items": ["isgift"]
+        }))
+        .unwrap();
+        let rows = mgr.execute_query(sel);
+        assert!(rows.is_ok());
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_save_and_restore_backup_lifecycle() {
+        let dir = temp_scratch_dir("backup_lifecycle");
+        let mgr = DatabaseManager::new_in_dir(&dir).unwrap();
+
+        // Insert a project
+        let ins: DbIntent = serde_json::from_value(json!({
+            "op": "insert",
+            "table": "projects",
+            "row": { "name": "BackupTest", "deleted": "NO", "version": "iOSv01" }
+        }))
+        .unwrap();
+        let id = mgr.execute_stmt(ins).unwrap();
+        assert!(id > 0);
+
+        // Save backup succeeds and returns true
+        let backup_ok = mgr.save_backup();
+        assert!(backup_ok);
+        assert!(dir.join("scratchjr.sqllite.bak").exists());
+
+        // Now modify the DB
+        let upd: DbIntent = serde_json::from_value(json!({
+            "op": "update",
+            "table": "projects",
+            "id": id,
+            "row": { "name": "ModifiedName" }
+        }))
+        .unwrap();
+        assert_eq!(mgr.execute_stmt(upd), Ok(id));
+
+        // Restore backup succeeds
+        let restore_ok = mgr.restore_backup();
+        assert!(restore_ok);
+
+        // Verify restored data has original name
+        let sel: DbIntent = serde_json::from_value(json!({
+            "op": "select",
+            "table": "projects",
+            "items": ["name"]
+        }))
+        .unwrap();
+        let rows = mgr.execute_query(sel).unwrap();
+        assert!(rows.contains("BackupTest"));
+        assert!(!rows.contains("ModifiedName"));
 
         let _ = fs::remove_dir_all(&dir);
     }

@@ -30,7 +30,9 @@ pub fn database_stmt(state: State<'_, AppState>, raw: Value) -> i64 {
 
     match state.db.execute_stmt(intent) {
         Ok(res) => {
-            state.db.save_backup();
+            if !state.db.save_backup() {
+                eprintln!("Warning: database backup failed after execute_stmt");
+            }
             res
         }
         Err(code) => code,
@@ -135,7 +137,9 @@ pub fn io_get_audio_data(state: State<'_, AppState>, audio_name: String) -> Opti
 
 #[tauri::command]
 pub fn app_closed_acked(app: AppHandle, state: State<'_, AppState>) {
-    state.db.save_backup();
+    if !state.db.save_backup() {
+        eprintln!("Warning: database backup failed on app close");
+    }
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.destroy();
     }
