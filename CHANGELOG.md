@@ -5,6 +5,10 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
 
 ## [Unreleased]
 
+## [v2.14.1] - 2026-10-22
+
+**Patch Release: Security Hardening, Host Rejection Parity, Bounds Enforcement, and Code Quality Strictness.**
+
 ### Security
 - **External URL Validation Choke Point (`src/main/updater.ts`, `docs/THREAT-MODEL.md`)**:
   - Implemented `safeExternalUrl` allowlist restricting `openExternalUrl` strictly to HTTPS GitHub release and documentation URLs, rejecting insecure HTTP, non-allowlisted origins, and embedded credentials.

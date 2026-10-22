@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 /* eslint-disable no-console */
 // ScratchJr Reborn Service Worker (Offline PWA Cache)
-var CACHE_NAME = 'scratchjr-pwa-v2.14.0';
+var CACHE_NAME = 'scratchjr-pwa-v2.14.1';
 
 var PRECACHE_URLS = [
   './',
