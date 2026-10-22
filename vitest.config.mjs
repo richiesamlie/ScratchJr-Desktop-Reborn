@@ -23,5 +23,18 @@ export default defineConfig({
         include: ['tests/**/*.test.js'],
         globals: false,
         testTimeout: 10000,
+        coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json', 'html'],
+            include: ['src/**'],
+            exclude: [
+                'src/app/dist/**',
+                'src/app/pnglibrary/**',
+                'src/app/svglibrary/**',
+                'src/app/localizations/**',
+                'src/icons/**',
+                'src/types/**',
+            ],
+        },
     },
 });

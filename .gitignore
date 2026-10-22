@@ -49,3 +49,5 @@ src-tauri/target/
 
 # Local tools
 .freebuff/
+
+coverage/
