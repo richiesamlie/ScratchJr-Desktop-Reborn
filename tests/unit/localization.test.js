@@ -110,4 +110,25 @@ describe('Localization — determineLocaleFromBrowser (Finding F1 verification)'
         setBrowserLanguage('fr');
         expect(Localization.determineLocaleFromBrowser()).toBe('en');
     });
+
+    it('maintains key parity for critical UI theme and font keys across all supported locales', async () => {
+        const fs = await import('fs');
+        const path = await import('path');
+        const localesDir = path.resolve(__dirname, '../../src/app/localizations');
+        const criticalKeys = ['THEME', 'THEME_LIGHT', 'THEME_DARK', 'THEME_CLASSIC', 'FONT_FAMILY'];
+
+        const supportedLocales = Object.values(settingsJson.supportedLocales);
+        expect(supportedLocales.length).toBeGreaterThanOrEqual(12);
+
+        for (const loc of supportedLocales) {
+            const locPath = path.join(localesDir, `${loc}.json`);
+            expect(fs.existsSync(locPath), `Locale file for ${loc} must exist`).toBe(true);
+            const data = JSON.parse(fs.readFileSync(locPath, 'utf8'));
+            for (const key of criticalKeys) {
+                expect(data, `Locale ${loc} must have critical key ${key}`).toHaveProperty(key);
+                expect(typeof data[key]).toBe('string');
+                expect(data[key].length).toBeGreaterThan(0);
+            }
+        }
+    });
 });

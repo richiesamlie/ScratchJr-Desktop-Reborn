@@ -416,5 +416,10 @@
     "BLOCK_DESC_COLOR": "FARBE",
     "BLOCKS_FADE": "Verblassen",
     "BLOCKS_FADE_DESCRIPTION": "Macht die Figur halbtransparent.",
-    "BLOCK_DESC_FADE": "VERBLASSEN"
+    "BLOCK_DESC_FADE": "VERBLASSEN",
+    "THEME": "Theme",
+    "THEME_LIGHT": "☀️ Light",
+    "THEME_DARK": "🌙 Dark",
+    "THEME_CLASSIC": "🎨 Classic",
+    "FONT_FAMILY": "Font"
 }

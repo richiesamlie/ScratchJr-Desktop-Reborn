@@ -416,5 +416,10 @@
     "BLOCK_DESC_COLOR": "いろ",
     "BLOCKS_FADE": "とうめいにする",
     "BLOCKS_FADE_DESCRIPTION": "きゃらくたーをはんとうめいにします。",
-    "BLOCK_DESC_FADE": "とうめい"
+    "BLOCK_DESC_FADE": "とうめい",
+    "THEME": "Theme",
+    "THEME_LIGHT": "☀️ Light",
+    "THEME_DARK": "🌙 Dark",
+    "THEME_CLASSIC": "🎨 Classic",
+    "FONT_FAMILY": "Font"
 }

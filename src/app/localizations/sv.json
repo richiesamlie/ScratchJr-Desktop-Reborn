@@ -416,5 +416,10 @@
     "BLOCK_DESC_COLOR": "FÄRG",
     "BLOCKS_FADE": "Tona ut",
     "BLOCKS_FADE_DESCRIPTION": "Gör figuren halvgenomskinlig.",
-    "BLOCK_DESC_FADE": "TONA UT"
+    "BLOCK_DESC_FADE": "TONA UT",
+    "THEME": "Theme",
+    "THEME_LIGHT": "☀️ Light",
+    "THEME_DARK": "🌙 Dark",
+    "THEME_CLASSIC": "🎨 Classic",
+    "FONT_FAMILY": "Font"
 }
