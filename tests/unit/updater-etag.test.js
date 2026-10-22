@@ -22,7 +22,7 @@ vi.mock('../../src/main/logging.ts', async () => {
 
 import { checkForUpdate } from '../../src/main/updater.ts';
 
-const URL = 'https://example.com/dl';
+const URL = 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v1.6.2/ScratchJr-win32-x64.zip';
 const RELEASE = {
     tag_name: 'v1.6.2',
     body: 'notes',
@@ -77,12 +77,12 @@ describe('checkForUpdate conditional requests and CDN', () => {
             release_url: 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/tag/v2.0.0',
             notes: 'Major release',
             downloads: {
-                'win32-x64-msi': 'https://example.com/ScratchJr.msi',
-                'win32-x64': 'https://example.com/ScratchJr-win.zip',
-                'darwin-x64': 'https://example.com/ScratchJr-mac.zip',
-                'darwin-arm64': 'https://example.com/ScratchJr-mac-arm64.zip',
-                'linux-x64': 'https://example.com/ScratchJr-linux.zip',
-                'linux-arm64': 'https://example.com/ScratchJr-linux-arm64.zip',
+                'win32-x64-msi': 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr.msi',
+                'win32-x64': 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-win.zip',
+                'darwin-x64': 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-mac.zip',
+                'darwin-arm64': 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-mac-arm64.zip',
+                'linux-x64': 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-linux.zip',
+                'linux-arm64': 'https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/download/v2.0.0/ScratchJr-linux-arm64.zip',
             },
         };
 
@@ -116,7 +116,7 @@ describe('checkForUpdate conditional requests and CDN', () => {
 
         expect(info.available).toBe(false);
         expect(info.latestVersion).toBe('1.6.2');
-        expect(info.downloadUrl).toBe('https://example.com/dl');
+        expect(info.downloadUrl).toBe(URL);
 
         // ETag persisted for the next round-trip
         const cachePath = path.join(tmpDir, 'update-cache.json');

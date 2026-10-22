@@ -111,7 +111,7 @@ tries to escalate.
 | Arbitrary file read | **No** | `io_gettextresource`/`io_getAudioData` confined to app dir by `validateFilePath` (`path-utils.ts:14-26`); media reads by basename key |
 | Arbitrary file write | **No** | Media writes basename-confined to `Documents/ScratchJR/media` (`database.ts:358-363`); export writes only after a native save dialog the user controls (`ipc-handlers.ts:247-284`) |
 | Arbitrary delete | **No** | `io_remove` deletes one basename-confined media file; `io_cleanassets` extension-scoped, only unreferenced files |
-| OS execution / URL scheme abuse | **No** | No `shell` exposure in the bridge; `openExternalUrl` is main-side only, called only from the update dialog with GitHub URLs (`updater.ts:220-224`, `main.ts:63-67`) |
+| OS execution / URL scheme abuse | **No** | No `shell` exposure in the bridge; `openExternalUrl` is main-side only and enforces strict HTTPS URL allowlisting (`safeExternalUrl` in `updater.ts:330-365`), restricting navigation exclusively to official GitHub repository releases and verified asset CDN links. |
 | DoS main process | **Bounded** | Direct `io_getmedia` reads are single-file, basename-confined reads bounded by asset file size on disk; no unbounded cache or memory buildup |
 | Wipe student projects | **Yes, within DB** | delete intents on `projects` — by design (renderer owns project lifecycle); mitigated by `.bak` rotation, which a compromised renderer could also defeat via a second save. Accepted: equal to the threat of the app itself. |
 
@@ -129,14 +129,13 @@ seams are inert under CSP but should ideally be dev-only.
 
 **Current mitigations (verified):**
 
-- HTTPS to `api.github.com` only, fixed owner/repo constants
-  (`updater.ts:13-14,115-121`); 10s abort timeout; ETag 304 caching to
-  respect rate limits.
+- HTTPS to `api.github.com` and CDN endpoints with fixed owner/repo constants; abort timeout; ETag 304 caching to respect rate limits.
+- Strict scheme and origin allowlist via `safeExternalUrl` in `updater.ts`: enforces `https:` protocol, rejects credentials, and permits only `github.com/${REPO_OWNER}/${REPO_NAME}/*` and `*.githubusercontent.com`. All arbitrary, file, SMB, or mismatched origins fall back to the safe release page URL or are blocked.
 - Malformed payloads rejected (`tag_name` type check, `:145-148`).
 - Semver comparison strips prerelease suffixes; NaN-class comparison bugs
   were already fixed historically (`:70-82`, unit-tested).
 - **No auto-download, no auto-execute.** The dialog offers
-  Download/View/Cancel; download opens the user's browser at the asset URL
+  Download/View/Cancel; download opens the user's browser only after `safeExternalUrl` validation
   (`main.ts:52-67`). A school can firewall `api.github.com` and lose only
   the check, which fails silently (`main.ts:134-136` handles the offline
   case).

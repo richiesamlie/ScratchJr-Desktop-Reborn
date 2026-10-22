@@ -7,7 +7,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { app, shell, BrowserWindow } from 'electron';
+import { app, shell } from 'electron';
 import { debugLog } from './logging';
 
 const REPO_OWNER = 'richiesamlie';
@@ -192,7 +192,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
                     const available = compareVersions(latestVersion, currentVersion) > 0;
                     
                     // Select platform download asset from manifest
-                    let downloadUrl = manifest.release_url || releasePageUrl;
+                    let downloadUrl = safeExternalUrl(manifest.release_url, releasePageUrl);
                     if (manifest.downloads) {
                         const platform = process.platform;
                         const arch = process.arch;
@@ -201,7 +201,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
                             : [`${platform}-${arch}-electron`, `${platform}-${arch}`];
                         const foundKey = candidateKeys.find((k) => manifest.downloads && manifest.downloads[k]);
                         if (foundKey && manifest.downloads[foundKey]) {
-                            downloadUrl = manifest.downloads[foundKey];
+                            downloadUrl = safeExternalUrl(manifest.downloads[foundKey], releasePageUrl);
                         }
                     }
 
@@ -211,7 +211,7 @@ export async function checkForUpdate(): Promise<UpdateInfo> {
                         currentVersion,
                         latestVersion,
                         downloadUrl,
-                        releasePageUrl: manifest.release_url || releasePageUrl,
+                        releasePageUrl: safeExternalUrl(manifest.release_url, releasePageUrl),
                         releaseNotes: manifest.notes || '',
                     };
                 }
@@ -315,7 +315,7 @@ function buildUpdateInfo (
 
         const asset = release.assets.find((a) => candidateNames.includes(a.name));
         if (asset) {
-            downloadUrl = asset.browser_download_url;
+            downloadUrl = safeExternalUrl(asset.browser_download_url, releasePageUrl);
         }
     }
 
@@ -338,10 +338,55 @@ function buildUpdateInfo (
 }
 
 /**
+ * Validate that an external URL is a safe, HTTPS GitHub release or asset link
+ * before passing to shell.openExternal or presenting as a download URL.
+ *
+ * Prevents malicious or compromised manifest entries from opening file://,
+ * smb://, or arbitrary external domains.
+ */
+export function safeExternalUrl(raw: unknown, fallback: string): string {
+    if (typeof raw !== 'string' || !raw.trim()) {
+        return fallback;
+    }
+    try {
+        const parsed = new URL(raw.trim());
+        if (parsed.protocol !== 'https:') {
+            return fallback;
+        }
+        if (parsed.username || parsed.password) {
+            return fallback;
+        }
+        const hostname = parsed.hostname.toLowerCase();
+        const pathname = parsed.pathname;
+
+        const isAllowedGitHubRepo =
+            hostname === 'github.com' &&
+            (pathname === `/${REPO_OWNER}/${REPO_NAME}` ||
+             pathname.startsWith(`/${REPO_OWNER}/${REPO_NAME}/`));
+
+        const isAllowedGitHubAssetCdn =
+            hostname === 'githubusercontent.com' ||
+            hostname.endsWith('.githubusercontent.com');
+
+        if (isAllowedGitHubRepo || isAllowedGitHubAssetCdn) {
+            return raw;
+        }
+        return fallback;
+    } catch {
+        return fallback;
+    }
+}
+
+/**
  * Open a URL in the default browser.
  */
 export function openExternalUrl(url: string): void {
-    shell.openExternal(url).catch((err) => {
-        debugLog('Failed to open URL:', url, err);
+    const validated = safeExternalUrl(url, '');
+    if (!validated) {
+        debugLog('Blocked external URL:', url);
+        return;
+    }
+    Promise.resolve(shell.openExternal(validated)).catch((err) => {
+        debugLog('Failed to open URL:', validated, err);
     });
 }
