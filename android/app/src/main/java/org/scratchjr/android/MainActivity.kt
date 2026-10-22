@@ -21,6 +21,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
+import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -28,6 +31,9 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.webkit.WebViewAssetLoader
 import org.scratchjr.android.bridge.AndroidBridge
 import org.scratchjr.android.database.AndroidDatabaseManager
+import org.scratchjr.android.utils.IoUtils
+import org.scratchjr.android.utils.WebSecurityUtils
+import java.io.ByteArrayInputStream
 import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
@@ -113,8 +119,8 @@ class MainActivity : AppCompatActivity() {
         val settings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
-        settings.allowFileAccess = true
-        settings.allowContentAccess = true
+        settings.allowFileAccess = false
+        settings.allowContentAccess = false
         settings.databaseEnabled = true
         settings.mediaPlaybackRequiresUserGesture = false
         settings.useWideViewPort = false
@@ -129,10 +135,43 @@ class MainActivity : AppCompatActivity() {
             .build()
 
         webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                val host = request?.url?.host
+                if (!WebSecurityUtils.isAppAssetHost(host)) {
+                    Log.w(TAG, "Blocked external navigation to: ${request?.url}")
+                    return true // Block navigation
+                }
+                return false
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                if (!WebSecurityUtils.isAppAssetUrl(url)) {
+                    Log.w(TAG, "Blocked external navigation to: $url")
+                    return true // Block navigation
+                }
+                return false
+            }
+
             override fun shouldInterceptRequest(
                 view: WebView,
                 request: WebResourceRequest
             ): WebResourceResponse? {
+                val host = request.url.host
+                if (!WebSecurityUtils.isAppAssetHost(host)) {
+                    Log.w(TAG, "Blocked external resource request to: ${request.url}")
+                    return WebResourceResponse(
+                        "text/plain",
+                        "UTF-8",
+                        403,
+                        "Forbidden",
+                        emptyMap(),
+                        ByteArrayInputStream(ByteArray(0))
+                    )
+                }
                 return assetLoader.shouldInterceptRequest(request.url)
             }
 
@@ -240,6 +279,7 @@ class MainActivity : AppCompatActivity() {
      * every navigation; cleared after successful handoff.
      */
     private var pendingSjrBase64: String? = null
+    private var activeImportDialog: AlertDialog? = null
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -247,17 +287,53 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
     }
 
+    private fun getDisplayName(uri: Uri): String? {
+        return try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex != -1) cursor.getString(nameIndex) else null
+                } else null
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private fun handleIntent(intent: Intent?) {
         val data = intent?.data ?: return
         if (intent.action == Intent.ACTION_VIEW) {
-            try {
-                val inputStream: InputStream? = contentResolver.openInputStream(data)
-                val bytes = inputStream?.readBytes() ?: return
-                pendingSjrBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
-                tryFlushSjrImport()
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to import .sjr from intent", e)
+            if (isFinishing || isDestroyed) return
+
+            activeImportDialog?.dismiss()
+
+            val displayName = getDisplayName(data)
+            val message = if (!displayName.isNullOrBlank()) {
+                getString(R.string.import_project_dialog_message, displayName)
+            } else {
+                getString(R.string.import_project_dialog_message_generic)
             }
+
+            activeImportDialog = AlertDialog.Builder(this)
+                .setTitle(R.string.import_project_dialog_title)
+                .setMessage(message)
+                .setPositiveButton(R.string.import_project_button_add) { _, _ ->
+                    try {
+                        val inputStream: InputStream? = contentResolver.openInputStream(data)
+                        val bytes = inputStream?.use { IoUtils.readBounded(it) }
+                        if (bytes == null) {
+                            Log.w(TAG, "Import rejected: stream was null or exceeded max allowed size")
+                            Toast.makeText(this, R.string.import_project_too_large, Toast.LENGTH_LONG).show()
+                            return@setPositiveButton
+                        }
+                        pendingSjrBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+                        tryFlushSjrImport()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to import .sjr from intent", e)
+                    }
+                }
+                .setNegativeButton(R.string.import_project_button_cancel, null)
+                .show()
         }
     }
 
@@ -350,6 +426,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        activeImportDialog?.dismiss()
+        activeImportDialog = null
         dbManager.close()
     }
 }
