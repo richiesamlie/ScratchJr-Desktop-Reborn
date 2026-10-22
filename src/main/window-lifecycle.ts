@@ -13,6 +13,19 @@ import { debugLog } from './logging';
 import type { ScratchJRDataStore } from './data-store';
 import { isParentFolder } from '../lib/path-utils';
 
+export function isAppFileUrl(urlOrOrigin?: string): boolean {
+    if (!urlOrOrigin) return false;
+    if (urlOrOrigin === 'file://' || urlOrOrigin === 'file:///') return true;
+    try {
+        const targetPath = fileURLToPath(urlOrOrigin);
+        const appRoot = path.resolve(path.join(__dirname, '..', '..', 'src', 'app'));
+        const relative = path.relative(appRoot, targetPath);
+        return relative === '' || isParentFolder(appRoot, targetPath);
+    } catch {
+        return false;
+    }
+}
+
 let win: BrowserWindow | null = null;
 let dataStoreRef: ScratchJRDataStore | null = null;
 
@@ -78,19 +91,21 @@ export function createWindow(dataStore: ScratchJRDataStore): BrowserWindow {
     // Security: never allow this renderer to open new windows.
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' as const }));
 
-    // Security: only allow camera and microphone permissions.
-    win.webContents.session.setPermissionRequestHandler((_webContents, permission, callback) => {
-        if (ALLOWED_PERMISSIONS.includes(permission)) {
+    // Security: only allow camera and microphone permissions from the app's own file origin.
+    win.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => {
+        const requestingUrl = (details && details.requestingUrl) || (webContents && webContents.getURL ? webContents.getURL() : '');
+        if (ALLOWED_PERMISSIONS.includes(permission) && isAppFileUrl(requestingUrl)) {
             callback(true);
         } else {
-            debugLog('Blocked permission request:', permission);
+            debugLog('Blocked permission request:', permission, requestingUrl);
             callback(false);
         }
     });
 
-    // Security: also gate programmatic permission checks.
-    win.webContents.session.setPermissionCheckHandler((_webContents, permission, _requestingOrigin) => {
-        return ALLOWED_PERMISSIONS.includes(permission);
+    // Security: also gate programmatic permission checks to the app's own file origin.
+    win.webContents.session.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+        const requestingUrl = (details && details.requestingUrl) || requestingOrigin || (webContents && webContents.getURL ? webContents.getURL() : '');
+        return ALLOWED_PERMISSIONS.includes(permission) && isAppFileUrl(requestingUrl);
     });
 
     // Security: only allow in-app file:// navigations under src/app.
