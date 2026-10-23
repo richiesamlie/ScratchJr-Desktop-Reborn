@@ -22,6 +22,11 @@ vi.mock('electron', async () => {
     };
 });
 
+vi.mock('../../src/main/logging.ts', async () => {
+    const { loggingMock } = await import('./helpers/logging-mock.js');
+    return loggingMock();
+});
+
 import { register, DB_ERRORS } from '../../src/main/ipc-handlers.ts';
 import { dialog } from 'electron';
 

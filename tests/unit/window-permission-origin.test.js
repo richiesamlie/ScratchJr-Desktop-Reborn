@@ -7,6 +7,11 @@ vi.mock('electron', async () => {
     return electronMainMock({ browserWindowStub: true });
 });
 
+vi.mock('../../src/main/logging.ts', async () => {
+    const { loggingMock } = await import('./helpers/logging-mock.js');
+    return loggingMock();
+});
+
 import { isAppFileUrl, ALLOWED_PERMISSIONS } from '../../src/main/window-lifecycle.ts';
 
 describe('Window Permission Origin Guard (Kid-Safety)', () => {

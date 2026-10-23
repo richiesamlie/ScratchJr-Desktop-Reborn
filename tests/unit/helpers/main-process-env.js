@@ -8,7 +8,7 @@ import { vi } from 'vitest';
 // webContents shape database-save.test.js needs.
 export function electronMainMock ({ browserWindowStub = false } = {}) {
     return {
-        app: { isPackaged: false, getPath: () => '/tmp', quit: vi.fn() },
+        app: { isPackaged: false, getPath: () => os.tmpdir(), quit: vi.fn() },
         ipcMain: { handle: vi.fn(), on: vi.fn() },
         BrowserWindow: browserWindowStub
             ? vi.fn(() => ({ isDestroyed: vi.fn(() => false), webContents: { send: vi.fn(), on: vi.fn() } }))
@@ -23,7 +23,7 @@ export function electronMainMock ({ browserWindowStub = false } = {}) {
 
 // Slimmer electron surface for updater tests: app.getVersion drives the
 // update check and shell.openExternal is the only other API touched.
-export function electronUpdaterMock (getPathValue = '/tmp') {
+export function electronUpdaterMock (getPathValue = os.tmpdir()) {
     return {
         app: {
             getVersion: vi.fn(() => '1.6.2'),

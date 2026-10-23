@@ -13,7 +13,13 @@ import { app } from 'electron';
 const isDev: boolean = !app.isPackaged || !!process.env.DEBUG_SCRATCHJR;
 
 // --- Structured log file (initialized early so crash handlers can use it) ---
-const logPath = path.join(app.getPath('userData'), 'debug.log');
+const logDir = app.getPath('userData');
+try {
+    if (!fs.existsSync(logDir)) {
+        fs.mkdirSync(logDir, { recursive: true });
+    }
+} catch (_) { /* ignore directory creation error */ }
+const logPath = path.join(logDir, 'debug.log');
 // Cap growth: rotate to .old at boot when the previous run crossed 5 MB.
 const MAX_LOG_BYTES = 5 * 1024 * 1024;
 try {
@@ -22,6 +28,9 @@ try {
     }
 } catch (_) { /* first run or already rotated */ }
 const logFile = fs.createWriteStream(logPath, { flags: 'a' });
+logFile.on('error', () => {
+    // Prevent unhandled stream error from crashing the process
+});
 const logStdout = process.stdout;
 
 console.log = function (...args: unknown[]) {
