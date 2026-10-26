@@ -10,8 +10,43 @@ export const isDesktop = true;
 
 export let currentUiScale = 1.0;
 
+const rawCssTemplates = new Map<string, { baseUrl: string; rawText: string }>();
+let lastViewportW = 0;
+let lastViewportH = 0;
+let cssRefreshRafId: number | null = null;
+let cssRefreshPending = false;
+
 export function getUiScale () {
     return currentUiScale;
+}
+
+export function refreshPreprocessedCss () {
+    if (typeof document === 'undefined' || !document.head || rawCssTemplates.size === 0) return;
+    for (const [url, entry] of rawCssTemplates.entries()) {
+        const style = document.getElementById(url) as HTMLStyleElement | null;
+        if (!style) continue;
+        let cssData = preprocess(entry.rawText);
+        cssData = cssData.replace(/url\('/g, 'url(\'' + entry.baseUrl + '/');
+        cssData = cssData.replace(/url\(([^'])/g, 'url(' + entry.baseUrl + '/$1');
+        style.textContent = cssData;
+    }
+}
+
+function schedulePreprocessedCssRefresh () {
+    if (cssRefreshRafId === null) {
+        refreshPreprocessedCss();
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+            cssRefreshRafId = window.requestAnimationFrame(() => {
+                cssRefreshRafId = null;
+                if (cssRefreshPending) {
+                    cssRefreshPending = false;
+                    refreshPreprocessedCss();
+                }
+            });
+        }
+    } else {
+        cssRefreshPending = true;
+    }
 }
 
 export function applyResponsiveFrameScale () {
@@ -44,6 +79,12 @@ export function applyResponsiveFrameScale () {
                 el.style.transformOrigin = '';
             }
         });
+
+        if (currentWidth > 0 && currentHeight > 0 && (currentWidth !== lastViewportW || currentHeight !== lastViewportH)) {
+            lastViewportW = currentWidth;
+            lastViewportH = currentHeight;
+            schedulePreprocessedCssRefresh();
+        }
     }
 }
 
@@ -119,6 +160,8 @@ export function preprocess (s: string) {
 /**
  * Load the URL, preprocess the result and return the string.
  */
+const rawCssRaws = new Map<string, string>();
+
 export async function preprocessAndLoad (url: string) {
 
     var responseText: string | null = null;
@@ -128,6 +171,7 @@ export async function preprocessAndLoad (url: string) {
         const response = await fetch(url);
         responseText = await response.text();
     }
+    rawCssRaws.set(url, responseText ?? '');
     return preprocess(responseText ?? '');
 }
 
@@ -145,6 +189,7 @@ export async function preprocessAndLoadCss (baseUrl: string, url: string) {
 	}
 
     var cssData = await preprocessAndLoad(url);
+    rawCssTemplates.set(url, { baseUrl, rawText: rawCssRaws.get(url) ?? '' });
     cssData = cssData.replace(/url\('/g, 'url(\'' + baseUrl + '/');
     cssData = cssData.replace(/url\(([^'])/g, 'url(' + baseUrl + '/$1');
 
@@ -178,6 +223,7 @@ export async function loadCssList (baseUrl: string, urls: string[]) {
                 return null;
             }
             const data = await preprocessAndLoad(url);
+            rawCssTemplates.set(url, { baseUrl, rawText: rawCssRaws.get(url) ?? '' });
             let cssData = data.replace(/url\('/g, 'url(\'' + baseUrl + '/');
             cssData = cssData.replace(/url\(([^'])/g, 'url(' + baseUrl + '/$1');
             return { url, cssData };

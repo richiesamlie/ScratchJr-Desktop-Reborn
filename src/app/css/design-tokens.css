@@ -51,6 +51,14 @@
   /* --- Transitions --- */
   --sjr-transition-fast: 120ms ease;
   --sjr-transition-normal: 200ms ease;
+
+  /* --- Sketchboard & Sticker-Book Studio Tokens --- */
+  --sjr-bg-canvas-dot: rgba(56, 152, 236, 0.20);
+  --sjr-panel-surface: rgba(255, 255, 255, 0.86);
+  --sjr-panel-border: #C5E0F8;
+  --sjr-panel-shadow: 0 6px 0 #CADFF2, 0 8px 20px rgba(35, 75, 125, 0.08);
+  --sjr-dock-surface: #FFFFFF;
+  --sjr-dock-border: #B8D8F4;
 }
 
 /* ===== DARK THEME (Playful Cosmic Space) ===== */
@@ -89,6 +97,14 @@
   --sjr-card-depth: #141726;
   --sjr-card-depth-active: #9E610E;
   --sjr-shadow-glow: 0 0 0 4px rgba(82, 155, 245, 0.4);
+
+  /* --- Sketchboard & Sticker-Book Studio Tokens (Dark) --- */
+  --sjr-bg-canvas-dot: rgba(82, 155, 245, 0.22);
+  --sjr-panel-surface: rgba(36, 42, 66, 0.90);
+  --sjr-panel-border: #384268;
+  --sjr-panel-shadow: 0 6px 0 #111522, 0 8px 22px rgba(0, 0, 0, 0.35);
+  --sjr-dock-surface: #242A42;
+  --sjr-dock-border: #444E78;
 }
 
 /* ===== REDUCED MOTION ===== */

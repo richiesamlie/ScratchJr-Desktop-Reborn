@@ -501,11 +501,95 @@ p.stylelabel {
 }
 
 /* ===== Tactile Playful Stage Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) #stageframe,
+body:not([data-theme="classic"]) #stageframe {
+    width: ${572 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) #stageframe::before,
+body:not([data-theme="classic"]) #stageframe::before {
+    content: "";
+    position: absolute;
+    top: ${8 * scaleMultiplier}px;
+    left: ${46 * scaleMultiplier}px;
+    width: ${480 * scaleMultiplier}px;
+    height: ${56 * scaleMultiplier}px;
+    background: var(--sjr-dock-surface);
+    border: 3px solid var(--sjr-dock-border);
+    border-radius: var(--sjr-radius-xl);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    pointer-events: none;
+    box-sizing: border-box;
+    z-index: 1;
+}
+
+body:has(.presentationmode) #stageframe::before,
+:root:has(.presentationmode) #stageframe::before {
+    display: none;
+}
+
+:root:not([data-theme="classic"]) .fullscreen#full:not(.presentationmode),
+body:not([data-theme="classic"]) .fullscreen#full:not(.presentationmode) {
+    top: ${12 * scaleMultiplier}px;
+    left: ${60 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .gridToggle,
+body:not([data-theme="classic"]) .gridToggle {
+    top: ${12 * scaleMultiplier}px;
+    left: ${116 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .changeBkg,
+body:not([data-theme="classic"]) .changeBkg {
+    top: ${12 * scaleMultiplier}px;
+    left: ${234 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .addText,
+body:not([data-theme="classic"]) .addText {
+    top: ${12 * scaleMultiplier}px;
+    left: ${298 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .resetall:not(.presentationmode),
+:root:not([data-theme="classic"]) .resetall.nopresent,
+body:not([data-theme="classic"]) .resetall:not(.presentationmode),
+body:not([data-theme="classic"]) .resetall.nopresent {
+    top: ${12 * scaleMultiplier}px;
+    left: ${416 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .go:not(.presentationmode),
+:root:not([data-theme="classic"]) .go.on.nopresent,
+:root:not([data-theme="classic"]) .go.off.nopresent,
+body:not([data-theme="classic"]) .go:not(.presentationmode),
+body:not([data-theme="classic"]) .go.on.nopresent,
+body:not([data-theme="classic"]) .go.off.nopresent {
+    top: ${12 * scaleMultiplier}px;
+    left: ${472 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) #stageframe .stage:not(.fullscreen),
 :root:not([data-theme="classic"]) *.stage.normal,
+body:not([data-theme="classic"]) #stageframe .stage:not(.fullscreen),
 body:not([data-theme="classic"]) *.stage.normal {
     border: 4px solid #FFFFFF;
     border-radius: 24px;
     box-shadow: 0 6px 0 var(--sjr-card-depth), 0 10px 28px rgba(35, 75, 125, 0.12);
+    box-sizing: border-box;
 }
 
 :root:not([data-theme="classic"]) .fullscreen#full,
@@ -520,6 +604,7 @@ body:not([data-theme="classic"]) .addText,
 body:not([data-theme="classic"]) .changeBkg,
 body:not([data-theme="classic"]) .resetall,
 body:not([data-theme="classic"]) .go {
+    z-index: 2;
     transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.12s ease;
 }
 
@@ -553,5 +638,30 @@ body:not([data-theme="classic"]) .resetall:active,
 body:not([data-theme="classic"]) .go:active {
     transform: translateY(2px) scale(0.94);
     filter: none;
+}
+
+/* Pop-down Stage Text Edit Drawer Overhaul */
+:root:not([data-theme="classic"]) .pagetext,
+body:not([data-theme="classic"]) .pagetext {
+    background: var(--sjr-panel-surface);
+    border: 3px solid var(--sjr-panel-border);
+    border-radius: 0 0 var(--sjr-radius-xl) var(--sjr-radius-xl);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+:root:not([data-theme="classic"]) *.edittext,
+body:not([data-theme="classic"]) *.edittext {
+    border: 2.5px solid var(--sjr-panel-border);
+    border-radius: var(--sjr-radius-lg);
+    background: var(--sjr-bg-primary);
+    color: var(--sjr-text-primary);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:root:not([data-theme="classic"]) *.textuicolormenu,
+body:not([data-theme="classic"]) *.textuicolormenu,
+:root:not([data-theme="classic"]) *.textuifamilies,
+body:not([data-theme="classic"]) *.textuifamilies {
+    background: transparent;
 }
 

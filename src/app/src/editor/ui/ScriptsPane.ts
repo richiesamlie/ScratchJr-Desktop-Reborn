@@ -10,7 +10,7 @@ import Scroll from './Scroll';
 import Menu from '../blocks/Menu';
 import ScratchAudio from '../../utils/ScratchAudio';
 import {gn, localx, localy, newHTML,
-    globalx, globaly, setCanvasSize, getDocumentHeight, frame} from '../../utils/lib';
+    globalx, globaly, setCanvasSize, getDocumentWidth, getDocumentHeight, frame} from '../../utils/lib';
 import type Scripts from './Scripts';
 import type Sprite from '../engine/Sprite';
 import type Block from '../blocks/Block';
@@ -42,10 +42,13 @@ export default class ScriptsPane {
         if (!div || !scroll) {
             return;
         }
-        var width = div.offsetWidth;
+        var width = Math.max(getDocumentWidth(), frame ? frame.offsetWidth : 0) || div.offsetWidth;
         setCanvasSize(div, width, height);
         setCanvasSize(scroll.contents, width, height);
         scroll.repositionArrows(height);
+        if (ScratchJr.stage && ScratchJr.stage.currentPage && ScratchJr.getActiveScript()) {
+            scroll.update();
+        }
     }
 
     static setActiveScript (sprname: string) {

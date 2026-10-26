@@ -387,23 +387,47 @@ export default class Palette {
             sel.setAttribute('tabindex', isCurrent ? '0' : '-1');
         }
         var pal = gn('palette')!;
-        gn('blockspalette')!.style.background = (currentSel as HTMLElement).bkg!;
+        var isClassic = typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'classic';
+        var catColor = (currentSel as HTMLElement).bkg!;
+        if (isClassic) {
+            gn('blockspalette')!.style.background = catColor;
+            pal.style.background = '';
+        } else {
+            gn('blockspalette')!.style.background = '';
+            pal.style.background = catColor;
+        }
         while (pal.childElementCount > 0) {
             pal.removeChild(pal.childNodes[0]);
         }
-        if (!ScratchJr.getSprite()) {
+        if (!ScratchJr.stage || !ScratchJr.stage.currentPage || !ScratchJr.getSprite()) {
             return;
         }
         var list = (BlockSpecs.palettes[n]).concat();
-        var dx = dxblocks;
+        var bpWidth = gn('blockspalette')?.offsetWidth || 0;
+        var availWidth = bpWidth > 500
+            ? Math.max(380, (pal.offsetWidth || (bpWidth - (498 * scaleMultiplier))) - (28 * scaleMultiplier))
+            : 9999;
+        var dxStart = isClassic ? dxblocks : Math.round(18 * scaleMultiplier);
+        var activeBlockY = isClassic ? blockdy : Math.round(5 * scaleMultiplier);
+        var rawSpan = dxStart;
+        for (var m = 0; m < list.length; m++) {
+            rawSpan += (list[m] == 'space') ? (30 * blockscale) : betweenblocks!;
+        }
+        var fitRatio = (rawSpan > availWidth) ? Math.max(0.75, availWidth / rawSpan) : 1;
+        var comfortRatio = (!isClassic && rawSpan < availWidth)
+            ? Math.min(1.16, Math.max(1.0, (availWidth * 0.82) / Math.max(1, rawSpan)))
+            : fitRatio;
+        var stepBetween = betweenblocks! * comfortRatio;
+        var activeBlockScale = blockscale * Math.max(0.84, fitRatio);
+        var dx = dxStart;
         for (var k = 0; k < list.length; k++) {
             if (list[k] == 'space') {
-                dx += 30 * blockscale;
+                dx += 30 * blockscale * comfortRatio;
             } else {
                 var newb = Palette.newScaledBlock(pal, list[k],
-                    ((list[k] == 'repeat') ? 0.65 * scaleMultiplier : blockscale), dx, blockdy);
+                    ((list[k] == 'repeat') ? 0.65 * scaleMultiplier * Math.max(0.84, fitRatio) : activeBlockScale), dx, activeBlockY);
                 newb.lift();
-                dx += betweenblocks!;
+                dx += stepBetween;
             }
         }
         dx += 30;
