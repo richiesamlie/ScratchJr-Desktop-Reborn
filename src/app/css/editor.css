@@ -1173,10 +1173,10 @@ body:not([data-theme="classic"]) *.topsection {
 
 :root:not([data-theme="classic"]) *.info,
 body:not([data-theme="classic"]) *.info {
-    top: ${css_vh(1.2)};
-    right: ${css_vh(1.69)};
-    width: ${css_vh(5.8)};
-    height: ${css_vh(5.8)};
+    top: ${12 * scaleMultiplier}px;
+    right: ${16 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
     border-radius: 999px;
     background: var(--sjr-panel-surface);
     background-image: none;
@@ -1196,7 +1196,7 @@ body:not([data-theme="classic"]) *.info::after {
     font-family: Georgia, serif;
     font-style: italic;
     font-weight: 900;
-    font-size: ${css_vh(3.0)};
+    font-size: ${24 * scaleMultiplier}px;
     line-height: 1;
     color: var(--sjr-accent-primary);
     pointer-events: none;
@@ -1420,14 +1420,15 @@ body:not([data-theme="classic"]) .pages {
     border-radius: var(--sjr-radius-xl);
     box-shadow: var(--sjr-panel-shadow);
     box-sizing: border-box;
-    padding: ${css_vh(1.0)};
+    padding: ${10 * scaleMultiplier}px;
 }
 
 :root:not([data-theme="classic"]) *.rightpanel,
 body:not([data-theme="classic"]) *.rightpanel {
-    right: ${css_vh(1.69)};
-    top: ${css_vh(9.38)} !important;
-    height: calc(100% - ${css_vh(10.8)}) !important;
+    right: ${16 * scaleMultiplier}px;
+    top: ${74 * scaleMultiplier}px !important;
+    width: ${192 * scaleMultiplier}px !important;
+    height: ${360 * scaleMultiplier}px !important;
 }
 
 :root:not([data-theme="classic"]) .pagescc,
@@ -1461,6 +1462,24 @@ body:not([data-theme="classic"]) #blockspalette {
     border-top: 3.5px solid var(--sjr-panel-border);
     border-bottom: 3.5px solid var(--sjr-panel-border);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+:root:not([data-theme="classic"]) .controlundo,
+body:not([data-theme="classic"]) .controlundo {
+    top: ${7 * scaleMultiplier}px;
+    right: ${12 * scaleMultiplier}px;
+    height: ${50 * scaleMultiplier}px;
+    display: inline-flex;
+    align-items: center;
+    gap: ${4 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .undobutton,
+:root:not([data-theme="classic"]) .redobutton,
+body:not([data-theme="classic"]) .undobutton,
+body:not([data-theme="classic"]) .redobutton {
+    width: ${50 * scaleMultiplier}px;
+    height: ${50 * scaleMultiplier}px;
 }
 
 :root:not([data-theme="classic"]) .scripts,

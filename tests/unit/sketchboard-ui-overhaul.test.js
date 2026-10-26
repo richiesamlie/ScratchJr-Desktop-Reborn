@@ -279,4 +279,24 @@ describe('Sketchboard & Sticker-Book UI/UX Overhaul', () => {
             expect(badge.title).toBe('');
         });
     });
+
+    describe('Multi-Resolution Responsive Scaling', () => {
+        it('re-evaluates preprocessed CSS when applyResponsiveFrameScale detects viewport resize', async () => {
+            const { applyResponsiveFrameScale, preprocessAndLoadCss } = await import('../../src/app/src/utils/lib.ts');
+            global.window.tablet = {
+                io_gettextresource: vi.fn().mockResolvedValue('.test-vh { height: ${css_vh(50)}; }')
+            };
+            global.window.innerWidth = 1024;
+            global.window.innerHeight = 768;
+            await preprocessAndLoadCss('css', 'css/test-responsive.css');
+            const styleEl = document.getElementById('css/test-responsive.css');
+            expect(styleEl).not.toBeNull();
+            expect(styleEl.textContent).toContain('384px');
+
+            global.window.innerWidth = 1920;
+            global.window.innerHeight = 1000;
+            applyResponsiveFrameScale();
+            expect(styleEl.textContent).toContain('500px');
+        });
+    });
 });

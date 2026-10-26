@@ -395,15 +395,24 @@ export default class Palette {
             return;
         }
         var list = (BlockSpecs.palettes[n]).concat();
+        var bpWidth = gn('blockspalette')?.offsetWidth || 0;
+        var availWidth = bpWidth > 500 ? Math.max(400, bpWidth - (354 * scaleMultiplier) - (125 * scaleMultiplier)) : 9999;
+        var rawSpan = dxblocks;
+        for (var m = 0; m < list.length; m++) {
+            rawSpan += (list[m] == 'space') ? (30 * blockscale) : betweenblocks!;
+        }
+        var fitRatio = (rawSpan > availWidth) ? Math.max(0.75, availWidth / rawSpan) : 1;
+        var stepBetween = betweenblocks! * fitRatio;
+        var activeBlockScale = blockscale * Math.max(0.84, fitRatio);
         var dx = dxblocks;
         for (var k = 0; k < list.length; k++) {
             if (list[k] == 'space') {
-                dx += 30 * blockscale;
+                dx += 30 * blockscale * fitRatio;
             } else {
                 var newb = Palette.newScaledBlock(pal, list[k],
-                    ((list[k] == 'repeat') ? 0.65 * scaleMultiplier : blockscale), dx, blockdy);
+                    ((list[k] == 'repeat') ? 0.65 * scaleMultiplier * Math.max(0.84, fitRatio) : activeBlockScale), dx, blockdy);
                 newb.lift();
-                dx += betweenblocks!;
+                dx += stepBetween;
             }
         }
         dx += 30;

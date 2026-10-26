@@ -54,6 +54,10 @@ export default class UI {
         ScratchJr.setupKeypad();
         ScratchJr.setupEditableField();
         UI.aspectRatioAdjustment();
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('resize', UI.aspectRatioAdjustment);
+            window.addEventListener('resize', UI.aspectRatioAdjustment);
+        }
     }
 
     /** Clear any previously applied aspect-ratio tweaks so they can be recalculated. */
@@ -116,13 +120,13 @@ export default class UI {
         var rightPanel = pages.parentNode as HTMLElement;
 
         var isClassic = typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'classic';
-        var minStageHeight = isClassic ? 434 : 458;
-        var desiredScriptsHeight = Math.max(260, Math.round(docHeight * 0.30));
+        var minStageHeight = isClassic ? 434 : Math.round(450 * scaleMultiplier);
+        var desiredScriptsHeight = Math.max(240, Math.round(docHeight * 0.30));
         var maxTopHeight = Math.max(minStageHeight,
             docHeight - blockspalette.offsetHeight - desiredScriptsHeight);
         var targetTopHeight = isClassic
             ? Math.min(Math.max(minStageHeight, Math.round(docHeight * 0.57)), maxTopHeight)
-            : Math.min(Math.max(minStageHeight, Math.round(464 * scaleMultiplier)), maxTopHeight);
+            : Math.min(Math.max(minStageHeight, Math.round(450 * scaleMultiplier)), maxTopHeight);
 
         if (topsection) { topsection.style.height = targetTopHeight + 'px'; }
         if (leftPanel) { leftPanel.style.height = targetTopHeight + 'px'; }
@@ -161,6 +165,14 @@ export default class UI {
 
         var docWidth = getDocumentWidth();
         var docHeight = getDocumentHeight();
+        var isClassic = typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'classic';
+        if (!isClassic) {
+            UI.balanceVertical(docWidth, docHeight);
+            if (ScratchJr.stage && ScratchJr.stage.currentPage && ScratchJr.getSprite()) {
+                Palette.selectCategory(Palette.numcat);
+            }
+            return;
+        }
         if (docWidth / docHeight <= 1.45) {
             return;
         }

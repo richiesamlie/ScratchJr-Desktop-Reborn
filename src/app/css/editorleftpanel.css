@@ -229,13 +229,21 @@
 .spritethumb.noneditable .brush{ display: none;}
 
 /* ===== Tactile Playful Sprite Panel Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) .flipme,
+body:not([data-theme="classic"]) .flipme {
+    top: ${8 * scaleMultiplier}px;
+    left: ${16 * scaleMultiplier}px;
+    width: ${210 * scaleMultiplier}px;
+    height: ${58 * scaleMultiplier}px;
+}
+
 :root:not([data-theme="classic"]) #library,
 body:not([data-theme="classic"]) #library {
-    left: ${css_vh(1.69)};
-    top: ${css_vh(9.38)};
-    width: ${css_vh(30.5)};
-    height: calc(100% - ${css_vh(10.8)});
-    padding: ${css_vh(1.0)};
+    left: ${16 * scaleMultiplier}px;
+    top: ${74 * scaleMultiplier}px;
+    width: ${244 * scaleMultiplier}px;
+    height: ${360 * scaleMultiplier}px;
+    padding: ${10 * scaleMultiplier}px;
     background: var(--sjr-panel-surface);
     border: 3px solid var(--sjr-panel-border);
     border-radius: var(--sjr-radius-xl);
@@ -249,7 +257,7 @@ body:not([data-theme="classic"]) #library {
 :root:not([data-theme="classic"]) #library .spritethumbs,
 body:not([data-theme="classic"]) #library .spritethumbs {
     width: 100%;
-    max-height: calc(100% - ${css_vh(8.6)});
+    max-height: calc(100% - ${68 * scaleMultiplier}px);
 }
 
 :root:not([data-theme="classic"]) #library .spritethumbs .spritecc,
@@ -260,13 +268,13 @@ body:not([data-theme="classic"]) #library .spritethumbs .spritecc {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: ${css_vh(0.8)};
+    gap: ${8 * scaleMultiplier}px;
 }
 
 :root:not([data-theme="classic"]) .spritethumb,
 body:not([data-theme="classic"]) .spritethumb {
     width: 100% !important;
-    height: ${css_vh(8.8)};
+    height: ${68 * scaleMultiplier}px;
     margin: 0 !important;
     border-radius: 20px;
     transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
@@ -277,10 +285,10 @@ body:not([data-theme="classic"]) .spritethumb {
 body:not([data-theme="classic"]) .spritethumb .thumbcanvas {
     margin: 0;
     top: 50%;
-    left: ${css_vh(0.8)};
+    left: ${8 * scaleMultiplier}px;
     transform: translateY(-50%);
-    width: ${css_vh(6.6)};
-    height: ${css_vh(6.6)};
+    width: ${50 * scaleMultiplier}px;
+    height: ${50 * scaleMultiplier}px;
 }
 
 :root:not([data-theme="classic"]) .spritethumb .sname,
@@ -288,8 +296,9 @@ body:not([data-theme="classic"]) .spritethumb .thumbcanvas {
 body:not([data-theme="classic"]) .spritethumb .sname,
 body:not([data-theme="classic"]) .spritethumb.off .sname {
     top: 50%;
-    left: ${css_vh(8.0)};
-    width: ${css_vh(11.5)};
+    left: ${64 * scaleMultiplier}px;
+    width: ${98 * scaleMultiplier}px;
+    font-size: ${14 * scaleMultiplier}px;
     transform: translateY(-50%);
     text-align: left;
     color: var(--sjr-text-secondary);
@@ -299,8 +308,9 @@ body:not([data-theme="classic"]) .spritethumb.off .sname {
 :root:not([data-theme="classic"]) .spritethumb.on .sname,
 body:not([data-theme="classic"]) .spritethumb.on .sname {
     top: 50%;
-    left: ${css_vh(8.0)};
-    width: ${css_vh(11.5)};
+    left: ${64 * scaleMultiplier}px;
+    width: ${98 * scaleMultiplier}px;
+    font-size: ${14 * scaleMultiplier}px;
     transform: translateY(-50%);
     text-align: left;
     color: var(--sjr-accent-warm-dark);
@@ -310,11 +320,11 @@ body:not([data-theme="classic"]) .spritethumb.on .sname {
 :root:not([data-theme="classic"]) .spritethumb .brush,
 body:not([data-theme="classic"]) .spritethumb .brush {
     top: 50%;
-    right: ${css_vh(0.8)};
+    right: ${8 * scaleMultiplier}px;
     left: auto;
     transform: translateY(-50%);
-    width: ${css_vh(5.6)};
-    height: ${css_vh(5.6)};
+    width: ${44 * scaleMultiplier}px;
+    height: ${44 * scaleMultiplier}px;
     background-size: 100% 100%;
 }
 
@@ -394,8 +404,8 @@ body:not([data-theme="classic"]) .spritethumb .deletespritethumb:active {
 :root:not([data-theme="classic"]) #library .addsprite,
 body:not([data-theme="classic"]) #library .addsprite {
     width: 100%;
-    height: ${css_vh(7.6)};
-    margin: ${css_vh(0.8)} 0 0 0;
+    height: ${58 * scaleMultiplier}px;
+    margin: ${8 * scaleMultiplier}px 0 0 0;
     flex-shrink: 0;
     background: var(--sjr-bg-secondary);
     background-image: none;
@@ -413,7 +423,7 @@ body:not([data-theme="classic"]) #library .addsprite {
 :root:not([data-theme="classic"]) #library .addsprite::before,
 body:not([data-theme="classic"]) #library .addsprite::before {
     content: "+";
-    font-size: ${css_vh(5.0)};
+    font-size: ${38 * scaleMultiplier}px;
     font-weight: 900;
     color: var(--sjr-accent-primary);
     line-height: 1;
@@ -439,17 +449,17 @@ body:not([data-theme="classic"]) .editor-project-badge {
     display: inline-flex;
     align-items: center;
     position: absolute;
-    top: ${css_vh(1.2)};
-    left: ${css_vh(32.5)};
-    max-width: ${css_vh(18.0)};
-    height: ${css_vh(5.8)};
-    padding: 0 ${css_vh(1.6)};
+    top: ${14 * scaleMultiplier}px;
+    left: ${234 * scaleMultiplier}px;
+    max-width: ${140 * scaleMultiplier}px;
+    height: ${44 * scaleMultiplier}px;
+    padding: 0 ${14 * scaleMultiplier}px;
     background: var(--sjr-panel-surface);
     border: 2.5px solid var(--sjr-panel-border);
     border-radius: var(--sjr-radius-pill);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     font-family: inherit;
-    font-size: ${css_vh(2.2)};
+    font-size: ${15 * scaleMultiplier}px;
     font-weight: 700;
     color: var(--sjr-text-primary);
     white-space: nowrap;
@@ -458,6 +468,26 @@ body:not([data-theme="classic"]) .editor-project-badge {
     pointer-events: none;
     z-index: 5;
     box-sizing: border-box;
+}
+
+@media (max-width: 1240px) {
+    :root:not([data-theme="classic"]) .flipme,
+    body:not([data-theme="classic"]) .flipme {
+        top: ${13 * scaleMultiplier}px;
+        left: ${14 * scaleMultiplier}px;
+        width: ${154 * scaleMultiplier}px;
+        height: ${43 * scaleMultiplier}px;
+    }
+
+    :root:not([data-theme="classic"]) .editor-project-badge,
+    body:not([data-theme="classic"]) .editor-project-badge {
+        top: ${15 * scaleMultiplier}px;
+        left: ${174 * scaleMultiplier}px;
+        max-width: ${90 * scaleMultiplier}px;
+        height: ${38 * scaleMultiplier}px;
+        padding: 0 ${10 * scaleMultiplier}px;
+        font-size: ${13 * scaleMultiplier}px;
+    }
 }
 
 :root:not([data-theme="classic"]) .editor-project-badge:empty,
