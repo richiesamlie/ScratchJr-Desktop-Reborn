@@ -152,6 +152,7 @@ export default class Project {
         if (!metadata.version) {
             metadata.version = window.Settings?.scratchJrVersion || '1.0.0';
         }
+        UI.updateProjectBadge(String(metadata.name));
         _setMediaCount(-1);
         if (metadata!.json) {
             Project.loadData(metadata.json as Record<string, unknown>, doneProjectLoad);

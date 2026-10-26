@@ -229,23 +229,93 @@
 .spritethumb.noneditable .brush{ display: none;}
 
 /* ===== Tactile Playful Sprite Panel Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) #library,
+body:not([data-theme="classic"]) #library {
+    left: ${css_vh(1.69)};
+    top: ${css_vh(9.38)};
+    width: ${css_vh(30.5)};
+    height: calc(100% - ${css_vh(10.8)});
+    padding: ${css_vh(1.0)};
+    background: var(--sjr-panel-surface);
+    border: 3px solid var(--sjr-panel-border);
+    border-radius: var(--sjr-radius-xl);
+    box-shadow: var(--sjr-panel-shadow);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+:root:not([data-theme="classic"]) #library .spritethumbs,
+body:not([data-theme="classic"]) #library .spritethumbs {
+    width: 100%;
+    max-height: calc(100% - ${css_vh(8.6)});
+}
+
+:root:not([data-theme="classic"]) #library .spritethumbs .spritecc,
+body:not([data-theme="classic"]) #library .spritethumbs .spritecc {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: ${css_vh(0.8)};
+}
+
 :root:not([data-theme="classic"]) .spritethumb,
 body:not([data-theme="classic"]) .spritethumb {
+    width: 100% !important;
+    height: ${css_vh(8.8)};
+    margin: 0 !important;
     border-radius: 20px;
     transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
     box-sizing: border-box;
 }
 
+:root:not([data-theme="classic"]) .spritethumb .thumbcanvas,
+body:not([data-theme="classic"]) .spritethumb .thumbcanvas {
+    margin: 0;
+    top: 50%;
+    left: ${css_vh(0.8)};
+    transform: translateY(-50%);
+    width: ${css_vh(6.6)};
+    height: ${css_vh(6.6)};
+}
+
 :root:not([data-theme="classic"]) .spritethumb .sname,
-body:not([data-theme="classic"]) .spritethumb .sname {
+:root:not([data-theme="classic"]) .spritethumb.off .sname,
+body:not([data-theme="classic"]) .spritethumb .sname,
+body:not([data-theme="classic"]) .spritethumb.off .sname {
+    top: 50%;
+    left: ${css_vh(8.0)};
+    width: ${css_vh(11.5)};
+    transform: translateY(-50%);
+    text-align: left;
     color: var(--sjr-text-secondary);
     font-weight: 800;
 }
 
 :root:not([data-theme="classic"]) .spritethumb.on .sname,
 body:not([data-theme="classic"]) .spritethumb.on .sname {
+    top: 50%;
+    left: ${css_vh(8.0)};
+    width: ${css_vh(11.5)};
+    transform: translateY(-50%);
+    text-align: left;
     color: var(--sjr-accent-warm-dark);
     font-weight: 900;
+}
+
+:root:not([data-theme="classic"]) .spritethumb .brush,
+body:not([data-theme="classic"]) .spritethumb .brush {
+    top: 50%;
+    right: ${css_vh(0.8)};
+    left: auto;
+    transform: translateY(-50%);
+    width: ${css_vh(5.6)};
+    height: ${css_vh(5.6)};
+    background-size: 100% 100%;
 }
 
 :root:not([data-theme="classic"]) .spritethumb.off,
@@ -323,6 +393,10 @@ body:not([data-theme="classic"]) .spritethumb .deletespritethumb:active {
 
 :root:not([data-theme="classic"]) #library .addsprite,
 body:not([data-theme="classic"]) #library .addsprite {
+    width: 100%;
+    height: ${css_vh(7.6)};
+    margin: ${css_vh(0.8)} 0 0 0;
+    flex-shrink: 0;
     background: var(--sjr-bg-secondary);
     background-image: none;
     border: 3px dashed var(--sjr-accent-primary);
@@ -339,7 +413,7 @@ body:not([data-theme="classic"]) #library .addsprite {
 :root:not([data-theme="classic"]) #library .addsprite::before,
 body:not([data-theme="classic"]) #library .addsprite::before {
     content: "+";
-    font-size: ${css_vh(5.5)};
+    font-size: ${css_vh(5.0)};
     font-weight: 900;
     color: var(--sjr-accent-primary);
     line-height: 1;
@@ -389,15 +463,6 @@ body:not([data-theme="classic"]) .editor-project-badge {
 :root:not([data-theme="classic"]) .editor-project-badge:empty,
 body:not([data-theme="classic"]) .editor-project-badge:empty {
     display: none;
-}
-
-:root:not([data-theme="classic"]) #library,
-body:not([data-theme="classic"]) #library {
-    background: var(--sjr-panel-surface);
-    border: 3px solid var(--sjr-panel-border);
-    border-radius: var(--sjr-radius-xl);
-    box-shadow: var(--sjr-panel-shadow);
-    box-sizing: border-box;
 }
 
 

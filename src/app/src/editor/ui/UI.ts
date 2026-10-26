@@ -78,6 +78,10 @@ export default class UI {
 
     /** Shift the library and pages panels horizontally to balance gaps around the stage. */
     static balanceHorizontal (docWidth: number) {
+        var isClassic = typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'classic';
+        if (!isClassic) {
+            return;
+        }
         var library = gn('library')!;
         var pages = gn('pages')!;
         var stage = gn('stage')!;
@@ -111,13 +115,14 @@ export default class UI {
         var leftPanel = library.parentNode as HTMLElement;
         var rightPanel = pages.parentNode as HTMLElement;
 
-        var minStageHeight = 434;
+        var isClassic = typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'classic';
+        var minStageHeight = isClassic ? 434 : 458;
         var desiredScriptsHeight = Math.max(260, Math.round(docHeight * 0.30));
         var maxTopHeight = Math.max(minStageHeight,
             docHeight - blockspalette.offsetHeight - desiredScriptsHeight);
-        var targetTopHeight = Math.min(
-            Math.max(minStageHeight, Math.round(docHeight * 0.57)),
-            maxTopHeight);
+        var targetTopHeight = isClassic
+            ? Math.min(Math.max(minStageHeight, Math.round(docHeight * 0.57)), maxTopHeight)
+            : Math.min(Math.max(minStageHeight, Math.round(464 * scaleMultiplier)), maxTopHeight);
 
         if (topsection) { topsection.style.height = targetTopHeight + 'px'; }
         if (leftPanel) { leftPanel.style.height = targetTopHeight + 'px'; }

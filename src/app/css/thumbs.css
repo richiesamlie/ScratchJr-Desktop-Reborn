@@ -268,23 +268,34 @@
 :root:not([data-theme="classic"]) .scrollarea,
 body:not([data-theme="classic"]) .scrollarea {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(${210 * scaleMultiplier}px, 1fr));
-    gap: ${20 * scaleMultiplier}px;
+    grid-template-columns: repeat(auto-fill, minmax(${240 * scaleMultiplier}px, 1fr));
+    gap: ${24 * scaleMultiplier}px;
+    align-items: start;
     min-width: 0;
     width: 100%;
     padding: ${6 * scaleMultiplier}px 0 ${32 * scaleMultiplier}px;
     box-sizing: border-box;
 }
 
+:root:not([data-theme="classic"]) .projectthumb .share,
+:root:not([data-theme="classic"]) .projectthumb .ribbonHorizontal,
+:root:not([data-theme="classic"]) .projectthumb .ribbonVertical,
+body:not([data-theme="classic"]) .projectthumb .share,
+body:not([data-theme="classic"]) .projectthumb .ribbonHorizontal,
+body:not([data-theme="classic"]) .projectthumb .ribbonVertical {
+    display: none;
+}
+
 :root:not([data-theme="classic"]) .projectthumb,
 body:not([data-theme="classic"]) .projectthumb {
     width: 100%;
-    height: auto;
+    height: ${226 * scaleMultiplier}px;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: ${10 * scaleMultiplier}px;
+    justify-content: space-between;
+    padding: ${12 * scaleMultiplier}px;
     background: var(--sjr-bg-secondary);
     border: 3.5px solid var(--sjr-border-light);
     border-radius: var(--sjr-radius-xl);
@@ -301,13 +312,21 @@ body:not([data-theme="classic"]) .projectthumb:hover {
 }
 
 :root:not([data-theme="classic"]) .projectthumb#newproject,
+body:not([data-theme="classic"]) .projectthumb#newproject {
+    background: var(--sjr-bg-secondary);
+    border: 3.5px dashed var(--sjr-accent-warm);
+    box-shadow: 0 5px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    padding: ${12 * scaleMultiplier}px;
+    justify-content: center;
+}
+
 :root:not([data-theme="classic"]) .projectthumb#openproject,
-body:not([data-theme="classic"]) .projectthumb#newproject,
 body:not([data-theme="classic"]) .projectthumb#openproject {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
+    background: var(--sjr-bg-secondary);
+    border: 3.5px dashed var(--sjr-accent-primary);
+    box-shadow: 0 5px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    padding: ${12 * scaleMultiplier}px;
+    justify-content: space-between;
 }
 
 .scene-badge {
@@ -347,12 +366,12 @@ body:not([data-theme="classic"]) .projectmenu {
     align-items: center;
     justify-content: center;
     position: absolute;
-    top: 6px;
-    right: 6px;
+    top: 10px;
+    right: 10px;
     width: 32px;
     height: 32px;
     border-radius: var(--sjr-radius-pill);
-    background: var(--sjr-bg-primary);
+    background: var(--sjr-bg-secondary);
     border: 2px solid var(--sjr-border-light);
     color: var(--sjr-text-secondary);
     font-size: 14px;
@@ -360,6 +379,7 @@ body:not([data-theme="classic"]) .projectmenu {
     letter-spacing: -1px;
     cursor: pointer;
     z-index: 8;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     transition: transform var(--sjr-transition-fast), background-color var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
 }
 
@@ -380,17 +400,64 @@ body:not([data-theme="classic"]) .projectthumb.is-managing .projectmenu {
 
 :root:not([data-theme="classic"]) .aproject,
 body:not([data-theme="classic"]) .aproject {
-    border-radius: var(--sjr-radius-lg);
+    width: 100%;
+    height: ${150 * scaleMultiplier}px;
+    border-radius: var(--sjr-radius-md);
     box-sizing: border-box;
     transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
 }
 
+:root:not([data-theme="classic"]) .aproject.p1,
+:root:not([data-theme="classic"]) .aproject.p2,
+:root:not([data-theme="classic"]) .aproject.p3,
+:root:not([data-theme="classic"]) .aproject.p4,
+body:not([data-theme="classic"]) .aproject.p1,
+body:not([data-theme="classic"]) .aproject.p2,
+body:not([data-theme="classic"]) .aproject.p3,
+body:not([data-theme="classic"]) .aproject.p4 {
+    background: var(--sjr-bg-primary);
+    background-image: none;
+    border: 2px solid var(--sjr-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:root:not([data-theme="classic"]) .aproject img,
+body:not([data-theme="classic"]) .aproject img {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #FFFFFF;
+}
+
+:root:not([data-theme="classic"]) .aproject.open,
+body:not([data-theme="classic"]) .aproject.open {
+    background: var(--sjr-bg-primary);
+    background-image: none;
+    border: 2px solid var(--sjr-border-light);
+    border-radius: var(--sjr-radius-md);
+}
+
+:root:not([data-theme="classic"]) .aproject.open::after,
+body:not([data-theme="classic"]) .aproject.open::after {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--sjr-radius-md);
+}
+
 :root:not([data-theme="classic"]) .aproject.empty,
 body:not([data-theme="classic"]) .aproject.empty {
-    background: var(--sjr-bg-secondary);
+    background: transparent;
     background-image: none;
-    border: 3.5px dashed var(--sjr-accent-warm);
-    box-shadow: 0 5px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    border: none;
+    box-shadow: none;
+    height: ${180 * scaleMultiplier}px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -400,30 +467,32 @@ body:not([data-theme="classic"]) .aproject.empty {
 :root:not([data-theme="classic"]) .aproject.empty::before,
 body:not([data-theme="classic"]) .aproject.empty::before {
     content: "+";
-    font-size: ${css_vh(8.5)};
+    width: ${76 * scaleMultiplier}px;
+    height: ${76 * scaleMultiplier}px;
+    border-radius: 999px;
+    background: var(--sjr-accent-warm);
+    box-shadow: 0 5px 0 var(--sjr-accent-warm-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: ${52 * scaleMultiplier}px;
     font-weight: 900;
-    color: var(--sjr-accent-warm);
+    color: #FFFFFF;
     line-height: 1;
     pointer-events: none;
     transition: transform var(--sjr-transition-fast);
 }
 
-:root:not([data-theme="classic"]) .aproject.empty:hover,
-body:not([data-theme="classic"]) .aproject.empty:hover {
+:root:not([data-theme="classic"]) .projectthumb#newproject:hover,
+body:not([data-theme="classic"]) .projectthumb#newproject:hover {
     border-color: var(--sjr-accent-warm-dark);
     transform: translateY(-3px);
     box-shadow: 0 8px 0 var(--sjr-card-depth), 0 10px 24px rgba(35, 75, 125, 0.15);
 }
 
-:root:not([data-theme="classic"]) .aproject.empty:hover::before,
-body:not([data-theme="classic"]) .aproject.empty:hover::before {
-    transform: scale(1.12);
-}
-
-:root:not([data-theme="classic"]) .aproject.empty:active,
-body:not([data-theme="classic"]) .aproject.empty:active {
-    transform: translateY(2px);
-    box-shadow: 0 1px 0 var(--sjr-card-depth);
+:root:not([data-theme="classic"]) .projectthumb#newproject:hover .aproject.empty::before,
+body:not([data-theme="classic"]) .projectthumb#newproject:hover .aproject.empty::before {
+    transform: scale(1.1);
 }
 
 :root:not([data-theme="classic"]) .aproject.empty:active::before,
@@ -437,24 +506,26 @@ body:not([data-theme="classic"]) .aproject:not(.empty) {
     transition: transform var(--sjr-transition-fast), filter var(--sjr-transition-fast);
 }
 
-:root:not([data-theme="classic"]) .aproject:not(.empty):hover,
-body:not([data-theme="classic"]) .aproject:not(.empty):hover {
-    transform: translateY(-3px) scale(1.03);
-    filter: drop-shadow(0 6px 14px rgba(35, 75, 125, 0.18));
-}
-
-:root:not([data-theme="classic"]) .aproject:not(.empty):active,
-body:not([data-theme="classic"]) .aproject:not(.empty):active {
-    transform: translateY(2px) scale(0.97);
-    filter: drop-shadow(0 2px 4px rgba(35, 75, 125, 0.12));
+:root:not([data-theme="classic"]) .projecttitle,
+body:not([data-theme="classic"]) .projecttitle {
+    width: 100%;
+    height: auto;
+    min-height: ${32 * scaleMultiplier}px;
+    margin-top: ${10 * scaleMultiplier}px;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    box-sizing: border-box;
 }
 
 :root:not([data-theme="classic"]) .projecttitle h4,
 body:not([data-theme="classic"]) .projecttitle h4 {
+    width: 100%;
+    text-align: left;
     color: var(--sjr-text-primary);
     font-weight: 800;
-    margin-top: ${css_vh(0.8)};
-    font-size: ${14 * scaleMultiplier}px;
+    margin: 0;
+    font-size: ${15 * scaleMultiplier}px;
 }
 
 :root:not([data-theme="classic"]) .closex,

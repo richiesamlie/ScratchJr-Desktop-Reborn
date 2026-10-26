@@ -501,19 +501,25 @@ p.stylelabel {
 }
 
 /* ===== Tactile Playful Stage Overrides (Light & Dark) ===== */
+:root:not([data-theme="classic"]) #stageframe,
+body:not([data-theme="classic"]) #stageframe {
+    width: ${572 * scaleMultiplier}px;
+}
+
 :root:not([data-theme="classic"]) #stageframe::before,
 body:not([data-theme="classic"]) #stageframe::before {
     content: "";
     position: absolute;
-    top: ${css_vh(0.2)};
-    left: ${css_vh(3.8)};
-    width: ${css_vh(67.2)};
-    height: ${css_vh(9.2)};
+    top: ${8 * scaleMultiplier}px;
+    left: ${46 * scaleMultiplier}px;
+    width: ${480 * scaleMultiplier}px;
+    height: ${56 * scaleMultiplier}px;
     background: var(--sjr-dock-surface);
     border: 3px solid var(--sjr-dock-border);
     border-radius: var(--sjr-radius-xl);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     pointer-events: none;
+    box-sizing: border-box;
     z-index: 1;
 }
 
@@ -522,11 +528,68 @@ body:has(.presentationmode) #stageframe::before,
     display: none;
 }
 
+:root:not([data-theme="classic"]) .fullscreen#full:not(.presentationmode),
+body:not([data-theme="classic"]) .fullscreen#full:not(.presentationmode) {
+    top: ${12 * scaleMultiplier}px;
+    left: ${60 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .gridToggle,
+body:not([data-theme="classic"]) .gridToggle {
+    top: ${12 * scaleMultiplier}px;
+    left: ${116 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .changeBkg,
+body:not([data-theme="classic"]) .changeBkg {
+    top: ${12 * scaleMultiplier}px;
+    left: ${234 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .addText,
+body:not([data-theme="classic"]) .addText {
+    top: ${12 * scaleMultiplier}px;
+    left: ${298 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .resetall:not(.presentationmode),
+:root:not([data-theme="classic"]) .resetall.nopresent,
+body:not([data-theme="classic"]) .resetall:not(.presentationmode),
+body:not([data-theme="classic"]) .resetall.nopresent {
+    top: ${12 * scaleMultiplier}px;
+    left: ${416 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) .go:not(.presentationmode),
+:root:not([data-theme="classic"]) .go.on.nopresent,
+:root:not([data-theme="classic"]) .go.off.nopresent,
+body:not([data-theme="classic"]) .go:not(.presentationmode),
+body:not([data-theme="classic"]) .go.on.nopresent,
+body:not([data-theme="classic"]) .go.off.nopresent {
+    top: ${12 * scaleMultiplier}px;
+    left: ${472 * scaleMultiplier}px;
+    width: ${48 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+}
+
+:root:not([data-theme="classic"]) #stageframe .stage:not(.fullscreen),
 :root:not([data-theme="classic"]) *.stage.normal,
+body:not([data-theme="classic"]) #stageframe .stage:not(.fullscreen),
 body:not([data-theme="classic"]) *.stage.normal {
     border: 4px solid #FFFFFF;
     border-radius: 24px;
     box-shadow: 0 6px 0 var(--sjr-card-depth), 0 10px 28px rgba(35, 75, 125, 0.12);
+    box-sizing: border-box;
 }
 
 :root:not([data-theme="classic"]) .fullscreen#full,
