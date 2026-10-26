@@ -21,11 +21,11 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 
 2. **Bump Version in Lockstep**:
    All version references across the multi-target workspace must be updated in lockstep:
-   - `package.json` & `package-lock.json` (`npm version 2.14.2 --no-git-tag-version`)
-   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.14.2"`, synced automatically by `npm run build:renderer`)
-   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.14.2'`)
-   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.14.2"`)
-   - `src-tauri/Cargo.toml` (`version = "2.14.2"`) & `src-tauri/tauri.conf.json` (`"version": "2.14.2"`)
+   - `package.json` & `package-lock.json` (`npm version 2.15.0 --no-git-tag-version`)
+   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.15.0"`, synced automatically by `npm run build:renderer`)
+   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.15.0'`)
+   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.15.0"`)
+   - `src-tauri/Cargo.toml` (`version = "2.15.0"`) & `src-tauri/tauri.conf.json` (`"version": "2.15.0"`)
    - `version.json` (`version`, `name`, `release_url`, and `downloads` URLs)
    - `docs/index.html` (direct release download URLs)
 
@@ -45,7 +45,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 4. **Commit Version Bump**:
    ```bash
    git add package.json package-lock.json src/app/settings.json src/app/sw.js android/app/build.gradle.kts src-tauri/Cargo.toml src-tauri/tauri.conf.json version.json CHANGELOG.md README.md docs/index.html
-   git commit -m "Release v2.14.2"
+   git commit -m "Release v2.15.0"
    ```
 
 ---
@@ -55,7 +55,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 The GitHub Actions workflows (`.github/workflows/build-release.yml` and `.github/workflows/build-android.yml`) build and publish releases when a version tag (`v*.*.*`) is pushed:
 
 ```bash
-git tag v2.14.2
+git tag v2.15.0
 git push origin master --tags
 ```
 

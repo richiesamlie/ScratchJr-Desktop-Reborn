@@ -3,9 +3,11 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [Unreleased]
+## [v2.15.0] - 2026-10-26
 
-### UI & UX (Experimental Branch `experimental/ui-overhaul`)
+**Minor Release: Kid-Friendly Tactile Sketchboard & Sticker-Book UI/UX Overhaul, Multi-Resolution Responsive Scaling, and Adaptive Palette & Storyboard Layout.**
+
+### UI & UX
 - **Kid-Friendly Tactile Sketchboard & Sticker-Book UI/UX Overhaul**:
   - **Sticker-Book Lobby Overhaul**:
     - Introduced `#lobby-toolbar` mounted in `.inner` before `#scrollarea`, containing an icon-first real-time search input with clear button and sort toggle (Recent vs Alphabetical A–Z).
