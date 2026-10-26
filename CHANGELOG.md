@@ -19,9 +19,14 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
     - High-clarity dot-grid paper background (`--sjr-bg-canvas-dot`) for the `.scripts` programming canvas.
     - Framed character library (`#library`) and scene list (`.pages`) as physical tactile cards.
     - Project name badge (`#editor-project-badge`) in the top bar displaying current project title and opening rename dialog on tap.
+    - Tactile sticker Home button (`#flip`) with warm gradient and active push depression.
+  - **Multi-Resolution Responsive Scaling & Ergonomic Sizing**:
+    - Multi-resolution scaling (`scaleMultiplier` dynamically evaluated across 1024×768, 1920×1080, and 2560×1440) with live window resize recalculation and `requestAnimationFrame` debouncing.
+    - Heightened middle block palette bar (`#blockspalette` 86px, `#palette` 71px) with category-tinted pill tray and adaptive horizontal block spacing (`comfortRatio`), eliminating clipping on numeric block badges.
+    - Proportional storyboard (`.pagescc`) with 140px flex-sized `.pagethumb` cards and slim 6px scrollbars, accommodating up to 4 scenes with zero overflow or overlap.
   - **Engine Safety Invariants & Verification**:
-    - Guarded against 5 critical engine traps: preserved `#scrollarea` child invariants for `Home.getNextName()`, bypassed touch dragging on toolbar input controls, guarded `Thumbs.getPagePos` single-column layout, maintained `#stageframe` direct children for presentation mode reparenting, and adhered to eval-free CSS preprocessor syntax.
-    - Created dedicated unit test suite `tests/unit/sketchboard-ui-overhaul.test.js` (11 tests passing 100%).
+    - Guarded against critical engine traps: preserved `#scrollarea` child invariants for `Home.getNextName()`, bypassed touch dragging on toolbar input controls, guarded `Thumbs.getPagePos` dynamic DOM delta calculation, maintained `#stageframe` direct children for presentation mode reparenting, and adhered to eval-free CSS preprocessor syntax.
+    - Dedicated unit test suite `tests/unit/sketchboard-ui-overhaul.test.js` (13 tests passing 100%).
 
 
 ## [v2.14.2] - 2026-10-26
