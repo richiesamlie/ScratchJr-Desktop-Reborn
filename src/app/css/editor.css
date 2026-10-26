@@ -1217,7 +1217,12 @@ body:not([data-theme="classic"]) *.info:active {
 :root:not([data-theme="classic"]) .pagethumb,
 body:not([data-theme="classic"]) .pagethumb {
     position: relative;
-    border-radius: 20px;
+    flex: 0 1 ${106 * scaleMultiplier}px;
+    min-height: ${74 * scaleMultiplier}px;
+    width: ${140 * scaleMultiplier}px;
+    height: ${106 * scaleMultiplier}px;
+    padding: ${4 * scaleMultiplier}px;
+    border-radius: 18px;
     transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
     box-sizing: border-box;
 }
@@ -1270,7 +1275,11 @@ body:not([data-theme="classic"]) .pagethumb .pc-container {
 
 :root:not([data-theme="classic"]) .pagethumb canvas.pc,
 body:not([data-theme="classic"]) .pagethumb canvas.pc {
-    border-radius: 14px;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto !important;
+    height: 100% !important;
+    border-radius: 12px;
     box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
 }
 
@@ -1350,10 +1359,16 @@ body:not([data-theme="classic"]) .pagethumb.drop {
 
 :root:not([data-theme="classic"]) #emptypage,
 body:not([data-theme="classic"]) #emptypage {
+    position: relative;
+    bottom: auto;
+    flex: 0 0 ${48 * scaleMultiplier}px;
+    min-height: ${48 * scaleMultiplier}px;
+    width: ${140 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
     background: var(--sjr-bg-secondary) !important;
     background-color: var(--sjr-bg-secondary) !important;
     border: 3px dashed var(--sjr-accent-primary);
-    border-radius: 20px;
+    border-radius: 18px;
     box-shadow: 0 4px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
     display: flex !important;
     align-items: center !important;
@@ -1372,7 +1387,7 @@ body:not([data-theme="classic"]) #emptypage .empty {
 :root:not([data-theme="classic"]) #emptypage::before,
 body:not([data-theme="classic"]) #emptypage::before {
     content: "+";
-    font-size: 48px;
+    font-size: ${32 * scaleMultiplier}px;
     font-weight: 900;
     color: var(--sjr-accent-primary);
     line-height: 1;
@@ -1420,14 +1435,15 @@ body:not([data-theme="classic"]) .pages {
     border-radius: var(--sjr-radius-xl);
     box-shadow: var(--sjr-panel-shadow);
     box-sizing: border-box;
-    padding: ${10 * scaleMultiplier}px;
+    padding: ${8 * scaleMultiplier}px ${6 * scaleMultiplier}px;
+    overflow: hidden;
 }
 
 :root:not([data-theme="classic"]) *.rightpanel,
 body:not([data-theme="classic"]) *.rightpanel {
     right: ${16 * scaleMultiplier}px;
     top: ${74 * scaleMultiplier}px !important;
-    width: ${192 * scaleMultiplier}px !important;
+    width: ${196 * scaleMultiplier}px !important;
     height: ${360 * scaleMultiplier}px;
 }
 
@@ -1438,17 +1454,45 @@ body:not([data-theme="classic"]) .pagescc {
     left: 0;
     width: 100% !important;
     height: 100% !important;
+    padding: ${4 * scaleMultiplier}px ${4 * scaleMultiplier}px ${6 * scaleMultiplier}px;
+    overflow-x: hidden !important;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: ${10 * scaleMultiplier}px;
+    gap: ${8 * scaleMultiplier}px;
     box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74, 158, 255, 0.35) transparent;
+}
+
+:root:not([data-theme="classic"]) .pagescc::-webkit-scrollbar,
+body:not([data-theme="classic"]) .pagescc::-webkit-scrollbar {
+    width: 6px;
+    height: 0px;
+}
+
+:root:not([data-theme="classic"]) .pagescc::-webkit-scrollbar-button,
+body:not([data-theme="classic"]) .pagescc::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+:root:not([data-theme="classic"]) .pagescc::-webkit-scrollbar-track,
+body:not([data-theme="classic"]) .pagescc::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+:root:not([data-theme="classic"]) .pagescc::-webkit-scrollbar-thumb,
+body:not([data-theme="classic"]) .pagescc::-webkit-scrollbar-thumb {
+    background: rgba(74, 158, 255, 0.35);
+    border-radius: 999px;
 }
 
 :root:not([data-theme="classic"]) .pagethumb,
 body:not([data-theme="classic"]) .pagethumb {
     margin: 0;
-    flex-shrink: 0;
 }
 
 :root:not([data-theme="classic"]) #blockspalette .papercut,
@@ -1458,10 +1502,18 @@ body:not([data-theme="classic"]) #blockspalette .papercut {
 
 :root:not([data-theme="classic"]) #blockspalette,
 body:not([data-theme="classic"]) #blockspalette {
+    height: ${86 * scaleMultiplier}px;
     background: var(--sjr-panel-surface);
     border-top: 3.5px solid var(--sjr-panel-border);
     border-bottom: 3.5px solid var(--sjr-panel-border);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) #blockspalette .categoryselector,
+body:not([data-theme="classic"]) #blockspalette .categoryselector {
+    top: ${8 * scaleMultiplier}px;
+    left: ${6 * scaleMultiplier}px;
 }
 
 :root:not([data-theme="classic"]) #blockspalette .categoryselector .catbkg,
@@ -1472,12 +1524,12 @@ body:not([data-theme="classic"]) #blockspalette .categoryselector .catbkg {
 :root:not([data-theme="classic"]) #blockspalette .palette,
 body:not([data-theme="classic"]) #blockspalette .palette {
     position: absolute;
-    top: ${3 * scaleMultiplier}px;
-    left: ${358 * scaleMultiplier}px;
-    right: ${128 * scaleMultiplier}px;
-    height: ${58 * scaleMultiplier}px;
-    border-radius: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.55);
+    top: ${4 * scaleMultiplier}px;
+    left: ${366 * scaleMultiplier}px;
+    right: ${132 * scaleMultiplier}px;
+    height: ${71 * scaleMultiplier}px;
+    border-radius: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
     box-sizing: border-box;
     transition: background-color 0.18s ease;
@@ -1485,8 +1537,8 @@ body:not([data-theme="classic"]) #blockspalette .palette {
 
 :root:not([data-theme="classic"]) .controlundo,
 body:not([data-theme="classic"]) .controlundo {
-    top: ${7 * scaleMultiplier}px;
-    right: ${12 * scaleMultiplier}px;
+    top: ${14 * scaleMultiplier}px;
+    right: ${14 * scaleMultiplier}px;
     height: ${50 * scaleMultiplier}px;
     display: inline-flex;
     align-items: center;

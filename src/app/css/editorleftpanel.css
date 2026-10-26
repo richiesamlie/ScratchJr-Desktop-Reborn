@@ -287,11 +287,12 @@ body:not([data-theme="classic"]) #library .spritethumbs {
 body:not([data-theme="classic"]) #library .spritethumbs .spritecc {
     width: 100%;
     margin: 0;
-    padding: 0;
+    padding: ${6 * scaleMultiplier}px ${4 * scaleMultiplier}px ${8 * scaleMultiplier}px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: ${8 * scaleMultiplier}px;
+    gap: ${10 * scaleMultiplier}px;
+    box-sizing: border-box;
 }
 
 :root:not([data-theme="classic"]) .spritethumb,
