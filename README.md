@@ -4,10 +4,10 @@
 
 # ScratchJr Reborn — Web/PWA, Desktop & Android
 
-> A modernized, universal multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
+> A modernized, multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
 [![Version](https://img.shields.io/github/v/release/richiesamlie/ScratchJr-Desktop-Reborn?color=blue&label=version)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-249%20passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-359%20passed-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-orange.svg)]()
 
@@ -15,105 +15,63 @@
 
 ## 🚀 Launch Online & Downloads
 
-| Edition / Target | Platform | Download & Description |
+| Edition / Target | Platform | Download & Access |
 | :--- | :--- | :--- |
-| **🌐 Web / PWA** | In-Browser (Chrome, Safari, Edge, Firefox) | **[🎮 Launch Web App](https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/)** · Installable PWA |
-| **🚀 Lightweight Desktop (Tauri v2 + Rust)** | Windows 10/11 (x64) | [**Download Setup.exe**](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [MSI Installer](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)<br>*(Ultra-lightweight ~30MB RAM, instant cold start, WebView2)* |
-| **⚡ Universal Desktop (Electron)** | Windows 10/11 (x64) | [MSI Installer](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
+| **🌐 Web / PWA** | Browser (Chrome, Safari, Edge, Firefox) | **[🎮 Launch Web App](https://richiesamlie.github.io/ScratchJr-Desktop-Reborn/play/)** · Installable PWA |
+| **🚀 Lightweight Desktop (Tauri v2 + Rust)** | Windows 10/11 (x64) | [**Setup.exe**](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [MSI](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) *(~30 MB RAM, WebView2)* |
+| **⚡ Universal Desktop (Electron 45)** | Windows 10/11 (x64) | [MSI](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · [Portable ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
 | | macOS (Apple Silicon & Intel) | [Download ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
 | | Linux (x64 & ARM64) | [Download ZIP](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) |
-| **📱 Android** | Phones, Tablets, Chromebooks (Android 7.0+) | [Download APK](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · Google Play Bundle |
+| **📱 Android** | Android 7.0+ (Phones, Tablets, Chromebooks) | [Download APK](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest) · Google Play AAB |
 
 ---
 
-## ✨ Key Capabilities
+## ✨ Highlights
 
-### 🌐 Universal Multi-Target Architecture
-- **In-Browser Web & PWA**: Zero-install client-side execution via WebAssembly SQLite (`sql.js`) and IndexedDB with multi-tab concurrency guards.
-- **Dual Desktop Runtime (Tauri v2 + Electron)**:
-  - **🚀 Lightweight Desktop (Tauri v2 + Rust)**: Micro-footprint (~28–41 MB RAM) utilizing native Microsoft Edge WebView2, instant startup, with native Windows installers (`ScratchJr-tauri-*`).
-  - **⚡ Universal Desktop (Electron)**: Fully self-contained Chromium + Node.js runtime across Windows, macOS, and Linux with silent MSI fleet deployment (`ScratchJr-electron-*`).
-  - **Zero Conversion Project Parity**: Both desktop runtimes share the identical SQLite database (`Documents\ScratchJR\scratchjr.sqllite`) with atomic rollback protection.
-- **Native Android Shell**: High-performance Kotlin shell with native SQLite WAL, camera/mic permissions, and system file intents.
-
-### 🎨 Creative Coding & Expanded Canvas
-- **Advanced Paint Editor**: Discrete zoom controls (`+`, `−`, `1:1`), a true freehand masking eraser tool with circular preview cursor, multiple brush styles (Normal, Flat, Dotted), custom spectrum color picker, and star/line shape tools.
-- **Sensing & Stage Detection**: New "If Touching Color" (`ontouchcolor`) Start block with color selector dropdown and interactive magnifying loupe eyedropper for pixel-level color sampling.
-- **10 Pages per Project**: Expanded multi-scene storytelling with up to 10 pages per project (up from 4).
-- **Enhanced Toolkit**: Horizontal flip (`flipX`) motion block, media & audio track import (`.wav`, `.mp3`, `.ogg`, `.webm`, `.m4a`), smart asset library search, and 12 native languages.
-
-### ⚡ Modern Engine & Hardware Parity
-- **Unified Pointer & Multi-Touch**: Responsive drawing and block dragging across touchscreens, stylus, and mouse with zero modality lock.
-- **Interactive Camera**: Live camera feed capture with hardware fallback and keyboard shortcuts (`Space`/`Enter` to snap, `Escape` to cancel).
-- **Streamlined Pipeline**: Direct single-roundtrip media transport and structured IPC cloning for fast asset loading and low memory usage.
-
-### 💾 Safe Storage & 1-Click Sharing
-- **1-Click `.sjr` Open & Export**: Dedicated lobby import card and instant export to native Save dialogs, Android share sheet, or browser download.
-- **Self-Healing Asset Library**: Automatic SQLite repair and regeneration for custom sprite thumbnails.
-- **Crash Protection**: Atomic database writes, rolling `.bak` snapshots on Desktop, and automated corruption quarantine.
-- **249 Automated Tests**: 100% test coverage across database intents, shapes, blocks, UTF-8 serialization, camera controls, and CDP browser smoke harnesses.
+- **Universal Multi-Target Host**: Shared TypeScript/JavaScript engine across **Web/PWA** (`sql.js` + IndexedDB), **Tauri v2** (Rust + `rusqlite`), **Electron 45** (Chromium + Node 26), and **Android** (Kotlin + SQLite WAL). Both desktop editions share the same `Documents\ScratchJR\scratchjr.sqllite` database.
+- **Expanded Editor & Blocks**: Up to **10 pages per project**, horizontal flip (`flipX`), "If Touching Color" (`ontouchcolor`) with loupe eyedropper, configurable stage resolution (`480×360` SD / `960×720` HD) and custom grid snapping (`16`–`32`), drag-and-drop sprite reordering, and lobby project search & duplication.
+- **Upgraded Paint Editor**: Zoom controls (`+`, `−`, `1:1`), freehand masking eraser, Normal/Flat/Dotted brushes, spectrum color picker, star/line shapes, and custom media/audio import (`.wav`, `.mp3`, `.ogg`, `.webm`, `.m4a`).
+- **Safe Storage & 1-Click Sharing**: Instant `.sjr` project import/export, atomic SQLite writes with rolling `.bak` snapshots, multi-tab Web Locks protection, and self-healing sprite thumbnails.
 
 ---
 
-## 🛠️ Building from Source
+## 🛠️ Quick Start & Build
 
-**Prerequisites:** Node.js 22+ and Git. (Rust 1.77+ required for Tauri build).
+**Prerequisites:** Node.js 26+ and Git (Rust 1.99+ for Tauri; JDK 17/21 + Android SDK 37 for Android).
 
 ```bash
-# Install dependencies
-npm install
+npm install                # Install dependencies
+npm test                   # Run unit suite (359 tests)
+npm run typecheck          # TypeScript check
+npm run lint               # ESLint 10 flat-config check
 
-# Run unit tests and static analysis (249 tests, 0 errors)
-npm test
-npm run typecheck && npx eslint src
+# Build targets
+npm run build:renderer     # Compile renderer bundle
+npm run build:web          # Build Web/PWA to dist-web/
+npm run build:android      # Sync web bundle to Android assets
 
-# Target Builds
-npm run build:renderer     # Compile renderer TypeScript bundles
-npm run build:web          # Build static Web / PWA to dist-web/
-npm run build:android      # Sync web bundles to Android assets
-
-# End-to-End Smoke Tests (CDP)
-node scripts/smoke-web.js  # Headless browser test (PWA / Web)
-node scripts/smoke-test.js # Electron desktop smoke test
-
-# Desktop Packaging (Electron)
-npm run make:zip           # Build Electron portable ZIP
-npm run make               # Build Electron platform installer (e.g. Windows MSI)
-
-# Desktop Packaging (Tauri v2)
-npm run tauri:build        # Build Tauri release executable and installers
-npm run package:tauri      # Package Tauri MSI, Setup, and portable ZIP to out/tauri-win32-x64/
+# Package desktop releases
+npm run make:zip           # Electron portable ZIP
+npm run tauri:build        # Tauri v2 MSI & NSIS installers
+npm run package:tauri      # Package Tauri artifacts + SHA256SUMS to out/tauri-win32-x64/
 ```
 
 ---
 
 ## 📚 Documentation
 
-| Guide | Description |
-| :--- | :--- |
-| **[Architecture & Security](docs/ARCHITECTURE.md)** | Process separation, IPC boundaries, and data flows |
-| **[Threat Model & Mitigations](docs/THREAT-MODEL.md)** | Security posture and network isolation |
-| **[School & Fleet Deployment](docs/SCHOOL-DEPLOYMENT.md)** | MSI silent install flags, Intune, and GPO guides |
-| **[Release Runbook](docs/RELEASE.md)** | Packaging procedures and maintainer release checklist |
-| **[GitHub Wiki](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/wiki)** | Comprehensive guides, API docs, and platform runbooks |
+- **[Architecture & Security](docs/ARCHITECTURE.md)** — Process separation, IPC boundaries, and host adapters
+- **[Threat Model](docs/THREAT-MODEL.md)** — Security posture and network isolation
+- **[School & Fleet Deployment](docs/SCHOOL-DEPLOYMENT.md)** — Silent MSI install flags, Intune, and GPO guides
+- **[Release Runbook](docs/RELEASE.md)** — Lockstep versioning and packaging checklist
+- **[GitHub Wiki](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/wiki)** — Detailed guides, IPC inventory, and changelog
 
 ---
 
-## 🤝 Acknowledgements & Credits
+## 🤝 Credits & License
 
-ScratchJr Reborn builds upon the dedicated work of the open-source community:
+Built on the open-source work of:
+- **Original ScratchJr**: [Tufts DevTech Research Group](https://sites.tufts.edu/devtech/), [MIT Lifelong Kindergarten Group](https://www.media.mit.edu/groups/lifelong-kindergarten/overview/), and [Playful Invention Company](http://www.playfulinvention.com/) ([`scratchfoundation/scratchjr`](https://github.com/scratchfoundation/scratchjr)).
+- **Desktop & Community Adaptations**: [`jfo8000/ScratchJr-Desktop`](https://github.com/jfo8000/ScratchJr-Desktop), [`JustSch/ScratchJr-Desktop`](https://github.com/JustSch/ScratchJr-Desktop), [`wangzongjun/ScratchJr`](https://github.com/wangzongjun/ScratchJr), [`patdx/scratchjr`](https://github.com/patdx/scratchjr), and [SQL.js](https://github.com/sql-js/sql.js).
 
-- **Original ScratchJr**: Created by the [Tufts DevTech Research Group](https://sites.tufts.edu/devtech/), the [Lifelong Kindergarten group at MIT Media Lab](https://www.media.mit.edu/groups/lifelong-kindergarten/overview/), and the [Playful Invention Company](http://www.playfulinvention.com/). Official source: [`scratchfoundation/scratchjr`](https://github.com/scratchfoundation/scratchjr).
-- **Desktop Electron Pioneers**: Initial desktop adaptations and WebRTC pointer/camera integration by [`jfo8000/ScratchJr-Desktop`](https://github.com/jfo8000/ScratchJr-Desktop) and [`JustSch/ScratchJr-Desktop`](https://github.com/JustSch/ScratchJr-Desktop).
-- **Feature Inspirations**:
-  - [`wangzongjun/ScratchJr`](https://github.com/wangzongjun/ScratchJr): Inspiration for the horizontal flip motion block (`flipX`), asset library categorization and search, 1-click `.sjr` import card, and UTF-8 Base64 serialization.
-  - [`patdx/scratchjr`](https://github.com/patdx/scratchjr): Inspiration for web storage resilience architectures: multi-tab concurrency protection via the Web Locks API (`navigator.locks`), browser storage eviction defense (`navigator.storage.persist()`), and database corruption quarantine.
-- **WebAssembly SQLite**: Powered by [SQL.js](https://github.com/sql-js/sql.js) and [SQLite.org](https://sqlite.org/).
-
----
-
-## 📄 License & Disclaimer
-
-Scratch and ScratchJr are trademarks of Massachusetts Institute of Technology, which does not sponsor, endorse, or authorize this content. See [scratchjr.org](https://scratchjr.org) for more information.
-
-Licensed under the [BSD 3-Clause License](LICENSE) — Copyright (c) 2016, Massachusetts Institute of Technology.
+Scratch and ScratchJr are trademarks of Massachusetts Institute of Technology, which does not sponsor, endorse, or authorize this content. Licensed under the [BSD 3-Clause License](LICENSE).
