@@ -5,6 +5,25 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
 
 ## [Unreleased]
 
+### UI & UX (Experimental Branch `experimental/ui-overhaul`)
+- **Kid-Friendly Tactile Sketchboard & Sticker-Book UI/UX Overhaul**:
+  - **Sticker-Book Lobby Overhaul**:
+    - Introduced `#lobby-toolbar` mounted in `.inner` before `#scrollarea`, containing an icon-first real-time search input with clear button and sort toggle (Recent vs Alphabetical A–Z).
+    - Responsive CSS grid layout for `.scrollarea` ensuring cards adapt smoothly across tablet, mobile, and wide desktop viewports.
+    - Tactile sticker cards with die-cut rounded borders, soft paper drop shadows, and hover elevation physics.
+    - True scene badge (`.scene-badge`) showing exact page counts (1–10) without clamp distortion.
+    - Kid-friendly project options button (`.projectmenu`) to safely toggle duplicate, export, and delete actions without exposing destructive controls during casual card browsing.
+  - **Tactile Easel & Sketchboard Editor**:
+    - Top-of-canvas mini-tools dock bar (`#stageframe::before`) providing physical 3D elevation and tactile depth behind the 6 essential stage tools (`#full`, `#grid`, `#setbkg`, `#addtext`, `#resetall`, `#go`) while preserving presentation mode mechanics.
+    - Clean pop-down text drawer overhaul for `.pagetext` (`#textbox`) with tactile input container.
+    - High-clarity dot-grid paper background (`--sjr-bg-canvas-dot`) for the `.scripts` programming canvas.
+    - Framed character library (`#library`) and scene list (`.pages`) as physical tactile cards.
+    - Project name badge (`#editor-project-badge`) in the top bar displaying current project title and opening rename dialog on tap.
+  - **Engine Safety Invariants & Verification**:
+    - Guarded against 5 critical engine traps: preserved `#scrollarea` child invariants for `Home.getNextName()`, bypassed touch dragging on toolbar input controls, guarded `Thumbs.getPagePos` single-column layout, maintained `#stageframe` direct children for presentation mode reparenting, and adhered to eval-free CSS preprocessor syntax.
+    - Created dedicated unit test suite `tests/unit/sketchboard-ui-overhaul.test.js` (11 tests passing 100%).
+
+
 ## [v2.14.2] - 2026-10-26
 
 **Patch Release: Universal Toolchain & Dependency Modernization (Node 26, Electron 45, Forge 8, ESLint 10 Flat Config, Vitest 5, Tauri v2.12, Gradle 9.8.2 / AGP 9.4.1).**

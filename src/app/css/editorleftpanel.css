@@ -17,6 +17,10 @@
     background-size: 100.5%;  /* webview pixelates the image unless we do this */
 }
 
+.editor-project-badge {
+    display: none;
+}
+
 .scrollbar {
     position: absolute;
     display: inline-block;
@@ -355,4 +359,45 @@ body:not([data-theme="classic"]) #library .addsprite:active {
     transform: translateY(2px);
     box-shadow: 0 1px 0 var(--sjr-card-depth);
 }
+
+:root:not([data-theme="classic"]) .editor-project-badge,
+body:not([data-theme="classic"]) .editor-project-badge {
+    display: inline-flex;
+    align-items: center;
+    position: absolute;
+    top: ${css_vh(1.2)};
+    left: ${css_vh(32.5)};
+    max-width: ${css_vh(18.0)};
+    height: ${css_vh(5.8)};
+    padding: 0 ${css_vh(1.6)};
+    background: var(--sjr-panel-surface);
+    border: 2.5px solid var(--sjr-panel-border);
+    border-radius: var(--sjr-radius-pill);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    font-family: inherit;
+    font-size: ${css_vh(2.2)};
+    font-weight: 700;
+    color: var(--sjr-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 5;
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .editor-project-badge:empty,
+body:not([data-theme="classic"]) .editor-project-badge:empty {
+    display: none;
+}
+
+:root:not([data-theme="classic"]) #library,
+body:not([data-theme="classic"]) #library {
+    background: var(--sjr-panel-surface);
+    border: 3px solid var(--sjr-panel-border);
+    border-radius: var(--sjr-radius-xl);
+    box-shadow: var(--sjr-panel-shadow);
+    box-sizing: border-box;
+}
+
 

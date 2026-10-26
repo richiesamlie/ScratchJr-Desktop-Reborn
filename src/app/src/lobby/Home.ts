@@ -26,11 +26,16 @@ export default class Home {
     static actionTarget: HTMLElement | null = null;
     static initialPt: { x: number; y: number };
     static scrolltop: number;
+    static searchQuery = '';
+    static sortMode: 'recent' | 'alpha' = 'recent';
+    static cachedProjects: Array<{ id?: string; name?: string; isgift?: string; thumbnail?: unknown }> = [];
 
     static init () {
+        Home.searchQuery = '';
         version = LobbyState.version;
         frame = gn('htmlcontents')!;
         var inner = newHTML('div', 'inner', frame);
+        Home.createLobbyToolbar(inner);
         var div = newHTML('div', 'scrollarea', inner);
         div.setAttribute('id', 'scrollarea');
         frame.onmousedown = Home.handleTouchStart;
@@ -39,6 +44,100 @@ export default class Home {
         frame.ontouchend = Home.handleTouchEnd as unknown as (this: GlobalEventHandlers, ev: TouchEvent) => any;
         Home.installSjrDrop();
         Home.displayYourProjects();
+    }
+
+    static createLobbyToolbar (parent: HTMLElement) {
+        var toolbar = document.createElement('div');
+        toolbar.className = 'lobby-toolbar';
+        toolbar.id = 'lobby-toolbar';
+        var scrollarea = parent.querySelector('#scrollarea');
+        if (scrollarea) {
+            parent.insertBefore(toolbar, scrollarea);
+        } else {
+            parent.appendChild(toolbar);
+        }
+
+        var searchWrap = newHTML('div', 'lobby-search-wrap', toolbar);
+        var searchIcon = newHTML('span', 'lobby-search-icon', searchWrap);
+        searchIcon.setAttribute('aria-hidden', 'true');
+        searchIcon.textContent = '🔍';
+
+        var searchInput = newHTML('input', 'lobby-search-input', searchWrap) as HTMLInputElement;
+        searchInput.id = 'lobby-search-input';
+        searchInput.type = 'search';
+        searchInput.placeholder = Localization.localizeWithFallback('FIND_PROJECT', 'Find project...');
+        searchInput.setAttribute('aria-label', Localization.localizeWithFallback('SEARCH_PROJECTS', 'Search projects'));
+        searchInput.autocomplete = 'off';
+
+        var clearBtn = newHTML('button', 'lobby-search-clear', searchWrap) as HTMLButtonElement;
+        clearBtn.id = 'lobby-search-clear';
+        clearBtn.type = 'button';
+        clearBtn.textContent = '×';
+        clearBtn.style.display = 'none';
+        clearBtn.setAttribute('aria-label', 'Clear search');
+
+        searchInput.oninput = function () {
+            Home.searchQuery = searchInput.value.trim().toLowerCase();
+            clearBtn.style.display = Home.searchQuery ? 'inline-block' : 'none';
+            Home.filterVisibleCards();
+        };
+
+        clearBtn.onclick = function (e: MouseEvent) {
+            e.preventDefault();
+            searchInput.value = '';
+            Home.searchQuery = '';
+            clearBtn.style.display = 'none';
+            Home.filterVisibleCards();
+            searchInput.focus();
+        };
+
+        var sortBtn = newHTML('button', 'lobby-sort-btn', toolbar) as HTMLButtonElement;
+        sortBtn.id = 'lobby-sort-btn';
+        sortBtn.type = 'button';
+        Home.updateSortButtonLabel(sortBtn);
+        sortBtn.onclick = function (e: MouseEvent) {
+            e.preventDefault();
+            ScratchAudio.sndFX('tap.wav');
+            Home.toggleSort();
+        };
+
+        return toolbar;
+    }
+
+    static toggleSort () {
+        Home.sortMode = Home.sortMode === 'recent' ? 'alpha' : 'recent';
+        var sortBtn = gn('lobby-sort-btn') as HTMLButtonElement;
+        if (sortBtn) {
+            Home.updateSortButtonLabel(sortBtn);
+        }
+        Home.sortAndRenderCards();
+    }
+
+    static updateSortButtonLabel (btn: HTMLButtonElement) {
+        var label = Home.sortMode === 'recent'
+            ? Localization.localizeWithFallback('SORT_RECENT', 'Sort: Recent')
+            : Localization.localizeWithFallback('SORT_ALPHA', 'Sort: A–Z');
+        btn.textContent = label;
+    }
+
+    static filterVisibleCards () {
+        var div = gn('scrollarea');
+        if (!div) return;
+        var query = Home.searchQuery;
+        for (var i = 0; i < div.childElementCount; i++) {
+            var child = div.childNodes[i] as HTMLElement;
+            if (child.id === 'newproject' || child.id === 'openproject') {
+                child.style.display = '';
+                continue;
+            }
+            if (!query) {
+                child.style.display = '';
+                continue;
+            }
+            var titleNode = child.querySelector ? child.querySelector('.projecttitle h4') : null;
+            var title = (titleNode && titleNode.textContent ? titleNode.textContent.trim().toLowerCase() : '');
+            child.style.display = title.indexOf(query) > -1 ? '' : 'none';
+        }
     }
 
     ////////////////////////////
@@ -85,6 +184,10 @@ export default class Home {
     //////////////////////////
 
     static handleTouchStart (e: MouseEvent & { touches?: TouchList }) {
+        var targetNode = e.target as HTMLElement | null;
+        if (targetNode && (targetNode.tagName === 'INPUT' || targetNode.tagName === 'BUTTON' || (targetNode.closest && targetNode.closest('#lobby-toolbar')))) {
+            return;
+        }
         Home.dragging = false;
         Home.holding = false;
         // if ((t.nodeName == "INPUT") || (t.nodeName == "FORM")) return;
@@ -143,6 +246,10 @@ export default class Home {
     }
 
     static handleTouchEnd (e: MouseEvent & { touches?: TouchList }) {
+        var targetNode = e.target as HTMLElement | null;
+        if (targetNode && (targetNode.tagName === 'INPUT' || targetNode.tagName === 'BUTTON' || (targetNode.closest && targetNode.closest('#lobby-toolbar')))) {
+            return;
+        }
         e.preventDefault();
         e.stopPropagation();
         if (e.touches && (e.touches.length > 1)) {
@@ -171,6 +278,14 @@ export default class Home {
         }
         var md5 = Home.actionTarget.id;
         switch (Home.getAction(e)) {
+        case 'menu':
+            ScratchAudio.sndFX('tap.wav');
+            if (Home.actionTarget.classList.contains('is-managing')) {
+                Home.hideProjectControls(Home.actionTarget);
+            } else {
+                Home.showProjectControls(Home.actionTarget);
+            }
+            break;
         case 'project':
             ScratchAudio.sndFX('keydown.wav');
             if (md5 && (md5 == 'newproject')) {
@@ -381,6 +496,8 @@ export default class Home {
 
     static removeProjThumb () {
         if (Home.actionTarget && Home.actionTarget.parentNode) {
+            var removedId = Home.actionTarget.id;
+            Home.cachedProjects = Home.cachedProjects.filter(p => String(p.id) !== removedId);
             Home.actionTarget.parentNode.removeChild(Home.actionTarget);
         }
         Home.actionTarget = null;
@@ -389,6 +506,13 @@ export default class Home {
     static getAction (e: MouseEvent) {
         if (!Home.actionTarget) {
             return 'none';
+        }
+        if (e && e.target) {
+            var rawTarget = e.target as HTMLElement;
+            var rawCls = rawTarget.getAttribute ? (rawTarget.getAttribute('class') || '') : '';
+            if (rawCls.indexOf('projectmenu') > -1) {
+                return 'menu';
+            }
         }
         var shown = false;
         var closex = Home.actionTarget.querySelector ? (Home.actionTarget.querySelector('.closex') as HTMLElement | null) : null;
@@ -525,21 +649,51 @@ export default class Home {
 
     static displayProjects (str: string) {
         var data = JSON.parse(str);
+        Home.cachedProjects = data;
         var div = gn('scrollarea')!;
         while (div.childElementCount > 0) {
             div.removeChild(div.childNodes[0]);
         }
         Home.emptyProjectThumbnail(div);
         Home.openProjectThumbnail(div);
-        for (var i = 0; i < data.length; i++) {
-            Home.addProjectLink(div, data[i]);
+        var sorted = Home.getSortedProjects(data);
+        for (var i = 0; i < sorted.length; i++) {
+            Home.addProjectLink(div, sorted[i]);
         }
+        Home.filterVisibleCards();
         setTimeout(function () {
             LobbyState.busy = false;
         }, 1000);
         if (gn('wrapc')!) {
             gn('wrapc')!.scrollTop = scrollvalue;
         }
+    }
+
+    static getSortedProjects (list: Array<{ id?: string; name?: string; isgift?: string; thumbnail?: unknown }>) {
+        var copy = list ? list.slice() : [];
+        if (Home.sortMode === 'alpha') {
+            copy.sort((a, b) => {
+                var nameA = ((a.name && a.name !== 'undefined') ? String(a.name) : 'Project').toLowerCase();
+                var nameB = ((b.name && b.name !== 'undefined') ? String(b.name) : 'Project').toLowerCase();
+                return nameA.localeCompare(nameB);
+            });
+        }
+        return copy;
+    }
+
+    static sortAndRenderCards () {
+        var div = gn('scrollarea');
+        if (!div) return;
+        while (div.childElementCount > 0) {
+            div.removeChild(div.childNodes[0]);
+        }
+        Home.emptyProjectThumbnail(div);
+        Home.openProjectThumbnail(div);
+        var sorted = Home.getSortedProjects(Home.cachedProjects);
+        for (var i = 0; i < sorted.length; i++) {
+            Home.addProjectLink(div, sorted[i]);
+        }
+        Home.filterVisibleCards();
     }
 
     static addProjectLink (parent: HTMLElement, aa: { id?: string; name?: string; isgift?: string; thumbnail?: unknown }) {
@@ -558,6 +712,18 @@ export default class Home {
         tb.thumb = thumb.md5;
         var mt = newHTML('div', 'aproject p' + pc, tb);
         Home.insertThumbnail(mt, 192, 144, thumb);
+
+        var actualPages = thumb.pagecount ? Number(thumb.pagecount) : 1;
+        var sceneBadge = newHTML('span', 'scene-badge', mt);
+        sceneBadge.textContent = String(actualPages);
+        sceneBadge.setAttribute('title', actualPages + (actualPages === 1 ? ' page' : ' pages'));
+
+        var menuBtn = newHTML('div', 'projectmenu', tb);
+        menuBtn.setAttribute('role', 'button');
+        menuBtn.setAttribute('tabindex', '0');
+        menuBtn.setAttribute('aria-label', 'Project options');
+        menuBtn.textContent = '•••';
+
         var label = newHTML('div', 'projecttitle', tb);
         var txt = newHTML('h4', undefined, label);
         txt.textContent = (data.name && data.name !== 'undefined') ? data.name as string : 'Project';

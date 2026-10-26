@@ -1381,6 +1381,16 @@ body:not([data-theme="classic"]) #emptypage:active::before {
     transform: scale(0.92);
 }
 
+:root:not([data-theme="classic"]) .pages,
+body:not([data-theme="classic"]) .pages {
+    background: var(--sjr-panel-surface);
+    border: 3px solid var(--sjr-panel-border);
+    border-radius: var(--sjr-radius-xl);
+    box-shadow: var(--sjr-panel-shadow);
+    box-sizing: border-box;
+    padding-top: ${css_vh(1.2)};
+}
+
 :root:not([data-theme="classic"]) #blockspalette .papercut,
 body:not([data-theme="classic"]) #blockspalette .papercut {
     display: none;
@@ -1388,16 +1398,16 @@ body:not([data-theme="classic"]) #blockspalette .papercut {
 
 :root:not([data-theme="classic"]) #blockspalette,
 body:not([data-theme="classic"]) #blockspalette {
-    background: var(--sjr-bg-secondary);
-    border-top: 3px solid var(--sjr-border-light);
-    border-bottom: 3px solid var(--sjr-border-light);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    background: var(--sjr-panel-surface);
+    border-top: 3.5px solid var(--sjr-panel-border);
+    border-bottom: 3.5px solid var(--sjr-panel-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04), inset 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 :root:not([data-theme="classic"]) .scripts,
 body:not([data-theme="classic"]) .scripts {
     background: var(--sjr-bg-scripts);
-    background-image: radial-gradient(circle, var(--sjr-border-medium) 1.5px, transparent 1.5px);
+    background-image: radial-gradient(circle, var(--sjr-bg-canvas-dot) 2px, transparent 2px);
     background-size: 24px 24px;
 }
 

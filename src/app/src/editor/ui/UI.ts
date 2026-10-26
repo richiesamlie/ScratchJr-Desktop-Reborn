@@ -192,7 +192,32 @@ export default class UI {
             ScratchAudio.sndFX('tap.wav');
             ScratchJr.saveAndFlip(evt);
         }; // move to project
+
+        var titleBadge = newHTML('div', 'editor-project-badge', sl);
+        titleBadge.setAttribute('id', 'editor-project-badge');
+        titleBadge.setAttribute('role', 'button');
+        titleBadge.setAttribute('tabindex', '0');
+        titleBadge.setAttribute('title', 'Project Info & Rename');
+        titleBadge.textContent = (Project.metadata && Project.metadata.name) ? String(Project.metadata.name) : 'Project';
+        titleBadge.onmousedown = function (evt: MouseEvent) {
+            if (ScratchJr.isEditable() && info && info.onmousedown) {
+                UI.showInfoBox(evt);
+            }
+        };
+
         UI.layoutLibrary(sl);
+    }
+
+    static updateProjectBadge (name?: string) {
+        var badge = gn('editor-project-badge');
+        if (!badge) {
+            return;
+        }
+        var pName = (typeof name === 'string')
+            ? name
+            : ((Project.metadata && Project.metadata.name) ? String(Project.metadata.name) : 'Project');
+        badge.textContent = pName;
+        badge.title = pName;
     }
 
     static middleSection () {
@@ -447,6 +472,7 @@ export default class UI {
             ScratchJr.storyStart('UI.handleTextFieldSave');
         }
         Project.metadata!.name = pname;
+        UI.updateProjectBadge(pname);
         ScratchJr.changed = true;
         PlatformBridge.setfield(PlatformBridge.database, Project.metadata!.id as string, 'name', pname);
         if (!dontHide) {
@@ -491,8 +517,10 @@ export default class UI {
 
         if (ScratchJr.isEditable()) {
             namedForms.projectname.myproject.value = Project.metadata!.name;
+            UI.updateProjectBadge(Project.metadata!.name as string);
         } else {
             gn('pname')!.textContent = String(Project.metadata!.name);
+            UI.updateProjectBadge(Project.metadata!.name as string);
         }
         gn('infobox')!.className = 'infobox fade in';
         if (ScratchJr.isEditable()) {

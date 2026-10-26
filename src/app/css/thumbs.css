@@ -265,6 +265,119 @@
 }
 
 /* ===== Tactile Playful Project Thumbnails (Light & Dark) ===== */
+:root:not([data-theme="classic"]) .scrollarea,
+body:not([data-theme="classic"]) .scrollarea {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(${210 * scaleMultiplier}px, 1fr));
+    gap: ${20 * scaleMultiplier}px;
+    min-width: 0;
+    width: 100%;
+    padding: ${6 * scaleMultiplier}px 0 ${32 * scaleMultiplier}px;
+    box-sizing: border-box;
+}
+
+:root:not([data-theme="classic"]) .projectthumb,
+body:not([data-theme="classic"]) .projectthumb {
+    width: 100%;
+    height: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: ${10 * scaleMultiplier}px;
+    background: var(--sjr-bg-secondary);
+    border: 3.5px solid var(--sjr-border-light);
+    border-radius: var(--sjr-radius-xl);
+    box-shadow: 0 5px 0 var(--sjr-card-depth), var(--sjr-card-shadow);
+    box-sizing: border-box;
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) .projectthumb:hover,
+body:not([data-theme="classic"]) .projectthumb:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 0 var(--sjr-card-depth), 0 10px 24px rgba(35, 75, 125, 0.14);
+}
+
+:root:not([data-theme="classic"]) .projectthumb#newproject,
+:root:not([data-theme="classic"]) .projectthumb#openproject,
+body:not([data-theme="classic"]) .projectthumb#newproject,
+body:not([data-theme="classic"]) .projectthumb#openproject {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.scene-badge {
+    display: none;
+}
+
+:root:not([data-theme="classic"]) .scene-badge,
+body:not([data-theme="classic"]) .scene-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: var(--sjr-radius-pill);
+    background: var(--sjr-accent-warm);
+    border: 2px solid #FFFFFF;
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 4;
+    user-select: none;
+}
+
+.projectmenu {
+    display: none;
+}
+
+:root:not([data-theme="classic"]) .projectmenu,
+body:not([data-theme="classic"]) .projectmenu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--sjr-radius-pill);
+    background: var(--sjr-bg-primary);
+    border: 2px solid var(--sjr-border-light);
+    color: var(--sjr-text-secondary);
+    font-size: 14px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    cursor: pointer;
+    z-index: 8;
+    transition: transform var(--sjr-transition-fast), background-color var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
+}
+
+:root:not([data-theme="classic"]) .projectmenu:hover,
+body:not([data-theme="classic"]) .projectmenu:hover {
+    background: var(--sjr-bg-secondary);
+    border-color: var(--sjr-accent-primary);
+    color: var(--sjr-accent-primary);
+    transform: scale(1.1);
+}
+
+:root:not([data-theme="classic"]) .projectthumb.is-managing .projectmenu,
+body:not([data-theme="classic"]) .projectthumb.is-managing .projectmenu {
+    background: var(--sjr-accent-warm);
+    border-color: var(--sjr-accent-warm);
+    color: #FFFFFF;
+}
+
 :root:not([data-theme="classic"]) .aproject,
 body:not([data-theme="classic"]) .aproject {
     border-radius: var(--sjr-radius-lg);
@@ -372,8 +485,8 @@ body:not([data-theme="classic"]) .duplicatebtn {
     width: 36px;
     height: 36px;
     top: -8px;
-    left: ${css_vh(24.5)};
-    right: auto;
+    right: -8px;
+    left: auto;
     border-radius: 999px;
     background: var(--sjr-accent-primary) url('../assets/ui/copyit.svg') no-repeat center center;
     background-size: 65%;
@@ -396,7 +509,8 @@ body:not([data-theme="classic"]) .exportbtn {
     width: 36px;
     height: 36px;
     top: -8px;
-    left: ${css_vh(11.5)};
+    right: 34px;
+    left: auto;
     transform: none;
     border-radius: 999px;
     background: var(--sjr-accent-success) url('../assets/ui/exportit.svg') no-repeat center center;
