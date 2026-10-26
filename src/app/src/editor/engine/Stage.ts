@@ -381,12 +381,24 @@ export default class Stage {
         if (!enginePorts().getShaking()) {
             return target;
         }
-        var dx = globalx(gn('deletesprite')!) - globalx(enginePorts().getStage().pagesdiv);
-        var dy = globaly(gn('deletesprite')!) - globaly(enginePorts().getStage().pagesdiv);
-        var w = gn('deletesprite')!.offsetWidth;
-        var h = gn('deletesprite')!.offsetHeight;
+        var pagesDiv = enginePorts().getStage().pagesdiv;
+        var delEl = gn('deletesprite')!;
+        if (pagesDiv && delEl && typeof pagesDiv.getBoundingClientRect === 'function' && typeof delEl.getBoundingClientRect === 'function') {
+            var pRect = pagesDiv.getBoundingClientRect();
+            var dRect = delEl.getBoundingClientRect();
+            if (pRect.width > 0 && pRect.height > 0) {
+                var sx = this.width / pRect.width;
+                var sy = this.height / pRect.height;
+                var rScaled = new Rectangle((dRect.left - pRect.left) * sx, (dRect.top - pRect.top) * sy, dRect.width * sx, dRect.height * sy);
+                return rScaled.hitRect(pt) ? delEl : target;
+            }
+        }
+        var dx = globalx(delEl) - globalx(pagesDiv);
+        var dy = globaly(delEl) - globaly(pagesDiv);
+        var w = delEl.offsetWidth;
+        var h = delEl.offsetHeight;
         var rect = new Rectangle(dx, dy, w, h);
-        return rect.hitRect(pt) ? gn('deletesprite')! : target;
+        return rect.hitRect(pt) ? delEl : target;
     }
 
     mouseDownOnSprite (spr: Sprite, pt: {x: number; y: number}) {

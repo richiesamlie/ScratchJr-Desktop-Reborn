@@ -231,10 +231,33 @@
 /* ===== Tactile Playful Sprite Panel Overrides (Light & Dark) ===== */
 :root:not([data-theme="classic"]) .flipme,
 body:not([data-theme="classic"]) .flipme {
-    top: ${8 * scaleMultiplier}px;
+    top: ${13 * scaleMultiplier}px;
     left: ${16 * scaleMultiplier}px;
-    width: ${210 * scaleMultiplier}px;
-    height: ${58 * scaleMultiplier}px;
+    width: ${56 * scaleMultiplier}px;
+    height: ${48 * scaleMultiplier}px;
+    background: var(--sjr-accent-warm) url('../assets/lobby/house.svg') no-repeat center center;
+    background-size: 68% auto;
+    border: 2.5px solid #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 4px 0 var(--sjr-accent-warm-dark), var(--sjr-card-shadow);
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast);
+    z-index: 5;
+}
+
+:root:not([data-theme="classic"]) .flipme:hover,
+body:not([data-theme="classic"]) .flipme:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--sjr-accent-warm-dark), var(--sjr-card-shadow);
+}
+
+:root:not([data-theme="classic"]) .flipme:active,
+body:not([data-theme="classic"]) .flipme:active {
+    background: var(--sjr-accent-warm) url('../assets/lobby/house.svg') no-repeat center center;
+    background-size: 68% auto;
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-accent-warm-dark);
 }
 
 :root:not([data-theme="classic"]) #library,
@@ -449,45 +472,41 @@ body:not([data-theme="classic"]) .editor-project-badge {
     display: inline-flex;
     align-items: center;
     position: absolute;
-    top: ${14 * scaleMultiplier}px;
-    left: ${234 * scaleMultiplier}px;
-    max-width: ${140 * scaleMultiplier}px;
+    top: ${15 * scaleMultiplier}px;
+    left: ${82 * scaleMultiplier}px;
+    max-width: ${178 * scaleMultiplier}px;
     height: ${44 * scaleMultiplier}px;
     padding: 0 ${14 * scaleMultiplier}px;
     background: var(--sjr-panel-surface);
     border: 2.5px solid var(--sjr-panel-border);
     border-radius: var(--sjr-radius-pill);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 3px 0 var(--sjr-card-depth), 0 2px 6px rgba(0, 0, 0, 0.06);
     font-family: inherit;
     font-size: ${15 * scaleMultiplier}px;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--sjr-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    pointer-events: none;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
     z-index: 5;
     box-sizing: border-box;
+    transition: transform var(--sjr-transition-fast), box-shadow var(--sjr-transition-fast), border-color var(--sjr-transition-fast);
 }
 
-@media (max-width: 1240px) {
-    :root:not([data-theme="classic"]) .flipme,
-    body:not([data-theme="classic"]) .flipme {
-        top: ${13 * scaleMultiplier}px;
-        left: ${14 * scaleMultiplier}px;
-        width: ${154 * scaleMultiplier}px;
-        height: ${43 * scaleMultiplier}px;
-    }
+:root:not([data-theme="classic"]) .editor-project-badge:hover,
+body:not([data-theme="classic"]) .editor-project-badge:hover {
+    border-color: var(--sjr-accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--sjr-card-depth), 0 4px 10px rgba(0, 0, 0, 0.08);
+}
 
-    :root:not([data-theme="classic"]) .editor-project-badge,
-    body:not([data-theme="classic"]) .editor-project-badge {
-        top: ${15 * scaleMultiplier}px;
-        left: ${174 * scaleMultiplier}px;
-        max-width: ${90 * scaleMultiplier}px;
-        height: ${38 * scaleMultiplier}px;
-        padding: 0 ${10 * scaleMultiplier}px;
-        font-size: ${13 * scaleMultiplier}px;
-    }
+:root:not([data-theme="classic"]) .editor-project-badge:active,
+body:not([data-theme="classic"]) .editor-project-badge:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--sjr-card-depth);
 }
 
 :root:not([data-theme="classic"]) .editor-project-badge:empty,

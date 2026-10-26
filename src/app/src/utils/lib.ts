@@ -13,6 +13,8 @@ export let currentUiScale = 1.0;
 const rawCssTemplates = new Map<string, { baseUrl: string; rawText: string }>();
 let lastViewportW = 0;
 let lastViewportH = 0;
+let cssRefreshRafId: number | null = null;
+let cssRefreshPending = false;
 
 export function getUiScale () {
     return currentUiScale;
@@ -27,6 +29,23 @@ export function refreshPreprocessedCss () {
         cssData = cssData.replace(/url\('/g, 'url(\'' + entry.baseUrl + '/');
         cssData = cssData.replace(/url\(([^'])/g, 'url(' + entry.baseUrl + '/$1');
         style.textContent = cssData;
+    }
+}
+
+function schedulePreprocessedCssRefresh () {
+    if (cssRefreshRafId === null) {
+        refreshPreprocessedCss();
+        if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+            cssRefreshRafId = window.requestAnimationFrame(() => {
+                cssRefreshRafId = null;
+                if (cssRefreshPending) {
+                    cssRefreshPending = false;
+                    refreshPreprocessedCss();
+                }
+            });
+        }
+    } else {
+        cssRefreshPending = true;
     }
 }
 
@@ -64,7 +83,7 @@ export function applyResponsiveFrameScale () {
         if (currentWidth > 0 && currentHeight > 0 && (currentWidth !== lastViewportW || currentHeight !== lastViewportH)) {
             lastViewportW = currentWidth;
             lastViewportH = currentHeight;
-            refreshPreprocessedCss();
+            schedulePreprocessedCssRefresh();
         }
     }
 }

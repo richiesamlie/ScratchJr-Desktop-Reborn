@@ -387,16 +387,26 @@ export default class Palette {
             sel.setAttribute('tabindex', isCurrent ? '0' : '-1');
         }
         var pal = gn('palette')!;
-        gn('blockspalette')!.style.background = (currentSel as HTMLElement).bkg!;
+        var isClassic = typeof document !== 'undefined' && document.documentElement?.dataset?.theme === 'classic';
+        var catColor = (currentSel as HTMLElement).bkg!;
+        if (isClassic) {
+            gn('blockspalette')!.style.background = catColor;
+            pal.style.background = '';
+        } else {
+            gn('blockspalette')!.style.background = '';
+            pal.style.background = catColor;
+        }
         while (pal.childElementCount > 0) {
             pal.removeChild(pal.childNodes[0]);
         }
-        if (!ScratchJr.getSprite()) {
+        if (!ScratchJr.stage || !ScratchJr.stage.currentPage || !ScratchJr.getSprite()) {
             return;
         }
         var list = (BlockSpecs.palettes[n]).concat();
         var bpWidth = gn('blockspalette')?.offsetWidth || 0;
-        var availWidth = bpWidth > 500 ? Math.max(400, bpWidth - (354 * scaleMultiplier) - (125 * scaleMultiplier)) : 9999;
+        var availWidth = bpWidth > 500
+            ? Math.max(380, (pal.offsetWidth || (bpWidth - (486 * scaleMultiplier))) - (20 * scaleMultiplier))
+            : 9999;
         var rawSpan = dxblocks;
         for (var m = 0; m < list.length; m++) {
             rawSpan += (list[m] == 'space') ? (30 * blockscale) : betweenblocks!;

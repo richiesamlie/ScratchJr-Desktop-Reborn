@@ -298,5 +298,39 @@ describe('Sketchboard & Sticker-Book UI/UX Overhaul', () => {
             applyResponsiveFrameScale();
             expect(styleEl.textContent).toContain('500px');
         });
+
+        it('applies category tint to #palette pill tray in modern themes and to #blockspalette in classic theme', async () => {
+            const Palette = (await import('../../src/app/src/editor/ui/Palette.ts')).default;
+            const bp = document.createElement('div');
+            bp.id = 'blockspalette';
+            const selectors = document.createElement('div');
+            selectors.id = 'selectors';
+            const catBkg = document.createElement('div');
+            selectors.appendChild(catBkg);
+            for (let i = 0; i < 6; i++) {
+                const sel = document.createElement('div');
+                sel.index = i;
+                sel.bkg = i === 1 ? '#4B8CC2' : '#FFE75A';
+                sel.appendChild(document.createElement('div'));
+                sel.appendChild(document.createElement('div'));
+                selectors.appendChild(sel);
+            }
+            const pal = document.createElement('div');
+            pal.id = 'palette';
+            bp.appendChild(selectors);
+            bp.appendChild(pal);
+            document.body.appendChild(bp);
+
+            document.documentElement.dataset.theme = 'light';
+            Palette.selectCategory(1);
+            expect(gn('blockspalette').style.background).toBe('');
+            expect(gn('palette').style.background).not.toBe('');
+
+            document.documentElement.dataset.theme = 'classic';
+            Palette.selectCategory(1);
+            expect(gn('blockspalette').style.background).not.toBe('');
+            expect(gn('palette').style.background).toBe('');
+            document.documentElement.dataset.theme = 'light';
+        });
     });
 });

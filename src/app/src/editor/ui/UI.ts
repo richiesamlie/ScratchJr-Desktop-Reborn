@@ -68,7 +68,7 @@ export default class UI {
         var pagecc = gn('pagecc');
         var scripts = gn('scripts');
         var stageframe = gn('stageframe');
-        if (library) { library.style.transform = ''; }
+        if (library) { library.style.transform = ''; library.style.height = ''; }
         if (pages) { pages.style.transform = ''; pages.style.width = ''; }
         if (topsection) { topsection.style.height = ''; }
         if (pagecc) { pagecc.style.height = ''; pagecc.style.width = ''; }
@@ -77,7 +77,11 @@ export default class UI {
         var rightPanel = pages?.parentNode as HTMLElement | null;
         if (leftPanel) { leftPanel.style.height = ''; }
         if (rightPanel) { rightPanel.style.height = ''; rightPanel.style.width = ''; rightPanel.style.top = ''; }
-        if (stageframe) { stageframe.style.height = ''; }
+        if (stageframe) {
+            stageframe.style.height = '';
+            stageframe.style.transform = '';
+            stageframe.style.transformOrigin = '';
+        }
     }
 
     /** Shift the library and pages panels horizontally to balance gaps around the stage. */
@@ -124,21 +128,50 @@ export default class UI {
         var desiredScriptsHeight = Math.max(240, Math.round(docHeight * 0.30));
         var maxTopHeight = Math.max(minStageHeight,
             docHeight - blockspalette.offsetHeight - desiredScriptsHeight);
-        var targetTopHeight = isClassic
-            ? Math.min(Math.max(minStageHeight, Math.round(docHeight * 0.57)), maxTopHeight)
-            : Math.min(Math.max(minStageHeight, Math.round(450 * scaleMultiplier)), maxTopHeight);
 
-        if (topsection) { topsection.style.height = targetTopHeight + 'px'; }
-        if (leftPanel) { leftPanel.style.height = targetTopHeight + 'px'; }
-        var rightPanelTop = Math.round(12 * scaleMultiplier);
-        if (rightPanel) {
-            rightPanel.style.top = rightPanelTop + 'px';
-            rightPanel.style.height = Math.max(200, targetTopHeight - rightPanelTop) + 'px';
-        }
-        if (stageframe) { stageframe.style.height = targetTopHeight + 'px'; }
-        if (pagecc) {
-            var pagesVisibleHeight = Math.max(0, pages.offsetHeight - pagecc.offsetTop - Math.round(12 * scaleMultiplier));
-            pagecc.style.height = pagesVisibleHeight + 'px';
+        if (isClassic) {
+            var targetTopHeightClassic = Math.min(Math.max(minStageHeight, Math.round(docHeight * 0.57)), maxTopHeight);
+            if (topsection) { topsection.style.height = targetTopHeightClassic + 'px'; }
+            if (leftPanel) { leftPanel.style.height = targetTopHeightClassic + 'px'; }
+            var rightPanelTop = Math.round(12 * scaleMultiplier);
+            if (rightPanel) {
+                rightPanel.style.top = rightPanelTop + 'px';
+                rightPanel.style.height = Math.max(200, targetTopHeightClassic - rightPanelTop) + 'px';
+            }
+            if (stageframe) { stageframe.style.height = targetTopHeightClassic + 'px'; }
+            if (pagecc) {
+                var pagesVisibleHeight = Math.max(0, pages.offsetHeight - pagecc.offsetTop - Math.round(12 * scaleMultiplier));
+                pagecc.style.height = pagesVisibleHeight + 'px';
+            }
+        } else {
+            var availCenterW = docWidth - Math.round(552 * scaleMultiplier);
+            var maxHorizZoom = Math.max(1.0, availCenterW / (572 * scaleMultiplier));
+            var rawTopScale = docHeight > 880 ? Math.min(1.35, Math.max(1.0, (docHeight - 80) / (760 * scaleMultiplier))) : 1.0;
+            var maxVertScale = Math.max(1.0, maxTopHeight / minStageHeight);
+            var topScale = Math.min(rawTopScale, maxHorizZoom, maxVertScale);
+            var targetTopHeight = Math.round(minStageHeight * topScale);
+            var stageBottom = Math.round(434 * scaleMultiplier * topScale);
+            var sidePanelTop = Math.round(74 * scaleMultiplier);
+            var sidePanelHeight = Math.max(Math.round(360 * scaleMultiplier), stageBottom - sidePanelTop);
+
+            if (topsection) { topsection.style.height = targetTopHeight + 'px'; }
+            if (leftPanel) { leftPanel.style.height = targetTopHeight + 'px'; }
+            if (library) { library.style.height = sidePanelHeight + 'px'; }
+            if (rightPanel) {
+                rightPanel.style.top = sidePanelTop + 'px';
+                rightPanel.style.height = sidePanelHeight + 'px';
+            }
+            if (stageframe) {
+                stageframe.style.height = minStageHeight + 'px';
+                if (topScale > 1.005 && !ScratchJr.inFullscreen) {
+                    stageframe.style.transformOrigin = 'top center';
+                    stageframe.style.transform = 'scale(' + topScale.toFixed(3) + ')';
+                }
+            }
+            if (pagecc) {
+                pagecc.style.height = Math.max(0, sidePanelHeight - Math.round(20 * scaleMultiplier)) + 'px';
+            }
+            UI.needsScroll();
         }
         if (scripts) {
             var scriptsHeight = Math.max(220, docHeight - scripts.offsetTop);
@@ -218,6 +251,12 @@ export default class UI {
         titleBadge.textContent = (Project.metadata && Project.metadata.name) ? String(Project.metadata.name) : 'Project';
         titleBadge.onmousedown = function (evt: MouseEvent) {
             if (ScratchJr.isEditable() && info && info.onmousedown) {
+                UI.showInfoBox(evt);
+            }
+        };
+        titleBadge.onkeydown = function (evt: KeyboardEvent) {
+            if ((evt.key === 'Enter' || evt.key === ' ') && ScratchJr.isEditable() && info && info.onmousedown) {
+                evt.preventDefault();
                 UI.showInfoBox(evt);
             }
         };
@@ -913,6 +952,10 @@ export default class UI {
                 b.className = 'themeOptionBtn' + (isSelected ? ' active' : '');
                 b.setAttribute('aria-checked', isSelected ? 'true' : 'false');
             });
+            UI.aspectRatioAdjustment();
+            if (ScratchJr.stage && ScratchJr.stage.currentPage && ScratchJr.getSprite()) {
+                Palette.selectCategory(Palette.numcat);
+            }
         };
 
         themes.forEach(function (t) {
