@@ -39,10 +39,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Node.js 22 LTS
+      - name: Set up Node.js 26
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
-          node-version: '22'
+          node-version: '26'
           cache: 'npm'
 
       - name: Set up Gradle
@@ -58,7 +58,7 @@ jobs:
         run: |
           cd android
           if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 9.3.1
+            gradle wrapper --gradle-version 9.8.2
           fi
           chmod +x gradlew
 

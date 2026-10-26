@@ -12,13 +12,26 @@ describe('Issue #10 Customization Features: Curated Fonts, Paint Text Tool, Sett
     beforeEach(() => {
         document.body.innerHTML = '';
         const store = {};
-        globalThis.localStorage = {
+        const mockStorage = {
             getItem: (k) => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
             setItem: (k, v) => { store[k] = String(v); },
             removeItem: (k) => { delete store[k]; },
             clear: () => { Object.keys(store).forEach(k => delete store[k]); }
         };
-        window.localStorage = globalThis.localStorage;
+        Object.defineProperty(window, 'localStorage', {
+            value: mockStorage,
+            configurable: true,
+            writable: true
+        });
+        if (typeof globalThis !== 'undefined' && globalThis !== window) {
+            try {
+                Object.defineProperty(globalThis, 'localStorage', {
+                    value: mockStorage,
+                    configurable: true,
+                    writable: true
+                });
+            } catch (_) {}
+        }
         window.Settings = {
             defaultTheme: 'light',
             textSpriteFont: 'Roboto',

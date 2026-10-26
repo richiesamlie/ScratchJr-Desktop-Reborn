@@ -6,9 +6,9 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 
 ## 1. Prerequisites & Environment
 
-- **Node.js**: Node 22+ (CI standard is Node 22 LTS).
+- **Node.js**: Node 26+ (CI standard is Node 26, `.nvmrc` = `26`).
 - **Rust**: Rust stable toolchain (for Tauri v2 desktop builds).
-- **JDK & Android SDK**: JDK 17 + Android SDK API 36 (for Android APK/AAB builds).
+- **JDK & Android SDK**: JDK 17 + Android SDK API 37 (`compileSdk = 37`, `targetSdk = 36`, for Android APK/AAB builds).
 - **Tooling**: Ensure `npm ci` is cleanly executed before running release steps.
 - **Git**: Ensure working directory is clean on `master` branch.
 
@@ -21,11 +21,11 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 
 2. **Bump Version in Lockstep**:
    All version references across the multi-target workspace must be updated in lockstep:
-   - `package.json` & `package-lock.json` (`npm version 2.14.1 --no-git-tag-version`)
-   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.14.1"`, synced automatically by `npm run build:renderer`)
-   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.14.1'`)
-   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.14.1"`)
-   - `src-tauri/Cargo.toml` (`version = "2.14.1"`) & `src-tauri/tauri.conf.json` (`"version": "2.14.1"`)
+   - `package.json` & `package-lock.json` (`npm version 2.14.2 --no-git-tag-version`)
+   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.14.2"`, synced automatically by `npm run build:renderer`)
+   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.14.2'`)
+   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.14.2"`)
+   - `src-tauri/Cargo.toml` (`version = "2.14.2"`) & `src-tauri/tauri.conf.json` (`"version": "2.14.2"`)
    - `version.json` (`version`, `name`, `release_url`, and `downloads` URLs)
    - `docs/index.html` (direct release download URLs)
 
@@ -45,7 +45,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 4. **Commit Version Bump**:
    ```bash
    git add package.json package-lock.json src/app/settings.json src/app/sw.js android/app/build.gradle.kts src-tauri/Cargo.toml src-tauri/tauri.conf.json version.json CHANGELOG.md README.md docs/index.html
-   git commit -m "Release v2.14.1"
+   git commit -m "Release v2.14.2"
    ```
 
 ---
@@ -55,7 +55,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 The GitHub Actions workflows (`.github/workflows/build-release.yml` and `.github/workflows/build-android.yml`) build and publish releases when a version tag (`v*.*.*`) is pushed:
 
 ```bash
-git tag v2.14.1
+git tag v2.14.2
 git push origin master --tags
 ```
 

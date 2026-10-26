@@ -1,6 +1,6 @@
 # Architecture — ScratchJr Desktop Reborn
 
-Verified from source (v2.14.1). Companion documents:
+Verified from source (v2.14.2). Companion documents:
 `ANDROID-PORT-PLAN.md` (Android specs & audit), `WEB-PORT-PLAN.md` (Web WASM architecture),
 `THREAT-MODEL.md` (boundaries), `engine.md` (editor internals), `development.md` (build).
 

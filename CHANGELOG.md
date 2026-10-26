@@ -5,6 +5,20 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
 
 ## [Unreleased]
 
+## [v2.14.2] - 2026-10-26
+
+**Patch Release: Universal Toolchain & Dependency Modernization (Node 26, Electron 45, Forge 8, ESLint 10 Flat Config, Vitest 5, Tauri v2.12, Gradle 9.8.2 / AGP 9.4.1).**
+
+### Dependencies & Tooling
+- **Universal Dependency & Toolchain Modernization**:
+  - **Toolchain**: Enforced Node.js `>=26.0.0` across local and CI environments (`.nvmrc`, `package.json#engines`, and `.github/workflows/`), updated global `npm` to `12.2.1`, and updated Rust stable toolchain to `1.99.1`.
+  - **Security Audits**: Resolved all 8 vulnerability advisories across build dependencies (`undici`, `@xmldom/xmldom`, `brace-expansion`, `js-yaml`); repository now reports 0 audit vulnerabilities.
+  - **Electron Ecosystem**: Upgraded `electron` to `45.0.0` and `@electron-forge/*` to `8.0.1`. Streamlined `scripts/patch-for-node26.js` to decouple from Forge 7 hooks while maintaining the `cross-zip` Node 26 compatibility patch.
+  - **Linting & Code Quality**: Migrated ESLint from legacy 8.x + `.eslintrc` / `airbnb-base` to `eslint@10.13.0` flat configuration (`eslint.config.mjs`) using `eslint-plugin-import-x@4.17.1` and `globals@17.13.0`, preserving 100% of the active ruleset.
+  - **Testing & Runtime**: Upgraded `vitest` and `@vitest/coverage-v8` to `5.0.5`, `sql.js` to `1.15.1`, `intl-messageformat` to `12.1.4`, `jsdom` to `30.1.3`, `jszip` to `3.10.2`, and `@types/node` to `26.6.5`.
+  - **Tauri / Rust Backend**: Upgraded `@tauri-apps/cli` to `2.12.4`, `tauri` to `2.12.5`, `rusqlite` to `0.41`, `dirs` to `7`, `md-5` to `0.11`, and `base64` to `0.23`.
+  - **Android Tooling**: Upgraded Gradle wrapper to `9.8.2`, AGP to `9.4.1`, `compileSdk` to `37`, `androidx.core:core-ktx` to `1.19.1`, `appcompat` to `1.8.0`, `material` to `1.14.0`, `webkit` to `1.18.0`, `lifecycle-runtime-ktx` to `2.11.0`, and `activity-ktx` to `1.13.0`.
+
 ## [v2.14.1] - 2026-10-22
 
 **Patch Release: Security Hardening, Host Rejection Parity, Bounds Enforcement, and Code Quality Strictness.**

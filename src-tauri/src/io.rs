@@ -58,7 +58,7 @@ impl IoManager {
     pub fn get_md5(data: &str) -> String {
         let mut hasher = Md5::new();
         hasher.update(data.as_bytes());
-        format!("{:x}", hasher.finalize())
+        hasher.finalize().iter().map(|b| format!("{b:02x}")).collect()
     }
 
     pub fn safe_app_path(&self, name: &str) -> Option<PathBuf> {
