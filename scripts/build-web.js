@@ -142,7 +142,9 @@ function main() {
         'development.md',
         'engine.md',
         'ARCHITECTURE.md',
-        'ANDROID-PORT-PLAN.md'
+        'THREAT-MODEL.md',
+        'SCHOOL-DEPLOYMENT.md',
+        'RELEASE.md'
     ];
 
     for (const docFile of docsFiles) {

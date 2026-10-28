@@ -10,17 +10,9 @@ Documentation for **ScratchJr Reborn** (`v2.15.0`) — a modernized, universal m
 - **[THREAT-MODEL.md](./THREAT-MODEL.md)** — security threat model, trust boundaries, SVG & archive hardening, and CI supply-chain controls
 - **[SCHOOL-DEPLOYMENT.md](./SCHOOL-DEPLOYMENT.md)** — fleet deployment guide: Windows MSI & Tauri/Electron silent install, Intune/GPO, update suppression (`--no-update-check`), multi-user lab data layout, and backup/recovery
 - **[RELEASE.md](./RELEASE.md)** — maintainer release runbook, version lockstep protocol, verification gates, and CI artifact publishing
-- **[WEB-PORT-PLAN.md](./WEB-PORT-PLAN.md)** — Web/PWA architecture (`browserClient.js`), `sql.js` WebAssembly + IndexedDB backing, Web Locks concurrency, and offline Service Worker caching
-- **[ANDROID-PORT-PLAN.md](./ANDROID-PORT-PLAN.md)** — native Android port architecture, Kotlin bridge specification, WebView hardening, and audit findings log
-- **[ANDROID-PORT-PROGRESS.md](./ANDROID-PORT-PROGRESS.md)** — Android port milestone record, device verification results, and ADB debugging quickstart
 
-### Historical Audits & Issue Specs
-
-- **[PONYTAIL-AUDIT.md](./PONYTAIL-AUDIT.md)** — historical codebase & tooling over-engineering audit (`v2.10.0`, remediated in `v2.10.1`)
-- **[issue-15-import-audit.md](./issue-15-import-audit.md)** — historical resilient project import audit & verification spec (resolved in `v2.13.2`)
-
-> Note: `ipc-inventory.md` and the 2026-08 handoff documents were removed as
-> outdated after the v1.7.0 architecture refactor. The authoritative IPC
+> Note: Historical port plans, audit logs, and handoff documents were removed once
+> implemented and merged into the core reference guides. The authoritative IPC
 > surface is `src/preload.ts` + the `IpcBridge` / `ScratchJrBridge` types in
 > `src/types/globals.d.ts` (and documented in the companion GitHub Wiki `IPC-Inventory.md`);
 > database access goes exclusively through structured intents (`src/lib/db-intents.ts`,
