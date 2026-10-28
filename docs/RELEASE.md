@@ -35,9 +35,10 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
    npm run build:main           # Compiles Electron main process
    npm run build:web            # Builds dist-web/ PWA distribution
    node scripts/build-android-assets.js  # Syncs Android WebView assets
-   npm test                     # Run vitest suite (344+ unit tests)
-   npm run typecheck            # TypeScript check (renderer + main)
-   npm run lint                 # ESLint check
+   npm test                     # Run vitest suite (42 files / 372 unit tests)
+   cargo test --manifest-path src-tauri/Cargo.toml # Run Tauri Rust unit tests
+   npm run typecheck            # TypeScript 7 strict check (renderer + main)
+   npm run lint                 # ESLint 10 flat-config check
    node scripts/smoke-web.js    # Headless CDP web smoke test
    node scripts/smoke-test.js   # Electron desktop smoke test
    ```

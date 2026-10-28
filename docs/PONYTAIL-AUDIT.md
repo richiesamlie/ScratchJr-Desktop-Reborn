@@ -1,7 +1,6 @@
 # Ponytail Over-Engineering Audit — ScratchJr Reborn
 
-**Status:** REVIEW DRAFT — do not apply any cuts yet. This document is for review by
-another agent/human first.
+**Status:** HISTORICAL ARCHIVE — Remediated and shipped in `v2.10.1` (`2026-09-29`). Preserved for architectural context.
 
 - **Date:** 2026-09-28
 - **Scope:** whole repository (`C:\weeklyprogram\scratchjr-audit`), working tree @ `e0c6bba` (release v2.10.0)

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This doc is a read-only audit and verification spec for the current
+> **Status:** HISTORICAL ARCHIVE — Resolved and shipped in `v2.13.2` (`2026-10-12`) and further hardened with archive bounds in `v2.14.1` (`2026-10-22`).
+
+This doc is the audit and verification spec for the
 Resilient Project Import work targeting
 [issue #15](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/issues/15).
 

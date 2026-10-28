@@ -1,10 +1,9 @@
 # ScratchJr Android Port — Implementation Plan (Option A)
 
-**Status:** Approved plan, experimental track
-**Host strategy:** Option A — recover the native Kotlin WebView shell from git history (`7eb82c8`), no Capacitor
-**Scope:** Android only. iOS, phone-first UI, and repo restructuring are explicit non-goals (Appendix D)
-**Branch:** new long-lived experimental branch `mobile/android`, cut from `master`
-**Baseline:** v1.8.0 desktop release state (current `master` @ `8b2ff46`)
+**Status:** Production (merged to `master`, `v2.15.0` — `compileSdk = 37`, `targetSdk = 36`, Gradle `9.8.2`, AGP `9.4.1`)
+**Host strategy:** Option A — native Kotlin WebView shell recovered from git history (`7eb82c8`), no Capacitor
+**Scope:** Android tablets, smartphones, and Chromebooks. iOS and repo restructuring are explicit non-goals (Appendix D)
+**Historical branch:** `mobile/android` (originally cut from `master` @ `8b2ff46` / v1.8.0; merged to `master`)
 
 ---
 

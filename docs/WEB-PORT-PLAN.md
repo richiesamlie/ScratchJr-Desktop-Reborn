@@ -1,7 +1,7 @@
 # ScratchJr Web & PWA Port Plan
 
-**Status:** APPROVED FOR PLANNING — Experimental Branch `web/pwa`  
-**Goal:** Deliver a zero-install, 100% browser-based Progressive Web App (PWA) of ScratchJr Reborn running on standard modern browsers (Chrome OS / Chromebooks, iPad Safari, Android Chrome, Windows/macOS/Linux browsers) with full offline functionality and project format interchangeability (`.sjr`).
+**Status:** PRODUCTION (shipped on `master`, `v2.15.0`)  
+**Goal:** Deliver a zero-install, 100% browser-based Progressive Web App (PWA) of ScratchJr Reborn running on standard modern browsers (Chrome OS / Chromebooks, iPad Safari, Android Chrome, Windows/macOS/Linux browsers) with full offline functionality and project format interchangeability (`.sjr` and `.sqlite`).
 
 ---
 
@@ -46,27 +46,29 @@ The Web / PWA port completes the cross-platform vision by adding a **pure browse
 ## Part 2 — Implementation Phases
 
 ### Phase W0 — Branch, Scaffolding & Host Detection
-- **Branch**: `web/pwa`.
-- **Host Detection**: Update `src/hostClient.js`:
+- **Host Detection**: `src/hostClient.js` routes across all 4 targets:
   ```javascript
   if (window.scratchjr) {
       load('../electronClient.js');
+  } else if (isTauri) {
+      load('../tauriClient.js');
   } else if (typeof AndroidInterface !== 'undefined') {
       load('../webhost.js');
   } else {
+      load('../sql-wasm.js');
       load('../browserClient.js'); // Web browser / PWA host
   }
   ```
-- **Asset Hygiene**: Ensure build output for the web distribution is cleanly isolated (e.g. `dist-web/`), gitignored, and does not pollute repo root.
+- **Asset Hygiene**: Ensure build output for the web distribution is cleanly isolated (`dist-web/`), gitignored, and does not pollute repo root.
 
 ### Phase W1 — In-Browser SQLite Engine (`sql.js` + `IndexedDB`)
-- **WebAssembly SQLite**: Integrate `sql.js` (`sql-wasm.js` and `sql-wasm.wasm`).
+- **WebAssembly SQLite**: Integrate `sql.js` (`1.15.1` — `sql-wasm.js` and `sql-wasm.wasm`).
 - **Database Lifecycle**:
   1. On boot: Open IndexedDB (`ScratchJrStorage`), load stored SQLite bytes (`db_bytes`).
   2. If exists: `db = new SQL.Database(bytes)`.
   3. If fresh: `db = new SQL.Database()`, execute table creation DDL (`PROJECTS`, `USERSHAPES`, `USERBKGS`, `PROJECTFILES`) matching desktop `src/main/database.ts` schema.
-  4. Save coordination: Debounced (100ms) save flushes `db.export()` back to IndexedDB.
-- **Intent Execution**: Support structured intents (`database_stmt`, `database_query`) using the existing `src/lib/db-intents.ts` allowlist and query composer.
+  4. Save coordination: Debounced (100ms) save flushes `db.export()` back to IndexedDB under Web Locks API (`navigator.locks`) multi-tab concurrency protection, plus explicit `database_flush` gate awaited during project imports.
+- **Intent Execution**: Support structured intents (`database_stmt`, `database_query`) enforcing strict schema, column, and operator allowlists matching `src/lib/db-intents.ts` (verified by `tests/unit/browser-intent-allowlist.test.js`).
 
 ### Phase W2 — Virtual Media & Asset Storage (`IndexedDB`)
 - **Media Store**: Store user-created drawings, photo snapshots, and recorded sounds as blobs in an IndexedDB `media` object store keyed by `<md5>.<ext>`.
@@ -101,11 +103,11 @@ The Web / PWA port completes the cross-platform vision by adding a **pure browse
 
 ### Phase W6 — Automated Build Script & Verification
 - **Build Script**: `npm run build:web`:
-  - Bundles renderer with esbuild.
-  - Copies WASM binary (`sql-wasm.wasm`), HTML pages, CSS, assets, sounds, and PWA manifest into `dist-web/`.
-- **Local Dev Server**: `npm run start:web` (starts a lightweight HTTP server for testing).
+  - Bundles renderer with esbuild (`ESBUILD_TARGET=chrome107`).
+  - Copies WASM binary (`sql-wasm.wasm`), HTML pages, CSS, assets, sounds, and PWA manifest into `dist-web/`, and stamps `sw.js` with the current package version and dynamic code-split chunks.
+- **Local Dev Server**: `npm run serve:web` (starts a lightweight HTTP server on port 3000 for testing).
 - **Automated Verification**:
-  - Verification validating `start -> lobby -> create project -> record audio -> export .sjr -> import .sjr`.
+  - `node scripts/smoke-web.js` validating `start -> lobby -> create project -> record audio -> export .sjr -> import .sjr -> import .sqlite`.
 
 ---
 
@@ -113,7 +115,7 @@ The Web / PWA port completes the cross-platform vision by adding a **pure browse
 
 | # | Check | Target | Verification Method |
 |---|---|---|---|
-| 1 | Desktop Non-Regression | Windows, macOS, Linux | `npm test` (154/154), `npm run smoke`, `npx tsc --noEmit` |
+| 1 | Desktop Non-Regression | Windows, macOS, Linux | `npm test` (372/372), `npm run smoke`, `npm run typecheck` |
 | 2 | Android Non-Regression | Android APK | `./gradlew assembleDebug` compiles without error |
 | 3 | In-Browser SQLite | Chrome, Safari, Firefox | Create project, refresh page, verify data persists via IndexedDB |
 | 4 | Offline Capability | Airplane Mode / Offline | Disconnect network in DevTools; app boots and runs without errors |

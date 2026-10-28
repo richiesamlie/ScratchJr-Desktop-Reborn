@@ -143,7 +143,7 @@
                 <li><strong>More room to create</strong> — 10 pages per project, a scrollable page strip, an expanded character sidebar, and + buttons that never disappear</li>
                 <li><strong>Safe & Durable by design</strong> — sandboxed desktop renderer, in-browser SQLite with IndexedDB persistence, SQLite WAL on Android, and strict path containment</li>
                 <li><strong>Modern native audio & camera</strong> — HTML5 Canvas snapshot feed, WebM Opus audio recording, and native system share sheet integration</li>
-                <li><strong>Trustworthy codebase</strong> — all renderer files in strict TypeScript, 249+ unit tests passing, automated E2E smoke tests, and CI hygiene guards</li>
+                <li><strong>Trustworthy codebase</strong> — all renderer files in strict TypeScript, 372 unit tests passing, automated E2E smoke tests, and CI hygiene guards</li>
                 <li><strong>Reliable releases</strong> — multi-platform desktop packages, Android APK/AAB, and instant web app with SHA256 checksums</li>
             </ul>
         </section>
@@ -176,11 +176,15 @@
         <section>
             <h2>Documentation</h2>
             <ul class="features">
-                <li><a href="README.md">Project readme</a> — downloads, enhancements, building from source</li>
-                <li><a href="development.md">Development guide</a> — build pipeline, desktop & Android build instructions, testing, releasing</li>
-                <li><a href="ANDROID-PORT-PLAN.md">Android Port Plan & Architecture</a> — native Kotlin shell, bridge specs, and audit log</li>
-                <li><a href="engine.md">Engine architecture</a> — how the editor runtime works</li>
-                <li><a href="ARCHITECTURE.md">System Architecture</a> — desktop & Android process topology, data flows, and security model</li>
+                <li><a href="README.md">Documentation index</a> — overview and quick orientation across all targets</li>
+                <li><a href="ARCHITECTURE.md">System Architecture</a> — Electron, Tauri v2, Android, and Web/PWA process topology and security model</li>
+                <li><a href="development.md">Development guide</a> — build pipeline, desktop/Android/Web instructions, testing, and releasing</li>
+                <li><a href="engine.md">Engine architecture</a> — EnginePorts, modelRegistry, runtime execution model, and Reborn blocks</li>
+                <li><a href="THREAT-MODEL.md">Threat Model</a> — trust boundaries, archive &amp; SVG hardening, and supply-chain security</li>
+                <li><a href="SCHOOL-DEPLOYMENT.md">School &amp; Fleet Deployment</a> — silent MSI installation, Intune/GPO, update suppression, and lab data layout</li>
+                <li><a href="RELEASE.md">Release Runbook</a> — version lockstep checklist and CI release pipeline</li>
+                <li><a href="WEB-PORT-PLAN.md">Web &amp; PWA Architecture</a> — in-browser SQLite WASM, IndexedDB persistence, and offline Service Worker</li>
+                <li><a href="ANDROID-PORT-PLAN.md">Android Port Architecture</a> — native Kotlin WebView shell, bridge specs, and audit log</li>
             </ul>
         </section>
     </main>

@@ -1,175 +1,130 @@
 # School / Fleet Deployment Guide — ScratchJr Desktop Reborn
 
-Audited: 2026-08-31, against v1.7.5 source (`e20a97a`). This guide states
-what is **verified from the packaging code**, not what the README promises.
-Statuses reflect the current release; the audit's P0 fixes (stable MSI
-UpgradeCode, signing) change several of them — noted inline.
+Verified against `v2.15.0` packaging (`scripts/build-msi.js`, `src-tauri/tauri.conf.json`, `.github/workflows/build-release.yml`, and `tests/unit/audit-remediation.test.js`).
 
 ---
 
 ## 1. What you distribute
 
-| Artifact | Nature | Silent install | Needs admin | Status |
-|---|---|---|---|---|
-| `ScratchJr-win32-x64.msi` | Per-machine MSI installer | `msiexec /i /qn` | Yes | Works, but **upgrades are broken today** (§3) |
-| `ScratchJr-win32-x64.zip` | Portable (unzip → run) | n/a (no install) | No | Works; good offline fallback |
-| macOS zips (x64/arm64) | Portable .app in zip | n/a | No | Works; unsigned (Gatekeeper friction) |
-| Linux zips (x64/arm64) | Portable | n/a | No | Works |
+ScratchJr Reborn ships two desktop editions alongside Web/PWA and Android, all sharing 100% `.sjr` project compatibility and the same `Documents\ScratchJR` database layout on desktop:
 
-Every release ships `.sha256` sidecar files for hash pinning in MDM tools.
+| Artifact | Edition | Nature | Silent install | Needs admin | Status |
+|---|---|---|---|---|---|
+| `ScratchJr-electron-win32-x64.msi` | Electron 45 | Per-machine Windows MSI (`x64`) | `msiexec /i /qn ALLUSERS=1` | Yes | **Production-ready** (stable `UpgradeCode` & cleanup action) |
+| `ScratchJr-tauri-win32-x64.msi` | Tauri v2 (Rust) | Lightweight Windows MSI (`x64`, ~30 MB RAM, uses WebView2) | `msiexec /i /qn` | Yes | **Production-ready** |
+| `ScratchJr-tauri-win32-x64-setup.exe` | Tauri v2 (Rust) | NSIS Windows Installer (`x64`) | `/S` | Optional | **Production-ready** |
+| `ScratchJr-electron-win32-x64.zip` / `ScratchJr-tauri-win32-x64.zip` | Electron / Tauri | Portable Windows ZIP (unzip → run) | n/a (no install) | No | Works; zero-install offline option |
+| `ScratchJr-electron-darwin-x64.zip` / `arm64.zip` | Electron 45 | macOS `.app` in ZIP (Intel & Apple Silicon) | n/a | No | Works |
+| `ScratchJr-electron-linux-x64.zip` / `arm64.zip` | Electron 45 | Linux portable (`x64` & `arm64`) | n/a | No | Works |
+| `ScratchJr-android.apk` | Android (Kotlin) | Universal APK (Android 7.0+ / API 24–36) | `adb install` / MDM | No | Works on tablets, phones & Chromebooks |
+
+Every release ships `.sha256` sidecar files for hash pinning in MDM tools (Intune, SCCM, Jamf, Ansible).
 
 ## 2. Where user data lives (predictable, per-user)
 
+```text
+%USERPROFILE%\Documents\ScratchJR\        (Windows — shared by both Electron & Tauri editions)
+~/Documents/ScratchJR/                     (macOS / Linux)
+├── scratchjr.sqllite        project DB (PROJECTS, USERSHAPES, USERBKGS)
+├── scratchjr.sqllite.bak    rolling backup (integrity-verified before restore)
+└── media/                   character, background, thumbnail, and sound assets
 ```
-%USERPROFILE%\Documents\ScratchJR\        (Windows)
-~/Documents/ScratchJR/                     (macOS/Linux)
-├── scratchjr.sqllite        project DB
-├── scratchjr.sqllite.bak    rolling backup (verified-before-use)
-└── media/                   character/background/sound assets
-```
 
-Plus per-user Electron state under `%APPDATA%\ScratchJr` (window state, log,
-update ETag cache). **No Program Files writes at runtime; standard (non-admin)
-users are fully supported after install.** Verified: all main-process paths
-come from `app.getPath('documents')`/`userData` (`src/main/data-store.ts:92-99`).
+Plus small per-user application state under `%APPDATA%\ScratchJr` (window bounds, `debug.log` with 5 MB rotation, update ETag cache).
 
-MSI uninstall preserves `Documents/ScratchJR` by default (data is outside the
-install dir). Note: the README's `REMOVE_DATABASE=1` uninstall cleanup option
-is **wired in `forge.config.js` but absent from the actually-shipped MSI**
-(audit F-02) — treat that option as not available until the fix lands.
+- **No `Program Files` writes at runtime:** Standard (non-admin) student accounts are fully supported after installation. All data paths resolve from the user's `Documents` and `AppData` directories (`src/main/data-store.ts`, `src-tauri/src/db.rs`).
+- **Uninstall data preservation:** Standard MSI uninstall (`msiexec /x ... /qn`) preserves `Documents\ScratchJR` by default so student work is never accidentally wiped during maintenance.
+- **Optional full data cleanup on uninstall:** Pass `REMOVE_DATABASE=1` during MSI uninstall (wired via `src/installer/cleanup-action.wxs` in `scripts/build-msi.js`) to remove the user's `Documents\ScratchJR` directory.
 
-## 3. Upgrade behavior — read before any fleet rollout
+## 3. Upgrade behavior (Windows MSI)
 
-**Current state (verified from `scripts/build-msi.js` + `electron-wix-msi`
-defaults): the shipped MSI is generated with a *random UpgradeCode per
-build* and declares x86.** Consequence: installing a newer version over an
-older one does **not** upgrade — it installs *alongside*. For a fleet this
-means:
+The Electron Windows MSI (`ScratchJr-electron-win32-x64.msi`) is built by `scripts/build-msi.js` with:
+- **Stable `UpgradeCode`:** `{E4346E7F-98B4-4602-9FAA-5AF8C9844BA7}`
+- **Architecture:** `x64`
+- **Install mode:** `perMachine` (`C:\Program Files\ScratchJr`)
 
-- v1.7.5 → v1.7.6 via MDM leaves **two** entries in Programs and Features
-  and two install dirs.
-- There is no reliable rollback either, since versions don't chain.
-
-**Do not scale MSI distribution past a handful of machines until audit
-P0-002 (stable UpgradeCode + x64 arch + cleanup action) is released.** After
-that fix: major upgrades replace cleanly, same-version reinstalls repair,
-downgrades are blocked by MSI rules (a deliberate safe default for
-classrooms), and the rollback procedure is "reinstall the previous MSI."
-
-The portable zip is unaffected: it has no installer state, so "upgrade"
-means deploying the new zip and removing the old one — but each user's data
-stays in `Documents/ScratchJR` untouched.
+Consequences for fleet management:
+- **In-place upgrades:** Installing a newer MSI version over an older one automatically replaces the previous version cleanly in `Program Files` and updates the single entry in *Programs and Features*.
+- **Same-version repair:** Re-running the same MSI repairs the installation.
+- **Student data untouched:** Upgrades never modify or delete `%USERPROFILE%\Documents\ScratchJR`.
 
 ## 4. Silent install / uninstall (Windows)
 
-```text
-Install (per-machine, elevated):
-  msiexec /i ScratchJr-win32-x64.msi /qn ALLUSERS=1
+```powershell
+# Install Electron MSI (per-machine, elevated, silent):
+msiexec /i ScratchJr-electron-win32-x64.msi /qn ALLUSERS=1
 
-Install with a target dir:
-  msiexec /i ScratchJr-win32-x64.msi /qn INSTALLDIR="C:\Program Files\ScratchJr"
+# Install Tauri MSI (lightweight WebView2 edition, elevated, silent):
+msiexec /i ScratchJr-tauri-win32-x64.msi /qn
 
-Uninstall (data preserved):
-  msiexec /x ScratchJr-win32-x64.msi /qn
+# Install with a custom target directory:
+msiexec /i ScratchJr-electron-win32-x64.msi /qn INSTALLDIR="C:\Program Files\ScratchJr"
 
-Detect installed version (for inventory scripts):
-  reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall /s /f ScratchJr
+# Uninstall (student projects in Documents\ScratchJR preserved):
+msiexec /x ScratchJr-electron-win32-x64.msi /qn
+
+# Uninstall and delete Documents\ScratchJR database folder:
+msiexec /x ScratchJr-electron-win32-x64.msi /qn REMOVE_DATABASE=1
+
+# Detect installed version (for inventory scripts):
+reg query HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall /s /f ScratchJr
 ```
-
-The MSI declares `defaultInstallMode: perMachine` (electron-wix-msi default
-with `chooseDirectory` UI; `/qn` skips the dialog). App run itself never
-needs elevation.
 
 ## 5. Deployment channels
 
 ### Microsoft Intune (Windows)
-- **Line-of-business app**: add the MSI as `appType: win32` (wrap with
-  `IntuneWinAppUtil`), install command `msiexec /i ScratchJr-win32-x64.msi /qn`,
-  uninstall via product codes, detection rule = MSI product code or the
-  `ScratchJr.exe` path under `Program Files\ScratchJr`.
-- Wait for P0-002 before using Intune's *replace* uninstall behavior; with
-  the current random UpgradeCode, set the previous version's uninstall
-  command explicitly.
+- **Line-of-business / Win32 app**: Wrap `ScratchJr-electron-win32-x64.msi` (or `ScratchJr-tauri-win32-x64.msi`) with `IntuneWinAppUtil`.
+- **Install command**: `msiexec /i ScratchJr-electron-win32-x64.msi /qn ALLUSERS=1`
+- **Uninstall command**: `msiexec /x {ProductCode} /qn`
+- **Detection rule**: MSI `UpgradeCode` `{E4346E7F-98B4-4602-9FAA-5AF8C9844BA7}` or file existence of `C:\Program Files\ScratchJr\ScratchJr.exe`.
 
-### Group Policy / SCCM
-- Standard MSI deployment works (per-machine assignment). Same caveat as
-  above for superseding versions.
+### Group Policy (GPO) / SCCM
+- Deploy `ScratchJr-electron-win32-x64.msi` as a Computer-assigned software package. Subsequent releases with the same `UpgradeCode` can be configured to supersede previous packages automatically.
 
-### Offline / restricted networks
-- The app is **fully functional offline**. The only network call is a
-  GitHub releases check 3 seconds after launch (`src/main/main.ts:134-136`)
-  that fails silently on blocked networks. Safe to firewall
-  `api.github.com` on student VLANs.
-- The MSI/zips are self-contained (Electron runtime bundled); no runtime
-  downloads, no codec packs, no dependencies.
+### Offline / restricted classroom networks
+- The app is **100% functional offline**. All built-in characters, backgrounds, sample projects, 16 curated sounds, and 12 localizations are bundled locally.
+- The Electron edition bundles Chromium and Node.js completely self-contained. The Tauri edition uses the built-in Windows 10/11 Evergreen WebView2 runtime.
 
 ## 6. Version pinning & update suppression
 
-- The app's updater is **notification-only**: a dialog with
-  Download/View/Cancel; it never downloads or installs anything by itself
-  (`src/main.ts:49-88`).
-- **Command-line flag**: Launch ScratchJr with `--no-update-check` (or `--disable-update-check`)
-  to completely suppress the automatic 3-second startup update check, eliminate all
-  outbound update network calls, and remove the "Check for Updates..." item from the
-  File menu.
+- The app's updater is **notification-only**: it never downloads or executes installers automatically (`src/main.ts`, `src/main/updater.ts`).
+- **Command-line flag**: Launch ScratchJr with `--no-update-check` (or `--disable-update-check`) to completely suppress the automatic 3-second startup update check, eliminate all outbound update network calls, and remove the "Check for Updates..." item from the File menu.
   - Example in a Linux desktop launcher (`.desktop` via Ansible):
     ```ini
     Exec=/usr/bin/scratchjr --no-update-check %U
     ```
-- **Environment variable**: Set `SCRATCHJR_NO_UPDATE_CHECK=1` (or `SCRATCHJR_DISABLE_UPDATE_CHECK=1`)
-  in `/etc/environment` or session profiles to enforce update suppression fleet-wide without altering launchers.
-- On offline or firewall-restricted networks, update requests fail silently without disrupting the application.
+  - Example in a Windows shortcut target:
+    ```text
+    "C:\Program Files\ScratchJr\ScratchJr.exe" --no-update-check
+    ```
+- **Environment variable**: Set `SCRATCHJR_NO_UPDATE_CHECK=1` (or `SCRATCHJR_DISABLE_UPDATE_CHECK=1`) via Group Policy Preferences, system environment variables, or `/etc/environment` to enforce update suppression fleet-wide without modifying shortcuts.
+- On offline or firewall-restricted student VLANs, update checks also fail silently without disrupting the application.
 
 ## 7. Multi-user / shared-lab machines
 
-- Data is **per-Windows-user** under each profile's Documents — two students
-  on one machine never see each other's projects.
-- Roaming profiles: `Documents\ScratchJR` typically roams with the profile
-  (redirected folders work); `%APPDATA%\ScratchJr` state is small and
-  regenerable.
-- No per-machine shared-project feature exists (by design, child-safety
-  oriented). Sharing between students is via `.sjr` files.
+- Data is **per-OS-user** under each student profile's `Documents\ScratchJR` — students logging into the same lab machine with their own accounts never overwrite each other's projects.
+- **Roaming profiles / Folder Redirection**: `Documents\ScratchJR` works seamlessly with Active Directory Folder Redirection and OneDrive Known Folder Move.
+- **Project sharing & legacy migration**: Students and teachers share projects via `.sjr` files (drag-and-drop onto the lobby, `File > Import Project (.sjr)...`, or `Ctrl+O`). Legacy JustSch SQLite databases (`.sqllite`, `.sqlite`, `.db`) can also be imported directly in 1 click.
 
 ## 8. Backup & recovery (what IT can rely on)
 
-- Every database save rotates a `.bak` first. On open, a corrupt DB is
-  detected via `PRAGMA integrity_check` and auto-recovered from the
-  *verified* backup (`src/main/database.ts:113-169`). Teachers don't need to
-  do anything.
-- A `.restore` file placed in the ScratchJR folder is offered as
-  "Restore projects" under the File menu.
-- If both DB and backup are corrupt, the app silently starts a fresh DB
-  (audit F-16) — for fleet use, include `Documents\ScratchJR` in your
-  standard folder-redirection/backup scope.
-- Migrating to new PCs: copy `Documents\ScratchJR` — that's the whole user
-  footprint.
+- Every database save writes to a temporary file, verifies integrity, rotates `.bak`, and atomically renames (`src/main/database.ts`, `src-tauri/src/db.rs`).
+- On launch, a corrupted database is automatically detected via `PRAGMA integrity_check` and restored from the verified `scratchjr.sqllite.bak` backup.
+- A manual backup file named `scratchjr.sqllite.restore` placed in `Documents\ScratchJR` can be restored by the teacher or student via `File > Restore projects`.
+- Migrating to new PCs: copy `Documents\ScratchJR` — that folder contains all user projects, custom drawings, and recorded sounds.
 
 ## 9. Security posture IT should know
 
-- Renderer is sandboxed; the app writes only inside its own data paths
-  (verified against all IPC channels — see `docs/THREAT-MODEL.md`).
-- No telemetry, no accounts, no cloud dependency. One optional HTTPS check
-  to `api.github.com`.
-- **Artifacts are currently unsigned** (audit F-01): expect SmartScreen
-  warnings on manual installs. For MDM/GPO deployment this is friction
-  rather than a blocker (hash-pin the `.sha256` values), but report the
-  gap to the maintainer — it is their top distribution priority.
-- Projects and imported media are untrusted-by-design inputs that the app
-  confines (no code execution path exists from SVG/project files; verified
-  in the threat model).
+- **Sandboxed renderer**: `sandbox: true`, `contextIsolation: true`, `nodeIntegration: false`, strict zero-inline CSP (`script-src 'self' 'wasm-unsafe-eval'`), and origin-locked camera/mic permissions (`src/main/window-lifecycle.ts`).
+- **No arbitrary SQL or file access**: Renderer communicates exclusively through allowlisted database intents (`src/lib/db-intents.ts`, `src-tauri/src/db.rs`) and basename-confined media filenames.
+- **Sanitized imports**: `.sjr` archives enforce size/entry caps (`50 MB` compressed / `2000` entries / `200 MB` uncompressed) and basename regex checks; SVG artwork is scrubbed by `src/app/src/utils/svgSanitizer.ts`.
+- **No telemetry, no accounts, no cloud lock-in**: Zero analytics or student tracking. See [`docs/THREAT-MODEL.md`](./THREAT-MODEL.md) for the full threat matrix.
 
 ## 10. Recommended rollout checklist
 
-1. Wait for a release containing audit P0-002 (MSI identity fix) — or use
-   the portable zip meanwhile.
-2. Hash-pin the version's `.sha256` in your MDM package definition.
-3. Pilot on 5-30 machines: silent install → standard-user login → create a
-   project → save → close → reopen.
-4. Verify upgrade on the pilot before broad push (post-P0-002: v1 → v2
-   should replace in place; verify with one machine first).
-5. Firewall `api.github.com` on student networks if update dialogs are
-   unwanted.
-6. Include `Documents\ScratchJR` in existing Documents
-   backup/redirection policy.
-7. Keep the previous installer archived for rollback; the MSI blocks
-   downgrades by design (roll forward or reinstall).
+1. Choose your edition: `ScratchJr-electron-win32-x64.msi` (self-contained Chromium) or `ScratchJr-tauri-win32-x64.msi` (lightweight ~30 MB RAM via Windows WebView2).
+2. Verify the `.sha256` checksum sidecar and pin the hash in your MDM package definition.
+3. Set `SCRATCHJR_NO_UPDATE_CHECK=1` in your fleet environment variables (or pass `--no-update-check` in managed shortcuts) if you manage updates centrally.
+4. Pilot on 5–30 lab machines: silent install → standard student login → create a project → record sound → save → close → reopen.
+5. Verify in-place MSI upgrade on a pilot machine before rolling out a new version fleet-wide.
+6. Include `Documents\ScratchJR` in your existing student `Documents` backup or folder-redirection policy.

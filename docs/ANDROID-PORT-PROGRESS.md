@@ -1,9 +1,8 @@
 # Android Port — Progress Record
 
-**Branch:** `mobile/android` (experimental track, cut from `master` @ `8b2ff46` / v1.8.0)
+**Branch:** Merged to `master` (current release `v2.15.0`; originally developed on `mobile/android` from `8b2ff46` / v1.8.0)
 **Master plan:** [`docs/ANDROID-PORT-PLAN.md`](./ANDROID-PORT-PLAN.md) (Option A — native Kotlin WebView shell, no Capacitor)
-**Last activity:** 2026-09-01, 15:41 (+0700)
-**Status:** P0–P8 complete and device-verified; P10 docs/signing complete; P9 pending physical device
+**Status:** P0–P10 complete, merged to `master`, and hardened in `v2.14.0`–`v2.15.0` (`compileSdk = 37`, `targetSdk = 36`, Gradle `9.8.2`, AGP `9.4.1`, `WebSecurityUtils.kt` origin lockdown, `IoUtils.readBounded` 50MB stream guard, and SQL intent allowlists)
 
 ---
 
