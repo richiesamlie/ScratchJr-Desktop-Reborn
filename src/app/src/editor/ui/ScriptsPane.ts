@@ -64,6 +64,12 @@ export default class ScriptsPane {
         scriptsParent.onmousedown = function (evt) {
             scriptsOwner.scriptsMouseDown(evt);
         };
+        scriptsParent.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                scriptsOwner.scriptsMouseDown(evt);
+            }
+        };
         scroll.update();
     }
 

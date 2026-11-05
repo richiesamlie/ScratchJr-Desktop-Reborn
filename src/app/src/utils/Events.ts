@@ -122,24 +122,29 @@ export default class Events {
             || ('touches' in e && Boolean((e as { touches?: TouchList }).touches))
             || (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches));
         delta = isTouchOrCoarse ? 10 * scaleMultiplier : 7;
+        window.onpointermove = function (evt) {
+            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+                evt.preventDefault();
+                Events.mouseMove(evt);
+            }
+        };
+        window.onpointerup = function (evt) {
+            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+                Events.mouseUp(evt);
+            }
+        };
+        window.onpointercancel = function () {
+            Events.cancelAll();
+            Events.clearDragAndDrop();
+        };
         window.onmousemove = function (evt) {
             Events.mouseMove(evt);
         };
         window.onmouseup = function (evt) {
             Events.mouseUp(evt);
         };
-        window.ontouchmove = function (evt) {
-            Events.mouseMove(evt as unknown as MouseEvent);
-        };
-        window.ontouchend = function (evt) {
-            Events.mouseUp(evt);
-        };
-        window.ontouchleave = function (evt) {
-            Events.mouseUp(evt);
-        };
-        window.ontouchcancel = function (evt) {
-            Events.mouseUp(evt);
-        };
+        // Pointer events handle touch/pen. Do not also process TouchEvents,
+        // otherwise one physical movement triggers two drag updates.
     }
 
     static holdit (c: HTMLElement, fcn: (c: HTMLElement) => void) {
@@ -214,6 +219,9 @@ export default class Events {
     }
 
     static clearEvents () {
+        window.onpointermove = null;
+        window.onpointerup = null;
+        window.onpointercancel = null;
         window.onmousemove = null;
         window.onmouseup = null;
         window.ontouchmove = null;

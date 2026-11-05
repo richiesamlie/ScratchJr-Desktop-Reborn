@@ -222,6 +222,34 @@ export default class Paint {
             Paint.initSprite(sw, sh);
         }
         window.onmousedown = Paint.detectGesture;
+        window.onpointerdown = function (evt: PointerEvent) {
+            if (!evt.isPrimary || (evt.pointerType !== 'touch' && evt.pointerType !== 'pen')) {
+                return;
+            }
+            // Keep the original paint-editor controls working: tool icons,
+            // colour selectors and Done/Save still register onmousedown.
+            // The first pointer patch prevented Chromium from synthesizing
+            // that event, so those controls never received their input.
+            let control = evt.target as HTMLElement | null;
+            while (control && control !== paintFrame) {
+                // Some controls already implement pointerdown themselves.
+                // Avoid firing their actions twice.
+                if (control.onpointerdown) {
+                    return;
+                }
+                if (control.onmousedown) {
+                    evt.preventDefault();
+                    control.onmousedown.call(control, evt as unknown as MouseEvent);
+                    return;
+                }
+                control = control.parentElement;
+            }
+            // Only a contact in the drawing area starts a paint gesture.
+            if (paintFrame?.contains(evt.target as Node)) {
+                evt.preventDefault();
+                Paint.detectGesture(evt);
+            }
+        };
         window.ondevicemotion = null;
 
         // Set the back button callback
@@ -305,6 +333,7 @@ export default class Paint {
     }
 
     static close () {
+        window.onpointerdown = null;
         saving = true;
         if (Camera.active) {
             Camera.close();

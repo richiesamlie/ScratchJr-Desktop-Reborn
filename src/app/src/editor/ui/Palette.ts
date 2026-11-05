@@ -59,6 +59,12 @@ export default class Palette {
         div.onmousedown = function (evt: MouseEvent) {
             Palette.paletteMouseDown(evt);
         };
+        div.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                Palette.paletteMouseDown(evt);
+            }
+        };
         var pc = newHTML('div', 'papercut', parent);
         newHTML('div', 'withstyle', pc);
     }
