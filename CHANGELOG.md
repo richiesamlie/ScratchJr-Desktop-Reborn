@@ -15,6 +15,10 @@ All notable changes to **ScratchJr Reborn**. The repo is developed on
   - Preserved touch interactivity for block dropdowns (`onmessage`, `message`, `setspeed`, `ontouchcolor`), sound library (`#addsoundslot`), category selector tabs, stage text boxes, grid overlay, character library (`#spritecc`), page thumbnails, Paint Editor costume name `<input>`, and Paint Editor Text Tool modal (`#painttextbackdrop`).
   - Added unit test suite `tests/unit/touch-pointer-support.test.js` (6 tests passing 100%).
 
+### CI & Tooling
+- **GitHub Actions Node 24 & Cache v2 Upgrade (`.github/workflows/*.yml`)**:
+  - Upgraded SHA-pinned GitHub Actions across `build-release.yml`, `build-android.yml`, and `deploy-pages.yml` to native Node 24 (`using: node24`) and Actions Cache v2 releases (`actions/checkout@v7.0.1`, `actions/setup-node@v7.1.0`, `actions/setup-java@v6.2.0`, `gradle/actions/setup-gradle@v6.4.1`, `actions/upload-artifact@v7.0.2`, `actions/download-artifact@v8.0.2`, `softprops/action-gh-release@v3.0.4`, `swatinem/rust-cache@v2.9.3`, `actions/configure-pages@v6.0.0`, `actions/upload-pages-artifact@v5.0.0`, `actions/deploy-pages@v5.0.1`), resolving Node.js 20 deprecation warnings, `setup-java v4` deprecation notices, and legacy Cache v1 HTTP 400 errors.
+
 ## [v2.15.0] - 2026-10-26
 
 **Minor Release: Kid-Friendly Tactile Sketchboard & Sticker-Book UI/UX Overhaul, Multi-Resolution Responsive Scaling, and Adaptive Palette & Storyboard Layout.**
