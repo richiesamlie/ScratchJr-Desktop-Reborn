@@ -222,6 +222,43 @@ export default class Paint {
             Paint.initSprite(sw, sh);
         }
         window.onmousedown = Paint.detectGesture;
+        window.onpointerdown = function (evt: PointerEvent) {
+            if (!evt.isPrimary || (evt.pointerType !== 'touch' && evt.pointerType !== 'pen')) {
+                return;
+            }
+            const targetEl = evt.target as HTMLElement | null;
+            if (!targetEl) {
+                return;
+            }
+            // Allow native focus and click handling on text inputs, buttons, and the text tool modal.
+            if (targetEl.tagName === 'INPUT' || targetEl.tagName === 'BUTTON' || targetEl.closest?.('#painttextbackdrop')) {
+                return;
+            }
+            if (document.activeElement && document.activeElement.tagName === 'INPUT') {
+                (document.activeElement as HTMLElement).blur();
+            }
+            // Keep the original paint-editor UI controls working: tool icons,
+            // colour selectors and Done/Save still register onmousedown.
+            if (!root || !root.contains(targetEl)) {
+                let control: HTMLElement | null = targetEl;
+                while (control && control !== paintFrame) {
+                    if (control.onpointerdown) {
+                        return;
+                    }
+                    if (control.onmousedown) {
+                        evt.preventDefault();
+                        control.onmousedown.call(control, evt as unknown as MouseEvent);
+                        return;
+                    }
+                    control = control.parentElement;
+                }
+            }
+            // Only a contact in the drawing area starts a paint gesture.
+            if (paintFrame?.contains(targetEl)) {
+                evt.preventDefault();
+                Paint.detectGesture(evt);
+            }
+        };
         window.ondevicemotion = null;
 
         // Set the back button callback
@@ -272,6 +309,26 @@ export default class Paint {
         }
         Ghost.clearLayer();
         initialPoint = PaintAction.getScreenPt(e);
+        window.onpointermove = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                Paint.dragBackground(evt);
+            }
+        };
+        window.onpointerup = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                Paint.bounceBack();
+                Paint.setCanvasTransform(currentZoom);
+                PaintAction.clearEvents();
+            }
+        };
+        window.onpointercancel = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                Paint.bounceBack();
+                Paint.setCanvasTransform(currentZoom);
+                PaintAction.clearEvents();
+            }
+        };
         window.onmousemove = function (evt: MouseEvent) {
             Paint.dragBackground(evt);
         };
@@ -289,7 +346,7 @@ export default class Paint {
 
     static mouseDown (e: MouseEvent | TouchEvent) {
         var t = e.target as HTMLElement;
-        if (t.onmousedown) {
+        if (t.onmousedown && t.onmousedown !== Paint.detectGesture) {
             return;
         }
         var pt = Events.getTargetPoint(e);
@@ -305,6 +362,7 @@ export default class Paint {
     }
 
     static close () {
+        window.onpointerdown = null;
         saving = true;
         if (Camera.active) {
             Camera.close();

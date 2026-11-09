@@ -3,6 +3,16 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [Unreleased]
+
+### Bug Fixes & Touch Support
+- **Windows Tablet & Touchscreen Pointer Event Support (`PR #18` by `@Git-Creatica`)**:
+  - Added `touch-action: none` across global stylesheets (`base.css`, `paint.css`, `editor.css`, `lobby.css`, `home.css`, `thumbs.css`, `entry.css`, `editorlandscape.css`) to prevent OS-level scroll/pan gesture hijacking during touch dragging.
+  - Enabled unified `PointerEvent` (`onpointerdown`, `onpointermove`, `onpointerup`, `onpointercancel`) handling across `Events.ts`, `Stage.ts`, `ScriptsPane.ts`, `Palette.ts`, `BlockArg.ts`, `Grid.ts`, `Page.ts`, `UI.ts`, `Paint.ts`, and `PaintAction.ts`.
+  - Enforced primary-pointer (`evt.isPrimary`) guards and safe `pointercancel` cleanup (`Events.mouseUp` / `PaintAction.stopAction` / `Stage.mouseUp`) to prevent multi-touch coordinate jumps and orphaned drag elements.
+  - Preserved touch interactivity for block dropdowns (`onmessage`, `message`, `setspeed`, `ontouchcolor`), sound library (`#addsoundslot`), category selector tabs, stage text boxes, grid overlay, character library (`#spritecc`), page thumbnails, Paint Editor costume name `<input>`, and Paint Editor Text Tool modal (`#painttextbackdrop`).
+  - Added unit test suite `tests/unit/touch-pointer-support.test.js` (6 tests passing 100%).
+
 ## [v2.15.0] - 2026-10-26
 
 **Minor Release: Kid-Friendly Tactile Sketchboard & Sticker-Book UI/UX Overhaul, Multi-Resolution Responsive Scaling, and Adaptive Palette & Storyboard Layout.**

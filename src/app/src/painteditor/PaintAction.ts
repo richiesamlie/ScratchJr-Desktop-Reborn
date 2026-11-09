@@ -145,10 +145,14 @@ export default class PaintAction {
     }
 
     static clearEvents () {
+        window.onpointermove = null;
+        window.onpointerup = null;
+        window.onpointercancel = null;
         currentShape = null;
         PaintAction.removeEraserCursor();
         window.onmousemove = null;
         window.onmouseup = null;
+        window.ontouchcancel = null;
     }
 
     static stopAction (e: PaintEvt) {
@@ -184,6 +188,23 @@ export default class PaintAction {
     }
 
     static setEvents () {
+        window.onpointermove = function (evt) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                PaintAction.mouseMove(evt);
+            }
+        };
+        window.onpointerup = function (evt) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                PaintAction.mouseUp(evt);
+            }
+        };
+        window.onpointercancel = function (evt) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                PaintAction.stopAction(evt);
+                PaintAction.clearEvents();
+            }
+        };
         window.onmousemove = function (evt) {
             PaintAction.mouseMove(evt);
         };

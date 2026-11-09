@@ -363,6 +363,11 @@ export default class BlockArg {
             ba.button.onmousedown = function (evt) {
                     ba.pressDropDown(evt, fcn);
                 };
+            ba.button.onpointerdown = function (evt: PointerEvent) {
+                if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                    ba.pressDropDown(evt, fcn);
+                }
+            };
             // Expand the parent div to incorporate the size of the button,
             // else on Android 4.2 the bottom part of the button
             // will not be clickable.

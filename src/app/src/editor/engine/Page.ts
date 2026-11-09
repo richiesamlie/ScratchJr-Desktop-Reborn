@@ -267,6 +267,11 @@ export default class Page {
         tb.onmousedown = function (evt: MouseEvent) {
                 enginePorts().thumbsPageMouseDown(evt);
             };
+        tb.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                enginePorts().thumbsPageMouseDown(evt);
+            }
+        };
         this.thumbnail = tb;
         return tb;
     }

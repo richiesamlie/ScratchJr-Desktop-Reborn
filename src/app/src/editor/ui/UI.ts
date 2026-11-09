@@ -632,6 +632,11 @@ export default class UI {
         var div = newHTML('div', 'spritecc', p);
         div.setAttribute('id', 'spritecc');
         div.onmousedown = UI.spriteThumbsActions;
+        div.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                UI.spriteThumbsActions(evt);
+            }
+        };
 
         // scrollbar
         var sb = newHTML('div', 'scrollbar', sprites);

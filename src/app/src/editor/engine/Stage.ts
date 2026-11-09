@@ -47,8 +47,12 @@ export default class Stage {
         this.div.onmousedown = function (evt) {
             me.mouseDown(evt);
         };
-        this.div.ontouchstart = function (evt) {
-            me.mouseDown(evt as unknown as MouseEvent);
+        this.div.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                me.mouseDown(evt);
+                enginePorts().unfocus(evt);
+            }
         };
         
         
@@ -482,11 +486,32 @@ export default class Stage {
         window.onmouseup = function (evt) {
             me.mouseUp(evt);
         };
-        window.ontouchmove = function (evt) {
-            me.mouseMove(evt as unknown as MouseEvent);
+        window.onpointermove = function (evt) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                me.mouseMove(evt);
+            }
         };
-        window.ontouchend = function (evt) {
-            me.mouseUp(evt as unknown as MouseEvent);
+        window.onpointerup = function (evt) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                me.mouseUp(evt);
+            }
+        };
+        window.onpointercancel = function (evt) {
+            if (!evt.isPrimary) {
+                return;
+            }
+            if (Events.dragged) {
+                me.mouseUp(evt);
+            } else {
+                if (Events.timeoutEvent) {
+                    clearTimeout(Events.timeoutEvent);
+                }
+                Events.timeoutEvent = undefined;
+                Events.clearEvents();
+                Events.dragged = false;
+                Events.dragthumbnail = null;
+            }
         };
     }
 
