@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation for **ScratchJr Reborn** (`v2.15.0`) — a modernized, universal multi-target edition of ScratchJr supporting **Desktop** (Tauri v2 & Electron 45), **Android** (Kotlin WebView shell), and **Web / PWA** (in-browser SQLite WASM + IndexedDB).
+Documentation for **ScratchJr Reborn** (`v2.15.1`) — a modernized, universal multi-target edition of ScratchJr supporting **Desktop** (Tauri v2 & Electron 45), **Android** (Kotlin WebView shell), and **Web / PWA** (in-browser SQLite WASM + IndexedDB).
 
 ## Core Reference Guides
 

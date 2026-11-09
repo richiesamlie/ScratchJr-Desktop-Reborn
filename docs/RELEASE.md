@@ -21,11 +21,11 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 
 2. **Bump Version in Lockstep**:
    All version references across the multi-target workspace must be updated in lockstep:
-   - `package.json` & `package-lock.json` (`npm version 2.15.0 --no-git-tag-version`)
-   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.15.0"`, synced automatically by `npm run build:renderer`)
-   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.15.0'`)
-   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.15.0"`)
-   - `src-tauri/Cargo.toml` (`version = "2.15.0"`) & `src-tauri/tauri.conf.json` (`"version": "2.15.0"`)
+   - `package.json` & `package-lock.json` (`npm version 2.15.1 --no-git-tag-version`)
+   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.15.1"`, synced automatically by `npm run build:renderer`)
+   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.15.1'`)
+   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.15.1"`)
+   - `src-tauri/Cargo.toml` (`version = "2.15.1"`) & `src-tauri/tauri.conf.json` (`"version": "2.15.1"`)
    - `version.json` (`version`, `name`, `release_url`, and `downloads` URLs)
    - `docs/index.html` (direct release download URLs)
 
@@ -35,7 +35,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
    npm run build:main           # Compiles Electron main process
    npm run build:web            # Builds dist-web/ PWA distribution
    node scripts/build-android-assets.js  # Syncs Android WebView assets
-   npm test                     # Run vitest suite (42 files / 372 unit tests)
+   npm test                     # Run vitest suite (43 files / 378 unit tests)
    cargo test --manifest-path src-tauri/Cargo.toml # Run Tauri Rust unit tests
    npm run typecheck            # TypeScript 7 strict check (renderer + main)
    npm run lint                 # ESLint 10 flat-config check
@@ -46,7 +46,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 4. **Commit Version Bump**:
    ```bash
    git add package.json package-lock.json src/app/settings.json src/app/sw.js android/app/build.gradle.kts src-tauri/Cargo.toml src-tauri/tauri.conf.json version.json CHANGELOG.md README.md docs/index.html
-   git commit -m "Release v2.15.0"
+   git commit -m "Release v2.15.1"
    ```
 
 ---
@@ -56,7 +56,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 The GitHub Actions workflows (`.github/workflows/build-release.yml` and `.github/workflows/build-android.yml`) build and publish releases when a version tag (`v*.*.*`) is pushed:
 
 ```bash
-git tag v2.15.0
+git tag v2.15.1
 git push origin master --tags
 ```
 

@@ -3,7 +3,9 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
-## [Unreleased]
+## [v2.15.1] - 2026-11-09
+
+**Patch Release: Windows Tablet & Touchscreen Pointer Event Support (`PR #18`), Primary-Pointer Guards, and Editor/Paint Touch Control Parity.**
 
 ### Bug Fixes & Touch Support
 - **Windows Tablet & Touchscreen Pointer Event Support (`PR #18` by `@Git-Creatica`)**:
