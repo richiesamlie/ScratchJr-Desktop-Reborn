@@ -75,6 +75,13 @@ export default class Grid {
         cnv.onmousedown = function (evt) {
             ScratchJr.stage.mouseDown(evt);
         };
+        cnv.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                ScratchJr.stage.mouseDown(evt);
+                ScratchJr.unfocus(evt);
+            }
+        };
         cnv.ontouchstart = function (evt) {
             ScratchJr.stage.mouseDown(evt as unknown as MouseEvent);
         };
@@ -156,6 +163,11 @@ export default class Grid {
         cnv.onmousedown = function (evt) {
                 Grid.mouseDownOnCursor(evt);
             };
+        cnv.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                Grid.mouseDownOnCursor(evt);
+            }
+        };
         var ctx = cnv.getContext('2d')!;
         ctx.globalAlpha = 0.5;
         ctx.fillStyle = '#28A5DA';
@@ -164,6 +176,11 @@ export default class Grid {
         ctx.strokeRect(3, 3, size - 6, size - 6);
         ctx.fillRect(3, 3, size - 6, size - 6);
         gc.onmousedown = Grid.mouseDownOnCursor;
+        gc.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                Grid.mouseDownOnCursor(evt);
+            }
+        };
     }
 
     static mouseDownOnCursor (e: MouseEvent) {

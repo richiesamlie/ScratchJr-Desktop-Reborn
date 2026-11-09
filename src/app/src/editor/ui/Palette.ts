@@ -61,6 +61,9 @@ export default class Palette {
         };
         div.onpointerdown = function (evt: PointerEvent) {
             if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                if ((evt.target as HTMLElement | null)?.closest?.('.recordslot')) {
+                    return;
+                }
                 evt.preventDefault();
                 Palette.paletteMouseDown(evt);
             }
@@ -102,6 +105,14 @@ export default class Palette {
             var ths = pal.childNodes[i] as HTMLElement;
             if (!hitRect(ths, pt)) {
                 continue;
+            }
+            if (ths.id === 'addsoundslot') {
+                if (typeof e.stopPropagation === 'function') {
+                    e.stopPropagation();
+                }
+                ScratchJr.clearSelection();
+                SoundPicker.open();
+                return;
             }
             if (ths.id === 'recordslot' || ths.className === 'recordslot') {
                 Palette.recordSound(e);
@@ -346,6 +357,12 @@ export default class Palette {
         });
         div.onmousedown = function (evt) {
             Palette.clickOnCategory(evt);
+        };
+        div.onpointerdown = function (evt: PointerEvent) {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
+                evt.preventDefault();
+                Palette.clickOnCategory(evt);
+            }
         };
         div.onkeydown = function (evt: KeyboardEvent) {
             if (evt.key === 'ArrowRight' || evt.key === 'ArrowLeft') {

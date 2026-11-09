@@ -123,19 +123,26 @@ export default class Events {
             || (typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches));
         delta = isTouchOrCoarse ? 10 * scaleMultiplier : 7;
         window.onpointermove = function (evt) {
-            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
                 evt.preventDefault();
                 Events.mouseMove(evt);
             }
         };
         window.onpointerup = function (evt) {
-            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
                 Events.mouseUp(evt);
             }
         };
-        window.onpointercancel = function () {
-            Events.cancelAll();
-            Events.clearDragAndDrop();
+        window.onpointercancel = function (evt) {
+            if (!evt.isPrimary) {
+                return;
+            }
+            if (dragged) {
+                Events.mouseUp(evt);
+            } else {
+                Events.cancelAll();
+                Events.clearDragAndDrop();
+            }
         };
         window.onmousemove = function (evt) {
             Events.mouseMove(evt);

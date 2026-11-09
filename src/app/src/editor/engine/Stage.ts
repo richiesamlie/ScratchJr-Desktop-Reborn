@@ -51,6 +51,7 @@ export default class Stage {
             if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
                 evt.preventDefault();
                 me.mouseDown(evt);
+                enginePorts().unfocus(evt);
             }
         };
         
@@ -486,14 +487,30 @@ export default class Stage {
             me.mouseUp(evt);
         };
         window.onpointermove = function (evt) {
-            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
                 evt.preventDefault();
                 me.mouseMove(evt);
             }
         };
         window.onpointerup = function (evt) {
-            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+            if (evt.isPrimary && (evt.pointerType === 'touch' || evt.pointerType === 'pen')) {
                 me.mouseUp(evt);
+            }
+        };
+        window.onpointercancel = function (evt) {
+            if (!evt.isPrimary) {
+                return;
+            }
+            if (Events.dragged) {
+                me.mouseUp(evt);
+            } else {
+                if (Events.timeoutEvent) {
+                    clearTimeout(Events.timeoutEvent);
+                }
+                Events.timeoutEvent = undefined;
+                Events.clearEvents();
+                Events.dragged = false;
+                Events.dragthumbnail = null;
             }
         };
     }
