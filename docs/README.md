@@ -1,6 +1,6 @@
 # Documentation
 
-Documentation for **ScratchJr Reborn** (`v2.15.1`) — a modernized, universal multi-target edition of ScratchJr supporting **Desktop** (Tauri v2 & Electron 45), **Android** (Kotlin WebView shell), and **Web / PWA** (in-browser SQLite WASM + IndexedDB).
+Documentation for **ScratchJr Reborn** (`v2.16.0`) — a modernized, universal multi-target edition of ScratchJr supporting **Desktop** (Tauri v2 & Electron 45), **Android** (Kotlin WebView shell), and **Web / PWA** (in-browser SQLite WASM + IndexedDB).
 
 ## Core Reference Guides
 
@@ -33,8 +33,8 @@ Documentation for **ScratchJr Reborn** (`v2.15.1`) — a modernized, universal m
 - **Native backend (Tauri v2)**: `src-tauri/src/{lib,commands,db,io}.rs` (`rusqlite` 0.41)
 - **Native shell (Android)**: `android/app/src/main/java/org/scratchjr/android/` (Kotlin, `compileSdk` 37 / `targetSdk` 36, SQLite WAL)
 - **Database intents & validation**: `src/lib/db-intents.ts` (Electron), `src-tauri/src/db.rs` (Tauri), `AndroidDatabaseManager.kt` (Android), and `src/browserClient.js` (Web)
-- **Unit & component tests**: `npm test` (Vitest 5; 42 test files / 372 tests in `tests/unit/`, plus `cargo test` in `src-tauri/`)
-- **Static analysis**: `npm run typecheck` (TypeScript 7) and `npm run lint` (ESLint 10 flat config in `eslint.config.mjs`)
+- **Unit & component tests**: `npm test` (Vitest 5; 45 test files / 393 tests in `tests/unit/`), `cargo test` (`src-tauri/`), and `./gradlew testDebugUnitTest` (`android/`)
+- **Static analysis**: `npm run typecheck` (TypeScript 7) and `npm run lint` (ESLint 10 flat config in `eslint.config.mjs` + Oxlint in `.oxlintrc.json`)
 - **End-to-end harnesses**: `npm run smoke` (`scripts/smoke-test.js`), `node scripts/smoke-web.js`, `npm run interact` (`scripts/interaction-test.js`)
 - **Package Desktop (Electron)**: `npm run make:zip` (builds renderer bundle first) and `node scripts/build-msi.js`
 - **Package Desktop (Tauri v2)**: `npm run tauri:build && npm run package:tauri` (outputs NSIS `.exe`, `.msi`, and `.zip` to `out/tauri-win32-x64/`)

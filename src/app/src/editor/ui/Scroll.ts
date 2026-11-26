@@ -199,6 +199,8 @@ export default class Scroll {
                 CSSTransition3D(bc, transition);
             }
             break;
+        default:
+            break;
         }
     }
 
@@ -480,6 +482,8 @@ export default class Scroll {
             break;
         case 'up':
             valy = 0;
+            break;
+        default:
             break;
         }
         Events.move3D(sc, valx, valy);

@@ -5,10 +5,34 @@ pub mod commands;
 use commands::AppState;
 use db::DatabaseManager;
 use io::IoManager;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use tauri::menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder};
+
+static CLOSE_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+
+fn try_begin_close(flag: &AtomicBool) -> bool {
+    flag.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_ok()
+}
+
+fn request_graceful_close(handle: &tauri::AppHandle) {
+    if let Some(w) = handle.get_webview_window("main") {
+        let _ = w.emit("scratchjr:app-close", ());
+    }
+    if try_begin_close(&CLOSE_IN_PROGRESS) {
+        let exit_handle = handle.clone();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs(10));
+            let state = exit_handle.state::<AppState>();
+            if !state.db.save_backup() {
+                eprintln!("Warning: database backup failed on close timeout");
+            }
+            exit_handle.exit(0);
+        });
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -55,22 +79,18 @@ pub fn run() {
             let mut file_submenu_builder = SubmenuBuilder::new(app, "File")
                 .item(&toggle_fullscreen);
 
-            #[cfg(debug_assertions)]
-            let show_devtools = true;
-            #[cfg(not(debug_assertions))]
-            let show_devtools = std::env::var("DEBUG_SCRATCHJR").is_ok();
-
-            let toggle_devtools = if show_devtools {
-                Some(
-                    MenuItemBuilder::with_id("devtools", "Toggle Developer Tools")
+            #[cfg(any(debug_assertions, feature = "devtools"))]
+            {
+                #[cfg(debug_assertions)]
+                let show_devtools = true;
+                #[cfg(not(debug_assertions))]
+                let show_devtools = std::env::var("DEBUG_SCRATCHJR").is_ok();
+                if show_devtools {
+                    let toggle_devtools = MenuItemBuilder::with_id("devtools", "Toggle Developer Tools")
                         .accelerator("F12")
-                        .build(app)?,
-                )
-            } else {
-                None
-            };
-            if let Some(ref item) = toggle_devtools {
-                file_submenu_builder = file_submenu_builder.item(item);
+                        .build(app)?;
+                    file_submenu_builder = file_submenu_builder.item(&toggle_devtools);
+                }
             }
 
             let state = app.state::<AppState>();
@@ -105,17 +125,7 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
                 let handle = window.app_handle().clone();
-                if let Some(w) = handle.get_webview_window("main") {
-                    let _ = w.eval("if (window.scratchjr && window.scratchjr.appCloseCallback) { window.scratchjr.appCloseCallback(); } else if (window.scratchjr && window.scratchjr.sendAppClosedAcked) { window.scratchjr.sendAppClosedAcked(); } else if (window.__TAURI_INTERNALS__) { window.__TAURI_INTERNALS__.invoke('app_closed_acked'); }");
-                }
-                std::thread::spawn(move || {
-                    std::thread::sleep(std::time::Duration::from_secs(10));
-                    let state = handle.state::<AppState>();
-                    if !state.db.save_backup() {
-                        eprintln!("Warning: database backup failed on close timeout");
-                    }
-                    handle.exit(0);
-                });
+                request_graceful_close(&handle);
             }
         })
         .on_menu_event(|app, event| {
@@ -127,6 +137,7 @@ pub fn run() {
                             let _ = w.set_fullscreen(!fs);
                         }
                     }
+                    #[cfg(any(debug_assertions, feature = "devtools"))]
                     "devtools" => {
                         #[cfg(debug_assertions)]
                         let allow_devtools = true;
@@ -141,34 +152,25 @@ pub fn run() {
                         }
                     }
                     "import_project" => {
-                        let _ = w.eval("if (window.scratchjr && window.scratchjr.importProjectRequestCallback) { window.scratchjr.importProjectRequestCallback(); } else if (window.Home && typeof window.Home.openFileDialog === 'function') { window.Home.openFileDialog(); }");
+                        let _ = w.emit("scratchjr:import-project", ());
                     }
                     "export_project" => {
-                        let _ = w.eval("if (window.scratchjr && window.scratchjr.exportProjectRequestCallback) { window.scratchjr.exportProjectRequestCallback(); }");
+                        let _ = w.emit("scratchjr:export-project", ());
                     }
                     "export_stage" => {
-                        let _ = w.eval("if (window.scratchjr && window.scratchjr.exportStageRequestCallback) { window.scratchjr.exportStageRequestCallback(); }");
+                        let _ = w.emit("scratchjr:export-stage", ());
                     }
                     "restore_projects" => {
                         let state = app.state::<AppState>();
                         if state.db.restore_backup() {
-                            let _ = w.eval("if (window.scratchjr && window.scratchjr.databaseRestoredCallback) { window.scratchjr.databaseRestoredCallback(); } else { window.location.href = 'index.html?back=yes'; }");
+                            let _ = w.emit("scratchjr:database-restored", ());
                         } else {
                             eprintln!("Restore projects failed: backup file was missing or invalid");
-                            let _ = w.eval("console.error('ScratchJr: Restore projects failed.');");
+                            let _ = w.emit("scratchjr:restore-failed", ());
                         }
                     }
                     "quit" => {
-                        let _ = w.eval("if (window.scratchjr && window.scratchjr.appCloseCallback) { window.scratchjr.appCloseCallback(); } else if (window.scratchjr && window.scratchjr.sendAppClosedAcked) { window.scratchjr.sendAppClosedAcked(); } else if (window.__TAURI_INTERNALS__) { window.__TAURI_INTERNALS__.invoke('app_closed_acked'); }");
-                        let handle = app.clone();
-                        std::thread::spawn(move || {
-                            std::thread::sleep(std::time::Duration::from_secs(10));
-                            let state = handle.state::<AppState>();
-                            if !state.db.save_backup() {
-                                eprintln!("Warning: database backup failed on quit timeout");
-                            }
-                            handle.exit(0);
-                        });
+                        request_graceful_close(app);
                     }
                     _ => {}
                 }
@@ -197,5 +199,18 @@ pub fn run() {
 
     if let Err(err) = app {
         eprintln!("ScratchJr error: {err}");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_try_begin_close_only_succeeds_once() {
+        let flag = AtomicBool::new(false);
+        assert!(try_begin_close(&flag));
+        assert!(!try_begin_close(&flag));
+        assert!(!try_begin_close(&flag));
     }
 }

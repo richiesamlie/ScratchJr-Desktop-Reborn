@@ -1,59 +1,51 @@
 import { describe, it, expect } from 'vitest';
-import fs from 'fs';
-import path from 'path';
+import { createRequire } from 'module';
 import { TABLES, parseDbIntent } from '../../src/lib/db-intents.ts';
 
+const require = createRequire(import.meta.url);
+const { createBrowserClient } = require('../../src/browserClient.js');
+
 describe('Browser SQL Intent Allowlist Parity (Finding F3)', () => {
-    const browserClientPath = path.resolve(__dirname, '../../src/browserClient.js');
-    const browserClientCode = fs.readFileSync(browserClientPath, 'utf8');
+    function createMockClient() {
+        class MockDatabase {
+            run() {}
+            exec(sql) {
+                if (String(sql).startsWith('SELECT last_insert_rowid()')) {
+                    return [{ columns: ['id'], values: [[1]] }];
+                }
+                return [{ columns: ['name', 'thumbnail'], values: [['My Project', 'thumb.png']] }];
+            }
+            getRowsModified() { return 1; }
+            export() { return new Uint8Array([1, 2, 3]); }
+        }
+
+        return createBrowserClient({
+            idbGet: () => Promise.resolve(null),
+            idbPut: () => Promise.resolve(undefined),
+            idbDelete: () => Promise.resolve(undefined),
+            initSqlJs: () => Promise.resolve({ Database: MockDatabase }),
+            registerWindowListeners: false,
+        });
+    }
 
     it('mirrors TABLES schema definitions exactly from src/lib/db-intents.ts', () => {
-        // Extract ALLOWED_TABLES object literal from browserClient.js
-        const match = browserClientCode.match(/var ALLOWED_TABLES = (\{[\s\S]*?\n    \});/);
-        expect(match, 'ALLOWED_TABLES must be defined in browserClient.js').not.toBeNull();
+        const client = createMockClient();
 
-        // Safely parse the object literal
-        const allowedTables = Function(`"use strict"; return (${match[1]});`)();
-
-        expect(Object.keys(allowedTables).sort()).toEqual(Object.keys(TABLES).sort());
+        expect(Object.keys(client.ALLOWED_TABLES).sort()).toEqual(Object.keys(TABLES).sort());
 
         for (const [table, cols] of Object.entries(TABLES)) {
-            expect(allowedTables[table]).toBeDefined();
-            expect(allowedTables[table].slice().sort()).toEqual(cols.slice().sort());
+            expect(client.ALLOWED_TABLES[table]).toBeDefined();
+            expect(client.ALLOWED_TABLES[table].slice().sort()).toEqual(cols.slice().sort());
         }
     });
 
     it('enforces ALLOWED_WHERE_OPS set to [=, !=, IS NULL]', () => {
-        const match = browserClientCode.match(/var ALLOWED_WHERE_OPS = (\[[\s\S]*?\]);/);
-        expect(match, 'ALLOWED_WHERE_OPS must be defined in browserClient.js').not.toBeNull();
-
-        const allowedOps = Function(`"use strict"; return (${match[1]});`)();
-        expect(allowedOps).toEqual(['=', '!=', 'IS NULL']);
+        const client = createMockClient();
+        expect(client.ALLOWED_WHERE_OPS).toEqual(['=', '!=', 'IS NULL']);
     });
 
-    function getExecuteIntent() {
-        const mockDb = {
-            run: () => {},
-            exec: () => [{ columns: ['name', 'thumbnail'], values: [['My Project', 'thumb.png']] }],
-            getRowsModified: () => 1,
-        };
-
-        const defsMatch = browserClientCode.match(/var ALLOWED_TABLES = [\s\S]*?(?=function executeIntent)/);
-        const execMatch = browserClientCode.match(/function executeIntent\(intent\) \{[\s\S]*?\n    \}/);
-
-        const setupCode = `
-            ${defsMatch[0]}
-            function initDatabase() { return Promise.resolve(mockDb); }
-            function flushDbSave() {}
-            ${execMatch[0]}
-            return executeIntent;
-        `;
-
-        return Function('mockDb', setupCode)(mockDb);
-    }
-
     it('enforces strict validation parity between parseDbIntent and executeIntent', async () => {
-        const executeIntent = getExecuteIntent();
+        const client = createMockClient();
 
         const parityCases = [
             // Valid intents
@@ -128,10 +120,10 @@ describe('Browser SQL Intent Allowlist Parity (Finding F3)', () => {
         for (const tc of parityCases) {
             if (tc.valid) {
                 expect(() => parseDbIntent(tc.intent), `db-intents should accept: ${tc.name}`).not.toThrow();
-                await expect(executeIntent(tc.intent), `browserClient should accept: ${tc.name}`).resolves.toBeDefined();
+                await expect(client.executeIntent(tc.intent), `browserClient should accept: ${tc.name}`).resolves.toBeDefined();
             } else {
                 expect(() => parseDbIntent(tc.intent), `db-intents should reject: ${tc.name}`).toThrow();
-                await expect(executeIntent(tc.intent), `browserClient should reject: ${tc.name}`).rejects.toThrow();
+                await expect(client.executeIntent(tc.intent), `browserClient should reject: ${tc.name}`).rejects.toThrow();
             }
         }
     });

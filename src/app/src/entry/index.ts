@@ -192,6 +192,8 @@ function indexSetUsage (e: MouseEvent) {
     case 'usageNoanswer':
         usageText = 'noanswer';
         break;
+    default:
+        break;
     }
     // Send one-time analytics event about usage
     PlatformBridge.analyticsEvent('lobby', 'scratchjr_usage', usageText);

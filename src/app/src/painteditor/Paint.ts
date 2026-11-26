@@ -1865,7 +1865,7 @@ export default class Paint {
         }
     }
 
-    static createCharFromXML (str: string, fcn?: string) {
+    static createCharFromXML (str: string, _fcn?: string) {
         nativeJr = str.indexOf('Scratch Jr') > -1;
         var dx = (workspaceWidth < 432) ? Math.floor((432 - workspaceWidth) / 2) : 0;
         var dy = (workspaceHeight < 384) ? Math.floor((384 - workspaceHeight) / 2) : 0;

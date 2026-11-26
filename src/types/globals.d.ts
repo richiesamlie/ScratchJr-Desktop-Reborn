@@ -39,6 +39,9 @@ interface Window {
         core?: {
             invoke(cmd: string, args?: Record<string, unknown>): Promise<any>;
         };
+        event?: {
+            listen(event: string, handler: (event: { payload: unknown }) => void): Promise<() => void>;
+        };
     };
 }
 

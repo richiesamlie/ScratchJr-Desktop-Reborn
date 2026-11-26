@@ -51,6 +51,15 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Verify version lockstep
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            node scripts/check-version-lockstep.js --tag "$GITHUB_REF_NAME"
+          else
+            node scripts/check-version-lockstep.js
+          fi
+
       - name: Build Web Bundle & Sync Android Assets
         run: npm run build:android
 
@@ -83,7 +92,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
-          ./gradlew assembleDebug assembleRelease bundleRelease --stacktrace
+          ./gradlew testDebugUnitTest assembleDebug assembleRelease bundleRelease --stacktrace
 
       - name: Clean up Android Release Keystore
         if: always()

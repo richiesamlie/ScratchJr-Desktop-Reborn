@@ -314,7 +314,7 @@ export default class BlockArg {
         return div;
     }
 
-    addTextArgument (str: string, isText?: boolean) {
+    addTextArgument (str: string, _isText?: boolean) {
         var div = newHTML('div', 'textfield', this.daddy.div);
         var ti = newHTML('h3', undefined, div);
         this.input = ti as HTMLInputElement;
@@ -972,14 +972,14 @@ export default class BlockArg {
         var ictx = icon.getContext('2d')!;
         ictx.fillStyle = '#AE1F24';
         ictx.beginPath();
-        ictx.arc(63 * dpr, 19 * dpr, 10 * dpr, 0 * dpr, Math.PI * 2, true);
+        ictx.arc(63 * dpr, 19 * dpr, 10 * dpr, 0, Math.PI * 2, true);
         ictx.closePath();
         ictx.fill();
         ictx.drawImage(canvas, 14 * dpr, 16 * dpr);
         ictx.beginPath();
         ictx.fillStyle = '#28A5DA';
         ictx.strokeStyle = '#355E7C';
-        ictx.arc(63 * dpr, 19 * dpr, 8 * dpr, 0 * dpr, Math.PI * 2, true);
+        ictx.arc(63 * dpr, 19 * dpr, 8 * dpr, 0, Math.PI * 2, true);
         ictx.closePath();
         ictx.stroke();
         ictx.fill();

@@ -121,7 +121,7 @@ describe('Audit Remediation: Database hardening and hygiene', () => {
 
 describe('Audit Remediation: Supply Chain and CI Action Pins', () => {
     it('F-03 / P0-001: All GitHub Actions in all workflow files are SHA-pinned (40-hex SHA)', () => {
-        const workflows = ['build-release.yml', 'build-android.yml', 'deploy-pages.yml'];
+        const workflows = ['ci.yml', 'build-release.yml', 'build-android.yml', 'deploy-pages.yml'];
 
         for (const wf of workflows) {
             const workflowPath = path.resolve(__dirname, '../../.github/workflows', wf);

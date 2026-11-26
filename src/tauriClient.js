@@ -306,25 +306,36 @@ class TauriDesktopInterface {
             const audioCaptureElement = this.getAudioCaptureElement();
 
             if (keep === 'YES') {
-                const blob = audioCaptureElement.captureRecordingAsBlob();
-                if (blob) {
+                return audioCaptureElement.waitForStop().then(function () {
+                    const blob = audioCaptureElement.captureRecordingAsBlob();
+                    if (!blob) return undefined;
                     const filename = audioCaptureElement.getId();
-                    const fileReader = new FileReader();
-                    fileReader.onload = function () {
-                        const dataUrl = /** @type {string} */ (fileReader.result);
-                        tauriDesktopInterface.io_setmedianame(dataUrl, filename, 'webm')
-                            .then(function () {
-                                tauriDesktopInterface.loadSoundFromDataURI(`${filename}.webm`, dataUrl);
-                            })
-                            .catch(function (err) {
-                                console.error('[tauriClient] Failed to persist recording:', err);
-                            });
-                    };
-                    fileReader.readAsDataURL(blob);
-                }
+                    return new Promise(function (resolve, reject) {
+                        const fileReader = new FileReader();
+                        fileReader.onload = function () {
+                            const dataUrl = /** @type {string} */ (fileReader.result);
+                            tauriDesktopInterface.io_setmedianame(dataUrl, filename, 'webm')
+                                .then(function () {
+                                    tauriDesktopInterface.loadSoundFromDataURI(`${filename}.webm`, dataUrl);
+                                    resolve(undefined);
+                                })
+                                .catch(function (err) {
+                                    console.error('[tauriClient] Failed to persist recording:', err);
+                                    reject(err);
+                                });
+                        };
+                        fileReader.onerror = function (err) {
+                            console.error('[tauriClient] Failed to read recorded sound blob:', err);
+                            reject(err);
+                        };
+                        fileReader.readAsDataURL(blob);
+                    });
+                });
             }
+            return audioCaptureElement.stopRecord();
         } catch (e) {
             console.error('[tauriClient] Error saving sound:', e);
+            return Promise.resolve();
         }
     }
 
@@ -456,9 +467,60 @@ class TauriDesktopInterface {
     onExportStageRequest(callback) {
         this.exportStageRequestCallback = callback;
     }
+
+    attachTauriEvents() {
+        const eventApi = typeof window !== 'undefined' && window.__TAURI__ && window.__TAURI__.event;
+        if (!eventApi || typeof eventApi.listen !== 'function') {
+            return;
+        }
+        const host = this;
+        eventApi.listen('scratchjr:app-close', function () {
+            if (host.appCloseCallback) {
+                host.appCloseCallback();
+            } else {
+                host.sendAppClosedAcked();
+            }
+        }).catch(function () {});
+
+        eventApi.listen('scratchjr:import-project', function () {
+            if (host.importProjectRequestCallback) {
+                host.importProjectRequestCallback();
+            } else {
+                const homeGlobal = /** @type {any} */ (window).Home;
+                if (homeGlobal && typeof homeGlobal.openFileDialog === 'function') {
+                    homeGlobal.openFileDialog();
+                }
+            }
+        }).catch(function () {});
+
+        eventApi.listen('scratchjr:export-project', function () {
+            if (host.exportProjectRequestCallback) {
+                host.exportProjectRequestCallback();
+            }
+        }).catch(function () {});
+
+        eventApi.listen('scratchjr:export-stage', function () {
+            if (host.exportStageRequestCallback) {
+                host.exportStageRequestCallback();
+            }
+        }).catch(function () {});
+
+        eventApi.listen('scratchjr:database-restored', function () {
+            if (host.databaseRestoredCallback) {
+                host.databaseRestoredCallback();
+            } else {
+                window.location.href = 'index.html?back=yes';
+            }
+        }).catch(function () {});
+
+        eventApi.listen('scratchjr:restore-failed', function () {
+            console.error('ScratchJr: Restore projects failed.');
+        }).catch(function () {});
+    }
 }
 
 const tauriHost = new TauriDesktopInterface();
+tauriHost.attachTauriEvents();
 
 // Expose tablet and scratchjr host interface
 /** @type {any} */ (window).tablet = tauriHost;

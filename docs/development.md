@@ -1,6 +1,6 @@
 # Development Guide
 
-Practical knowledge for working on **ScratchJr Reborn** (`v2.15.0`). Covers the build pipeline, CLI flags, CSS preprocessing, the editor layout/limits map, Reborn blocks, the project file format, testing, and releasing across Desktop (Electron & Tauri v2), Android, and Web/PWA.
+Practical knowledge for working on **ScratchJr Reborn** (`v2.16.0`). Covers the build pipeline, CLI flags, CSS preprocessing, the editor layout/limits map, Reborn blocks, the project file format, testing, and releasing across Desktop (Electron & Tauri v2), Android, and Web/PWA.
 
 ## Build pipeline — read this first
 
@@ -14,9 +14,10 @@ The renderer is bundled by esbuild with **per-page code splitting**:
 ### Verification harnesses
 
 ```bash
-npm test                     # Vitest 5 unit suite (42 files / 372 tests)
+npm test                     # Vitest 5 unit suite (45 files / 393 tests)
 npm run typecheck            # TypeScript 7 strict check (renderer + main)
-npm run lint                 # ESLint 10 flat-config check (eslint.config.mjs)
+npm run lint                 # ESLint 10 + Oxlint static analysis (.js & .ts)
+npm run check:versions       # Verify 9-target version lockstep
 npm run smoke                # Electron CDP boot: start -> lobby -> editor -> help -> media round-trip
 node scripts/smoke-web.js    # Headless Chrome CDP E2E test for Web/PWA (create, save, export, import)
 npm run interact             # Real pointer drags: sprite move, palette->script docking, undo, .sjr & PNG

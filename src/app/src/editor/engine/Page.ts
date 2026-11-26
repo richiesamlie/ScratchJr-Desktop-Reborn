@@ -396,7 +396,7 @@ export default class Page {
         ctx.restore();
     }
 
-    getMatrixFor (spr: Sprite, scale?: number) {
+    getMatrixFor (spr: Sprite, _scale?: number) {
         var sx = new Matrix();
         var angle = spr.angle ? -spr.angle : 0;
         if (spr.flip) {

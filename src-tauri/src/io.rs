@@ -269,4 +269,69 @@ mod tests {
         assert!(io.safe_media_path("/abs/foo.png").is_none());
         assert!(io.safe_media_path("foo..bar.png").is_none());
     }
+
+    #[test]
+    fn test_safe_app_path_accepts_relative_and_rejects_traversal() {
+        let io = dummy_io_manager();
+        assert_eq!(
+            io.safe_app_path("./css/base.css"),
+            Some(io.app_root.join("css/base.css"))
+        );
+        assert_eq!(
+            io.safe_app_path("sounds/pop.mp3"),
+            Some(io.app_root.join("sounds/pop.mp3"))
+        );
+
+        assert!(io.safe_app_path("../secret").is_none());
+        assert!(io.safe_app_path("C:\\Windows\\win.ini").is_none());
+        assert!(io.safe_app_path("a/../../b").is_none());
+    }
+
+    #[test]
+    fn test_clean_assets_preserves_referenced_and_deletes_orphans() {
+        let base = std::env::temp_dir().join(format!("scratchjr_clean_test_{}", std::process::id()));
+        let media_dir = base.join("media");
+        let _ = fs::remove_dir_all(&base);
+        fs::create_dir_all(&media_dir).unwrap();
+
+        let io = IoManager {
+            scratch_dir: base.clone(),
+            media_dir: media_dir.clone(),
+            app_root: base.join("app"),
+        };
+
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE PROJECTS (ID INTEGER PRIMARY KEY, JSON TEXT, THUMBNAIL TEXT);
+             CREATE TABLE USERSHAPES (ID INTEGER PRIMARY KEY, MD5 TEXT, ALTMD5 TEXT);
+             CREATE TABLE USERBKGS (ID INTEGER PRIMARY KEY, MD5 TEXT, ALTMD5 TEXT);"
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO PROJECTS (JSON, THUMBNAIL) VALUES (?, ?)",
+            ["{\"md5\":\"in_json.png\"}", "{\"md5\":\"in_thumb.png\"}"],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO USERSHAPES (MD5, ALTMD5) VALUES (?, ?)",
+            ["shape.svg", "shape_alt.png"],
+        ).unwrap();
+        conn.execute(
+            "INSERT INTO USERBKGS (MD5, ALTMD5) VALUES (?, ?)",
+            ["bkg.svg", "bkg_alt.png"],
+        ).unwrap();
+
+        for name in ["in_json.png", "in_thumb.png", "shape_alt.png", "bkg_alt.png", "orphan.png", "keep_other.svg"] {
+            fs::write(media_dir.join(name), b"data").unwrap();
+        }
+
+        assert!(io.clean_assets("png", &conn));
+
+        assert!(media_dir.join("in_json.png").exists());
+        assert!(media_dir.join("in_thumb.png").exists());
+        assert!(media_dir.join("shape_alt.png").exists());
+        assert!(media_dir.join("bkg_alt.png").exists());
+        assert!(media_dir.join("keep_other.svg").exists());
+        assert!(!media_dir.join("orphan.png").exists());
+
+        let _ = fs::remove_dir_all(&base);
+    }
 }

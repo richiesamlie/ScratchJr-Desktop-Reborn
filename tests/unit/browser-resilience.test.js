@@ -1,116 +1,205 @@
 // @vitest-environment jsdom
-import "./renderer-harness.js";
-import { describe, it, expect, vi } from "vitest";
+import './renderer-harness.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createRequire } from 'module';
 
-describe("Browser Storage Resilience & Multi-Tab Concurrency Guard", () => {
-    it("requests storage persistence via navigator.storage.persist when available", async () => {
-        let persistCalled = false;
-        const mockStorage = {
-            persist: vi.fn(async () => {
-                persistCalled = true;
-                return true;
-            })
-        };
-        Object.defineProperty(navigator, "storage", {
-            value: mockStorage,
-            configurable: true
+const require = createRequire(import.meta.url);
+const { createBrowserClient } = require('../../src/browserClient.js');
+
+describe('Browser Storage Resilience & Multi-Tab Concurrency Guard (real browserClient)', () => {
+    let idbStore;
+    let idbGetMock;
+    let idbPutMock;
+    let idbDeleteMock;
+    let activeLockName;
+
+    beforeEach(() => {
+        document.body.innerHTML = '';
+        idbStore = {};
+        activeLockName = null;
+
+        idbGetMock = vi.fn(async (store, key) => idbStore[`${store}:${key}`]);
+        idbPutMock = vi.fn(async (store, key, val) => {
+            idbStore[`${store}:${key}`] = val;
+        });
+        idbDeleteMock = vi.fn(async (store, key) => {
+            delete idbStore[`${store}:${key}`];
         });
 
-        const res = await navigator.storage.persist();
-        expect(res).toBe(true);
-        expect(persistCalled).toBe(true);
-    });
+        Object.defineProperty(navigator, 'storage', {
+            value: {
+                persist: vi.fn(async () => true),
+            },
+            configurable: true,
+        });
 
-    it("acquires exclusive web lock when available and denies secondary tabs with ifAvailable", async () => {
-        let activeLockName = null;
-        const mockLocks = {
-            request: vi.fn(async (name, options, callback) => {
-                if (options && options.ifAvailable) {
-                    if (activeLockName === name) {
-                        // Lock already held by primary tab
-                        return callback(null);
+        Object.defineProperty(navigator, 'locks', {
+            value: {
+                request: vi.fn((name, options, callback) => {
+                    if (options && options.ifAvailable && activeLockName === name) {
+                        return Promise.resolve(callback(null));
                     }
                     activeLockName = name;
-                    return callback({ name });
+                    return Promise.resolve(callback({ name })).finally(() => {
+                        if (activeLockName === name) {
+                            activeLockName = null;
+                        }
+                    });
+                }),
+            },
+            configurable: true,
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        document.body.innerHTML = '';
+    });
+
+    function makeSqlFactory({ throwOnExistingBytes = false } = {}) {
+        class MockDatabase {
+            constructor(bytes) {
+                if (throwOnExistingBytes && bytes && bytes.length > 0) {
+                    throw new Error('corrupt sqlite header');
                 }
-                return callback({ name });
-            })
-        };
+            }
+            run() {}
+            exec() { return []; }
+            getRowsModified() { return 0; }
+            export() { return new Uint8Array([9, 8, 7]); }
+        }
+        return vi.fn(async () => ({ Database: MockDatabase }));
+    }
 
-        // Tab 1 claims lock
-        let tab1Lock = null;
-        await mockLocks.request("scratchjr_db_lock", { ifAvailable: true }, (lock) => {
-            tab1Lock = lock;
+    it('requests navigator.storage.persist during initDatabase', async () => {
+        const client = createBrowserClient({
+            idbGet: idbGetMock,
+            idbPut: idbPutMock,
+            idbDelete: idbDeleteMock,
+            initSqlJs: makeSqlFactory(),
+            registerWindowListeners: false,
         });
-        expect(tab1Lock).not.toBeNull();
-        expect(tab1Lock.name).toBe("scratchjr_db_lock");
 
-        // Tab 2 attempts to claim same lock -> null (read-only mode)
-        let tab2Lock = null;
-        await mockLocks.request("scratchjr_db_lock", { ifAvailable: true }, (lock) => {
-            tab2Lock = lock;
-        });
-        expect(tab2Lock).toBeNull();
+        await client.initDatabase();
+        expect(navigator.storage.persist).toHaveBeenCalledTimes(1);
+        expect(client.getState().hasExclusiveLock).toBe(true);
+        await client.triggerLeave();
     });
 
-    it("quarantines corrupt database payload with a timestamped key", () => {
+    it('puts secondary tab into read-only mode when lock is held and skips IndexedDB writes', async () => {
+        const tab1 = createBrowserClient({
+            idbGet: idbGetMock,
+            idbPut: idbPutMock,
+            idbDelete: idbDeleteMock,
+            initSqlJs: makeSqlFactory(),
+            registerWindowListeners: false,
+        });
+        await tab1.initDatabase();
+        expect(tab1.getState().hasExclusiveLock).toBe(true);
+        expect(tab1.getState().hasReleaseLock).toBe(true);
+
+        const putCountAfterTab1 = idbPutMock.mock.calls.length;
+
+        const tab2 = createBrowserClient({
+            idbGet: idbGetMock,
+            idbPut: idbPutMock,
+            idbDelete: idbDeleteMock,
+            initSqlJs: makeSqlFactory(),
+            registerWindowListeners: false,
+        });
+        await tab2.initDatabase();
+
+        expect(tab2.getState().hasExclusiveLock).toBe(false);
+        expect(document.getElementById('scratchjr_multitab_notice')).not.toBeNull();
+
+        await tab2.doActualDbSave();
+        expect(idbPutMock.mock.calls.length).toBe(putCountAfterTab1);
+
+        await tab1.triggerLeave();
+    });
+
+    it('quarantines corrupt db_bytes under db_bytes_corrupt_<ts> when exclusive lock is held', async () => {
         const corruptBytes = new Uint8Array([0x00, 0x01, 0x02, 0xff]);
-        const mockIdbStore = {};
+        idbStore['sqlite_db:db_bytes'] = corruptBytes;
 
-        function simulateQuarantine(bytes) {
-            const corruptKey = "db_bytes_corrupt_" + Date.now();
-            mockIdbStore[corruptKey] = bytes;
-            return corruptKey;
-        }
+        const client = createBrowserClient({
+            idbGet: idbGetMock,
+            idbPut: idbPutMock,
+            idbDelete: idbDeleteMock,
+            initSqlJs: makeSqlFactory({ throwOnExistingBytes: true }),
+            registerWindowListeners: false,
+        });
 
-        const key = simulateQuarantine(corruptBytes);
-        expect(key.startsWith("db_bytes_corrupt_")).toBe(true);
-        expect(mockIdbStore[key]).toBe(corruptBytes);
+        await client.initDatabase();
+
+        const corruptKeys = Object.keys(idbStore).filter((k) => k.startsWith('sqlite_db:db_bytes_corrupt_'));
+        expect(corruptKeys).toHaveLength(1);
+        expect(idbStore[corruptKeys[0]]).toBe(corruptBytes);
+        expect(idbStore['sqlite_db:db_bytes']).toEqual(new Uint8Array([9, 8, 7]));
+
+        await client.triggerLeave();
     });
 
-    it("prevents secondary tab without exclusive lock from writing quarantine data", () => {
-        let idbPutCalled = false;
-        const mockIdbPut = vi.fn(() => {
-            idbPutCalled = true;
-            return Promise.resolve();
+    it('prevents secondary tab without exclusive lock from writing quarantine payload', async () => {
+        activeLockName = 'scratchjr_db_lock';
+        idbStore['sqlite_db:db_bytes'] = new Uint8Array([0x00, 0x01, 0x02]);
+
+        const client = createBrowserClient({
+            idbGet: idbGetMock,
+            idbPut: idbPutMock,
+            idbDelete: idbDeleteMock,
+            initSqlJs: makeSqlFactory({ throwOnExistingBytes: true }),
+            registerWindowListeners: false,
         });
 
-        const hasExclusiveLock = false;
-        const savedBytes = new Uint8Array([1, 2, 3]);
+        await client.initDatabase();
 
-        if (hasExclusiveLock) {
-            mockIdbPut("db_bytes_corrupt_" + Date.now(), savedBytes);
-        }
-
-        expect(idbPutCalled).toBe(false);
-        expect(mockIdbPut).not.toHaveBeenCalled();
+        expect(client.getState().hasExclusiveLock).toBe(false);
+        expect(idbPutMock).not.toHaveBeenCalled();
     });
 
-    it("releases exclusive lock only after in-flight flush completes", async () => {
-        let saveCompleted = false;
-        let lockReleased = false;
+    it('releases exclusive web lock only after flushDbSave completes on triggerLeave', async () => {
+        let flushFinished = false;
+        let lockReleasedBeforeFlush = false;
 
-        const fakeFlush = () => new Promise((resolve) => {
-            setTimeout(() => {
-                saveCompleted = true;
-                resolve(true);
-            }, 10);
+        let resolvePut;
+        idbPutMock.mockImplementation(() => new Promise((resolve) => {
+            resolvePut = () => {
+                flushFinished = true;
+                resolve(undefined);
+            };
+        }));
+
+        const client = createBrowserClient({
+            idbGet: idbGetMock,
+            idbPut: idbPutMock,
+            idbDelete: idbDeleteMock,
+            initSqlJs: makeSqlFactory(),
+            registerWindowListeners: false,
         });
 
-        const releaseLock = () => {
-            lockReleased = true;
-        };
+        // Resolve initial initDatabase flush immediately
+        const initPromise = client.initDatabase();
+        await vi.waitFor(() => expect(resolvePut).toBeTypeOf('function'));
+        resolvePut();
+        await initPromise;
 
-        const flushPromise = fakeFlush().finally(() => {
-            releaseLock();
-        });
+        // Next flush (on leave) stays pending until we resolvePut
+        flushFinished = false;
+        resolvePut = undefined;
+        const leavePromise = client.triggerLeave();
 
-        expect(saveCompleted).toBe(false);
-        expect(lockReleased).toBe(false);
+        await vi.waitFor(() => expect(resolvePut).toBeTypeOf('function'));
+        if (!client.getState().hasReleaseLock) {
+            lockReleasedBeforeFlush = true;
+        }
+        expect(flushFinished).toBe(false);
+        expect(lockReleasedBeforeFlush).toBe(false);
 
-        await flushPromise;
+        resolvePut();
+        await leavePromise;
 
-        expect(saveCompleted).toBe(true);
-        expect(lockReleased).toBe(true);
+        expect(flushFinished).toBe(true);
+        expect(client.getState().hasReleaseLock).toBe(false);
     });
 });

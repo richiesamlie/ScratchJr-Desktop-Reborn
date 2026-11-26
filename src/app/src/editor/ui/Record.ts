@@ -281,7 +281,7 @@ export default class Record {
     }
 
     static startRecording (filename: string) {
-        if (parseInt(filename) < 0) {
+        if (parseInt(filename, 10) < 0) {
             // Error in getting record filename - go back to editor
             recordedSound = null;
             isRecording = false;
@@ -335,7 +335,7 @@ export default class Record {
 
     // Gets the sound duration from host bridge and changes play UI state after time
     static timeOutPlay (timeout: number | string) { // duration from the native audio bridge (may be numeric string)
-        if (parseInt(String(timeout)) < 0) {
+        if (parseInt(String(timeout), 10) < 0) {
             timeout = 0.1; // Error - stop playing immediately
         }
         playTimeLimit = setTimeout(function () {
@@ -447,7 +447,7 @@ export default class Record {
     }
 
     // Called on error - remove everything and hide the recorder
-    static killRecorder (e?: MouseEvent) {
+    static killRecorder (_e?: MouseEvent) {
         // Inform host bridge and then tear-down
         if (isPlaying) {
             Record.stopPlayingSound(Record.closeContinueRemove); // stop playing and tear-down

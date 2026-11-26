@@ -597,7 +597,7 @@ export default class UI {
         return year + '-' + month + '-' + day + ' ' + hour + ':' + min + ':' + sec;
     }
 
-    static hideInfoBox (e: Event, dontHide?: unknown) { // unused flag; legacy callers pass the nameField element
+    static hideInfoBox (e: Event, _dontHide?: unknown) { // unused flag; legacy callers pass the nameField element
         e.preventDefault();
         e.stopPropagation();
         ScratchJr.onBackButtonCallback.pop();
@@ -812,7 +812,7 @@ export default class UI {
         UI.spriteScolling(e, Events.dragthumbnail);
     }
 
-    static spriteScolling (e: MouseEvent | TouchEvent, c?: HTMLElement) {
+    static spriteScolling (e: MouseEvent | TouchEvent, _c?: HTMLElement) {
         var pt = Events.getTargetPoint(e);
         var deltay = Events.dragmousey - pt.y;
         Events.dragmousey = pt.y;

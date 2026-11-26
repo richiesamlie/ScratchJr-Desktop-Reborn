@@ -151,7 +151,7 @@ export default class Ghost {
         }
     }
 
-    static hitSomething (pt: Point, id: string, color?: string | number) {
+    static hitSomething (pt: Point, id: string, _color?: string | number) {
         var mt: Element | null = gn(id)! as Element;
         var dogohst = true;
         if (mt && mt.getAttribute('relatedto')) {
@@ -171,6 +171,8 @@ export default class Ghost {
         case 'paintbucket':
         case 'camera':
             mt = Ghost.getHitObject(pt, (Paint.mode as string) == 'path');
+            break;
+        default:
             break;
         }
         if (mt && dogohst) {
@@ -258,6 +260,8 @@ export default class Ghost {
                 mt = target;
             }
             break;
+        default:
+            break;
         }
         if (mt) {
             return Ghost.setGhostTo(mt);
@@ -265,7 +269,7 @@ export default class Ghost {
         return null;
     }
 
-    static getActualHit (mt: Element | null, pt: Point, id?: string) {
+    static getActualHit (mt: Element | null, pt: Point, _id?: string) {
         if (!mt) {
             return null;
         }

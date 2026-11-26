@@ -1,6 +1,6 @@
 # Architecture — ScratchJr Desktop Reborn
 
-Verified from source (v2.15.1). Companion documents:
+Verified from source (v2.16.0). Companion documents:
 `THREAT-MODEL.md` (security boundaries), `engine.md` (editor internals),
 `development.md` (build & testing), `SCHOOL-DEPLOYMENT.md` (fleet rollout), `RELEASE.md` (runbook).
 
@@ -89,7 +89,7 @@ Verified from source (v2.15.1). Companion documents:
 
 ```text
 ┌──────────────────────────── Browser / PWA Runtime ──────────────────────────────┐
-│ Service Worker (sw.js) cache-first offline caching (scratchjr-pwa-v2.15.1)      │
+│ Service Worker (sw.js) cache-first offline caching (scratchjr-pwa-v2.16.0)      │
 │  ├─ browserClient.js       in-browser sql.js 1.15 WASM + IndexedDB persistence, │
 │  │                        Web Locks API multi-tab safety, database_flush gate   │
 │  ├─ webav.js              standard getUserMedia & MediaRecorder                 │

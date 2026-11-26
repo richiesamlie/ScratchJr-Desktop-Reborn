@@ -48,18 +48,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify package.json matches tag
+      - name: Verify version lockstep
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
-        run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
-            echo "::error::Run \`npm version <new> --no-git-tag-version\`, commit, then re-tag."
-            exit 1
-          fi
-          echo "Tag ${GITHUB_REF_NAME} matches package.json (${PKG_VERSION})."
+        run: node scripts/check-version-lockstep.js --tag "$GITHUB_REF_NAME"
 
       - name: Lint
         run: npm run lint
@@ -226,32 +218,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify package.json and tauri versions match tag
+      - name: Verify version lockstep
         shell: bash
         run: |
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            TAG_VERSION="${GITHUB_REF_NAME#v}"
-            PKG_VERSION=$(node -p "require('./package.json').version")
-            TAURI_VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
-            CARGO_VERSION=$(node -p "require('fs').readFileSync('./src-tauri/Cargo.toml', 'utf8').match(/^version\\s*=\\s*\"([^\"]+)\"/m)[1]")
-            VERSION_JSON=$(node -p "require('./version.json').version")
-            if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-              echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)."
-              exit 1
-            fi
-            if [ "$TAG_VERSION" != "$TAURI_VERSION" ]; then
-              echo "::error::Tag version ($TAG_VERSION) does not match tauri.conf.json version ($TAURI_VERSION)."
-              exit 1
-            fi
-            if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
-              echo "::error::Tag version ($TAG_VERSION) does not match Cargo.toml version ($CARGO_VERSION)."
-              exit 1
-            fi
-            if [ "$TAG_VERSION" != "$VERSION_JSON" ]; then
-              echo "::error::Tag version ($TAG_VERSION) does not match version.json version ($VERSION_JSON)."
-              exit 1
-            fi
-            echo "Tag ${GITHUB_REF_NAME} matches package.json, tauri.conf.json, Cargo.toml, and version.json (${PKG_VERSION})."
+            node scripts/check-version-lockstep.js --tag "$GITHUB_REF_NAME"
+          else
+            node scripts/check-version-lockstep.js
           fi
 
       - name: Run Rust unit tests

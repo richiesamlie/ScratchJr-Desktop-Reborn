@@ -290,7 +290,7 @@ export default class SVGTools {
         return attr;
     }
 
-    static getPenAttr (shape?: Element): Record<string, string | number> {
+    static getPenAttr (_shape?: Element): Record<string, string | number> {
         return {
             'fill': 'none',
             'stroke': Paint.fillcolor,
@@ -607,6 +607,8 @@ export default class SVGTools {
             var tlen = (elem.textContent || '').length;
             box = new Rectangle(tx, ty, Math.max(24, tlen * (tfs * 0.6)), tfs * 1.2);
             break;
+        default:
+            break;
         }
         return box;
     }
@@ -666,6 +668,8 @@ export default class SVGTools {
                 list.push(points.getItem(i));
             }
             area = SVGTools.polygonArea(list);
+            break;
+        default:
             break;
         }
         return area;

@@ -70,7 +70,7 @@ export default class Transform {
     // Element translation
     ////////////////////////////
 
-    static translateTo (elem: Element, xform: { setTranslate(x: number, y: number): void; matrix?: unknown }, fcn?: SVGMatrix) {
+    static translateTo (elem: Element, xform: { setTranslate(x: number, y: number): void; matrix?: unknown }, _fcn?: SVGMatrix) {
         if (elem == undefined) {
             return;
         }
@@ -124,6 +124,8 @@ export default class Transform {
                 points.getItem(j).x = p.x;
                 points.getItem(j).y = p.y;
             }
+            break;
+        default:
             break;
         }
         Transform.updateAll(elem);
@@ -497,6 +499,8 @@ export default class Transform {
                 points.getItem(j).x = p.x;
                 points.getItem(j).y = p.y;
             }
+            break;
+        default:
             break;
         }
         if (pname == 'g') {

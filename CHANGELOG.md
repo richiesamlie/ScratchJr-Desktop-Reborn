@@ -3,6 +3,44 @@
 All notable changes to **ScratchJr Reborn**. The repo is developed on
 `master`; releases are tagged `vX.Y.Z` and built by CI.
 
+## [v2.16.0] - 2026-11-26
+
+**Final Stable Release: CI Quality Gates, TypeScript Static Analysis (`oxlint`), Security & Cross-Host Parity Hardening, and Production Asset Optimization.**
+
+### CI & Quality Gates
+- **PR & `master` CI Workflow (`.github/workflows/ci.yml`)**:
+  - Added SHA-pinned CI jobs running on pull requests and pushes to `master`: `js-and-web` (lockstep check, lint, typecheck, Vitest, main build, web build, and headless `smoke-web.js`), `rust-tauri` (`cargo test` on Windows), and `android-unit` (`./gradlew testDebugUnitTest`).
+  - Gated `.github/workflows/deploy-pages.yml` on `check:versions`, `lint`, `typecheck`, `npm test`, and `smoke-web.js` before publishing GitHub Pages.
+  - Added `./gradlew testDebugUnitTest` to `.github/workflows/build-android.yml` and added `ci.yml` to the 40-char SHA-pin enforcement test in `tests/unit/audit-remediation.test.js`.
+- **Unified 9-Target Version Lockstep Checker (`scripts/check-version-lockstep.js`)**:
+  - Consolidated release version verification across `package.json`, `package-lock.json`, `version.json`, `src/app/settings.json`, `src/app/sw.js`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`, `android/app/build.gradle.kts` (`versionName` + `versionCode`), and `docs/index.html` (with `tests/unit/version-lockstep.test.js`).
+- **Package & Advisory Hygiene (`package.json`, `package-lock.json`)**:
+  - Marked root `package.json` `"private": true` and resolved all 6 moderate dev-dependency audit advisories (`0 vulnerabilities`).
+
+### Static Analysis
+- **Full TypeScript & JS Linting (`oxlint` + `eslint`)**:
+  - Added `oxlint@^1.95.0` and `.oxlintrc.json` to lint all 88 `.ts` and `.js` files under `src/`, with strict `eqeqeq`, `guard-for-in`, `no-shadow`, and `import/no-cycle` enforcement on backend, shared lib, and host-adapter modules.
+  - Resolved all 54 surfaced correctness diagnostics across the renderer and platform layers (`oxc/erasing-op`, `no-unassigned-vars`, `unicorn/no-new-array`, `radix`, `no-useless-escape`, `default-case`, and unused parameters).
+
+### Security & Cross-Host Parity
+- **SVG Sanitizer Hardening & Coverage (`src/app/src/utils/svgSanitizer.ts`, `tests/unit/svg-sanitizer.test.js`)**:
+  - Restricted `href`/`xlink:href` data URIs strictly to raster formats (`png`, `jpeg`, `gif`, `webp`, `bmp`), blocking `data:image/svg+xml`, and stripped unsafe inline `style` values (`expression(`, `javascript:`, `vbscript:`, `@import`, and non-local `url(...)`).
+  - Added dedicated unit tests including a smoke verification pass over real bundled SVGs in `src/app/svglibrary/`.
+- **Desktop Audio Recording `waitForStop()` Parity (`src/electronClient.js`, `src/tauriClient.js`)**:
+  - Aligned `recordsound_recordclose` on Electron and Tauri with Web/Android by awaiting `waitForStop()` and returning a `Promise` wrapping `FileReader` + `io_setmedianame` persistence.
+- **Tauri v2 Release Hardening & Typed Events (`src-tauri/Cargo.toml`, `src-tauri/src/lib.rs`, `src-tauri/src/io.rs`, `src/tauriClient.js`)**:
+  - Moved `tauri/devtools` behind an opt-in Cargo `devtools` feature so release binaries omit DevTools.
+  - Replaced `w.eval(...)` window/menu callbacks with typed Tauri events (`scratchjr:app-close`, `scratchjr:import-project`, `scratchjr:export-project`, `scratchjr:export-stage`, `scratchjr:database-restored`, `scratchjr:restore-failed`) and guarded close fallback spawning with an `AtomicBool`.
+  - Added Rust unit tests for close-guard idempotency, `safe_app_path`, and `clean_assets`.
+- **Direct Browser Host Testing (`src/browserClient.js`, `tests/unit/browser-resilience.test.js`, `tests/unit/browser-intent-allowlist.test.js`)**:
+  - Exported `createBrowserClient` from `src/browserClient.js` (keeping classic `<script>` auto-init unchanged) and replaced regex-scraping/`Function()` eval and mock-only resilience tests with direct tests against real `browserClient.js` code.
+
+### Build & Asset Optimization
+- **Production Minification & Clean Staging (`scripts/build-renderer.js`, `build-web.js`, `build-android-assets.js`, `package-and-zip.js`, `tauri.conf.json`)**:
+  - Enabled `minify: true` and `sourcemap: false` for production `--prod` / `NODE_ENV=production` builds (keeping dev sourcemaps intact) and cleaned `android/app/src/main/assets/www` before syncing assets so stale chunks and `.map` files never accumulate.
+- **Asset Cleanup (`src/app/assets/paint/*.svg`, `src/icons/original/`)**:
+  - Optimized the 12 oversized Illustrator 15 paint UI SVGs with `svgo` (`3,777.1 KB` → `1,992.7 KB`) while preserving `viewBox` and path geometry; removed unreferenced `src/icons/original/InstallerAnimation.sketch`.
+
 ## [v2.15.1] - 2026-11-09
 
 **Patch Release: Windows Tablet & Touchscreen Pointer Event Support (`PR #18`), Primary-Pointer Guards, and Editor/Paint Touch Control Parity.**

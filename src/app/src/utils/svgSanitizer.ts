@@ -17,13 +17,19 @@ const DANGEROUS_ELEMENTS = new Set([
     'video',
 ]);
 
+const SAFE_RASTER_DATA_URI_RE = /^data:image\/(png|jpe?g|gif|webp|bmp);base64,/i;
+const UNSAFE_STYLE_RE = /expression\s*\(|javascript:|vbscript:|@import/i;
+const CSS_URL_RE = /url\s*\(([^)]*)\)/gi;
+
 function isSafeSvgHref (value: string): boolean {
     const trimmed = value.trim();
     if (!trimmed) {
         return true;
     }
+    // oxlint-disable-next-line no-control-regex
     const normalized = trimmed.replace(/[\x00-\x20]+/g, '').toLowerCase();
     if (
+        // oxlint-disable-next-line no-script-url
         normalized.startsWith('javascript:') ||
         normalized.startsWith('vbscript:') ||
         normalized.startsWith('http:') ||
@@ -33,13 +39,35 @@ function isSafeSvgHref (value: string): boolean {
     ) {
         return false;
     }
-    return trimmed.startsWith('#') || normalized.startsWith('data:image/');
+    return trimmed.startsWith('#') || SAFE_RASTER_DATA_URI_RE.test(normalized);
+}
+
+function isSafeSvgStyle (value: string): boolean {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return true;
+    }
+    // oxlint-disable-next-line no-control-regex
+    const normalized = trimmed.replace(/[\x00-\x20]+/g, '');
+    // oxlint-disable-next-line no-script-url
+    if (UNSAFE_STYLE_RE.test(normalized)) {
+        return false;
+    }
+    CSS_URL_RE.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = CSS_URL_RE.exec(normalized)) !== null) {
+        const inner = match[1].trim().replace(/^['"]|['"]$/g, '');
+        if (!inner.startsWith('#')) {
+            return false;
+        }
+    }
+    return true;
 }
 
 /**
  * Traverses an SVG root element and all descendants in a static snapshot,
  * removing dangerous elements, inline event handler attributes (on*),
- * and unsafe href / xlink:href references.
+ * unsafe href / xlink:href references, and unsafe inline style attributes.
  */
 export function sanitizeSvgElement (root: Element | null | undefined): void {
     if (!root) {
@@ -70,6 +98,12 @@ export function sanitizeSvgElement (root: Element | null | undefined): void {
                 el.removeAttribute(attr.name);
                 continue;
             }
+            if (attrName === 'style') {
+                if (!isSafeSvgStyle(attr.value || '')) {
+                    el.removeAttribute(attr.name);
+                }
+                continue;
+            }
             if (attrName === 'href' || attrName === 'xlink:href' || attr.localName?.toLowerCase() === 'href') {
                 if (!isSafeSvgHref(attr.value || '')) {
                     el.removeAttribute(attr.name);
@@ -95,7 +129,10 @@ function stripDangerousSvgRegex (svgText: string): string {
         .replace(/<(iframe|object|embed|applet|meta|link|style|animate|animateMotion|animateTransform|set|use|audio|video)\b[\s\S]*?<\/\1>/gi, '')
         .replace(/<(iframe|object|embed|applet|meta|link|style|animate|animateMotion|animateTransform|set|use|audio|video)\b[^>]*\/>/gi, '')
         .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-        .replace(/\s(?:xlink:)?href\s*=\s*(?:"\s*(?:javascript:|vbscript:|https?:|file:|\/\/)[^"]*"|'\s*(?:javascript:|vbscript:|https?:|file:|\/\/)[^']*')/gi, '');
+        .replace(/\s(?:xlink:)?href\s*=\s*(?:"\s*(?:javascript:|vbscript:|https?:|file:|\/\/|data:image\/svg\+xml)[^"]*"|'\s*(?:javascript:|vbscript:|https?:|file:|\/\/|data:image\/svg\+xml)[^']*')/gi, '')
+        .replace(/\sstyle\s*=\s*(?:"([^"]*)"|'([^']*)')/gi, (full, dVal, sVal) => (
+            isSafeSvgStyle(dVal !== undefined ? dVal : (sVal || '')) ? full : ''
+        ));
 }
 
 /**

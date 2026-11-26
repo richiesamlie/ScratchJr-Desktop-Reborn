@@ -284,7 +284,7 @@ export default class PaintAction {
         PaintAction.fingerDown(evt);
     }
 
-    static startHold (e?: PaintEvt) {
+    static startHold (_e?: PaintEvt) {
         //  console.log ("startHold", currentShape);
         if (!currentShape) {
             return;
@@ -426,7 +426,7 @@ export default class PaintAction {
         Ghost.findTarget(evt);
     }
 
-    static startDragShape (e?: PaintEvt) {
+    static startDragShape (_e?: PaintEvt) {
         if (timeoutEvent) {
             clearTimeout(timeoutEvent);
         }
@@ -998,7 +998,7 @@ Path.maxDistance()); // check the start
         PaintAction.paintRegion(evt);
     }
 
-    static paintRegion (e?: PaintEvt) {
+    static paintRegion (_e?: PaintEvt) {
         ScratchAudio.sndFX('splash.wav');
         switch (PaintAction.getPaintType()) {
         case 'paths':
@@ -1099,7 +1099,7 @@ Path.maxDistance()); // check the start
 
     static ignoreEvt () {}
 
-    static backToSelect (e?: PaintEvt) {
+    static backToSelect (_e?: PaintEvt) {
         Paint.selectButton('select');
     }
 
@@ -1131,7 +1131,7 @@ Path.maxDistance()); // check the start
     //Calls for click
 
 
-    static removeShape (e?: PaintEvt | null) {
+    static removeShape (_e?: PaintEvt | null) {
         if (currentShape == undefined) {
             return;
         }

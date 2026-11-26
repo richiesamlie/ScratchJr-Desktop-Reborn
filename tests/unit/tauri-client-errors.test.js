@@ -74,6 +74,122 @@ describe('Tauri Client Host Interface and Error Contract', () => {
         const result = await client.database_query({ op: 'select', table: 'projects' }, 5000);
         expect(result).toEqual([{ id: 1, name: 'Project 1' }]);
     });
+
+    it('recordsound_recordclose("YES") awaits waitForStop before persisting recording via io_setmedianame', async () => {
+        const client = globalThis.window.tablet;
+        let stopped = false;
+        let resolveStop;
+        const stopPromise = new Promise((r) => { resolveStop = r; });
+
+        const captureStub = {
+            waitForStop: vi.fn(() => stopPromise),
+            captureRecordingAsBlob: vi.fn(() => (stopped ? new Blob(['audio-bytes'], { type: 'audio/webm' }) : null)),
+            getId: vi.fn(() => 'rec-tauri-1'),
+            stopRecord: vi.fn(() => Promise.resolve()),
+        };
+        client.audioCaptureElement = captureStub;
+        invokeMock.mockResolvedValueOnce('rec-tauri-1.webm');
+
+        const OrigFileReader = globalThis.FileReader;
+        globalThis.FileReader = class {
+            readAsDataURL() {
+                this.result = 'data:audio/webm;base64,YXVkaW8=';
+                if (this.onload) this.onload();
+            }
+        };
+
+        try {
+            const closePromise = client.recordsound_recordclose('YES');
+            expect(captureStub.waitForStop).toHaveBeenCalledTimes(1);
+            expect(captureStub.captureRecordingAsBlob).not.toHaveBeenCalled();
+
+            stopped = true;
+            resolveStop();
+            await closePromise;
+
+            expect(captureStub.captureRecordingAsBlob).toHaveBeenCalledTimes(1);
+            expect(invokeMock).toHaveBeenCalledWith('io_setmedianame', {
+                encodedData: 'data:audio/webm;base64,YXVkaW8=',
+                key: 'rec-tauri-1',
+                ext: 'webm',
+            });
+        } finally {
+            globalThis.FileReader = OrigFileReader;
+            client.audioCaptureElement = null;
+        }
+    });
+
+    it('recordsound_recordclose("NO") calls stopRecord', async () => {
+        const client = globalThis.window.tablet;
+        const captureStub = {
+            stopRecord: vi.fn(() => Promise.resolve('stopped')),
+        };
+        client.audioCaptureElement = captureStub;
+
+        try {
+            const res = await client.recordsound_recordclose('NO');
+            expect(captureStub.stopRecord).toHaveBeenCalledTimes(1);
+            expect(res).toBe('stopped');
+        } finally {
+            client.audioCaptureElement = null;
+        }
+    });
+
+    it('wires Tauri window/menu events and falls back to sendAppClosedAcked when unregistered', () => {
+        const listeners = {};
+        const client = globalThis.window.tablet;
+        client.appCloseCallback = undefined;
+        client.importProjectRequestCallback = undefined;
+        client.exportProjectRequestCallback = undefined;
+        client.exportStageRequestCallback = undefined;
+        client.databaseRestoredCallback = undefined;
+
+        globalThis.window.__TAURI__.event = {
+            listen: vi.fn((eventName, handler) => {
+                listeners[eventName] = handler;
+                return Promise.resolve(() => {});
+            }),
+        };
+
+        client.attachTauriEvents();
+        expect(Object.keys(listeners)).toEqual([
+            'scratchjr:app-close',
+            'scratchjr:import-project',
+            'scratchjr:export-project',
+            'scratchjr:export-stage',
+            'scratchjr:database-restored',
+            'scratchjr:restore-failed',
+        ]);
+
+        // Unregistered app-close falls back to sendAppClosedAcked -> invoke('app_closed_acked')
+        invokeMock.mockResolvedValueOnce(undefined);
+        listeners['scratchjr:app-close']({ payload: null });
+        expect(invokeMock).toHaveBeenCalledWith('app_closed_acked', undefined);
+
+        // Registered callbacks receive events
+        const onClose = vi.fn();
+        const onImport = vi.fn();
+        const onExport = vi.fn();
+        const onStage = vi.fn();
+        const onRestored = vi.fn();
+        client.onAppClose(onClose);
+        client.onImportProjectRequest(onImport);
+        client.onExportProjectRequest(onExport);
+        client.onExportStageRequest(onStage);
+        client.onDatabaseRestored(onRestored);
+
+        listeners['scratchjr:app-close']({ payload: null });
+        listeners['scratchjr:import-project']({ payload: null });
+        listeners['scratchjr:export-project']({ payload: null });
+        listeners['scratchjr:export-stage']({ payload: null });
+        listeners['scratchjr:database-restored']({ payload: null });
+
+        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(onImport).toHaveBeenCalledTimes(1);
+        expect(onExport).toHaveBeenCalledTimes(1);
+        expect(onStage).toHaveBeenCalledTimes(1);
+        expect(onRestored).toHaveBeenCalledTimes(1);
+    });
 });
 
 describe('Electron tablet parity with scratchjr bridge', () => {
@@ -141,5 +257,63 @@ describe('Electron tablet parity with scratchjr bridge', () => {
 
         client.sendAppClosedAcked();
         expect(mockBridge.sendAppClosedAcked).toHaveBeenCalled();
+    });
+
+    it('recordsound_recordclose("YES") awaits waitForStop before persisting on Electron', async () => {
+        const client = globalThis.window.tablet;
+        let stopped = false;
+        let resolveStop;
+        const stopPromise = new Promise((r) => { resolveStop = r; });
+
+        const captureStub = {
+            waitForStop: vi.fn(() => stopPromise),
+            captureRecordingAsBlob: vi.fn(() => (stopped ? new Blob(['audio-bytes'], { type: 'audio/webm' }) : null)),
+            getId: vi.fn(() => 'rec-electron-1'),
+            stopRecord: vi.fn(() => Promise.resolve()),
+        };
+        client.audioCaptureElement = captureStub;
+
+        const OrigFileReader = globalThis.FileReader;
+        globalThis.FileReader = class {
+            readAsDataURL() {
+                this.result = 'data:audio/webm;base64,ZWxlY3Ryb24=';
+                if (this.onload) this.onload();
+            }
+        };
+
+        try {
+            const closePromise = client.recordsound_recordclose('YES');
+            expect(captureStub.waitForStop).toHaveBeenCalledTimes(1);
+            expect(captureStub.captureRecordingAsBlob).not.toHaveBeenCalled();
+
+            stopped = true;
+            resolveStop();
+            await closePromise;
+
+            expect(mockBridge.io_setmedianame).toHaveBeenCalledWith(
+                'data:audio/webm;base64,ZWxlY3Ryb24=',
+                'rec-electron-1',
+                'webm'
+            );
+        } finally {
+            globalThis.FileReader = OrigFileReader;
+            client.audioCaptureElement = null;
+        }
+    });
+
+    it('recordsound_recordclose("NO") calls stopRecord on Electron', async () => {
+        const client = globalThis.window.tablet;
+        const captureStub = {
+            stopRecord: vi.fn(() => Promise.resolve('stopped-electron')),
+        };
+        client.audioCaptureElement = captureStub;
+
+        try {
+            const res = await client.recordsound_recordclose('NO');
+            expect(captureStub.stopRecord).toHaveBeenCalledTimes(1);
+            expect(res).toBe('stopped-electron');
+        } finally {
+            client.audioCaptureElement = null;
+        }
     });
 });

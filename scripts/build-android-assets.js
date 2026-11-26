@@ -21,13 +21,16 @@ function main() {
     console.log('Building renderer bundle for Android...');
     // Target a broadly-deployable System WebView baseline (mid-2022 Play
     // roll-out); desktop keeps its own chrome150 default.
-    execSync('node scripts/build-renderer.js', {
+    execSync('node scripts/build-renderer.js --prod', {
         stdio: 'inherit',
         cwd: rootDir,
         env: { ...process.env, ESBUILD_TARGET: process.env.ESBUILD_TARGET || 'chrome107' },
     });
 
     console.log(`Syncing assets to ${targetAssetsDir}...`);
+    if (fs.existsSync(targetAssetsDir)) {
+        fs.rmSync(targetAssetsDir, { recursive: true, force: true });
+    }
     fs.mkdirSync(targetAssetsDir, { recursive: true });
 
     // HTML entry pages. hostClient.js loads the Electron client only when the

@@ -261,6 +261,8 @@ export default class IO {
             break;
         case 'png': header = 'data:image/png;base64,';
             break;
+        default:
+            break;
         }
         return header + data;
     }
@@ -471,11 +473,11 @@ export default class IO {
                 pendingAssets.push(addMediaToZip('sounds', projectMetadata.sounds[m]));
             }
 
-            var illegalRe = /[\/\?<>\\:\*\|":]/g;
+            var illegalRe = /[/?<>\\:*|":]/g;
             var controlRe = /[\x00-\x1f\x80-\x9f]/g;  // eslint-disable-line no-control-regex
             var reservedRe = /^\.+$/;
             var windowsReservedRe = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
-            var windowsTrailingRe = /[\. ]+$/;
+            var windowsTrailingRe = /[. ]+$/;
 
             const projectName = (typeof jsonData.name === 'string') ? jsonData.name : '';
             zipFileName = projectName.replace(/\s*/g, '');
@@ -504,7 +506,7 @@ export default class IO {
             if (!isNaN(Number(lastPart))) {
                 return {
                     'name': splitName.join(' '),
-                    'number': parseInt(lastPart as string)
+                    'number': parseInt(lastPart as string, 10)
                 };
             } else {
                 return {
@@ -640,7 +642,7 @@ export default class IO {
         // Project version compatibility check:
         // Accept legacy and modern versions (e.g. iOSv01, androidv01, 1.x, 2.x, desktop-vX.Y.Z)
         var projectVersionStr = String(jsonData.version || '');
-        var numericMajor = parseInt(projectVersionStr.replace(/^([a-zA-Z_\-]+v?)?/, ''), 10) || 0;
+        var numericMajor = parseInt(projectVersionStr.replace(/^([a-zA-Z_-]+v?)?/, ''), 10) || 0;
         if (numericMajor > 99) {
             throw new Error('Project created in an unsupported future version of ScratchJr.');
         }

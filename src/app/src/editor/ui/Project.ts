@@ -96,7 +96,7 @@ export default class Project {
     static delayLoadStartTime = 0;
     static loadwaitStartTime = 0;
 
-    static load (md5?: string) {
+    static load (_md5?: string) {
         mediaCountBase = 1;
         ScratchJr.log('Project load status', ScratchJr.getTime(), 'sec', BlockSpecs.loadCount);
         if (BlockSpecs.loadCount > 0) {

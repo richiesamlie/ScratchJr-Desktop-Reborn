@@ -21,24 +21,25 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 
 2. **Bump Version in Lockstep**:
    All version references across the multi-target workspace must be updated in lockstep:
-   - `package.json` & `package-lock.json` (`npm version 2.15.1 --no-git-tag-version`)
-   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.15.1"`, synced automatically by `npm run build:renderer`)
-   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.15.1'`)
-   - `android/app/build.gradle.kts` (`versionCode`, `versionName = "2.15.1"`)
-   - `src-tauri/Cargo.toml` (`version = "2.15.1"`) & `src-tauri/tauri.conf.json` (`"version": "2.15.1"`)
+   - `package.json` & `package-lock.json` (`npm version 2.16.0 --no-git-tag-version`)
+   - `src/app/settings.json` (`"scratchJrVersion": "desktop-v2.16.0"`, synced automatically by `npm run build:renderer`)
+   - `src/app/sw.js` (`CACHE_NAME = 'scratchjr-pwa-v2.16.0'`)
+   - `android/app/build.gradle.kts` (`versionCode = 21600`, `versionName = "2.16.0"`)
+   - `src-tauri/Cargo.toml` (`version = "2.16.0"`) & `src-tauri/tauri.conf.json` (`"version": "2.16.0"`)
    - `version.json` (`version`, `name`, `release_url`, and `downloads` URLs)
    - `docs/index.html` (direct release download URLs)
 
 3. **Verify Local Quality Gates**:
    ```bash
+   npm run check:versions       # Verifies all 9 version targets in lockstep
    npm run build:renderer       # Bundles renderer and synchronizes settings.json
    npm run build:main           # Compiles Electron main process
-   npm run build:web            # Builds dist-web/ PWA distribution
-   node scripts/build-android-assets.js  # Syncs Android WebView assets
-   npm test                     # Run vitest suite (43 files / 378 unit tests)
+   npm run build:web            # Builds minified dist-web/ PWA distribution
+   node scripts/build-android-assets.js  # Syncs minified Android WebView assets
+   npm test                     # Run vitest suite (45 files / 393 unit tests)
    cargo test --manifest-path src-tauri/Cargo.toml # Run Tauri Rust unit tests
    npm run typecheck            # TypeScript 7 strict check (renderer + main)
-   npm run lint                 # ESLint 10 flat-config check
+   npm run lint                 # ESLint 10 + Oxlint static analysis (JS & TS)
    node scripts/smoke-web.js    # Headless CDP web smoke test
    node scripts/smoke-test.js   # Electron desktop smoke test
    ```
@@ -46,7 +47,7 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 4. **Commit Version Bump**:
    ```bash
    git add package.json package-lock.json src/app/settings.json src/app/sw.js android/app/build.gradle.kts src-tauri/Cargo.toml src-tauri/tauri.conf.json version.json CHANGELOG.md README.md docs/index.html
-   git commit -m "Release v2.15.1"
+   git commit -m "Release v2.16.0"
    ```
 
 ---
@@ -56,12 +57,12 @@ Step-by-step procedures for cutting, validating, and publishing new releases of 
 The GitHub Actions workflows (`.github/workflows/build-release.yml` and `.github/workflows/build-android.yml`) build and publish releases when a version tag (`v*.*.*`) is pushed:
 
 ```bash
-git tag v2.15.1
+git tag v2.16.0
 git push origin master --tags
 ```
 
 ### What CI Executes
-1. **Version Gate**: Validates that `GITHUB_REF_NAME` matches `package.json`, `src/app/settings.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`, and `version.json`.
+1. **Version Gate**: Runs `node scripts/check-version-lockstep.js --tag "$GITHUB_REF_NAME"` across all 9 version targets.
 2. **Quality Matrix**: Runs lint, unit tests (`npm test` and `cargo test`), typecheck, and renderer build across Ubuntu, macOS, and Windows.
 3. **Artifact Creation**:
    - **Tauri Desktop (Windows x64)**: `ScratchJr-tauri-win32-x64-setup.exe`, `ScratchJr-tauri-win32-x64.msi`, and `ScratchJr-tauri-win32-x64.zip` (`npm run tauri:build && npm run package:tauri`).

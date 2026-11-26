@@ -409,7 +409,7 @@ export default class Block {
         return connections.indexOf(you);
     }
 
-    isConnectedAfterFirst (myn: number, you: Block, yourn?: number) {
+    isConnectedAfterFirst (myn: number, you: Block, _yourn?: number) {
         if (myn == 0) {
             return false;
         }

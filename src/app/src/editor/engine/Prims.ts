@@ -82,7 +82,7 @@ export default class Prims {
     static setTime (strip: Thread) {
         strip.time = Date.now();
     }
-    static showTime (strip?: Thread) {
+    static showTime (_strip?: Thread) {
         //var time = ((new Date()) - strip.time) / 1000;
         // 	ScratchJr.log (strip.thisblock.blocktype, time, "sec") ;
     }

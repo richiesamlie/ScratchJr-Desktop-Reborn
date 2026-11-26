@@ -11,6 +11,9 @@ const esbuild = require('esbuild');
 const path = require('path');
 
 const isWatch = process.argv.includes('--watch');
+const isProd = process.argv.includes('--prod')
+    || process.env.NODE_ENV === 'production'
+    || process.env.BUILD_MINIFY === '1';
 
 /** @type {import('esbuild').BuildOptions} */
 const options = {
@@ -23,11 +26,11 @@ const options = {
     bundle: true,
     format: 'esm',
     platform: 'browser',
-    // Desktop (Electron 43.4.1) ships Chromium 150; Android builds pass
+    // Desktop (Electron 45) ships Chromium 150; Android builds pass
     // ESBUILD_TARGET=chromeNN to target the oldest System WebView supported.
     target: [process.env.ESBUILD_TARGET || 'chrome150'],
-    sourcemap: true,
-    minify: false,  // keep readable for debugging
+    sourcemap: !isProd,
+    minify: isProd,
     logLevel: 'info',
 };
 

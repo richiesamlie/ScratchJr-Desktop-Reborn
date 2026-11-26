@@ -54,6 +54,8 @@ if (targetPlatform === 'darwin' && process.platform === 'win32') {
         /^\/scripts($|\/)/,
         /^\/scratch($|\/)/,
         /^\/graphify-out($|\/)/,
+        /^\/coverage($|\/)/,
+        /^\/\.freebuff($|\/)/,
     ],
     appCopyright: pkg['app-copyright'] || '',
     appVersion: pkg.version,
@@ -88,7 +90,7 @@ execSync('npx tsc -p tsconfig.main.json', { stdio: 'inherit' });
 // deps) must be bundled into dist/app.bundle.js BEFORE packaging — the HTML
 // pages load only that bundle, and it is gitignored, so a fresh checkout has
 // no bundle at all.
-execSync('node scripts/build-renderer.js', { stdio: 'inherit' });
+execSync('node scripts/build-renderer.js --prod', { stdio: 'inherit' });
 
 packager(options)
     .then((outputPaths) => {

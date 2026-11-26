@@ -20,14 +20,17 @@ All version references must be updated in lockstep:
 - `android/app/build.gradle.kts` (`versionCode`, `versionName`)
 - `src-tauri/Cargo.toml` (`version = "X.Y.Z"`) & `src-tauri/tauri.conf.json` (`"version": "X.Y.Z"`)
 - `version.json`
+- `docs/index.html`
 - `CHANGELOG.md`
+
+Verify lockstep via `npm run check:versions`.
 
 **Always Include Tauri in Releases**: Whenever creating a new release or bumping versions, Tauri release packages (`npm run tauri:build && npm run package:tauri`) MUST be built, checksummed, and uploaded to the GitHub release alongside Electron and Android packages.
 
 ## 3. Mandatory Verification Gate
 Before declaring any task complete or pushing:
-- **Unit Suite**: `npm test` (all tests must pass 100%).
-- **Static Analysis**: `npm run typecheck && npx eslint src` (must have 0 errors).
+- **Unit Suite**: `npm test` (all tests must pass 100%) and `cargo test --manifest-path src-tauri/Cargo.toml`.
+- **Static Analysis**: `npm run typecheck && npm run lint` (ESLint + Oxlint across `.js` & `.ts`; must have 0 errors).
 - **Target Builds**:
   - `npm run build:renderer` (recompiles renderer bundle)
   - `npm run build:main` (if main process touched)

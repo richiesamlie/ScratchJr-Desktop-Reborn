@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "ScratchJr",
-  "version": "2.15.1",
+  "version": "2.16.0",
   "identifier": "org.scratchjr.desktop",
   "build": {
     "frontendDist": "../src",
     "beforeDevCommand": "npm run build:renderer",
-    "beforeBuildCommand": "npm run build:renderer"
+    "beforeBuildCommand": "node scripts/build-renderer.js --prod"
   },
   "app": {
     "withGlobalTauri": true,

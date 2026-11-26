@@ -9,13 +9,9 @@
 /* global AudioCapture, CameraPickerDialog */
 /* eslint-disable no-console */
 
-(function () {
-    if (window.scratchjr) return; // Desktop Electron
-    if (typeof AndroidInterface !== 'undefined') return; // Android WebView
-
-    // Simple compact MD5 implementation (RFC 1321) for content addressing
-    /** @param {string} str */
-    function md5(str) {
+// Simple compact MD5 implementation (RFC 1321) for content addressing
+/** @param {string} str */
+function md5(str) {
         /** @param {number} x @param {number} y */
         function safeAdd(x, y) {
             var lsw = (x & 0xffff) + (y & 0xffff);
@@ -199,7 +195,7 @@
     }
 
     /** @param {string} storeName @param {string} key */
-    function idbGet(storeName, key) {
+    function defaultIdbGet(storeName, key) {
         return openIdb().then(function (db) {
             return new Promise(function (resolve, reject) {
                 var tx = db.transaction(storeName, 'readonly');
@@ -212,7 +208,7 @@
     }
 
     /** @param {string} storeName @param {string} key @param {any} val */
-    function idbPut(storeName, key, val) {
+    function defaultIdbPut(storeName, key, val) {
         return openIdb().then(function (db) {
             return new Promise(function (resolve, reject) {
                 var tx = db.transaction(storeName, 'readwrite');
@@ -225,7 +221,7 @@
     }
 
     /** @param {string} storeName @param {string} key */
-    function idbDelete(storeName, key) {
+    function defaultIdbDelete(storeName, key) {
         return openIdb().then(function (db) {
             return new Promise(function (resolve, reject) {
                 var tx = db.transaction(storeName, 'readwrite');
@@ -236,6 +232,23 @@
             });
         });
     }
+
+/**
+ * Factory creating an isolated browser/PWA host client instance.
+ * Accepts optional dependency overrides for deterministic unit testing.
+ * @param {{
+ *   idbGet?: (storeName: string, key: string) => Promise<any>,
+ *   idbPut?: (storeName: string, key: string, val: any) => Promise<any>,
+ *   idbDelete?: (storeName: string, key: string) => Promise<any>,
+ *   initSqlJs?: (opts: any) => Promise<any>,
+ *   registerWindowListeners?: boolean
+ * }} [options]
+ */
+function createBrowserClient(options) {
+    var opts = options || {};
+    var idbGet = opts.idbGet || defaultIdbGet;
+    var idbPut = opts.idbPut || defaultIdbPut;
+    var idbDelete = opts.idbDelete || defaultIdbDelete;
 
     // ---- In-Memory Media LRU Cache ----
     // Avoids repetitive IndexedDB roundtrips for active sprite costumes and sound effects
@@ -432,16 +445,16 @@
     }
 
     // Flush database immediately when navigating away or switching tabs
-    if (typeof window !== 'undefined') {
-        var onLeave = function () {
-            flushDbSave(true).finally(function () {
-                if (releaseExclusiveLock) {
-                    var rel = releaseExclusiveLock;
-                    releaseExclusiveLock = null;
-                    rel();
-                }
-            });
-        };
+    function onLeave() {
+        return flushDbSave(true).finally(function () {
+            if (releaseExclusiveLock) {
+                var rel = releaseExclusiveLock;
+                releaseExclusiveLock = null;
+                rel();
+            }
+        });
+    }
+    if (typeof window !== 'undefined' && opts.registerWindowListeners !== false) {
         window.addEventListener('beforeunload', onLeave);
         window.addEventListener('pagehide', onLeave);
         document.addEventListener('visibilitychange', function () {
@@ -476,9 +489,11 @@
                     var locateWasm = function (/** @type {string} */ file) {
                         return '../' + file;
                     };
-                    var sqlInit = /** @type {any} */ (window).initSqlJs;
+                    var sqlInit = opts.initSqlJs || (typeof window !== 'undefined' ? /** @type {any} */ (window).initSqlJs : undefined);
                     sqlInit({ locateFile: locateWasm }).then(function (/** @type {any} */ SQL) {
-                        /** @type {any} */ (window).SQL = SQL;
+                        if (typeof window !== 'undefined') {
+                            /** @type {any} */ (window).SQL = SQL;
+                        }
                         idbGet(STORE_SQLITE, 'db_bytes').then(function (savedBytes) {
                             if (savedBytes && savedBytes.length > 0) {
                                 try {
@@ -533,11 +548,11 @@
                 }).catch(reject);
             }
 
-            if (typeof (/** @type {any} */ (window).initSqlJs) === 'function') {
+            if (typeof opts.initSqlJs === 'function' || (typeof window !== 'undefined' && typeof (/** @type {any} */ (window).initSqlJs) === 'function')) {
                 loadSqlEngine();
             } else {
                 var checkInterval = setInterval(function () {
-                    if (typeof (/** @type {any} */ (window).initSqlJs) === 'function') {
+                    if (typeof opts.initSqlJs === 'function' || (typeof window !== 'undefined' && typeof (/** @type {any} */ (window).initSqlJs) === 'function')) {
                         clearInterval(checkInterval);
                         loadSqlEngine();
                     }
@@ -1364,53 +1379,79 @@
     };
 
     // Global shortcut listener for browser window (Ctrl+S to save, Ctrl+O to open/import, Ctrl+Z/Y undo/redo, Ctrl+N new project)
-    window.addEventListener('keydown', function (/** @type {KeyboardEvent} */ e) {
-        if ((e.ctrlKey || e.metaKey) && !e.altKey) {
-            var key = e.key.toLowerCase();
-            var syntheticEvt = {
-                preventDefault: function () {},
-                stopPropagation: function () {},
-                timeStamp: performance.now(),
-                touches: undefined
-            };
-            if (key === 's') {
-                e.preventDefault();
-                var scratchJrGlobal = /** @type {any} */ (window).ScratchJr;
-                if (scratchJrGlobal && scratchJrGlobal.saveProject) {
-                    scratchJrGlobal.saveProject(null, function () {});
-                }
-                flushDbSave(true);
-            } else if (key === 'o') {
-                e.preventDefault();
-                browserHost.openImportSjrDialog();
-            } else if (key === 'z' && !e.shiftKey) {
-                e.preventDefault();
-                var undoGlobal = /** @type {any} */ (window).Undo;
-                if (undoGlobal && undoGlobal.prevStep) {
-                    undoGlobal.prevStep(syntheticEvt);
-                }
-            } else if ((key === 'z' && e.shiftKey) || (key === 'y' && !e.shiftKey)) {
-                e.preventDefault();
-                var redoGlobal = /** @type {any} */ (window).Undo;
-                if (redoGlobal && redoGlobal.nextStep) {
-                    redoGlobal.nextStep(syntheticEvt);
-                }
-            } else if (key === 'n') {
-                e.preventDefault();
-                var homeGlobal = /** @type {any} */ (window).Home;
-                if (homeGlobal && homeGlobal.createNewProject) {
-                    homeGlobal.createNewProject();
+    if (typeof window !== 'undefined' && opts.registerWindowListeners !== false) {
+        window.addEventListener('keydown', function (/** @type {KeyboardEvent} */ e) {
+            if ((e.ctrlKey || e.metaKey) && !e.altKey) {
+                var key = e.key.toLowerCase();
+                var syntheticEvt = {
+                    preventDefault: function () {},
+                    stopPropagation: function () {},
+                    timeStamp: performance.now(),
+                    touches: undefined
+                };
+                if (key === 's') {
+                    e.preventDefault();
+                    var scratchJrGlobal = /** @type {any} */ (window).ScratchJr;
+                    if (scratchJrGlobal && scratchJrGlobal.saveProject) {
+                        scratchJrGlobal.saveProject(null, function () {});
+                    }
+                    flushDbSave(true);
+                } else if (key === 'o') {
+                    e.preventDefault();
+                    browserHost.openImportSjrDialog();
+                } else if (key === 'z' && !e.shiftKey) {
+                    e.preventDefault();
+                    var undoGlobal = /** @type {any} */ (window).Undo;
+                    if (undoGlobal && undoGlobal.prevStep) {
+                        undoGlobal.prevStep(syntheticEvt);
+                    }
+                } else if ((key === 'z' && e.shiftKey) || (key === 'y' && !e.shiftKey)) {
+                    e.preventDefault();
+                    var redoGlobal = /** @type {any} */ (window).Undo;
+                    if (redoGlobal && redoGlobal.nextStep) {
+                        redoGlobal.nextStep(syntheticEvt);
+                    }
+                } else if (key === 'n') {
+                    e.preventDefault();
+                    var homeGlobal = /** @type {any} */ (window).Home;
+                    if (homeGlobal && homeGlobal.createNewProject) {
+                        homeGlobal.createNewProject();
+                    }
                 }
             }
+        });
+    }
+
+    return {
+        browserHost: browserHost,
+        ALLOWED_TABLES: ALLOWED_TABLES,
+        ALLOWED_WHERE_OPS: ALLOWED_WHERE_OPS,
+        executeIntent: executeIntent,
+        initDatabase: initDatabase,
+        acquireWebLock: acquireWebLock,
+        flushDbSave: flushDbSave,
+        doActualDbSave: doActualDbSave,
+        getMediaCache: getMediaCache,
+        putMediaCache: putMediaCache,
+        removeMediaCache: removeMediaCache,
+        triggerLeave: onLeave,
+        getState: function () {
+            return {
+                hasExclusiveLock: hasExclusiveLock,
+                hasReleaseLock: Boolean(releaseExclusiveLock),
+                sqlDb: sqlDb
+            };
         }
-    });
+    };
+}
 
-    // Expose as window.tablet and window.scratchjr
-    /** @type {any} */ (window).tablet = browserHost;
-    /** @type {any} */ (window).scratchjr = browserHost;
-
-    // Trigger database initialization early
-    initDatabase().catch(function (/** @type {any} */ err) {
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { createBrowserClient: createBrowserClient };
+} else if (typeof window !== 'undefined' && !window.scratchjr && typeof AndroidInterface === 'undefined') {
+    var browserClientInstance = createBrowserClient();
+    /** @type {any} */ (window).tablet = browserClientInstance.browserHost;
+    /** @type {any} */ (window).scratchjr = browserClientInstance.browserHost;
+    browserClientInstance.initDatabase().catch(function (/** @type {any} */ err) {
         console.error('[browserClient] Early DB init failed:', err);
     });
-}());
+}

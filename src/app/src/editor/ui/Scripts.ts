@@ -309,7 +309,7 @@ export default class Scripts {
         return Math.sqrt((x * x) + (y * y));
     }
 
-    findClosest (choices: Array<[Block, number, number]>, b?: Block) {
+    findClosest (choices: Array<[Block, number, number]>, _b?: Block) {
         var min = 9999;
         var item = null;
         for (var i = 0; i < choices.length; i++) {
@@ -604,7 +604,7 @@ export default class Scripts {
         var dx = localx(sc, x);
         var dy = localy(sc, y) + this.adjustCheight(this.dragList[0]);
         this.flowCaret.moveBlock(dx, dy);
-        this.snapToPlace(new Array(this.flowCaret));
+        this.snapToPlace([this.flowCaret]);
         if (this.flowCaret.div.style.visibility == 'visible') {
             this.layout(this.flowCaret);
         }
@@ -656,6 +656,8 @@ export default class Scripts {
                     list[i][0] = 'playsnd';
                     list[i][1] = this.spr.sounds[0];
                 }
+                break;
+            default:
                 break;
             }
             var cb = this.recreateBlock(list[i]);

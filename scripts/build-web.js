@@ -28,7 +28,7 @@ function main() {
 
     // 1. Build renderer esbuild bundles
     console.log('1. Building renderer bundles...');
-    execSync('node scripts/build-renderer.js', {
+    execSync('node scripts/build-renderer.js --prod', {
         stdio: 'inherit',
         cwd: rootDir,
         env: { ...process.env, ESBUILD_TARGET: process.env.ESBUILD_TARGET || 'chrome107' },

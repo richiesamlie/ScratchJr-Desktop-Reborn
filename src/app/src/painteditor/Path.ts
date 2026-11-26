@@ -601,7 +601,7 @@ export default class Path {
         g.parentNode!.removeChild(g);
     }
 
-    static getDotsCoodinates (shape?: Element | null) {
+    static getDotsCoodinates (_shape?: Element | null) {
         var pointslist: Array<{cmd: string; pt: Point}> = [];
         for (var i = 0; i < gn('pathdots')!.childElementCount; i++) {
             var dot = gn('pathdots')!.childNodes[i] as HTMLElement;
@@ -1618,6 +1618,8 @@ export default class Path {
                     y: res[0].y
                 };
                 res.push(lastpt);
+                break;
+            default:
                 break;
             }
         }

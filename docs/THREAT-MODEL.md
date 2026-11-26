@@ -1,6 +1,6 @@
 # Threat Model — ScratchJr Desktop Reborn
 
-Verified against `v2.15.0` source across **Desktop** (Electron 45 & Tauri v2), **Android** (Kotlin WebView shell), and **Web / PWA** (`sql.js` WASM + IndexedDB).
+Verified against `v2.16.0` source across **Desktop** (Electron 45 & Tauri v2), **Android** (Kotlin WebView shell), and **Web / PWA** (`sql.js` WASM + IndexedDB).
 
 Scope: creative coding app used by young children, deployed in schools and homes, local-first, no accounts, no telemetry. Assets to protect, in order: (1) student project data (`~/Documents/ScratchJR/`, Android app sandbox, or browser IndexedDB), (2) the host machine/device itself (no arbitrary code execution, no arbitrary filesystem access, no data exfiltration), (3) the integrity of released artifacts that schools and parents install.
 
@@ -28,7 +28,7 @@ TRUSTED            SQLite DB (sql.js / rusqlite / Android WAL), media store, Git
 
 **Likelihood: MEDIUM** — `.sjr` files are the app's share format; a child or teacher can receive one from USB, email, or web download.
 
-**Current mitigations (verified in `v2.15.0`):**
+**Current mitigations (verified in `v2.16.0`):**
 
 | Attack | Mitigation | Evidence |
 |---|---|---|
@@ -48,12 +48,13 @@ TRUSTED            SQLite DB (sql.js / rusqlite / Android WAL), media store, Git
 
 **Likelihood: MEDIUM** (custom image/sound import is a core feature).
 
-**Current mitigations (verified in `v2.15.0`):**
+**Current mitigations (verified in `v2.16.0`):**
 
-- **Dedicated SVG Sanitizer (`src/app/src/utils/svgSanitizer.ts`):**
+- **Dedicated SVG Sanitizer (`src/app/src/utils/svgSanitizer.ts`, tested in `tests/unit/svg-sanitizer.test.js`):**
   - Strips dangerous elements (`<script>`, `<foreignObject>`, `<iframe>`, `<object>`, `<embed>`, `<applet>`, `<meta>`, `<link>`, `<style>`, `<animate*>`, `<set>`, `<use>`, `<audio>`, `<video>`).
   - Removes all inline `on*` event handler attributes.
-  - Restricts `href` and `xlink:href` attributes strictly to local fragment references (`#...`) or `data:image/*` URIs (blocking `javascript:`, `vbscript:`, `http:`, `https:`, `file:`, and `//`).
+  - Strips unsafe inline `style` attributes (`expression(`, `javascript:`, `vbscript:`, `@import`, and non-local `url(...)`).
+  - Restricts `href` and `xlink:href` attributes strictly to local fragment references (`#...`) or raster `data:image/(png|jpeg|gif|webp|bmp);base64,` URIs (blocking `data:image/svg+xml`, `javascript:`, `vbscript:`, `http:`, `https:`, `file:`, and `//`).
 - **Script-inert render paths:** `DOMParser().parseFromString(str, 'text/xml')` followed by canvas rasterization (`SVG2Canvas.ts`) or `<img src="data:image/svg+xml;base64,...">`.
 - **Canvas dimension clamping:** Maximum canvas dimensions are clamped to `4096px` (`SVG2Canvas.ts`, `Paint.ts`) to prevent decompression-bomb OOM crashes on low-end school hardware.
 - **Zero-inline strict CSP:** `default-src 'self'`, `script-src 'self' 'wasm-unsafe-eval'` (zero `'unsafe-inline'` in `script-src`) across all HTML pages and `tauri.conf.json`.
@@ -84,7 +85,7 @@ TRUSTED            SQLite DB (sql.js / rusqlite / Android WAL), media store, Git
 
 **Path:** GitHub Pages CDN / GitHub Releases API → `updater.ts` → dialog → `openExternal`.
 
-**Current mitigations (verified in `v2.15.0`):**
+**Current mitigations (verified in `v2.16.0`):**
 
 - HTTPS requests to fixed owner/repo endpoints with 10-second abort timeout and ETag `304` caching.
 - **Strict URL choke point (`safeExternalUrl` in `src/main/updater.ts`):** Enforces `https:` protocol, rejects embedded credentials (`username`/`password`), and permits only `github.com/richiesamlie/ScratchJr-Desktop-Reborn/*` and `*.githubusercontent.com`. All non-matching origins fall back to the verified repository release URL or are rejected.
@@ -97,9 +98,9 @@ TRUSTED            SQLite DB (sql.js / rusqlite / Android WAL), media store, Git
 
 **Path:** dependency / GitHub Action / build tool → GitHub Actions → release artifact → school PCs & devices.
 
-**Current mitigations (verified in `v2.15.0`, tested in `tests/unit/audit-remediation.test.js`):**
+**Current mitigations (verified in `v2.16.0`, tested in `tests/unit/audit-remediation.test.js`):**
 
-1. **100% SHA-pinned GitHub Actions:** Every `uses:` directive across `build-release.yml`, `build-android.yml`, and `deploy-pages.yml` is pinned to a 40-character commit SHA (enforced by automated unit test `F-03 / P0-001`).
+1. **100% SHA-pinned GitHub Actions:** Every `uses:` directive across `ci.yml`, `build-release.yml`, `build-android.yml`, and `deploy-pages.yml` is pinned to a 40-character commit SHA (enforced by automated unit test `F-03 / P0-001`).
 2. **Verified WiX 3.14 binary download:** `build-release.yml` verifies the SHA-256 hash (`6ac824e1642d6f7277d0ed7ea09411a508f6116ba6fae0aa5f2c7daa2ff43d31`) of `wix314-binaries.zip` via `sha256sum -c -` before extracting (`F-04 / P0-004`).
 3. **Least-privilege workflow permissions:** Build jobs run with `permissions: contents: read`; `contents: write` is isolated exclusively to the final release-publishing jobs (`release` and `release-android`).
 4. **Zero npm audit vulnerabilities:** Only 1 runtime dependency (`sql.js@^1.15.1`), `npm ci` lockfile enforcement, and `0` vulnerability advisories across all build/dev dependencies.
@@ -110,7 +111,7 @@ TRUSTED            SQLite DB (sql.js / rusqlite / Android WAL), media store, Git
 
 ## Summary matrix
 
-| Threat | Likelihood | Impact | Current mitigation (`v2.15.0`) | Status |
+| Threat | Likelihood | Impact | Current mitigation (`v2.16.0`) | Status |
 |---|---|---|---|---|
 | A. Malicious `.sjr` / `.sqlite` | MEDIUM | Contained | 50MB/2000-entry/200MB caps, basename regex guard, allowlist SQL intents, per-asset error isolation, Android intent confirmation | **Mitigated** |
 | B. Malicious media (SVG/PNG/audio) | MEDIUM | Contained | `svgSanitizer.ts` tag/attr/href scrubbing, script-inert XML/Canvas render, 4096px canvas clamp, zero-inline CSP | **Mitigated** |

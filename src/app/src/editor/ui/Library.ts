@@ -929,19 +929,18 @@ export default class Library {
         }
     }
 
-    static editBackground (e?: Event) {
+    static editBackground (_e?: Event) {
         var md5 = selectedOne && (selectedOne != 'none') ? selectedOne : undefined;
         Paint.open(true, md5);
     }
 
-    static editCostume (e?: Event) {
-        var sname;
+    static editCostume (_e?: Event) {
         var cname = selectedOne ? clickThumb!.fieldname : Localization.localize('LIBRARY_CHARACTER');
         var scale = selectedOne && (selectedOne != 'none') ? clickThumb!.scale : 0.5;
         var md5 = selectedOne && (selectedOne != 'none') ? selectedOne : undefined;
         var w = selectedOne && (selectedOne != 'none') ? Math.round(clickThumb!.w!) : undefined;
         var h = selectedOne && (selectedOne != 'none') ? Math.round(clickThumb!.h!) : undefined;
-        Paint.open(false, md5, sname, cname, scale, w, h);
+        Paint.open(false, md5, undefined, cname, scale, w, h);
     }
 
     static closeSpriteSelection (e: Event) {

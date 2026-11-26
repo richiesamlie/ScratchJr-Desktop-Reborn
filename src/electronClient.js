@@ -260,38 +260,43 @@ class ElectronDesktopInterface {
 
     /** called when the tickmark is chosen in the record dialog @param {string} keep */
     recordsound_recordclose(keep) {
+        try {
+            const electronDesktopInterface = this;
+            const audioCaptureElement = this.getAudioCaptureElement();
 
-		try {
-			let electronDesktopInterface =  this;
-
-			let audioCaptureElement = this.getAudioCaptureElement();
-
-			if (keep === 'YES') {
-
-				let blob = audioCaptureElement.captureRecordingAsBlob();
-				if (blob) {
-					let filename = audioCaptureElement.getId();
-
-					let fileReader = new FileReader();
-					fileReader.onload = function () {
-						// saving new sound... will save as a webm file.
-						let dataUrl = /** @type {string} */ (fileReader.result);
-						electronDesktopInterface.io_setmedianame(dataUrl, filename, 'webm')
-							.then(function () {
-								electronDesktopInterface.loadSoundFromDataURI(filename + '.webm', dataUrl);
-							})
-							.catch(function (err) {
-								debugLog('Failed to persist recording:', err);
-							});
-					};
-					fileReader.readAsDataURL(blob);
-				}
-
-			}
+            if (keep === 'YES') {
+                return audioCaptureElement.waitForStop().then(function () {
+                    const blob = audioCaptureElement.captureRecordingAsBlob();
+                    if (!blob) return undefined;
+                    const filename = audioCaptureElement.getId();
+                    return new Promise(function (resolve, reject) {
+                        const fileReader = new FileReader();
+                        fileReader.onload = function () {
+                            // saving new sound... will save as a webm file.
+                            const dataUrl = /** @type {string} */ (fileReader.result);
+                            electronDesktopInterface.io_setmedianame(dataUrl, filename, 'webm')
+                                .then(function () {
+                                    electronDesktopInterface.loadSoundFromDataURI(filename + '.webm', dataUrl);
+                                    resolve(undefined);
+                                })
+                                .catch(function (err) {
+                                    debugLog('Failed to persist recording:', err);
+                                    reject(err);
+                                });
+                        };
+                        fileReader.onerror = function (err) {
+                            debugLog('Failed to read recorded sound blob:', err);
+                            reject(err);
+                        };
+                        fileReader.readAsDataURL(blob);
+                    });
+                });
+            }
+            return audioCaptureElement.stopRecord();
         } catch (e) {
-    		debugLog('Error saving sound', e);
+            debugLog('Error saving sound', e);
+            return Promise.resolve();
         }
-
     }
 
 

@@ -7,7 +7,7 @@
 > A modernized, multi-platform edition of [ScratchJr](https://scratchjr.org/) for Web/PWA, Windows, macOS, Linux, and Android.
 
 [![Version](https://img.shields.io/github/v/release/richiesamlie/ScratchJr-Desktop-Reborn?color=blue&label=version)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/releases/latest)
-[![Tests](https://img.shields.io/badge/tests-372%20passed-brightgreen.svg)]()
+[![CI](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/actions/workflows/ci.yml/badge.svg)](https://github.com/richiesamlie/ScratchJr-Desktop-Reborn/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green.svg)](LICENSE)
 [![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-orange.svg)]()
 
@@ -41,9 +41,10 @@
 
 ```bash
 npm install                # Install dependencies
-npm test                   # Run unit suite (372 tests)
+npm test                   # Run Vitest unit suite
 npm run typecheck          # TypeScript check
-npm run lint               # ESLint 10 flat-config check
+npm run lint               # ESLint 10 + Oxlint static analysis (JS & TS)
+npm run check:versions     # Verify 9-target version lockstep
 
 # Build targets
 npm run build:renderer     # Compile renderer bundle

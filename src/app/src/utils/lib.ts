@@ -515,6 +515,8 @@ export function drawThumbnail (img: DrawImageSource, c: HTMLCanvasElement) {
         dx = (c.width - wi) / 2;
         dy = (c.height - he) / 2;
         break;
+    default:
+        break;
     }
     var ctx = c.getContext('2d')!;
     ctx.drawImage(img, dx, dy, wi, he);
@@ -561,6 +563,8 @@ export function fitInRect (srcw: number, srch: number, destw: number, desth: num
         he = srch * dw;
         dx = (destw - wi) / 2;
         dy = (desth - he) / 2;
+        break;
+    default:
         break;
     }
     return [dx, dy, wi, he];
@@ -739,7 +743,7 @@ export function getHex (num: number) {
 }
 
 export function colorToRGBA (color: string, opacity: string) {
-    var val = parseInt('0x' + color.substr(1, color.length));
+    var val = parseInt('0x' + color.substr(1, color.length), 16);
     return 'rgba(' + (val >> 16) % 256 + ',' + (val >> 8) % 256 + ',' + (val % 256) + ',' + opacity + ')';
 }
 
